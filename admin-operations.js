@@ -417,6 +417,9 @@
         <h3>Menu recipes &amp; automatic stock usage</h3>
         <p class="ops-note">Map each menu item to its stock ingredients and the quantity used per portion. Use the same unit as inventory (for example, kg with kg). Ingredients are deducted when an order is marked Completed. Missing recipes are not auto-deducted, and an order will not complete if configured stock is insufficient.</p>
         <div id="ops-recipe-warning" class="app-message info"></div>
+        <h4>Estimated ingredient cost and gross margin per portion</h4>
+        <p class="ops-note">Estimate uses the current stock-item unit costs and the recipe quantities. It excludes labour, rent, utilities and other overhead.</p>
+        <div id="ops-recipe-cost-summary" class="ops-table-wrap"></div>
         <form id="ops-recipe-form" class="ops-form">
           <label>Menu item
             <select name="menu_item_id" id="ops-recipe-menu" required></select>
@@ -1171,9 +1174,9 @@
 
   async function loadRecipes() {
     const [menuResult, inventoryResult, recipesResult] = await Promise.all([
-      db.from("menu_items").select("id,name").order("name"),
-      db.from("inventory_items").select("id,name,unit,quantity").eq("is_active",true).order("name"),
-      db.from("menu_item_recipes").select("*,menu_items(name),inventory_items(name,unit)")
+      db.from("menu_items").select("id,name,price").order("name"),
+      db.from("inventory_items").select("id,name,unit,quantity,unit_cost").eq("is_active",true).order("name"),
+      db.from("menu_item_recipes").select("*,menu_items(name,price),inventory_items(name,unit,unit_cost)")
         .order("created_at",{ascending:false})
     ]);
     if(menuResult.error) throw menuResult.error;
@@ -1188,6 +1191,20 @@
 
     const configured=new Set(recipes.map(recipe=>recipe.menu_item_id));
     const missing=menus.filter(item=>!configured.has(item.id));
+    $("#ops-recipe-cost-summary").innerHTML=table(
+      ["Menu item","Selling price","Estimated ingredients / portion","Gross margin before overhead","Ingredient cost %"],
+      menus.filter(item=>configured.has(item.id)).map(item=>{
+        const ownRecipes=recipes.filter(recipe=>recipe.menu_item_id===item.id);
+        const ingredientCost=ownRecipes.reduce((sum,recipe)=>{
+          const unitCost=Number(recipe.inventory_items?.unit_cost||0);
+          return sum+Number(recipe.quantity_per_item)*unitCost;
+        },0);
+        const price=Number(item.price||0);
+        const margin=price-ingredientCost;
+        const percent=price>0?(ingredientCost/price*100):0;
+        return [item.name,money(price),money(ingredientCost),money(margin),percent.toFixed(1)+"%"];
+      })
+    );
     const warning=$("#ops-recipe-warning");
     warning.textContent=missing.length
       ? missing.length+' menu item(s) have no recipe; stock will not be deducted for those items until at least one ingredient is mapped: '+missing.map(item=>item.name).join(", ")
