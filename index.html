@@ -21,6 +21,8 @@
 
     .customer-auth{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(25,10,12,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
     .customer-auth[hidden]{display:none!important}
+    /* Phone OTP is paused; keep the sign-in overlay hidden on all clients. */
+    .customer-auth{display:none!important}
     .customer-auth-card{box-sizing:border-box;width:100%;max-width:430px;background:#fff;border-radius:22px;padding:28px;color:#242424;box-shadow:0 20px 70px #0005}
     .customer-auth-card h2{margin:6px 0 10px;color:#8d1723}
     .customer-auth-card label{display:block;font-weight:700;margin:16px 0 6px}
@@ -333,7 +335,7 @@
     })();
   </script>
   <script src="config.js"></script>
-  <script src="customer.js?v=guest-checkout-20261020"></script>
+  <script src="customer.js?v=guest-checkout-fix2-20261020"></script>
   <script src="pwa.js"></script>
 </body>
 </html>
