@@ -160,6 +160,9 @@
         <button class="tab" data-opstab="staff" type="button">Staff</button>
         <button class="tab" data-opstab="expenses" type="button">Expenses</button>
         <button class="tab" data-opstab="shifts" type="button">Cash shifts</button>
+        <button class="tab" data-opstab="purchases" type="button">Purchases</button>
+        <button class="tab" data-opstab="payouts" type="button">Cash payouts</button>
+        <button class="tab" data-opstab="attendance" type="button">Attendance</button>
         <button class="tab" data-opstab="reports" type="button">Reports</button>
       </div>
 
@@ -327,6 +330,87 @@
         <div id="ops-shifts-list" class="ops-table-wrap"></div>
       </section>
 
+      <section id="ops-purchases" class="hidden">
+        <h3>Purchase orders</h3>
+        <p class="ops-note">Create an order for a supplier, then use Receive stock only when the delivery physically arrives. Receiving updates the stock ledger once.</p>
+        <form id="ops-purchase-form" class="ops-form">
+          <label>Supplier
+            <select name="supplier_id" id="ops-purchase-supplier">
+              <option value="">No supplier selected</option>
+            </select>
+          </label>
+          <label>Stock item
+            <select name="item_id" id="ops-purchase-item" required></select>
+          </label>
+          <label>Quantity ordered
+            <input name="quantity" type="number" min="0.001" step="0.001" required>
+          </label>
+          <label>Unit cost (GH₵)
+            <input name="unit_cost" type="number" min="0" step="0.01" required>
+          </label>
+          <label>Reference / invoice
+            <input name="reference" maxlength="100">
+          </label>
+          <label class="wide">Notes
+            <input name="notes" maxlength="250">
+          </label>
+          <button class="btn btn-primary" type="submit">Create purchase order</button>
+        </form>
+        <div id="ops-purchases-list" class="ops-table-wrap"></div>
+      </section>
+
+      <section id="ops-payouts" class="hidden">
+        <h3>Cash payouts / money out</h3>
+        <p class="ops-note">Record cash withdrawn from the till separately from operating expenses. Cash payouts linked to an open shift are included when that shift is reconciled.</p>
+        <form id="ops-payout-form" class="ops-form">
+          <label>Date
+            <input name="payout_date" type="date" required>
+          </label>
+          <label>Category
+            <input name="category" maxlength="80" required placeholder="Small cash purchase, refund">
+          </label>
+          <label>Amount (GH₵)
+            <input name="amount" type="number" min="0.01" step="0.01" required>
+          </label>
+          <label class="wide">Description
+            <input name="description" maxlength="250" required>
+          </label>
+          <label>Payment method
+            <select name="payment_method">
+              <option value="cash">Cash from till</option>
+              <option value="mobile_money">Mobile Money</option>
+              <option value="bank">Bank</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <label>Open shift (cash only)
+            <select name="shift_id" id="ops-payout-shift">
+              <option value="">Not linked</option>
+            </select>
+          </label>
+          <label>Reference
+            <input name="reference" maxlength="100">
+          </label>
+          <button class="btn btn-primary" type="submit">Record payout</button>
+        </form>
+        <div id="ops-payouts-list" class="ops-table-wrap"></div>
+      </section>
+
+      <section id="ops-attendance" class="hidden">
+        <h3>Staff attendance</h3>
+        <p class="ops-note">Record clock-in and clock-out times. The system prevents the same staff member from having two open attendance records.</p>
+        <form id="ops-attendance-form" class="ops-form">
+          <label>Staff member
+            <select name="staff_id" id="ops-attendance-staff" required></select>
+          </label>
+          <label>Notes (optional)
+            <input name="notes" maxlength="250">
+          </label>
+          <button class="btn btn-primary" type="submit">Clock in</button>
+        </form>
+        <div id="ops-attendance-list" class="ops-table-wrap"></div>
+      </section>
+
       <section id="ops-reports" class="hidden">
         <h3>Sales and expense summary</h3>
         <p class="ops-note">
@@ -357,13 +441,14 @@
         tab.classList.toggle("active", tab === btn);
       });
 
-      ["inventory", "suppliers", "staff", "expenses", "shifts", "reports"].forEach(name => {
+      ["inventory", "suppliers", "staff", "expenses", "shifts", "purchases", "payouts", "attendance", "reports"].forEach(name => {
         $("#ops-" + name).classList.toggle("hidden", name !== btn.dataset.opstab);
       });
 
-      if (btn.dataset.opstab === "reports") {
-        loadReports();
-      }
+      if (btn.dataset.opstab === "reports") loadReports();
+      if (btn.dataset.opstab === "purchases") loadPurchases();
+      if (btn.dataset.opstab === "payouts") loadCashPayouts();
+      if (btn.dataset.opstab === "attendance") loadAttendance();
     });
 
     $("#ops-item-form").addEventListener("submit", addInventoryItem);
@@ -372,6 +457,9 @@
     $("#ops-staff-form").addEventListener("submit", addStaff);
     $("#ops-expense-form").addEventListener("submit", addExpense);
     $("#ops-shift-open-form").addEventListener("submit", openShift);
+    $("#ops-purchase-form").addEventListener("submit", createPurchaseOrder);
+    $("#ops-payout-form").addEventListener("submit", addCashPayout);
+    $("#ops-attendance-form").addEventListener("submit", clockIn);
   }
 
   function showTab(name) {
@@ -434,6 +522,7 @@
         loadExpenses(),
         loadShifts()
       ]);
+      await Promise.all([loadPurchases(), loadCashPayouts(), loadAttendance()]);
 
       loaded = true;
       message("Operations data loaded.");
@@ -844,6 +933,205 @@
     } catch (error) {
       showError(error);
     }
+  }
+
+  async function loadPurchases() {
+    const [ordersResult, suppliersResult, itemsResult] = await Promise.all([
+      db.from("purchase_orders")
+        .select("*,suppliers(name),purchase_order_items(*,inventory_items(name,unit))")
+        .order("created_at", { ascending: false }).limit(50),
+      db.from("suppliers").select("id,name").eq("is_active", true).order("name"),
+      db.from("inventory_items").select("id,name,unit").eq("is_active", true).order("name")
+    ]);
+    if (ordersResult.error) throw ordersResult.error;
+    if (suppliersResult.error) throw suppliersResult.error;
+    if (itemsResult.error) throw itemsResult.error;
+
+    const supplierSelect = $("#ops-purchase-supplier");
+    if (supplierSelect) supplierSelect.innerHTML = '<option value="">No supplier selected</option>' +
+      (suppliersResult.data || []).map(item => '<option value="' + esc(item.id) + '">' + esc(item.name) + '</option>').join("");
+
+    const itemSelect = $("#ops-purchase-item");
+    if (itemSelect) itemSelect.innerHTML = (itemsResult.data || []).map(item =>
+      '<option value="' + esc(item.id) + '">' + esc(item.name) + ' (' + esc(item.unit) + ')</option>'
+    ).join("") || '<option value="">Add a stock item first</option>';
+
+    $("#ops-purchases-list").innerHTML = table(
+      ["Created", "Reference", "Supplier", "Items", "Total", "Status", "Action"],
+      (ordersResult.data || []).map(order => {
+        const lines = order.purchase_order_items || [];
+        const label = lines.map(line =>
+          (line.inventory_items?.name || "Stock item") + " — " + line.quantity + " " +
+          (line.inventory_items?.unit || "") + " @ " + money(line.unit_cost)
+        ).join("; ") || "No items";
+        const total = lines.reduce((sum, line) => sum + Number(line.quantity) * Number(line.unit_cost), 0);
+        const action = order.status === "ordered"
+          ? {kind:"html", value:'<button class="btn btn-primary" data-receive-purchase="' + esc(order.id) + '">Receive stock</button>'}
+          : order.status === "draft" ? "Incomplete draft" : order.status;
+        return [new Date(order.created_at).toLocaleString(), order.reference || "—",
+          order.suppliers?.name || "—", label, money(total), order.status, action];
+      })
+    );
+    $("#ops-purchases-list").querySelectorAll("[data-receive-purchase]").forEach(button => {
+      button.addEventListener("click", async () => {
+        if (!confirm("Confirm the supplier delivered these quantities? Stock will be increased and recorded once.")) return;
+        button.disabled = true;
+        try {
+          const { error } = await db.rpc("receive_purchase_order", {p_purchase_order_id:button.dataset.receivePurchase});
+          if (error) throw error;
+          message("Purchase received and inventory updated.");
+          await Promise.all([loadPurchases(), loadInventory(), loadMovements()]);
+        } catch (error) {
+          showError(error);
+          button.disabled = false;
+        }
+      });
+    });
+  }
+
+  async function createPurchaseOrder(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const quantity = Number(data.get("quantity"));
+    const unitCost = Number(data.get("unit_cost"));
+    if (!data.get("item_id") || !Number.isFinite(quantity) || quantity <= 0 ||
+        !Number.isFinite(unitCost) || unitCost < 0) {
+      message("Choose a stock item, enter a positive quantity and a valid unit cost.", true);
+      return;
+    }
+    try {
+      const {data:userData,error:userError}=await db.auth.getUser();
+      if(userError) throw userError;
+      const {data:order,error:orderError}=await db.from("purchase_orders").insert({
+        supplier_id:String(data.get("supplier_id")||"").trim()||null,
+        status:"draft",
+        reference:String(data.get("reference")||"").trim()||null,
+        notes:String(data.get("notes")||"").trim()||null,
+        created_by:userData.user?.id||null
+      }).select().single();
+      if(orderError) throw orderError;
+      const {error:itemError}=await db.from("purchase_order_items").insert({
+        purchase_order_id:order.id,
+        item_id:String(data.get("item_id")),
+        quantity,
+        unit_cost:unitCost
+      });
+      if(itemError) throw itemError;
+      const {error:updateError}=await db.from("purchase_orders").update({
+        status:"ordered",ordered_at:new Date().toISOString(),updated_at:new Date().toISOString()
+      }).eq("id",order.id);
+      if(updateError) throw updateError;
+      form.reset();
+      message("Purchase order created. Receive it only after delivery arrives.");
+      await loadPurchases();
+    } catch(error) {
+      showError(error);
+    }
+  }
+
+  async function loadCashPayouts() {
+    const date = localDateString();
+    const form = $("#ops-payout-form");
+    if (form && !form.elements.payout_date.value) form.elements.payout_date.value = date;
+    const [payoutResult,shiftResult] = await Promise.all([
+      db.from("cash_payouts").select("*").eq("payout_date",date).order("created_at",{ascending:false}).limit(100),
+      db.from("cash_shifts").select("id,opened_at,opening_cash").eq("status","open").order("opened_at",{ascending:false})
+    ]);
+    if(payoutResult.error) throw payoutResult.error;
+    if(shiftResult.error) throw shiftResult.error;
+    const select=$("#ops-payout-shift");
+    if(select) select.innerHTML='<option value="">Not linked</option>'+(shiftResult.data||[]).map(shift=>
+      '<option value="'+esc(shift.id)+'">Opened '+esc(new Date(shift.opened_at).toLocaleString())+'</option>'
+    ).join("");
+    $("#ops-payouts-list").innerHTML=table(
+      ["Date","Category","Description","Amount","Method","Reference"],
+      (payoutResult.data||[]).map(item=>[
+        item.payout_date,item.category,item.description,money(item.amount),item.payment_method,item.reference||"—"
+      ])
+    );
+  }
+
+  async function addCashPayout(event) {
+    event.preventDefault();
+    const form=event.currentTarget;
+    const data=new FormData(form);
+    const method=String(data.get("payment_method")||"cash");
+    try {
+      const {error}=await db.rpc("record_cash_payout",{
+        p_category:String(data.get("category")||"").trim(),
+        p_description:String(data.get("description")||"").trim(),
+        p_amount:Number(data.get("amount")),
+        p_payment_method:method,
+        p_payout_date:data.get("payout_date")||localDateString(),
+        p_reference:String(data.get("reference")||"").trim()||null,
+        p_shift_id:method==="cash"?(String(data.get("shift_id")||"").trim()||null):null
+      });
+      if(error) throw error;
+      form.reset();
+      form.elements.payout_date.value=localDateString();
+      message("Cash payout recorded.");
+      await Promise.all([loadCashPayouts(),loadExpenses(),loadShifts()]);
+    }catch(error){showError(error);}
+  }
+
+  async function loadAttendance() {
+    const date=localDateString();
+    const [staffResult,attendanceResult]=await Promise.all([
+      db.from("staff_profiles").select("id,full_name").eq("is_active",true).order("full_name"),
+      db.from("staff_attendance").select("*,staff_profiles(full_name,role)").eq("work_date",date).order("check_in_at",{ascending:false}).limit(100)
+    ]);
+    if(staffResult.error) throw staffResult.error;
+    if(attendanceResult.error) throw attendanceResult.error;
+    const select=$("#ops-attendance-staff");
+    if(select) select.innerHTML=(staffResult.data||[]).map(person=>'<option value="'+esc(person.id)+'">'+esc(person.full_name)+'</option>').join("")||'<option value="">Add staff first</option>';
+    $("#ops-attendance-form").querySelector('button[type="submit"]').disabled=!(staffResult.data||[]).length;
+    $("#ops-attendance-list").innerHTML=table(
+      ["Staff","Role","Clock in","Clock out","Hours","Action"],
+      (attendanceResult.data||[]).map(record=>{
+        const elapsed=((record.check_out_at?new Date(record.check_out_at):new Date())-new Date(record.check_in_at))/3600000;
+        const hours=Math.max(0,elapsed);
+        const action=record.check_out_at?"Finished":{kind:"html",value:'<button class="btn btn-light" data-clock-out="'+esc(record.id)+'">Clock out</button>'};
+        return [record.staff_profiles?.full_name||"Staff",record.staff_profiles?.role||"—",
+          new Date(record.check_in_at).toLocaleTimeString(),record.check_out_at?new Date(record.check_out_at).toLocaleTimeString():"On duty",
+          hours.toFixed(2),action];
+      })
+    );
+    $("#ops-attendance-list").querySelectorAll("[data-clock-out]").forEach(button=>{
+      button.addEventListener("click",async()=>{
+        button.disabled=true;
+        try{
+          const {data:userData,error:userError}=await db.auth.getUser();
+          if(userError) throw userError;
+          const {error}=await db.from("staff_attendance").update({
+            check_out_at:new Date().toISOString(),check_out_by:userData.user?.id||null
+          }).eq("id",button.dataset.clockOut).is("check_out_at",null);
+          if(error) throw error;
+          message("Staff clock-out recorded.");
+          await loadAttendance();
+        }catch(error){showError(error);button.disabled=false;}
+      });
+    });
+  }
+
+  async function clockIn(event) {
+    event.preventDefault();
+    const form=event.currentTarget;
+    const data=new FormData(form);
+    if(!data.get("staff_id")){message("Select a staff member first.",true);return;}
+    try{
+      const {data:userData,error:userError}=await db.auth.getUser();
+      if(userError) throw userError;
+      const {error}=await db.from("staff_attendance").insert({
+        staff_id:String(data.get("staff_id")),
+        check_in_by:userData.user?.id||null,
+        notes:String(data.get("notes")||"").trim()||null
+      });
+      if(error) throw error;
+      form.elements.notes.value="";
+      message("Staff clock-in recorded.");
+      await loadAttendance();
+    }catch(error){showError(error);}
   }
 
   async function loadReports() {
