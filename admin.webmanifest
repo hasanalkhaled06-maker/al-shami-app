@@ -13,6 +13,12 @@
   "categories": ["business", "productivity"],
   "icons": [
     {
+      "src": "./icons/apple-touch-icon-admin.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "./icons/al-shami-admin.svg",
       "sizes": "any",
       "type": "image/svg+xml",
