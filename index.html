@@ -7,7 +7,13 @@
   <meta name="theme-color" content="#8d1723">
   <meta name="description" content="Order fresh food from AL SHAMI RESTAURANT & FAST FOOD in Darkuman Circle Station, Accra.">
   <meta name="color-scheme" content="light">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AL SHAMI">
   <title>AL SHAMI RESTAURANT &amp; FAST FOOD</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/al-shami.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/al-shami.svg">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -67,6 +73,14 @@
       <strong data-i18n="orderNote">Order online</strong>
       <span data-i18n="orderNote2">Your order goes directly to our restaurant ordering system.</span>
     </section>
+
+    <aside class="install-note" id="install-note" aria-label="Install AL SHAMI app">
+      <span class="install-note-icon" aria-hidden="true">✦</span>
+      <div>
+        <strong>Keep AL SHAMI on your home screen</strong>
+        <p>On iPhone: open this page in Safari, tap Share, then choose <b>Add to Home Screen</b>.</p>
+      </div>
+    </aside>
 
     <div id="app-status" class="app-message info" role="status" aria-live="polite" hidden></div>
     <div id="active-offers" aria-live="polite"></div>
@@ -259,5 +273,6 @@
 
   <script src="config.js"></script>
   <script src="customer.js"></script>
+  <script src="pwa.js"></script>
 </body>
 </html>
