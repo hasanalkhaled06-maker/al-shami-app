@@ -1271,8 +1271,8 @@
       const start=new Date(fromDate+"T00:00:00");
       const end=new Date(toDate+"T00:00:00");
       end.setDate(end.getDate()+1);
-      const endExclusive=end.toISOString();
       const startISO=start.toISOString();
+      const endExclusive=end.toISOString();
 
       const [
         {data:orders,error:ordersError},
@@ -1280,10 +1280,10 @@
         {data:expenses,error:expensesError},
         {data:payouts,error:payoutsError}
       ]=await Promise.all([
-        db.from("orders").select("id,order_number,customer_name,customer_phone,total,status,created_at,updated_at")
+        db.from("orders").select("id,order_number,customer_name,customer_phone,total,status,created_at")
           .gte("created_at",startISO).lt("created_at",endExclusive).order("created_at",{ascending:false}),
-        db.from("orders").select("id,order_number,total,status,created_at,updated_at")
-          .eq("status","completed").gte("updated_at",startISO).lt("updated_at",endExclusive),
+        db.from("orders").select("id,order_number,total,status,completed_at,order_items(id,menu_item_id,item_name,quantity,unit_price)")
+          .eq("status","completed").gte("completed_at",startISO).lt("completed_at",endExclusive),
         db.from("expenses").select("expense_date,category,description,amount,payment_method,reference")
           .gte("expense_date",fromDate).lte("expense_date",toDate).order("expense_date",{ascending:false}),
         db.from("cash_payouts").select("payout_date,category,description,amount,payment_method,reference")
@@ -1294,33 +1294,72 @@
       if(expensesError) throw expensesError;
       if(payoutsError) throw payoutsError;
 
-      const sales=(completedOrders||[]).reduce((sum,order)=>sum+Number(order.total),0);
+      const allOrderItems=(completedOrders||[]).flatMap(order=>order.order_items||[]);
+      const orderItemIds=allOrderItems.map(item=>item.id).filter(Boolean);
+      let deductions=[];
+      let movementCosts=[];
+      if(orderItemIds.length){
+        const {data:deductionData,error:deductionError}=await db.from("order_inventory_deductions")
+          .select("order_item_id,inventory_item_id,quantity_deducted,stock_movement_id")
+          .in("order_item_id",orderItemIds);
+        if(deductionError) throw deductionError;
+        deductions=deductionData||[];
+        const movementIds=[...new Set(deductions.map(item=>item.stock_movement_id).filter(Boolean))];
+        if(movementIds.length){
+          const {data:movementData,error:movementError}=await db.from("inventory_movements")
+            .select("id,unit_cost").in("id",movementIds);
+          if(movementError) throw movementError;
+          movementCosts=movementData||[];
+        }
+      }
+
+      const unitCostByMovement=new Map(movementCosts.map(item=>[item.id,Number(item.unit_cost||0)]));
+      const costByOrderItem=new Map();
+      const deductedOrderItemIds=new Set();
+      deductions.forEach(item=>{
+        deductedOrderItemIds.add(item.order_item_id);
+        const cost=Number(item.quantity_deducted||0)*unitCostByMovement.get(item.stock_movement_id);
+        costByOrderItem.set(item.order_item_id,(costByOrderItem.get(item.order_item_id)||0)+(Number.isFinite(cost)?cost:0));
+      });
+
+      const completedSales=(completedOrders||[]).reduce((sum,order)=>sum+Number(order.total),0);
+      const ingredientCost=allOrderItems.reduce((sum,item)=>sum+(costByOrderItem.get(item.id)||0),0);
+      const unmappedLines=allOrderItems.filter(item=>item.menu_item_id&&!deductedOrderItemIds.has(item.id)).length;
       const expenseTotal=(expenses||[]).reduce((sum,item)=>sum+Number(item.amount),0);
       const payoutTotal=(payouts||[]).reduce((sum,item)=>sum+Number(item.amount),0);
+      const estimatedResult=completedSales-ingredientCost-expenseTotal;
+
       lastReportRows=[
-        ["Type","Date","Reference","Name / Category","Description","Method","Amount","Status"],
+        ["Type","Date","Order / Reference","Customer / Category","Description","Method","Amount (GH₵)","Status"],
         ...(completedOrders||[]).map(order=>[
-          "Completed sale",new Date(order.updated_at).toISOString(),order.order_number||order.id,
-          order.customer_name||"",order.customer_phone||"","cash",Number(order.total),order.status
+          "Completed sale",order.completed_at?new Date(order.completed_at).toISOString():"",
+          order.order_number||order.id,"Customer order",
+          (order.order_items||[]).map(item=>Number(item.quantity)+" x "+(item.item_name||"Menu item")).join("; "),
+          "cash",Number(order.total),order.status
         ]),
+        ["Estimated recipe ingredient cost",fromDate+" to "+toDate,"","Inventory stock ledger","Cost of ingredients deducted from completed orders","",Number(ingredientCost),"Estimate"],
         ...(expenses||[]).map(item=>[
-          "Expense",item.expense_date,item.reference||"",item.category,item.description,item.payment_method,Number(item.amount),"Recorded"
+          "Operating expense",item.expense_date,item.reference||"",item.category,item.description,
+          item.payment_method,Number(item.amount),"Recorded"
         ]),
         ...(payouts||[]).map(item=>[
-          "Cash payout",item.payout_date,item.reference||"",item.category,item.description,item.payment_method,Number(item.amount),"Recorded"
+          "Cash payout",item.payout_date,item.reference||"",item.category,item.description,
+          item.payment_method,Number(item.amount),"Recorded separately"
         ])
       ];
 
       $("#ops-report-content").innerHTML=
         '<div class="ops-grid">'+
           '<div class="ops-stat"><small>Orders placed in range</small><strong>'+(orders||[]).length+'</strong></div>'+
-          '<div class="ops-stat"><small>Completed sales in range</small><strong>'+money(sales)+'</strong></div>'+
-          '<div class="ops-stat"><small>Recorded expenses</small><strong>'+money(expenseTotal)+'</strong></div>'+
-          '<div class="ops-stat"><small>Cash payouts / money out</small><strong>'+money(payoutTotal)+'</strong></div>'+
+          '<div class="ops-stat"><small>Completed sales</small><strong>'+money(completedSales)+'</strong></div>'+
+          '<div class="ops-stat"><small>Estimated recipe ingredient cost</small><strong>'+money(ingredientCost)+'</strong></div>'+
+          '<div class="ops-stat"><small>Recorded operating expenses</small><strong>'+money(expenseTotal)+'</strong></div>'+
+          '<div class="ops-stat"><small>Cash payouts (separate)</small><strong>'+money(payoutTotal)+'</strong></div>'+
         '</div>'+
-        '<p><strong>Sales less recorded expenses and payouts:</strong> '+money(sales-expenseTotal-payoutTotal)+'</p>'+
-        '<p class="ops-note">This is a cash/recorded-cost summary, not net profit. Completed sales are grouped by order update time; expenses and payouts use their entered dates. Ingredient cost, payroll and other missing costs are not included unless entered as expenses.</p>'+
-        '<p class="ops-note">Report period: '+esc(fromDate)+' through '+esc(toDate)+'.</p>';
+        '<p><strong>Estimated result after mapped ingredient cost and recorded expenses:</strong> '+money(estimatedResult)+'</p>'+
+        '<p class="ops-note">This estimate excludes menu lines without recorded recipe deductions, unrecorded payroll/overhead, and any costs entered incompletely. '+unmappedLines+' completed order line(s) in this period have no recipe deduction ledger entry.</p>'+
+        '<p class="ops-note">Payouts are shown separately and are not subtracted from the estimated result because they may be transfers/drawings or already recorded in expenses. Sales are grouped by completion time; expenses and payouts use their entered dates.</p>'+
+        '<p class="ops-note">Report period: '+esc(fromDate)+' through '+esc(toDate)+'.';
     } catch(error) {
       showError(error);
     }
