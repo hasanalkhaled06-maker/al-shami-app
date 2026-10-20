@@ -180,6 +180,18 @@ create policy "admin insert audit log"
 on public.audit_log for insert to authenticated
 with check (public.is_current_user_admin());
 
+-- Explicit table privileges pair with the row-level security policies above.
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on
+  public.suppliers,
+  public.inventory_items,
+  public.inventory_movements,
+  public.expenses,
+  public.staff_profiles,
+  public.cash_shifts
+to authenticated;
+grant select, insert on public.audit_log to authenticated;
+
 -- Record stock movement and update stock quantity atomically.
 create or replace function public.record_inventory_movement(
   p_item_id uuid,
