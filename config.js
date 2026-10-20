@@ -1,6 +1,8 @@
-/* Paste your Supabase project URL and anon/publishable key below.
-   Never put the service_role key in this file. */
+/*
+  Supabase configuration.
+  Never put the service_role key here.
+*/
 window.AL_SHAMI_CONFIG = {
-  SUPABASE_URL: "PASTE_SUPABASE_PROJECT_URL_HERE",
-  SUPABASE_ANON_KEY: "PASTE_SUPABASE_ANON_OR_PUBLISHABLE_KEY_HERE"
+  SUPABASE_URL: "https://rxjfvuxzseuybfmfyjvs.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_K35OkhWCjj8nq4wnjfzdMw_Et77U1n7"
 };
