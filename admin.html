@@ -4,9 +4,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#8d1723">
+  <meta name="theme-color" content="#67101a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SHAMI ADMIN">
   <title>AL SHAMI — Restaurant Admin</title>
 
+  <link rel="manifest" href="admin.webmanifest">
+  <link rel="icon" href="icons/al-shami-admin.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/al-shami-admin.svg">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -22,6 +28,11 @@
     <button id="signout" class="btn btn-light hidden">Sign out</button>
   </div>
 </header>
+
+<div class="admin-install-note" id="admin-install-note">
+  <strong>Install AL SHAMI Admin on your home screen</strong>
+  <span>On iPhone, open this page in Safari → Share → Add to Home Screen. Admin access still requires your authorised login.</span>
+</div>
 
 <main class="admin-container">
 
@@ -213,6 +224,7 @@
 <script src="config.js"></script>
 <script src="admin.js"></script>
 <script src="admin-operations.js"></script>
+<script src="pwa.js"></script>
 
 </body>
 </html>
