@@ -1,28 +1,835 @@
 (() => {
-const cfg=window.AL_SHAMI_CONFIG||{};const ready=cfg.SUPABASE_URL?.startsWith("https://")&&!cfg.SUPABASE_URL.includes("PASTE_")&&cfg.SUPABASE_ANON_KEY&&!cfg.SUPABASE_ANON_KEY.includes("PASTE_");const db=ready?window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
-const $=s=>document.querySelector(s);let currentUser=null,orders=[],products=[],soundOn=false,knownOrderIds=new Set(),firstOrderLoad=true,audioCtx=null;
-const money=n=>"GH₵ "+Number(n||0).toFixed(2);const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));function toast(t){$("#toast").innerHTML=t;$("#toast").classList.remove("hidden");setTimeout(()=>$("#toast").classList.add("hidden"),5000)}function status(t,el="#product-message",err=false){$(el).textContent=t;$(el).className="status-message "+(err?"error":"success")}
-function setConnection(t){$("#connection-state").textContent=t}
-async function isAdmin(){if(!currentUser)return false;const {data,error}=await db.rpc("is_current_user_admin");if(error)throw error;return !!data}
-async function showDashboard(){const ok=await isAdmin();if(!ok){await db.auth.signOut();$("#login-message").textContent="This account is not authorised as a restaurant admin. Add its user ID to public.admin_users in Supabase.";$("#login-message").className="status-message error";return}$("#login-panel").classList.add("hidden");$("#dashboard").classList.remove("hidden");$("#signout").classList.remove("hidden");$("#sound-toggle").disabled=false;setConnection("Connected");await refreshAll();subscribe()}
-async function start(){if(!db){setConnection("Setup required");$("#login-message").textContent="Add the Supabase URL and anon/publishable key in assets/config.js, then reload.";return}const {data:{session}}=await db.auth.getSession();if(session){currentUser=session.user;try{await showDashboard()}catch(e){setConnection("Access error");status(e.message,"#login-message",true)}}else setConnection("Ready to sign in")}
-$("#login-form").onsubmit=async e=>{e.preventDefault();if(!db)return;const f=new FormData(e.target);const {data,error}=await db.auth.signInWithPassword({email:f.get("email"),password:f.get("password")});if(error){status(error.message,"#login-message",true);return}currentUser=data.user;try{await showDashboard()}catch(err){status(err.message,"#login-message",true)}};
-$("#signout").onclick=async()=>{await db.auth.signOut();location.reload()};$("#refresh").onclick=()=>refreshAll();$("#order-filter").onchange=renderOrders;
-document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));["orders","menu","offers","settings"].forEach(k=>$(`#tab-${k}`).classList.toggle("hidden",k!==b.dataset.tab))});
-$("#sound-toggle").onclick=async()=>{try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();await audioCtx.resume();soundOn=true;$("#sound-toggle").textContent="Sound alerts enabled";$("#sound-toggle").classList.add("btn-primary");beep();toast("Sound alerts are enabled on this device.")}catch(e){toast("Allow sound in your browser settings, then try again.")}};
-function beep(){if(!soundOn||!audioCtx)return;[0,0.22,0.44].forEach((d,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="sine";o.frequency.value=i===1?1040:880;g.gain.setValueAtTime(.0001,audioCtx.currentTime+d);g.gain.exponentialRampToValueAtTime(.18,audioCtx.currentTime+d+.02);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+d+.16);o.connect(g);g.connect(audioCtx.destination);o.start(audioCtx.currentTime+d);o.stop(audioCtx.currentTime+d+.18)})}
-async function refreshAll(){await Promise.all([loadOrders(),loadProducts(),loadOffers(),loadSettings()])}
-async function loadOrders(){const {data,error}=await db.from("orders").select("*,order_items(*,menu_items(name))").order("created_at",{ascending:false}).limit(150);if(error)throw error;orders=data||[];if(firstOrderLoad){orders.forEach(o=>knownOrderIds.add(o.id));firstOrderLoad=false}$("#stat-new").textContent=orders.filter(o=>o.status==="new").length;$("#stat-progress").textContent=orders.filter(o=>["accepted","preparing","ready"].includes(o.status)).length;$("#new-count").textContent=orders.filter(o=>o.status==="new").length;renderOrders()}
-function renderOrders(){const filter=$("#order-filter").value;const list=orders.filter(o=>filter==="all"||o.status===filter);$("#orders-list").innerHTML=list.length?list.map(o=>`<article class="order-card ${o.status==="new"?"is-new":""}"><div class="order-header"><div><h3>Order #${esc(o.order_number||o.id.slice(0,8))}</h3><div class="order-meta">${new Date(o.created_at).toLocaleString()} · ${esc(o.customer_name)} · ${esc(o.customer_phone)}</div></div><span class="order-status">${esc(o.status)}</span></div><p><strong>${o.order_type==="delivery"?"Delivery":"Pickup"}</strong>${o.delivery_address?" · "+esc(o.delivery_address):""}${o.notes?"<br>Notes: "+esc(o.notes):""}</p><ul class="order-lines">${(o.order_items||[]).map(i=>`<li><span>${Number(i.quantity)} × ${esc(i.item_name||i.menu_items?.name||"Menu item")}</span><strong>${money(i.unit_price*i.quantity)}</strong></li>`).join("")}</ul><div class="order-footer"><div><strong>${money(o.total)}</strong><div class="order-meta">Subtotal ${money(o.subtotal)} · Delivery ${money(o.delivery_fee)}</div></div><div class="order-actions"><select data-status="${o.id}" aria-label="Change order status">${["new","accepted","preparing","ready","completed","rejected"].map(s=>`<option value="${s}" ${o.status===s?"selected":""}>${s[0].toUpperCase()+s.slice(1)}</option>`).join("")}</select><button class="btn btn-light" data-copy="${o.id}">Copy details</button></div></div></article>`).join(""):'<p class="muted">No orders in this view.</p>';$("#orders-list").querySelectorAll("[data-status]").forEach(s=>s.onchange=()=>updateStatus(s.dataset.status,s.value));$("#orders-list").querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>{const o=orders.find(x=>x.id===b.dataset.copy);const t=`AL SHAMI ORDER #${o.order_number||o.id.slice(0,8)}\n${o.customer_name} - ${o.customer_phone}\n${o.order_type} ${o.delivery_address||""}\n${(o.order_items||[]).map(i=>`${i.quantity} x ${i.item_name||i.menu_items?.name}`).join("\n")}\nTOTAL ${money(o.total)}\nStatus: ${o.status}`;navigator.clipboard?.writeText(t).then(()=>toast("Order details copied."),()=>toast(t))})}
-async function updateStatus(id,statusValue){const {error}=await db.from("orders").update({status:statusValue,updated_at:new Date().toISOString()}).eq("id",id);if(error){toast("Could not update status: "+esc(error.message));return}toast("Order status updated.");await loadOrders()}
-function subscribe(){db.channel("al-shami-live-orders").on("postgres_changes",{event:"INSERT",schema:"public",table:"orders"},async payload=>{if(knownOrderIds.has(payload.new.id))return;knownOrderIds.add(payload.new.id);if(soundOn)beep();toast(`<strong>NEW ORDER!</strong> Order #${esc(payload.new.order_number||payload.new.id.slice(0,8))} has arrived.`);await loadOrders()}).on("postgres_changes",{event:"UPDATE",schema:"public",table:"orders"},()=>loadOrders()).subscribe(s=>setConnection(s==="SUBSCRIBED"?"Live · Realtime connected":"Live connection: "+s))}
-function resetProduct(){const f=$("#product-form");f.reset();f.elements.id.value="";f.elements.is_available.checked=true}
-async function loadProducts(){const {data,error}=await db.from("menu_items").select("*").order("sort_order").order("name");if(error)throw error;products=data||[];$("#stat-menu").textContent=products.length;$("#admin-menu-list").innerHTML=products.map(p=>`<div class="admin-menu-row">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:'<div class="product-image" style="width:58px;height:58px;border-radius:8px;font-size:22px">🍽️</div>'}<div class="grow"><strong>${esc(p.name)} · ${money(p.price)}</strong><small>${esc(p.category)} · ${p.is_available?"Available":"Hidden"}${p.description?" · "+esc(p.description):""}</small></div><button class="btn btn-light" data-edit-product="${p.id}">Edit</button><button class="btn btn-light" data-toggle-product="${p.id}">${p.is_available?"Hide":"Show"}</button></div>`).join("")||'<p class="muted">No menu items yet.</p>';$("#admin-menu-list").querySelectorAll("[data-edit-product]").forEach(b=>b.onclick=()=>{const p=products.find(x=>x.id===b.dataset.editProduct),f=$("#product-form");Object.entries({id:p.id,name:p.name,category:p.category,price:p.price,image_url:p.image_url||"",description:p.description||"",is_available:p.is_available}).forEach(([k,v])=>{if(f.elements[k].type==="checkbox")f.elements[k].checked=v;else f.elements[k].value=v});window.scrollTo({top:$("#product-form").getBoundingClientRect().top+scrollY-80,behavior:"smooth"})});$("#admin-menu-list").querySelectorAll("[data-toggle-product]").forEach(b=>b.onclick=async()=>{const p=products.find(x=>x.id===b.dataset.toggleProduct);const {error}=await db.from("menu_items").update({is_available:!p.is_available}).eq("id",p.id);if(error)toast(error.message);else await loadProducts()})}
-$("#product-form").onsubmit=async e=>{e.preventDefault();const f=e.target,d={name:f.elements.name.value.trim(),category:f.elements.category.value.trim(),price:Number(f.elements.price.value),image_url:f.elements.image_url.value.trim()||null,description:f.elements.description.value.trim()||null,is_available:f.elements.is_available.checked};if(!Number.isFinite(d.price)||d.price<=0){status("Price must be greater than zero.");return}const id=f.elements.id.value;const result=id?await db.from("menu_items").update(d).eq("id",id):await db.from("menu_items").insert(d);if(result.error){status(result.error.message,"#product-message",true);return}status("Menu item saved.");resetProduct();await loadProducts()};
-$("#cancel-product").onclick=resetProduct;
-async function loadOffers(){const {data,error}=await db.from("offers").select("*").order("created_at",{ascending:false});if(error)throw error;$("#offers-list").innerHTML=(data||[]).map(o=>`<div class="admin-menu-row"><div class="grow"><strong>${esc(o.title)}</strong><small>${esc(o.details||"")} · ${o.is_active?"Active":"Inactive"}</small></div><button class="btn btn-light" data-edit-offer="${o.id}">Edit</button><button class="btn btn-light" data-toggle-offer="${o.id}">${o.is_active?"Disable":"Enable"}</button></div>`).join("")||'<p class="muted">No offers created yet.</p>';$("#offers-list").querySelectorAll("[data-edit-offer]").forEach(b=>b.onclick=()=>{const o=data.find(x=>x.id===b.dataset.editOffer),f=$("#offer-form");f.elements.id.value=o.id;f.elements.title.value=o.title;f.elements.details.value=o.details||"";f.elements.is_active.checked=o.is_active});$("#offers-list").querySelectorAll("[data-toggle-offer]").forEach(b=>b.onclick=async()=>{const o=data.find(x=>x.id===b.dataset.toggleOffer);const {error}=await db.from("offers").update({is_active:!o.is_active}).eq("id",o.id);if(error)toast(error.message);else loadOffers()})}
-$("#offer-form").onsubmit=async e=>{e.preventDefault();const f=e.target,d={title:f.elements.title.value.trim(),details:f.elements.details.value.trim()||null,is_active:f.elements.is_active.checked};const id=f.elements.id.value;const r=id?await db.from("offers").update(d).eq("id",id):await db.from("offers").insert(d);if(r.error){status(r.error.message,"#offer-message",true);return}status("Offer saved.","#offer-message");f.reset();f.elements.id.value="";f.elements.is_active.checked=true;await loadOffers()};$("#cancel-offer").onclick=()=>{$("#offer-form").reset();$("#offer-form").elements.id.value=""};
-async function loadSettings(){const {data,error}=await db.from("restaurant_settings").select("*").eq("id",1).single();if(error)throw error;$("#settings-form").elements.delivery_fee.value=data.delivery_fee;$("#settings-form").elements.minimum_order.value=data.minimum_order}
-$("#settings-form").onsubmit=async e=>{e.preventDefault();const f=e.target,d={delivery_fee:Number(f.elements.delivery_fee.value),minimum_order:Number(f.elements.minimum_order.value),updated_at:new Date().toISOString()};const {error}=await db.from("restaurant_settings").update(d).eq("id",1);if(error){status(error.message,"#settings-message",true);return}status("Settings saved.","#settings-message")};
-start();
+  const cfg = window.AL_SHAMI_CONFIG || {};
+
+  const ready =
+    cfg.SUPABASE_URL?.startsWith("https://") &&
+    !cfg.SUPABASE_URL.includes("PASTE_") &&
+    cfg.SUPABASE_ANON_KEY &&
+    !cfg.SUPABASE_ANON_KEY.includes("PASTE_");
+
+  const db = ready
+    ? window.supabase.createClient(
+        cfg.SUPABASE_URL,
+        cfg.SUPABASE_ANON_KEY,
+        {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+          }
+        }
+      )
+    : null;
+
+  const $ = selector => document.querySelector(selector);
+
+  let currentUser = null;
+  let orders = [];
+  let products = [];
+  let soundOn = false;
+  let knownOrderIds = new Set();
+  let firstOrderLoad = true;
+  let audioCtx = null;
+  let refreshInProgress = false;
+
+  const money = value => "GH₵ " + Number(value || 0).toFixed(2);
+
+  const esc = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[char]));
+
+  function toast(message) {
+    const element = $("#toast");
+    if (!element) return;
+
+    element.textContent = message;
+    element.classList.remove("hidden");
+
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => {
+      element.classList.add("hidden");
+    }, 5000);
+  }
+
+  function status(message, selector = "#product-message", isError = false) {
+    const element = $(selector);
+    if (!element) return;
+
+    element.textContent = message;
+    element.className =
+      "status-message " + (isError ? "error" : "success");
+  }
+
+  function setConnection(message) {
+    const element = $("#connection-state");
+    if (element) element.textContent = message;
+  }
+
+  async function isAdmin() {
+    if (!currentUser || !db) return false;
+
+    const { data, error } = await db.rpc("is_current_user_admin");
+
+    if (error) throw error;
+
+    return Boolean(data);
+  }
+
+  async function showDashboard() {
+    const authorized = await isAdmin();
+
+    if (!authorized) {
+      await db.auth.signOut();
+
+      $("#login-message").textContent =
+        "This account is not authorised as a restaurant admin.";
+
+      $("#login-message").className = "status-message error";
+      return;
+    }
+
+    $("#login-panel").classList.add("hidden");
+    $("#dashboard").classList.remove("hidden");
+    $("#signout").classList.remove("hidden");
+    $("#sound-toggle").disabled = false;
+
+    setConnection("Connected");
+
+    await refreshAll();
+    subscribe();
+  }
+
+  async function start() {
+    if (!db) {
+      setConnection("Setup required");
+
+      $("#login-message").textContent =
+        "Check the Supabase URL and public key in config.js.";
+
+      return;
+    }
+
+    try {
+      const { data, error } = await db.auth.getSession();
+
+      if (error) throw error;
+
+      if (data.session) {
+        currentUser = data.session.user;
+        await showDashboard();
+      } else {
+        setConnection("Ready to sign in");
+      }
+    } catch (error) {
+      console.error("Startup error:", error);
+      setConnection("Connection error");
+      status(error.message, "#login-message", true);
+    }
+  }
+
+  $("#login-form").onsubmit = async event => {
+    event.preventDefault();
+
+    if (!db) {
+      toast("Supabase is not connected.");
+      return;
+    }
+
+    const form = new FormData(event.currentTarget);
+
+    const { data, error } = await db.auth.signInWithPassword({
+      email: form.get("email"),
+      password: form.get("password")
+    });
+
+    if (error) {
+      status(error.message, "#login-message", true);
+      return;
+    }
+
+    currentUser = data.user;
+
+    try {
+      await showDashboard();
+    } catch (error) {
+      console.error("Login error:", error);
+      status(error.message, "#login-message", true);
+    }
+  };
+
+  $("#signout").onclick = async () => {
+    if (db) await db.auth.signOut();
+    location.reload();
+  };
+
+  // Refresh button: loading state, error handling, and recovery.
+  $("#refresh").onclick = async () => {
+    const button = $("#refresh");
+
+    if (!db) {
+      toast("Supabase is not connected.");
+      return;
+    }
+
+    if (refreshInProgress) return;
+
+    refreshInProgress = true;
+
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = "Refreshing...";
+
+    try {
+      await refreshAll();
+      toast("Dashboard refreshed successfully.");
+    } catch (error) {
+      console.error("Refresh failed:", error);
+      toast("Refresh failed: " + (error.message || "Unknown error"));
+    } finally {
+      refreshInProgress = false;
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  };
+
+  $("#order-filter").onchange = renderOrders;
+
+  document.querySelectorAll(".tab").forEach(button => {
+    button.onclick = () => {
+      document.querySelectorAll(".tab").forEach(tab => {
+        tab.classList.toggle("active", tab === button);
+      });
+
+      ["orders", "menu", "offers", "settings"].forEach(name => {
+        $(`#tab-${name}`).classList.toggle(
+          "hidden",
+          name !== button.dataset.tab
+        );
+      });
+    };
+  });
+
+  $("#sound-toggle").onclick = async () => {
+    try {
+      audioCtx = audioCtx ||
+        new (window.AudioContext || window.webkitAudioContext)();
+
+      await audioCtx.resume();
+
+      soundOn = true;
+
+      $("#sound-toggle").textContent = "Sound alerts enabled";
+      $("#sound-toggle").classList.add("btn-primary");
+
+      beep();
+      toast("Sound alerts enabled on this device.");
+    } catch (error) {
+      toast("Could not enable sound. Check your browser settings.");
+    }
+  };
+
+  function beep() {
+    if (!soundOn || !audioCtx) return;
+
+    [0, 0.22, 0.44].forEach((delay, index) => {
+      const oscillator = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      oscillator.type = "sine";
+      oscillator.frequency.value = index === 1 ? 1040 : 880;
+
+      gain.gain.setValueAtTime(
+        0.0001,
+        audioCtx.currentTime + delay
+      );
+
+      gain.gain.exponentialRampToValueAtTime(
+        0.18,
+        audioCtx.currentTime + delay + 0.02
+      );
+
+      gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        audioCtx.currentTime + delay + 0.16
+      );
+
+      oscillator.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      oscillator.start(audioCtx.currentTime + delay);
+      oscillator.stop(audioCtx.currentTime + delay + 0.18);
+    });
+  }
+
+  async function refreshAll() {
+    if (!db) throw new Error("Supabase is not connected.");
+
+    const results = await Promise.allSettled([
+      loadOrders(),
+      loadProducts(),
+      loadOffers(),
+      loadSettings()
+    ]);
+
+    const failed = results
+      .map((result, index) => ({
+        result,
+        name: ["orders", "menu", "offers", "settings"][index]
+      }))
+      .filter(item => item.result.status === "rejected");
+
+    if (failed.length) {
+      console.error("Dashboard refresh errors:", failed);
+
+      throw new Error(
+        failed.map(item =>
+          item.name + ": " +
+          (item.result.reason?.message || "Failed to load")
+        ).join(" | ")
+      );
+    }
+  }
+
+  async function loadOrders() {
+    const { data, error } = await db
+      .from("orders")
+      .select("*,order_items(*,menu_items(name))")
+      .order("created_at", { ascending: false })
+      .limit(150);
+
+    if (error) throw error;
+
+    orders = data || [];
+
+    if (firstOrderLoad) {
+      orders.forEach(order => knownOrderIds.add(order.id));
+      firstOrderLoad = false;
+    }
+
+    $("#stat-new").textContent =
+      orders.filter(order => order.status === "new").length;
+
+    $("#stat-progress").textContent =
+      orders.filter(order =>
+        ["accepted", "preparing", "ready"].includes(order.status)
+      ).length;
+
+    $("#new-count").textContent =
+      orders.filter(order => order.status === "new").length;
+
+    renderOrders();
+  }
+
+  function renderOrders() {
+    const filter = $("#order-filter").value;
+
+    const filteredOrders = orders.filter(order =>
+      filter === "all" || order.status === filter
+    );
+
+    $("#orders-list").innerHTML = filteredOrders.length
+      ? filteredOrders.map(order => `
+        <article class="order-card ${
+          order.status === "new" ? "is-new" : ""
+        }">
+          <div class="order-header">
+            <div>
+              <h3>Order #${esc(
+                order.order_number || order.id.slice(0, 8)
+              )}</h3>
+
+              <div class="order-meta">
+                ${new Date(order.created_at).toLocaleString()}
+                · ${esc(order.customer_name)}
+                · ${esc(order.customer_phone)}
+              </div>
+            </div>
+
+            <span class="order-status">${esc(order.status)}</span>
+          </div>
+
+          <p>
+            <strong>
+              ${order.order_type === "delivery" ? "Delivery" : "Pickup"}
+            </strong>
+            ${order.delivery_address
+              ? " · " + esc(order.delivery_address)
+              : ""}
+            ${order.notes
+              ? "<br>Notes: " + esc(order.notes)
+              : ""}
+          </p>
+
+          <ul class="order-lines">
+            ${(order.order_items || []).map(item => `
+              <li>
+                <span>
+                  ${Number(item.quantity)} ×
+                  ${esc(
+                    item.item_name ||
+                    item.menu_items?.name ||
+                    "Menu item"
+                  )}
+                </span>
+
+                <strong>
+                  ${money(Number(item.unit_price) * Number(item.quantity))}
+                </strong>
+              </li>
+            `).join("")}
+          </ul>
+
+          <div class="order-footer">
+            <div>
+              <strong>${money(order.total)}</strong>
+
+              <div class="order-meta">
+                Subtotal ${money(order.subtotal)}
+                · Delivery ${money(order.delivery_fee)}
+              </div>
+            </div>
+
+            <div class="order-actions">
+              <select
+                data-status="${order.id}"
+                aria-label="Change order status"
+              >
+                ${[
+                  "new",
+                  "accepted",
+                  "preparing",
+                  "ready",
+                  "completed",
+                  "rejected"
+                ].map(value => `
+                  <option
+                    value="${value}"
+                    ${order.status === value ? "selected" : ""}
+                  >
+                    ${value[0].toUpperCase() + value.slice(1)}
+                  </option>
+                `).join("")}
+              </select>
+
+              <button class="btn btn-light" data-copy="${order.id}">
+                Copy details
+              </button>
+            </div>
+          </div>
+        </article>
+      `).join("")
+      : '<p class="muted">No orders in this view.</p>';
+
+    $("#orders-list")
+      .querySelectorAll("[data-status]")
+      .forEach(select => {
+        select.onchange = () =>
+          updateStatus(select.dataset.status, select.value);
+      });
+
+    $("#orders-list")
+      .querySelectorAll("[data-copy]")
+      .forEach(button => {
+        button.onclick = async () => {
+          const order = orders.find(
+            item => item.id === button.dataset.copy
+          );
+
+          if (!order) return;
+
+          const details = `AL SHAMI ORDER #${
+            order.order_number || order.id.slice(0, 8)
+          }
+${order.customer_name} - ${order.customer_phone}
+${order.order_type} ${order.delivery_address || ""}
+${(order.order_items || []).map(item =>
+  `${item.quantity} x ${
+    item.item_name || item.menu_items?.name || "Menu item"
+  }`
+).join("\n")}
+TOTAL ${money(order.total)}
+Status: ${order.status}`;
+
+          try {
+            await navigator.clipboard.writeText(details);
+            toast("Order details copied.");
+          } catch (error) {
+            toast(details);
+          }
+        };
+      });
+  }
+
+  async function updateStatus(id, newStatus) {
+    try {
+      const { error } = await db
+        .from("orders")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast("Order status updated.");
+      await loadOrders();
+    } catch (error) {
+      console.error("Status update failed:", error);
+      toast("Could not update status: " + (error.message || "Unknown error"));
+    }
+  }
+
+  function subscribe() {
+    db.channel("al-shami-live-orders")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "orders"
+        },
+        async payload => {
+          if (knownOrderIds.has(payload.new.id)) return;
+
+          knownOrderIds.add(payload.new.id);
+
+          if (soundOn) beep();
+
+          toast(
+            "NEW ORDER! Order #" +
+            (payload.new.order_number || payload.new.id.slice(0, 8)) +
+            " has arrived."
+          );
+
+          try {
+            await loadOrders();
+          } catch (error) {
+            console.error("Could not reload new orders:", error);
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders"
+        },
+        async () => {
+          try {
+            await loadOrders();
+          } catch (error) {
+            console.error("Could not reload updated orders:", error);
+          }
+        }
+      )
+      .subscribe(state => {
+        setConnection(
+          state === "SUBSCRIBED"
+            ? "Live · Realtime connected"
+            : "Live connection: " + state
+        );
+      });
+  }
+
+  function resetProduct() {
+    const form = $("#product-form");
+
+    form.reset();
+    form.elements.id.value = "";
+    form.elements.is_available.checked = true;
+  }
+
+  async function loadProducts() {
+    const { data, error } = await db
+      .from("menu_items")
+      .select("*")
+      .order("sort_order")
+      .order("name");
+
+    if (error) throw error;
+
+    products = data || [];
+
+    $("#stat-menu").textContent = products.length;
+
+    $("#admin-menu-list").innerHTML = products.map(product => `
+      <div class="admin-menu-row">
+        ${product.image_url
+          ? `<img src="${esc(product.image_url)}" alt="">`
+          : '<div class="product-image" style="width:58px;height:58px;border-radius:8px;font-size:22px">🍽️</div>'
+        }
+
+        <div class="grow">
+          <strong>
+            ${esc(product.name)} · ${money(product.price)}
+          </strong>
+
+          <small>
+            ${esc(product.category)} ·
+            ${product.is_available ? "Available" : "Hidden"}
+            ${product.description
+              ? " · " + esc(product.description)
+              : ""}
+          </small>
+        </div>
+
+        <button
+          class="btn btn-light"
+          data-edit-product="${product.id}"
+        >Edit</button>
+
+        <button
+          class="btn btn-light"
+          data-toggle-product="${product.id}"
+        >${product.is_available ? "Hide" : "Show"}</button>
+      </div>
+    `).join("") || '<p class="muted">No menu items yet.</p>';
+
+    $("#admin-menu-list")
+      .querySelectorAll("[data-edit-product]")
+      .forEach(button => {
+        button.onclick = () => {
+          const product = products.find(
+            item => item.id === button.dataset.editProduct
+          );
+
+          const form = $("#product-form");
+
+          Object.entries({
+            id: product.id,
+            name: product.name,
+            category: product.category,
+            price: product.price,
+            image_url: product.image_url || "",
+            description: product.description || "",
+            is_available: product.is_available
+          }).forEach(([key, value]) => {
+            if (form.elements[key].type === "checkbox") {
+              form.elements[key].checked = value;
+            } else {
+              form.elements[key].value = value;
+            }
+          });
+
+          window.scrollTo({
+            top:
+              $("#product-form").getBoundingClientRect().top +
+              window.scrollY - 80,
+            behavior: "smooth"
+          });
+        };
+      });
+
+    $("#admin-menu-list")
+      .querySelectorAll("[data-toggle-product]")
+      .forEach(button => {
+        button.onclick = async () => {
+          const product = products.find(
+            item => item.id === button.dataset.toggleProduct
+          );
+
+          const { error } = await db
+            .from("menu_items")
+            .update({ is_available: !product.is_available })
+            .eq("id", product.id);
+
+          if (error) {
+            toast(error.message);
+          } else {
+            await loadProducts();
+          }
+        };
+      });
+  }
+
+  $("#product-form").onsubmit = async event => {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+
+    const data = {
+      name: form.elements.name.value.trim(),
+      category: form.elements.category.value.trim(),
+      price: Number(form.elements.price.value),
+      image_url: form.elements.image_url.value.trim() || null,
+      description: form.elements.description.value.trim() || null,
+      is_available: form.elements.is_available.checked
+    };
+
+    if (!Number.isFinite(data.price) || data.price <= 0) {
+      status("Price must be greater than zero.");
+      return;
+    }
+
+    const id = form.elements.id.value;
+
+    const result = id
+      ? await db.from("menu_items").update(data).eq("id", id)
+      : await db.from("menu_items").insert(data);
+
+    if (result.error) {
+      status(result.error.message, "#product-message", true);
+      return;
+    }
+
+    status("Menu item saved.");
+    resetProduct();
+    await loadProducts();
+  };
+
+  $("#cancel-product").onclick = resetProduct;
+
+  async function loadOffers() {
+    const { data, error } = await db
+      .from("offers")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    const offers = data || [];
+
+    $("#offers-list").innerHTML = offers.map(offer => `
+      <div class="admin-menu-row">
+        <div class="grow">
+          <strong>${esc(offer.title)}</strong>
+          <small>
+            ${esc(offer.details || "")} ·
+            ${offer.is_active ? "Active" : "Inactive"}
+          </small>
+        </div>
+
+        <button class="btn btn-light" data-edit-offer="${offer.id}">
+          Edit
+        </button>
+
+        <button class="btn btn-light" data-toggle-offer="${offer.id}">
+          ${offer.is_active ? "Disable" : "Enable"}
+        </button>
+      </div>
+    `).join("") || '<p class="muted">No offers created yet.</p>';
+
+    $("#offers-list")
+      .querySelectorAll("[data-edit-offer]")
+      .forEach(button => {
+        button.onclick = () => {
+          const offer = offers.find(
+            item => item.id === button.dataset.editOffer
+          );
+
+          const form = $("#offer-form");
+
+          form.elements.id.value = offer.id;
+          form.elements.title.value = offer.title;
+          form.elements.details.value = offer.details || "";
+          form.elements.is_active.checked = offer.is_active;
+        };
+      });
+
+    $("#offers-list")
+      .querySelectorAll("[data-toggle-offer]")
+      .forEach(button => {
+        button.onclick = async () => {
+          const offer = offers.find(
+            item => item.id === button.dataset.toggleOffer
+          );
+
+          const { error } = await db
+            .from("offers")
+            .update({ is_active: !offer.is_active })
+            .eq("id", offer.id);
+
+          if (error) {
+            toast(error.message);
+          } else {
+            await loadOffers();
+          }
+        };
+      });
+  }
+
+  $("#offer-form").onsubmit = async event => {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+
+    const data = {
+      title: form.elements.title.value.trim(),
+      details: form.elements.details.value.trim() || null,
+      is_active: form.elements.is_active.checked
+    };
+
+    const id = form.elements.id.value;
+
+    const result = id
+      ? await db.from("offers").update(data).eq("id", id)
+      : await db.from("offers").insert(data);
+
+    if (result.error) {
+      status(result.error.message, "#offer-message", true);
+      return;
+    }
+
+    status("Offer saved.", "#offer-message");
+
+    form.reset();
+    form.elements.id.value = "";
+    form.elements.is_active.checked = true;
+
+    await loadOffers();
+  };
+
+  $("#cancel-offer").onclick = () => {
+    $("#offer-form").reset();
+    $("#offer-form").elements.id.value = "";
+  };
+
+  async function loadSettings() {
+    const { data, error } = await db
+      .from("restaurant_settings")
+      .select("*")
+      .eq("id", 1)
+      .single();
+
+    if (error) throw error;
+
+    $("#settings-form").elements.delivery_fee.value =
+      data.delivery_fee;
+
+    $("#settings-form").elements.minimum_order.value =
+      data.minimum_order;
+  }
+
+  $("#settings-form").onsubmit = async event => {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+
+    const data = {
+      delivery_fee: Number(form.elements.delivery_fee.value),
+      minimum_order: Number(form.elements.minimum_order.value),
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await db
+      .from("restaurant_settings")
+      .update(data)
+      .eq("id", 1);
+
+    if (error) {
+      status(error.message, "#settings-message", true);
+      return;
+    }
+
+    status("Settings saved.", "#settings-message");
+  };
+
+  start();
 })();
