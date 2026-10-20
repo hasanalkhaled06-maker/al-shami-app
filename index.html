@@ -48,7 +48,24 @@
   </style>
 </head>
 
+
 <body>
+  <section id="welcome-screen" class="welcome-screen" aria-label="Welcome to AL SHAMI">
+    <div class="welcome-glow welcome-glow-one"></div>
+    <div class="welcome-glow welcome-glow-two"></div>
+    <div class="welcome-content">
+      <div class="welcome-emblem" aria-hidden="true"><span>AL</span><span>SHAMI</span><i>✦</i></div>
+      <p class="welcome-kicker">RESTAURANT &amp; FAST FOOD · ACCRA</p>
+      <div class="welcome-divider"><span></span> ✦ <span></span></div>
+      <h1>مرحباً بك في مطعم الشامي</h1>
+      <p class="welcome-tagline">اختيارك الصحيح</p>
+      <p class="welcome-description">نكهات مميزة، جودة بتحبّها، وضيافة من القلب.</p>
+      <button id="welcome-enter" class="welcome-enter" type="button">
+        <span>اكتشف قائمتنا</span><span aria-hidden="true">←</span>
+      </button>
+      <div class="welcome-foot"><span>طازج · شهي · محضّر بحب</span></div>
+    </div>
+  </section>
   <header class="hero">
     <div class="hero-inner">
       <div class="brand-mark" aria-label="AL SHAMI">AL<br>SHAMI</div>
@@ -271,6 +288,17 @@
     })();
   </script>
 
+  <script>
+    (() => {
+      const screen = document.getElementById("welcome-screen");
+      const enter = document.getElementById("welcome-enter");
+      if (!screen || !enter) return;
+      enter.addEventListener("click", () => {
+        screen.classList.add("welcome-leaving");
+        window.setTimeout(() => screen.remove(), 420);
+      });
+    })();
+  </script>
   <script src="config.js"></script>
   <script src="customer.js"></script>
   <script src="pwa.js"></script>
