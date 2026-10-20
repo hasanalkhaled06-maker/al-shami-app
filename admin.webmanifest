@@ -1,0 +1,22 @@
+{
+  "id": "./admin.html",
+  "name": "AL SHAMI Admin",
+  "short_name": "SHAMI ADMIN",
+  "description": "Private management dashboard for AL SHAMI RESTAURANT & FAST FOOD.",
+  "start_url": "./admin.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#fffaf5",
+  "theme_color": "#67101a",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "./icons/al-shami-admin.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
