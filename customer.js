@@ -28,31 +28,17 @@
   let authPhone = "";
 
   function normalizePhone(value) {
-    // Avoid regex-based E.164 checks here: accept common Ghana entry formats
-    // and normalize them deterministically before asking Supabase to send SMS.
     const raw = String(value || "").trim();
-    let phone = raw.split("").filter(char =>
-      (char >= "0" && char <= "9") || char === "+"
-    ).join("");
+    const digitsOnly = raw.replace(/[^0-9]/g, "");
+    let national = digitsOnly;
+    if (national.startsWith("00233")) national = national.slice(5);
+    else if (national.startsWith("233")) national = national.slice(3);
+    else if (national.startsWith("0")) national = national.slice(1);
 
-    if (phone.startsWith("00")) phone = "+" + phone.slice(2);
-
-    let digits = phone.startsWith("+") ? phone.slice(1) : phone;
-    if (digits.startsWith("00")) digits = digits.slice(2);
-    if (digits.startsWith("0")) {
-      digits = "233" + digits.slice(1);
-    } else if (digits.length === 9) {
-      digits = "233" + digits;
+    if (national.length !== 9 || !national.split("").every(ch => ch >= "0" && ch <= "9")) {
+      throw new Error("Phone format check failed. Enter 9 digits after +233, e.g. +233241234567.");
     }
-
-    const onlyDigits = digits.length > 0 && digits.split("").every(char =>
-      char >= "0" && char <= "9"
-    );
-    if (!onlyDigits || digits.length < 8 || digits.length > 15 || digits.startsWith("0")) {
-      throw new Error("Enter a valid Ghana phone number, e.g. +233241234567 (9 digits after +233).");
-    }
-
-    return "+" + digits;
+    return "+233" + national;
   }
 
   function authMessage(message, error = false) {
