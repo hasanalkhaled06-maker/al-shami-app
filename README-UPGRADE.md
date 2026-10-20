@@ -11,6 +11,9 @@ This upgrade adds restaurant operations features to the existing AL SHAMI applic
 - supabase-migration-v2.sql
   Creates new database tables and functions for the operations module.
 
+- supabase-migration-v3.sql
+  Adds purchase orders, cash payouts, staff attendance, recipe-based stock usage, order completion timestamps, and updated cash reconciliation.
+
 - README-UPGRADE.md
   Contains setup and safety instructions.
 
@@ -42,7 +45,7 @@ The admin still requires an authorised login. Home-screen installation does not 
 
 ## Database setup
 
-The connected production project already has the operations tables and RPC functions installed. Before applying future database changes, back up the project and review the exact migration first. Do not re-run migrations blindly or drop existing tables.
+The connected production project already has the operations tables, v3 additions, and RPC functions installed. `supabase-migration-v3.sql` is a reproducible additive setup file for environments that already applied `supabase-schema.sql` and `supabase-migration-v2.sql`; it was not needed to reinstall production. Before applying future database changes, back up the project and review the exact migration first. Do not drop existing tables.
 
 Never put the Supabase service-role key in browser JavaScript.
 
