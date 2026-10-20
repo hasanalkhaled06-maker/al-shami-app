@@ -112,6 +112,17 @@ create index if not exists cash_shifts_opened_idx
 
 create index if not exists audit_log_created_idx
   on public.audit_log(created_at desc);
+create index if not exists audit_log_actor_id_idx on public.audit_log(actor_id);
+create index if not exists cash_shifts_opened_by_idx on public.cash_shifts(opened_by);
+create index if not exists cash_shifts_closed_by_idx on public.cash_shifts(closed_by);
+create index if not exists expenses_created_by_idx on public.expenses(created_by);
+create index if not exists inventory_items_supplier_id_idx on public.inventory_items(supplier_id);
+create index if not exists inventory_movements_created_by_idx on public.inventory_movements(created_by);
+create index if not exists order_items_menu_item_id_idx on public.order_items(menu_item_id);
+
+-- Only one active cash drawer shift may be open at a time.
+create unique index if not exists cash_shifts_single_open_shift_idx
+  on public.cash_shifts(status) where status = 'open';
 
 -- Enable Row Level Security on all new tables.
 alter table public.suppliers enable row level security;
@@ -195,8 +206,16 @@ begin
     raise exception 'Invalid movement type.';
   end if;
 
-  if p_quantity_change = 0 or p_unit_cost < 0 then
+  if p_quantity_change is null or p_quantity_change = 0 or coalesce(p_unit_cost, 0) < 0 then
     raise exception 'Quantity change cannot be zero and unit cost cannot be negative.';
+  end if;
+
+  if p_movement_type in ('opening','purchase') and p_quantity_change < 0 then
+    raise exception 'Opening stock and purchases must increase stock.';
+  end if;
+
+  if p_movement_type in ('usage','waste') and p_quantity_change > 0 then
+    raise exception 'Usage and waste must reduce stock; enter a negative quantity.';
   end if;
 
   update public.inventory_items
@@ -330,7 +349,7 @@ grant execute on function public.record_expense(
   text,text,numeric,date,text,text
 ) to authenticated;
 
--- Close a shift and record the counted cash.
+-- Close a shift and calculate expected drawer cash from completed orders and recorded cash expenses.
 create or replace function public.close_cash_shift(
   p_shift_id uuid,
   p_counted_cash numeric,
@@ -343,6 +362,13 @@ set search_path = public
 as $$
 declare
   v_id uuid;
+  v_opened_at timestamptz;
+  v_closed_at timestamptz := now();
+  v_opening_cash numeric(12,2);
+  v_sales numeric(12,2) := 0;
+  v_cash_expenses numeric(12,2) := 0;
+  v_expected_cash numeric(12,2);
+  v_difference numeric(12,2);
 begin
   if not public.is_current_user_admin() then
     raise exception 'Not authorised.';
@@ -352,18 +378,43 @@ begin
     raise exception 'Counted cash cannot be negative.';
   end if;
 
+  select opened_at, opening_cash
+    into v_opened_at, v_opening_cash
+  from public.cash_shifts
+  where id = p_shift_id and status = 'open'
+  for update;
+
+  if not found then
+    raise exception 'Open shift not found.';
+  end if;
+
+  -- This project currently accepts cash only; an order is counted once it is marked completed.
+  select coalesce(sum(total), 0)
+    into v_sales
+  from public.orders
+  where status = 'completed'
+    and updated_at >= v_opened_at
+    and updated_at <= v_closed_at;
+
+  select coalesce(sum(amount), 0)
+    into v_cash_expenses
+  from public.expenses
+  where payment_method = 'cash'
+    and created_at >= v_opened_at
+    and created_at <= v_closed_at;
+
+  v_expected_cash := v_opening_cash + v_sales - v_cash_expenses;
+  v_difference := p_counted_cash - v_expected_cash;
+
   update public.cash_shifts
   set closed_by = auth.uid(),
-      closed_at = now(),
+      closed_at = v_closed_at,
+      expected_cash = v_expected_cash,
       counted_cash = p_counted_cash,
-      difference = p_counted_cash - coalesce(expected_cash, opening_cash),
-      notes = coalesce(
-        nullif(trim(coalesce(p_notes,'')), ''),
-        notes
-      ),
+      difference = v_difference,
+      notes = coalesce(nullif(trim(coalesce(p_notes,'')), ''), notes),
       status = 'closed'
-  where id = p_shift_id
-    and status = 'open'
+  where id = p_shift_id and status = 'open'
   returning id into v_id;
 
   if v_id is null then
@@ -379,12 +430,12 @@ begin
     'cash_shift',
     v_id::text,
     jsonb_build_object(
+      'opening_cash', v_opening_cash,
+      'completed_cash_sales', v_sales,
+      'cash_expenses', v_cash_expenses,
+      'expected_cash', v_expected_cash,
       'counted_cash', p_counted_cash,
-      'difference', (
-        select difference
-        from public.cash_shifts
-        where id = v_id
-      )
+      'difference', v_difference
     )
   );
 
@@ -392,10 +443,11 @@ begin
 end;
 $$;
 
-revoke all on function public.close_cash_shift(
-  uuid,numeric,text
-) from public;
+revoke all on function public.close_cash_shift(uuid,numeric,text) from public;
+grant execute on function public.close_cash_shift(uuid,numeric,text) to authenticated;
 
-grant execute on function public.close_cash_shift(
-  uuid,numeric,text
-) to authenticated;
+-- Restrict the admin check to signed-in users; public order placement stays available to guests.
+revoke execute on function public.is_current_user_admin() from public, anon;
+grant execute on function public.is_current_user_admin() to authenticated;
+
+notify pgrst, 'reload schema';
