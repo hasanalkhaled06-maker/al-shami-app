@@ -14,21 +14,9 @@ This upgrade adds restaurant operations features to the existing AL SHAMI applic
 - README-UPGRADE.md
   Contains setup and safety instructions.
 
-## Connect the Operations module
+## Operations module wiring
 
-Open admin.html and locate the script tags at the bottom of the file.
-
-Find this line:
-
-<script src="admin.js"></script>
-
-Add this line immediately after it:
-
-<script src="admin-operations.js"></script>
-
-Keep the existing config.js and admin.js script tags.
-
-Save and commit the change.
+The current `admin.html` already loads `config.js`, `admin.js`, `admin-operations.js`, and `pwa.js) in the required order. Do not add duplicate script tags.
 
 ## Install as two home-screen apps
 
@@ -54,13 +42,9 @@ The admin still requires an authorised login. Home-screen installation does not 
 
 ## Database setup
 
-1. Back up the Supabase project before making database changes.
-2. Review supabase-migration-v2.sql.
-3. Test the migration on a separate test project when possible.
-4. Run the migration manually in the Supabase SQL Editor only after review.
-5. Sign in using an authorised restaurant admin account.
+The connected production project already has the operations tables and RPC functions installed. Before applying future database changes, back up the project and review the exact migration first. Do not re-run migrations blindly or drop existing tables.
 
-Do not put the Supabase service-role key in browser JavaScript.
+Never put the Supabase service-role key in browser JavaScript.
 
 ## Current features
 
@@ -69,7 +53,8 @@ Do not put the Supabase service-role key in browser JavaScript.
 - Suppliers can be recorded.
 - Staff contacts and role labels can be maintained in the roster; this does not create login accounts or change permissions.
 - Expenses can be recorded.
-- Cash shifts can be opened and closed.
+- Cash shifts can be opened and closed with expected cash calculated from completed cash orders and recorded cash expenses during the shift.
+- Recent stock movements are shown for audit/history.
 - Basic daily sales and expense figures are displayed.
 - Payments remain manual/cash; no online payment gateway is included.
 
@@ -78,8 +63,11 @@ Do not put the Supabase service-role key in browser JavaScript.
 - Ingredient usage is not automatically deducted when an order is sold.
 - Staff role records exist, but separate permissions for each role are not implemented.
 - Purchase orders are not fully implemented.
-- Cash expected at shift closing is not yet calculated from cash sales and payouts.
+- Cash reconciliation uses order status as the cash-sale signal because the current ordering flow is cash-only; mark orders Completed only after cash is collected.
+- There is no separate cash payout register yet.
+- Ingredient usage is entered manually; it is not automatically deducted by order composition.
 - The daily summary is not a complete net-profit calculation.
+- PWA updates require internet access and the app must be opened/foregrounded to check for updates; offline mode does not submit orders.
 
 ## Testing
 
