@@ -1,65 +1,53 @@
-# AL SHAMI ordering system — setup and deployment
+# AL SHAMI Restaurant & Fast Food
 
-This is a deployable starter web app with:
-- Customer menu and basket, delivery/pickup checkout, cash payment.
-- Orders saved in Supabase (not WhatsApp).
-- Protected staff/admin login.
-- Live incoming orders with sound alert while the admin dashboard is open.
-- Menu price/availability/photo/description management, offers, delivery fee and minimum order.
-- Responsive pages for iPhone and laptop.
+AL SHAMI is a mobile-friendly restaurant ordering website with a private staff dashboard. The project is deployed with GitHub Pages and uses the existing Supabase project for orders, menu data, settings, and restaurant operations.
 
-## Important limitation
-The files are the implementation, but the live database cannot be connected until you create your own Supabase project and paste its URL and public anon/publishable key into `assets/config.js`. Do **not** put a Supabase `service_role` key in browser files. Sound works after staff taps **Enable sound alerts** once on each device. The admin dashboard must remain open and connected for immediate in-page sound; mobile operating systems may suspend browser tabs in the background. Reliable background notifications require a later push-notification setup.
+## Live apps
 
-## 1. Create the database
-1. Open https://supabase.com and create a project. Save the database password privately.
-2. In your project, open **SQL Editor** → **New query**.
-3. Open `supabase-schema.sql`, copy all its contents, paste into SQL Editor, then click **Run**.
-4. Open **Project Settings → API** (or the API keys page). Copy the **Project URL** and the **anon/public/publishable key**. Never copy the service-role/secret key into the website.
+- Customer app: https://hasanalkhaled06-maker.github.io/al-shami-app/
+- Admin app: https://hasanalkhaled06-maker.github.io/al-shami-app/admin.html
 
-## 2. Configure the website
-Open `assets/config.js` in a text editor and replace:
-- `PASTE_SUPABASE_PROJECT_URL_HERE` with the Project URL.
-- `PASTE_SUPABASE_ANON_OR_PUBLISHABLE_KEY_HERE` with the public anon/publishable key.
+The two entry points share the same application and database, but use separate manifests and home-screen icons. The admin page remains protected by Supabase authentication and the `admin_users` allow-list.
 
-Keep the quote marks. Save the file.
+## Install on iPhone
 
-## 3. Create the first admin login
-1. In Supabase, open **Authentication → Users → Add user** and create the restaurant admin email/password.
-2. Copy the user's UUID/ID from the Users table.
-3. Open **SQL Editor → New query** and run this, replacing the UUID with the real ID:
-```sql
-insert into public.admin_users(user_id)
-values ('PASTE-THE-AUTH-USER-UUID-HERE');
-```
-4. Use that email/password at `admin.html`. Do not share the login. Add more staff only if they need admin access, by creating Auth users and adding their UUIDs.
+Install each app separately using Safari:
 
-## 4. Publish to Netlify
-1. Ensure `assets/config.js` is saved with the real project values.
-2. Keep the folder structure exactly as it is: `index.html`, `admin.html`, `assets/…`.
-3. Zip the contents of the `al_shami_ordering_system` folder (not a parent folder containing it).
-4. In Netlify, create a new site or open your existing site and deploy the ZIP using the manual deploy / deploy folder interface. If Netlify Drop accepts folders only, unzip locally and drop the folder contents. Do not upload only `index.html`; the `assets` folder is required.
-5. Customer ordering page is the site root. Admin page is `https://YOUR-SITE.netlify.app/admin.html`.
-6. In Supabase, open **Authentication → URL Configuration** and add your Netlify site URL to the allowed Site URL / Redirect URLs if needed.
+1. Open the customer or admin URL in Safari.
+2. Tap **Share** → **Add to Home Screen**.
+3. Enable **Open as Web App** if the option is shown.
+4. Tap **Add**.
 
-## 5. Test before sharing
-1. Open `admin.html` on your iPhone or laptop, sign in, and tap **Enable sound alerts**. Keep this page open.
-2. In another browser/device, open the customer site, add an item from the menu and submit a test order.
-3. Confirm the order appears in the admin dashboard and the sound plays.
-4. Change the status to Accepted → Preparing → Ready → Completed.
-5. Test pickup and delivery. Verify delivery fee and minimum order in **Settings**.
-6. Add the real menu, prices, and photo URLs in **Menu & prices**. Photos need publicly accessible HTTPS image URLs.
+This installs web apps on the iPhone Home Screen; these are not native apps published in the App Store. When a new website version is deployed, the app checks for updates on launch/return to the foreground. Ordering still requires an internet connection.
 
-## 6. Daily use
-- Customer page: share your Netlify site URL.
-- Staff dashboard: bookmark `/admin.html` on iPhone and laptop. Sign in and enable sound on both.
-- New orders appear in the dashboard through Supabase Realtime; staff can accept/reject and update status.
-- Menu changes are saved in the database and show on the customer page after refresh.
-- Offers are displayed on the customer page when active.
-- This starter accepts cash on delivery / cash at pickup; it does not process card or Mobile Money payments.
+## Main files
 
-## Security notes
-- Public visitors can read available menu items and active offers and can submit an order only through the validated `place_order` database function.
-- Public visitors cannot query customer orders. Only user IDs listed in `public.admin_users` can access the admin dashboard data.
-- Never expose the database password or service-role key.
-- Use HTTPS and a strong unique admin password.
+- `index.html`, `customer.js`: public menu, basket, cash-only checkout, order confirmation.
+- `admin.html`, `admin.js`: sign-in, incoming orders, menu/prices, offers, restaurant settings.
+- `admin-operations.js`: inventory, stock-movement history, suppliers, staff roster, expenses, cash shifts, and basic daily reporting.
+- `config.js`: Supabase project URL and public publishable key. Never put a service-role/secret key in browser code.
+- `manifest.webmanifest`, `admin.webmanifest`: separate install settings for customers and administrators.
+- `pwa.js`, `service-worker.js`: install/update registration and network-first static asset caching.
+- `icons/`: separate AL SHAMI and admin home-screen icons.
+- `supabase-schema.sql`: base schema for a new Supabase environment.
+- `supabase-migration-v2.sql`: additive operations tables, access policies, stock/expense/cash-shift functions, indexes, and grants.
+
+## Database setup and safety
+
+The connected production Supabase project already contains the base ordering schema and operations tables. Before applying future SQL changes, back up the database and review the exact migration. Do not run arbitrary SQL, drop production tables, or overwrite the service-role key in browser files.
+
+For a new environment, apply `supabase-schema.sql` first, configure the public Supabase URL/key in root `config.js`, create an Auth user, and add that user’s UUID to `public.admin_users`. Then review and apply `supabase-migration-v2.sql`.
+
+## Operations features and known limits
+
+- Stock levels and stock movements are recorded manually; ingredient consumption is not automatically deducted from each sold meal.
+- Inventory items can be associated with suppliers.
+- Staff profiles are a roster of names, phone numbers, and role labels; they do not create login accounts or implement per-role permissions.
+- Cash-shift expected cash is calculated from opening cash plus completed orders marked during the shift, minus recorded cash expenses created during the shift. Mark an order **Completed** only after collecting payment.
+- There is no separate cash-payout register yet, and the daily summary is not a complete net-profit calculation.
+- Online payment gateways are intentionally deferred. The customer checkout remains cash-only.
+- Push notifications while the app is fully closed are not included; the admin dashboard’s in-page alerts require the page to remain active.
+
+## Deployment
+
+GitHub Pages is configured to publish the `main` branch from the repository root. Changes merged directly to `main` trigger a Pages deployment. After deployment succeeds, open the two live URLs above and verify that the customer page loads and admin sign-in/operations are working.
