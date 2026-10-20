@@ -31,12 +31,13 @@ This installs web apps on the iPhone Home Screen; these are not native apps publ
 - `icons/`: separate AL SHAMI and admin home-screen icons.
 - `supabase-schema.sql`: base schema for a new Supabase environment.
 - `supabase-migration-v2.sql`: additive operations tables, access policies, stock/expense/cash-shift functions, indexes, and grants.
+- `supabase-migration-v3.sql`: additive purchase orders, cash payouts, staff attendance, menu recipes, automatic recipe-stock deductions on completion, order completion timestamps, and updated cash-shift reconciliation.
 
 ## Database setup and safety
 
 The connected production Supabase project already contains the base ordering schema and operations tables. Before applying future SQL changes, back up the database and review the exact migration. Do not run arbitrary SQL, drop production tables, or overwrite the service-role key in browser files.
 
-For a new environment, apply `supabase-schema.sql` first, configure the public Supabase URL/key in root `config.js`, create an Auth user, and add that user’s UUID to `public.admin_users`. Then review and apply `supabase-migration-v2.sql`.
+For a new environment, apply `supabase-schema.sql` first, configure the public Supabase URL/key in root `config.js`, create an Auth user, and add that user’s UUID to `public.admin_users`. Then review and apply `supabase-migration-v2.sql`, followed by `supabase-migration-v3.sql`. The v3 file is additive and is provided for reproducible setup; its features are already installed in this production project.
 
 ## Operations features and known limits
 
