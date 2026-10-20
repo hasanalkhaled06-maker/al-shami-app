@@ -239,3 +239,30 @@ a:focus-visible {
     transition-duration: .01ms !important;
   }
 }
+
+
+/* Premium AL SHAMI welcome screen */
+.welcome-screen{position:fixed;inset:0;z-index:20000;display:grid;place-items:center;overflow:hidden;padding:28px 22px;background:radial-gradient(ellipse at 50% 8%,rgba(235,192,105,.22),transparent 34%),linear-gradient(145deg,#31070e 0%,#67101a 42%,#9d1b2a 100%);color:#fffaf0;isolation:isolate}
+.welcome-screen::before,.welcome-screen::after{content:"";position:absolute;z-index:-1;pointer-events:none;border:1px solid rgba(247,221,161,.28);border-radius:50%;width:min(86vw,520px);aspect-ratio:1}
+.welcome-screen::before{top:-30%;right:-24%;box-shadow:0 0 0 24px rgba(247,221,161,.025),0 0 0 52px rgba(247,221,161,.025)}
+.welcome-screen::after{bottom:-38%;left:-28%;width:min(76vw,420px);box-shadow:0 0 0 20px rgba(247,221,161,.025),0 0 0 44px rgba(247,221,161,.025)}
+.welcome-glow{position:absolute;z-index:-1;width:240px;height:240px;border-radius:50%;filter:blur(70px);opacity:.2;background:#e7b85a}
+.welcome-glow-one{top:10%;left:-100px}.welcome-glow-two{right:-100px;bottom:8%;background:#ff7d55}
+.welcome-content{width:100%;max-width:510px;text-align:center;padding:34px 22px;border:1px solid rgba(247,221,161,.42);border-radius:30px;background:linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.025));box-shadow:0 28px 90px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.12);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);animation:welcome-rise .75s cubic-bezier(.2,.8,.2,1) both}
+.welcome-emblem{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;width:98px;height:98px;margin:0 auto 22px;border:2px solid #e7b85a;border-radius:28px;color:#f8d98f;font-family:'Playfair Display',serif;font-weight:800;line-height:1;letter-spacing:2px;transform:rotate(-3deg);box-shadow:0 0 0 6px rgba(231,184,90,.06),0 12px 36px rgba(0,0,0,.15)}
+.welcome-emblem span:first-child{font-size:27px}.welcome-emblem span:nth-child(2){font-size:17px;margin-top:4px}.welcome-emblem i{position:absolute;right:-7px;top:-10px;font-size:23px;font-style:normal;color:#fff1bd}
+.welcome-kicker{font-size:10px;font-weight:800;letter-spacing:2.4px;color:#f8d98f;margin:0 0 19px}
+.welcome-divider{display:flex;align-items:center;justify-content:center;gap:12px;color:#f8d98f;font-size:15px;margin:0 auto 22px}
+.welcome-divider span{height:1px;width:48px;background:linear-gradient(90deg,transparent,#e7b85a)}
+.welcome-divider span:last-child{transform:rotate(180deg)}
+.welcome-content h1{font-family:'Playfair Display',serif;font-size:clamp(27px,6.5vw,43px);line-height:1.35;margin:0 auto 7px;color:#fff8e9;text-shadow:0 3px 18px rgba(0,0,0,.18)}
+.welcome-tagline{font-size:clamp(24px,5.5vw,34px);font-weight:800;letter-spacing:.4px;color:#f6d486;margin:0 0 16px}
+.welcome-description{font-size:15px;line-height:1.8;color:rgba(255,250,240,.82);margin:0 auto 28px;max-width:330px}
+.welcome-enter{width:100%;max-width:310px;min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 auto;padding:0 22px;border:1px solid #ffe3a2;border-radius:16px;background:linear-gradient(110deg,#f7dda1,#d9a847);color:#4c1118;font-size:16px;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.2);transition:transform .2s,filter .2s}
+.welcome-enter span:last-child{font-size:22px}.welcome-enter:hover{filter:brightness(1.04);transform:translateY(-2px)}.welcome-enter:active{transform:scale(.99)}
+.welcome-foot{margin-top:27px;color:rgba(255,240,204,.7);font-size:10px;letter-spacing:2px}
+.welcome-leaving{animation:welcome-out .42s ease forwards;pointer-events:none}
+@keyframes welcome-rise{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes welcome-out{to{opacity:0;visibility:hidden;transform:scale(1.025)}}
+@media(max-height:650px){.welcome-content{padding:22px 18px}.welcome-emblem{width:72px;height:72px;margin-bottom:13px;border-radius:21px}.welcome-emblem span:first-child{font-size:21px}.welcome-emblem span:nth-child(2){font-size:13px}.welcome-kicker{margin-bottom:10px}.welcome-divider{margin-bottom:12px}.welcome-description{margin-bottom:16px}.welcome-foot{margin-top:15px}}
+@media(prefers-reduced-motion:reduce){.welcome-content,.welcome-leaving{animation:none!important}}
