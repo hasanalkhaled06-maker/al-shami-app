@@ -502,11 +502,26 @@
     const form = event.currentTarget;
     const data = new FormData(form);
 
+    const movementType = String(data.get("movement_type") || "");
+    const quantityChange = Number(data.get("quantity_change"));
+    if (!Number.isFinite(quantityChange) || quantityChange === 0) {
+      message("Enter a quantity change other than zero.", true);
+      return;
+    }
+    if (["purchase"].includes(movementType) && quantityChange < 0) {
+      message("Purchases must add stock. Enter a positive quantity.", true);
+      return;
+    }
+    if (["usage", "waste"].includes(movementType) && quantityChange > 0) {
+      message("Usage and waste must reduce stock. Enter a negative quantity.", true);
+      return;
+    }
+
     try {
       const { error } = await db.rpc("record_inventory_movement", {
         p_item_id: data.get("item_id"),
-        p_movement_type: data.get("movement_type"),
-        p_quantity_change: Number(data.get("quantity_change")),
+        p_movement_type: movementType,
+        p_quantity_change: quantityChange,
         p_unit_cost: Number(data.get("unit_cost") || 0),
         p_reference: String(data.get("reference") || "").trim() || null,
         p_notes: String(data.get("notes") || "").trim() || null
