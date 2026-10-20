@@ -37,6 +37,7 @@
 
   let loaded = false;
   let loading = false;
+  let lastReportRows = [];
 
   function addStyles() {
     if ($("#ops-styles")) return;
@@ -413,10 +414,17 @@
 
       <section id="ops-reports" class="hidden">
         <h3>Sales and expense summary</h3>
-        <p class="ops-note">
-          This report is not net profit. Ingredient costs and other missing costs
-          are not calculated.
-        </p>
+        <p class="ops-note">Choose a date range to review completed sales, recorded expenses and cash payouts. This is not net profit because ingredient use, payroll and other unrecorded costs may be missing.</p>
+        <form id="ops-report-form" class="ops-form">
+          <label>From date
+            <input name="from_date" type="date" required>
+          </label>
+          <label>To date
+            <input name="to_date" type="date" required>
+          </label>
+          <button class="btn btn-primary" type="submit">Run report</button>
+          <button id="ops-export-report" class="btn btn-light" type="button">Export report (CSV)</button>
+        </form>
         <div id="ops-report-content"></div>
       </section>
     `;
@@ -460,6 +468,11 @@
     $("#ops-purchase-form").addEventListener("submit", createPurchaseOrder);
     $("#ops-payout-form").addEventListener("submit", addCashPayout);
     $("#ops-attendance-form").addEventListener("submit", clockIn);
+    $("#ops-report-form").addEventListener("submit", event => {
+      event.preventDefault();
+      loadReports().catch(showError);
+    });
+    $("#ops-export-report").addEventListener("click", exportReport);
   }
 
   function showTab(name) {
@@ -1136,61 +1149,88 @@
 
   async function loadReports() {
     try {
-      const today = localDateString();
-      const start = new Date();
-      start.setHours(0, 0, 0, 0);
+      const today=localDateString();
+      const form=$("#ops-report-form");
+      if(!form.elements.from_date.value) form.elements.from_date.value=today;
+      if(!form.elements.to_date.value) form.elements.to_date.value=today;
+      const fromDate=form.elements.from_date.value;
+      const toDate=form.elements.to_date.value;
+      if(!fromDate||!toDate||fromDate>toDate) throw new Error("Choose a valid date range.");
+
+      const start=new Date(fromDate+"T00:00:00");
+      const end=new Date(toDate+"T00:00:00");
+      end.setDate(end.getDate()+1);
+      const endExclusive=end.toISOString();
+      const startISO=start.toISOString();
 
       const [
-        { data: orders, error: ordersError },
-        { data: completedOrders, error: completedOrdersError },
-        { data: expenses, error: expensesError }
-      ] = await Promise.all([
-        db.from("orders")
-          .select("id,total,status,created_at")
-          .gte("created_at", start.toISOString())
-          .order("created_at", { ascending: false }),
-        db.from("orders")
-          .select("id,total")
-          .eq("status", "completed")
-          .gte("updated_at", start.toISOString()),
-        db.from("expenses")
-          .select("amount,category,expense_date")
-          .eq("expense_date", today)
+        {data:orders,error:ordersError},
+        {data:completedOrders,error:completedOrdersError},
+        {data:expenses,error:expensesError},
+        {data:payouts,error:payoutsError}
+      ]=await Promise.all([
+        db.from("orders").select("id,order_number,customer_name,customer_phone,total,status,created_at,updated_at")
+          .gte("created_at",startISO).lt("created_at",endExclusive).order("created_at",{ascending:false}),
+        db.from("orders").select("id,order_number,total,status,created_at,updated_at")
+          .eq("status","completed").gte("updated_at",startISO).lt("updated_at",endExclusive),
+        db.from("expenses").select("expense_date,category,description,amount,payment_method,reference")
+          .gte("expense_date",fromDate).lte("expense_date",toDate).order("expense_date",{ascending:false}),
+        db.from("cash_payouts").select("payout_date,category,description,amount,payment_method,reference")
+          .gte("payout_date",fromDate).lte("payout_date",toDate).order("payout_date",{ascending:false})
       ]);
+      if(ordersError) throw ordersError;
+      if(completedOrdersError) throw completedOrdersError;
+      if(expensesError) throw expensesError;
+      if(payoutsError) throw payoutsError;
 
-      if (ordersError) throw ordersError;
-      if (completedOrdersError) throw completedOrdersError;
-      if (expensesError) throw expensesError;
+      const sales=(completedOrders||[]).reduce((sum,order)=>sum+Number(order.total),0);
+      const expenseTotal=(expenses||[]).reduce((sum,item)=>sum+Number(item.amount),0);
+      const payoutTotal=(payouts||[]).reduce((sum,item)=>sum+Number(item.amount),0);
+      lastReportRows=[
+        ["Type","Date","Reference","Name / Category","Description","Method","Amount","Status"],
+        ...(completedOrders||[]).map(order=>[
+          "Completed sale",new Date(order.updated_at).toISOString(),order.order_number||order.id,
+          order.customer_name||"",order.customer_phone||"","cash",Number(order.total),order.status
+        ]),
+        ...(expenses||[]).map(item=>[
+          "Expense",item.expense_date,item.reference||"",item.category,item.description,item.payment_method,Number(item.amount),"Recorded"
+        ]),
+        ...(payouts||[]).map(item=>[
+          "Cash payout",item.payout_date,item.reference||"",item.category,item.description,item.payment_method,Number(item.amount),"Recorded"
+        ])
+      ];
 
-      const completedSales = (completedOrders || [])
-        .reduce((sum, order) => sum + Number(order.total), 0);
-
-      const expenseTotal = (expenses || [])
-        .reduce((sum, expense) => sum + Number(expense.amount), 0);
-
-      $("#ops-report-content").innerHTML = `
-        <div class="ops-grid">
-          <div class="ops-stat">
-            <small>Orders today</small>
-            <strong>${(orders || []).length}</strong>
-          </div>
-          <div class="ops-stat">
-            <small>Completed sales today</small>
-            <strong>${money(completedSales)}</strong>
-          </div>
-          <div class="ops-stat">
-            <small>Expenses today</small>
-            <strong>${money(expenseTotal)}</strong>
-          </div>
-        </div>
-        <p><strong>Sales minus recorded expenses:</strong> ${money(completedSales - expenseTotal)}</p>
-        <p class="ops-note">
-          This is not net profit. Ingredient costs, payroll and other unrecorded costs may be missing.
-        </p>
-      `;
-    } catch (error) {
+      $("#ops-report-content").innerHTML=
+        '<div class="ops-grid">'+
+          '<div class="ops-stat"><small>Orders placed in range</small><strong>'+(orders||[]).length+'</strong></div>'+
+          '<div class="ops-stat"><small>Completed sales in range</small><strong>'+money(sales)+'</strong></div>'+
+          '<div class="ops-stat"><small>Recorded expenses</small><strong>'+money(expenseTotal)+'</strong></div>'+
+          '<div class="ops-stat"><small>Cash payouts / money out</small><strong>'+money(payoutTotal)+'</strong></div>'+
+        '</div>'+
+        '<p><strong>Sales less recorded expenses and payouts:</strong> '+money(sales-expenseTotal-payoutTotal)+'</p>'+
+        '<p class="ops-note">This is a cash/recorded-cost summary, not net profit. Completed sales are grouped by order update time; expenses and payouts use their entered dates. Ingredient cost, payroll and other missing costs are not included unless entered as expenses.</p>'+
+        '<p class="ops-note">Report period: '+esc(fromDate)+' through '+esc(toDate)+'.</p>';
+    } catch(error) {
       showError(error);
     }
+  }
+
+  function exportReport() {
+    if(lastReportRows.length<2) {
+      message("Run a report with data before exporting.",true);
+      return;
+    }
+    const quote=value=>'"'+String(value??"").replace(/"/g,'""')+'"';
+    const csv="\\uFEFF"+lastReportRows.map(row=>row.map(quote).join(",")).join("\\r\\n");
+    const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));
+    const link=document.createElement("a");
+    link.href=url;
+    link.download="al-shami-operations-report-"+localDateString()+".csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    message("Report exported.");
   }
 
   function table(headers, rows) {
