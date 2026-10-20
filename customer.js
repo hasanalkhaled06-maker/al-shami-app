@@ -28,11 +28,11 @@
   let authPhone = "";
 
   function normalizePhone(value) {
-    let phone = String(value || "").trim().replace(/[\\s().-]/g, "");
+    let phone = String(value || "").trim().replace(/[\s().-]/g, "");
     if (phone.startsWith("00")) phone = "+" + phone.slice(2);
     if (phone.startsWith("0")) phone = "+233" + phone.slice(1);
-    if (/^\\d{9}$/.test(phone)) phone = "+233" + phone;
-    if (!/^\\+[1-9]\\d{7,14}$/.test(phone)) {
+    if (/^\d{9}$/.test(phone)) phone = "+233" + phone;
+    if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
       throw new Error("Enter a valid phone number with country code, e.g. +233241234567.");
     }
     return phone;
