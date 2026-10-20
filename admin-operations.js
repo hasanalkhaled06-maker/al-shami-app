@@ -325,8 +325,8 @@
         </form>
 
         <p class="ops-note">
-          Expected cash = opening cash + completed cash orders − recorded cash expenses since shift opening.
-          Mark orders Completed only after payment has been collected. A separate payout register is not implemented yet.
+          Expected cash = opening cash + completed cash orders − recorded cash expenses − recorded cash payouts since shift opening.
+          Mark orders Completed only after payment has been collected. Record till money-out in Cash payouts.
         </p>
 
         <div id="ops-shifts-list" class="ops-table-wrap"></div>
@@ -1315,7 +1315,7 @@
       return;
     }
     const quote=value=>'"'+String(value??"").replace(/"/g,'""')+'"';
-    const csv="\\uFEFF"+lastReportRows.map(row=>row.map(quote).join(",")).join("\\r\\n");
+    const csv="\uFEFF"+lastReportRows.map(row=>row.map(quote).join(",")).join("\r\n");
     const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));
     const link=document.createElement("a");
     link.href=url;
