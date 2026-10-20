@@ -65,8 +65,9 @@ Do not put the Supabase service-role key in browser JavaScript.
 ## Current features
 
 - Existing customer menu and ordering system remains separate.
-- Inventory quantities and stock movements can be recorded manually.
+- Inventory items can be linked to suppliers, and a recent stock-movement history is shown.
 - Suppliers can be recorded.
+- Staff contacts and role labels can be maintained in the roster; this does not create login accounts or change permissions.
 - Expenses can be recorded.
 - Cash shifts can be opened and closed.
 - Basic daily sales and expense figures are displayed.
