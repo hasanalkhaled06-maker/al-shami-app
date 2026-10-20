@@ -30,6 +30,28 @@ Keep the existing config.js and admin.js script tags.
 
 Save and commit the change.
 
+## Install as two home-screen apps
+
+The repository now provides two installable web-app entry points:
+
+- Customer app: `index.html` + `manifest.webmanifest`
+- Private admin app: `admin.html` + `admin.webmanifest`
+
+Shared PWA files:
+
+- `pwa.js` registers the service worker and checks for app updates.
+- `service-worker.js` uses network-first caching for same-origin static files, keeping the live app fresh when online and providing a cached shell when offline.
+- `icons/` contains separate AL SHAMI and admin home-screen icons.
+
+### Install on iPhone
+
+For each app separately, open its URL in Safari, tap Share, choose **Add to Home Screen**, enable **Open as Web App** if shown, then tap Add.
+
+- Customer: `https://hasanalkhaled06-maker.github.io/al-shami-app/`
+- Admin: `https://hasanalkhaled06-maker.github.io/al-shami-app/admin.html`
+
+The admin still requires an authorised login. Home-screen installation does not publish the apps to the App Store. After a new website version is published, the installed web apps check for updates when opened or returned to the foreground; a native App Store release is not part of this PWA workflow.
+
 ## Database setup
 
 1. Back up the Supabase project before making database changes.
