@@ -625,13 +625,7 @@
         showCheckoutMessage(tr("setupError"), true);
         return;
       }
-      if (!authSession?.user) {
-        $("#customer-auth").hidden = false;
-        document.body.classList.add("auth-required");
-        authMessage("Please verify your phone number to place an order.");
-        $("#auth-phone")?.focus();
-        return;
-      }
+      // Phone OTP login is temporarily disabled. Guest checkout remains available.
 
       const rows = getCartRows();
 
@@ -741,6 +735,9 @@
 
   $("#address-field")?.classList.remove("hidden");
 
-  initializeCustomerAuth();
+  // Phone OTP initialization is paused until an SMS provider is configured.
+  document.body.classList.remove("auth-required");
+  const authGate = $("#customer-auth");
+  if (authGate) authGate.hidden = true;
   loadMenuAndSettings();
 })();
