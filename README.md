@@ -40,12 +40,14 @@ For a new environment, apply `supabase-schema.sql` first, configure the public S
 
 ## Operations features and known limits
 
-- Stock levels and stock movements are recorded manually; ingredient consumption is not automatically deducted from each sold meal.
-- Inventory items can be associated with suppliers.
-- Staff profiles are a roster of names, phone numbers, and role labels; they do not create login accounts or implement per-role permissions.
-- Cash-shift expected cash is calculated from opening cash plus completed orders marked during the shift, minus recorded cash expenses created during the shift. Mark an order **Completed** only after collecting payment.
-- There is no separate cash-payout register yet, and the daily summary is not a complete net-profit calculation.
-- Online payment gateways are intentionally deferred. The customer checkout remains cash-only.
+- Inventory has stock-movement history, low-stock indicators, supplier links, purchase orders, and a receive-stock action. Stock increases only after the purchase is marked received.
+- Recipe-based stock usage is recorded when an order changes to **Completed**. Configure ingredients and amounts per menu item in **Operations → Recipes & food cost** first; items without recipe mappings are not auto-deducted.
+- Cash payouts can be entered separately from expenses and are deducted during cash-shift reconciliation when associated with the shift or entered during its open period.
+- Staff attendance supports clock-in, clock-out, and hours for the day. Staff profiles remain a roster; they do not create login accounts or implement separate permissions for each role.
+- Orders can be searched by order number, customer, phone, address, menu item or status, and visible results can be exported to CSV. Operations reports support date ranges and CSV export.
+- Reports show completed sales less recorded expenses and payouts; this is not a full net-profit calculation unless ingredient costs, payroll and all other costs are consistently configured and recorded.
+- Purchase-order entry currently creates one stock-item line per order. The database structure supports multiple lines, but the UI can be expanded for multi-item receiving.
+- Online payment gateways are intentionally deferred. The customer checkout remains cash-only; phone OTP login is paused until a supported SMS provider is configured.
 - Push notifications while the app is fully closed are not included; the admin dashboard’s in-page alerts require the page to remain active.
 
 ## Deployment
