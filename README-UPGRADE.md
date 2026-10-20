@@ -48,26 +48,25 @@ Never put the Supabase service-role key in browser JavaScript.
 
 ## Current features
 
-- Existing customer menu and ordering system remains separate.
-- Inventory items can be linked to suppliers, and a recent stock-movement history is shown.
-- Suppliers can be recorded.
-- Staff contacts and role labels can be maintained in the roster; this does not create login accounts or change permissions.
-- Expenses can be recorded.
-- Cash shifts can be opened and closed with expected cash calculated from completed cash orders and recorded cash expenses during the shift.
-- Recent stock movements are shown for audit/history.
-- Basic daily sales and expense figures are displayed.
-- Payments remain manual/cash; no online payment gateway is included.
+- Existing customer menu and ordering system remains separate; existing order records are preserved.
+- Inventory stock movements, supplier links, low-stock tracking, purchase orders and a receive-stock action are available.
+- Menu recipes can map sold menu items to stock ingredients; configured ingredients are deducted once when an order changes to Completed.
+- Suppliers, staff contacts and role labels can be maintained.
+- Staff attendance records clock-in, clock-out and hours.
+- Expenses and a separate cash-payout register are available.
+- Cash shifts can be opened and closed with cash sales, cash expenses and cash payouts included in reconciliation.
+- Orders support text search and CSV export; operations reports support date ranges and CSV export.
+- Payments remain cash/manual; no online payment gateway is included.
 
 ## Limitations
 
-- Ingredient usage is not automatically deducted when an order is sold.
-- Staff role records exist, but separate permissions for each role are not implemented.
-- Purchase orders are not fully implemented.
+- Recipe deductions only apply to ingredients configured for each menu item; unconfigured menu items do not automatically deduct stock. Set up all recipe lines and keep recipe quantities in the same unit as inventory.
+- Staff role records exist, but separate database-enforced permissions for each role are not implemented.
+- The purchase-order UI currently creates a single stock-item line per order.
 - Cash reconciliation uses order status as the cash-sale signal because the current ordering flow is cash-only; mark orders Completed only after cash is collected.
-- There is no separate cash payout register yet.
-- Ingredient usage is entered manually; it is not automatically deducted by order composition.
-- The daily summary is not a complete net-profit calculation.
-- PWA updates require internet access and the app must be opened/foregrounded to check for updates; offline mode does not submit orders.
+- The operations summary is not a complete net-profit calculation; ingredient costs are reflected only where recipes and stock costs are configured, and payroll/overhead still need accurate recording.
+- Online payments and phone OTP login are deferred until payment/SMS providers are configured.
+- Push notifications while the app is fully closed are not included. PWA updates require internet access and the app must be opened/foregrounded to check for updates; offline mode does not submit orders.
 
 ## Testing
 
