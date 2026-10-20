@@ -12,6 +12,7 @@ const SHELL_FILES = [
   "./customer.js",
   "./admin.js",
   "./admin-operations.js",
+  "./pwa.js",
   "./manifest.webmanifest",
   "./admin.webmanifest",
   "./icons/al-shami.svg",
