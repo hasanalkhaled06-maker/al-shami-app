@@ -13,6 +13,12 @@
   "categories": ["food", "shopping"],
   "icons": [
     {
+      "src": "./icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "./icons/al-shami.svg",
       "sizes": "any",
       "type": "image/svg+xml",
