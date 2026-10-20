@@ -1,0 +1,22 @@
+{
+  "id": "./index.html",
+  "name": "AL SHAMI RESTAURANT & FAST FOOD",
+  "short_name": "AL SHAMI",
+  "description": "Order fresh food from AL SHAMI RESTAURANT & FAST FOOD in Darkuman Circle Station, Accra.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#fffaf5",
+  "theme_color": "#8d1723",
+  "categories": ["food", "shopping"],
+  "icons": [
+    {
+      "src": "./icons/al-shami.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
