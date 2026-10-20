@@ -18,6 +18,17 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
+
+    .customer-auth{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(25,10,12,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+    .customer-auth[hidden]{display:none!important}
+    .customer-auth-card{box-sizing:border-box;width:100%;max-width:430px;background:#fff;border-radius:22px;padding:28px;color:#242424;box-shadow:0 20px 70px #0005}
+    .customer-auth-card h2{margin:6px 0 10px;color:#8d1723}
+    .customer-auth-card label{display:block;font-weight:700;margin:16px 0 6px}
+    .customer-auth-card input{box-sizing:border-box;width:100%;padding:13px;border:1px solid #d8d8d8;border-radius:10px;font:inherit}
+    .customer-auth-card .btn{margin-top:12px}
+    .customer-account{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;margin:12px auto;max-width:1100px;background:#fff7e8;border:1px solid #ead7b3;border-radius:12px}
+    .customer-account[hidden]{display:none!important}
+    body.auth-required{overflow:hidden}
     .site-contact-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
     .site-contact-links a{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border:1px solid rgba(141,23,35,.2);border-radius:10px;color:#8d1723;text-decoration:none;font-weight:700}
     .cart-cost-breakdown{display:grid;gap:7px;margin:12px 0;padding:12px 0;border-top:1px solid #e8e8e8}
@@ -82,6 +93,28 @@
       </label>
     </div>
   </header>
+
+  
+  <section id="customer-auth" class="customer-auth" aria-labelledby="customer-auth-title">
+    <div class="customer-auth-card">
+      <p class="eyebrow">AL SHAMI ACCOUNT</p>
+      <h2 id="customer-auth-title">Sign in with your phone</h2>
+      <p class="muted">Enter your phone number and we’ll send you a one-time SMS code.</p>
+      <label for="auth-phone">Phone number</label>
+      <input id="auth-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+233 24 123 4567" maxlength="30" required>
+      <button id="auth-send-code" class="btn btn-primary btn-wide" type="button">Send verification code</button>
+      <div id="auth-code-area" hidden>
+        <label for="auth-code">SMS verification code</label>
+        <input id="auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Enter the code">
+        <button id="auth-verify-code" class="btn btn-primary btn-wide" type="button">Verify and continue</button>
+      </div>
+      <p id="auth-message" class="status-message" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+  <div id="customer-account" class="customer-account" hidden>
+    <span id="customer-account-label"></span>
+    <button id="customer-sign-out" class="btn btn-light" type="button">Sign out</button>
+  </div>
 
   <main class="container">
     <section class="notice" aria-label="Online ordering information">
