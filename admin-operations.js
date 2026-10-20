@@ -320,8 +320,8 @@
         </form>
 
         <p class="ops-note">
-          The current version compares counted cash with opening cash only.
-          Cash sales and payouts are not yet included in expected cash.
+          Expected cash = opening cash + completed cash orders − recorded cash expenses since shift opening.
+          Mark orders Completed only after payment has been collected. A separate payout register is not implemented yet.
         </p>
 
         <div id="ops-shifts-list" class="ops-table-wrap"></div>
@@ -765,11 +765,12 @@
     if (error) throw error;
 
     $("#ops-shifts-list").innerHTML = table(
-      ["Opened", "Status", "Opening cash", "Counted cash", "Difference", "Action"],
+      ["Opened", "Status", "Opening cash", "Expected cash", "Counted cash", "Difference", "Action"],
       (data || []).map(shift => [
         new Date(shift.opened_at).toLocaleString(),
         shift.status,
         money(shift.opening_cash),
+        shift.expected_cash == null ? "—" : money(shift.expected_cash),
         shift.counted_cash == null ? "—" : money(shift.counted_cash),
         shift.difference == null ? "—" : money(shift.difference),
         shift.status === "open"
