@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4f0d16"/>
+      <stop offset="1" stop-color="#8d1723"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#ffe6a4"/>
+      <stop offset="1" stop-color="#d79d35"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="104" fill="url(#bg)"/>
+  <path d="M256 72 L390 123 V232 C390 321 334 385 256 431 C178 385 122 321 122 232 V123 Z" fill="none" stroke="url(#gold)" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M160 169 H352 M160 343 H352" stroke="#f7d887" stroke-opacity=".5" stroke-width="4"/>
+  <text x="256" y="270" text-anchor="middle" font-family="Georgia,serif" font-size="104" font-weight="700" letter-spacing="-7" fill="url(#gold)">AS</text>
+  <text x="256" y="310" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="700" letter-spacing="4" fill="#fff5dc">ADMIN</text>
+</svg>
