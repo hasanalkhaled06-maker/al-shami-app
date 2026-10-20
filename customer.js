@@ -20,17 +20,19 @@
     : null;
 
   const $ = selector => document.querySelector(selector);
+  const checkoutForm = $("#checkout-form");
+  const orderButton = $("#place-order");
 
   let products = [];
   let offers = [];
   let cart = {};
   let category = "All";
   let lang = "en";
-  let fee = 0;
-  let minOrder = 0;
+  let deliveryFee = 0;
+  let minimumOrder = 0;
   let submitting = false;
 
-  const copy = {
+  const translations = {
     en: {
       hero: "Fresh favourites, made for you.",
       orderNote: "Order online",
@@ -95,7 +97,7 @@
       emptyCartError: "أضف وجبة واحدة على الأقل.",
       addressError: "يرجى إدخال عنوان التوصيل.",
       minimumError: "الحد الأدنى للطلب هو",
-      setupError: "تعذّر الاتصال. تحقق من إعدادات Supabase في config.js.",
+      setupError: "تحقق من إعدادات Supabase في ملف config.js.",
       loadError: "تعذّر تحميل المنيو.",
       orderError: "تعذّر إرسال الطلب. حاول مرة أخرى."
     },
@@ -136,9 +138,9 @@
   };
 
   const money = value => "GH₵ " + Number(value || 0).toFixed(2);
-  const tr = key => (copy[lang] || copy.en)[key] || key;
+  const tr = key => (translations[lang] || translations.en)[key] || key;
 
-  function esc(value) {
+  function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, char => ({
       "&": "&amp;",
       "<": "&lt;",
@@ -148,45 +150,55 @@
     })[char]);
   }
 
-  function msg(text, error = false) {
+  function showCheckoutMessage(text, isError = false) {
     const element = $("#checkout-message");
     if (!element) return;
 
-    element.textContent = text;
-    element.className = "status-message" + (error ? " error" : " success");
+    element.textContent = text || "";
+    element.className = "status-message" + (isError ? " error" : " success");
   }
 
-  function setStatus(text, error = false) {
+  function showAppStatus(text, isError = false) {
     const element = $("#app-status");
     if (!element) return;
 
-    element.textContent = text;
-    element.className = "app-message " + (error ? "error" : "info");
+    element.textContent = text || "";
+    element.className = "app-message " + (isError ? "error" : "info");
     element.hidden = !text;
   }
 
   function showSuccess(orderNumber, total) {
-    if (typeof window.AL_SHAMI_SHOW_SUCCESS === "function") {
-      window.AL_SHAMI_SHOW_SUCCESS({
-        orderNumber: orderNumber,
-        total: total
-      });
-    } else {
-      msg(`${tr("sent")} ${orderNumber ? "Order #" + orderNumber : ""}`);
+    try {
+      if (typeof window.AL_SHAMI_SHOW_SUCCESS === "function") {
+        window.AL_SHAMI_SHOW_SUCCESS({ orderNumber, total });
+      } else {
+        showCheckoutMessage(
+          `${tr("sent")} ${orderNumber ? "Order #" + orderNumber : ""}`
+        );
+      }
+    } catch (error) {
+      console.error("Could not display order confirmation:", error);
+      showCheckoutMessage(tr("sent"));
     }
   }
 
-  function setLang() {
+  function setLanguage() {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
 
     document.querySelectorAll("[data-i18n]").forEach(element => {
       const key = element.dataset.i18n;
-      if (copy[lang]?.[key]) element.textContent = tr(key);
+      if (translations[lang] && translations[lang][key]) {
+        element.textContent = tr(key);
+      }
     });
 
-    $("#search").placeholder = tr("search");
-    $("#place-order").textContent = submitting ? tr("sending") : tr("send");
+    const search = $("#search");
+    if (search) search.placeholder = tr("search");
+
+    if (orderButton) {
+      orderButton.textContent = submitting ? tr("sending") : tr("send");
+    }
 
     renderCategories();
     renderMenu();
@@ -194,20 +206,23 @@
   }
 
   function renderCategories() {
-    const cats = [
+    const container = $("#categories");
+    if (!container) return;
+
+    const categories = [
       "All",
       ...new Set(products.map(product => product.category).filter(Boolean))
     ];
 
-    $("#categories").innerHTML = cats.map(item => `
+    container.innerHTML = categories.map(item => `
       <button type="button"
         class="chip ${category === item ? "active" : ""}"
-        data-cat="${esc(item)}">
-        ${item === "All" ? tr("category") : esc(item)}
+        data-cat="${escapeHTML(item)}">
+        ${item === "All" ? tr("category") : escapeHTML(item)}
       </button>
     `).join("");
 
-    $("#categories").querySelectorAll("[data-cat]").forEach(button => {
+    container.querySelectorAll("[data-cat]").forEach(button => {
       button.addEventListener("click", () => {
         category = button.dataset.cat;
         renderCategories();
@@ -217,38 +232,42 @@
   }
 
   function renderMenu() {
-    const query = ($("#search").value || "").trim().toLowerCase();
+    const menu = $("#menu");
+    const search = $("#search");
+    if (!menu || !search) return;
 
-    const list = products.filter(product => {
+    const query = search.value.trim().toLowerCase();
+
+    const visibleProducts = products.filter(product => {
       const categoryMatches =
         category === "All" || product.category === category;
 
-      const searchMatches =
+      const searchText =
         `${product.name || ""} ${product.description || ""} ${product.category || ""}`
-          .toLowerCase().includes(query);
+          .toLowerCase();
 
-      return categoryMatches && searchMatches;
+      return categoryMatches && searchText.includes(query);
     });
 
-    $("#menu").innerHTML = list.length
-      ? list.map(product => `
+    menu.innerHTML = visibleProducts.length
+      ? visibleProducts.map(product => `
         <article class="product-card">
           <div class="product-image">
             ${product.image_url
-              ? `<img src="${esc(product.image_url)}"
-                  alt="${esc(product.name)}"
+              ? `<img src="${escapeHTML(product.image_url)}"
+                  alt="${escapeHTML(product.name)}"
                   loading="lazy"
                   onerror="this.remove()">`
               : "🍽️"}
           </div>
           <div class="product-info">
-            <h3>${esc(product.name)}</h3>
-            <p>${esc(product.description || "Freshly prepared at AL SHAMI.")}</p>
+            <h3>${escapeHTML(product.name)}</h3>
+            <p>${escapeHTML(product.description || "Freshly prepared at AL SHAMI.")}</p>
             <div class="product-bottom">
               <span class="price">${money(product.price)}</span>
               <button type="button"
                 class="btn btn-primary"
-                data-add="${esc(product.id)}">
+                data-add="${escapeHTML(product.id)}">
                 ${tr("add")}
               </button>
             </div>
@@ -257,12 +276,13 @@
       `).join("")
       : `<p class="muted">${tr("noItems")}</p>`;
 
-    $("#menu").querySelectorAll("[data-add]").forEach(button => {
+    menu.querySelectorAll("[data-add]").forEach(button => {
       button.addEventListener("click", () => {
         const id = button.dataset.add;
-        const product = products.find(item => String(item.id) === String(id));
 
-        if (!product) return;
+        if (!products.some(product => String(product.id) === String(id))) {
+          return;
+        }
 
         cart[id] = (cart[id] || 0) + 1;
         renderCart();
@@ -270,61 +290,81 @@
     });
   }
 
-  function renderCart() {
-    const rows = Object.entries(cart).filter(([id, quantity]) =>
-      quantity > 0 &&
+  function getCartRows() {
+    return Object.entries(cart).filter(([id, quantity]) =>
+      Number(quantity) > 0 &&
       products.some(product => String(product.id) === String(id))
     );
+  }
 
-    $("#cart-items").innerHTML = rows.length
+  function calculateSubtotal(rows = getCartRows()) {
+    return rows.reduce((sum, [id, quantity]) => {
+      const product = products.find(item => String(item.id) === String(id));
+      return sum + Number(product?.price || 0) * Number(quantity || 0);
+    }, 0);
+  }
+
+  function renderCart() {
+    const cartItems = $("#cart-items");
+    if (!cartItems) return;
+
+    const rows = getCartRows();
+
+    cartItems.innerHTML = rows.length
       ? rows.map(([id, quantity]) => {
           const product = products.find(item => String(item.id) === String(id));
 
           return `
             <div class="cart-row">
               <div class="cart-name">
-                <strong>${esc(product.name)}</strong>
+                <strong>${escapeHTML(product.name)}</strong>
                 <small>${money(product.price)} each</small>
               </div>
               <div class="qty-controls">
-                <button type="button" data-dec="${esc(id)}"
+                <button type="button" data-dec="${escapeHTML(id)}"
                   aria-label="Remove one">−</button>
-                <strong>${quantity}</strong>
-                <button type="button" data-inc="${esc(id)}"
+                <strong>${Number(quantity)}</strong>
+                <button type="button" data-inc="${escapeHTML(id)}"
                   aria-label="Add one">+</button>
               </div>
-              <strong>${money(Number(product.price) * quantity)}</strong>
+              <strong>${money(Number(product.price) * Number(quantity))}</strong>
             </div>
           `;
         }).join("")
       : `<p class="muted">${tr("empty")}</p>`;
 
-    const subtotal = rows.reduce((sum, [id, quantity]) => {
-      const product = products.find(item => String(item.id) === String(id));
-      return sum + Number(product?.price || 0) * quantity;
-    }, 0);
+    const subtotal = calculateSubtotal(rows);
+    const isDelivery = $("#order-type")?.value !== "pickup";
+    const currentFee = isDelivery ? deliveryFee : 0;
+    const total = subtotal + currentFee;
 
-    const deliveryFee =
-      $("#order-type").value === "delivery" ? fee : 0;
+    if ($("#cart-subtotal")) {
+      $("#cart-subtotal").textContent = money(subtotal);
+    }
 
-    const total = subtotal + deliveryFee;
+    if ($("#cart-delivery-fee")) {
+      $("#cart-delivery-fee").textContent = money(currentFee);
+    }
 
-    if ($("#cart-subtotal")) $("#cart-subtotal").textContent = money(subtotal);
-    if ($("#cart-delivery-fee")) $("#cart-delivery-fee").textContent = money(deliveryFee);
-    $("#cart-total").textContent = money(total);
+    if ($("#cart-total")) {
+      $("#cart-total").textContent = money(total);
+    }
+
+    const feeLine = $("#delivery-fee-line");
+    if (feeLine) feeLine.hidden = !isDelivery;
 
     const minimumNote = $("#minimum-order-note");
     if (minimumNote) {
-      minimumNote.hidden = minOrder <= 0;
-      minimumNote.textContent = minOrder > 0
-        ? `${tr("minimumError")} ${money(minOrder)}.`
+      minimumNote.hidden = minimumOrder <= 0;
+      minimumNote.textContent = minimumOrder > 0
+        ? `${tr("minimumError")} ${money(minimumOrder)}.`
         : "";
     }
 
-    $("#cart-items").querySelectorAll("[data-dec]").forEach(button => {
+    cartItems.querySelectorAll("[data-dec]").forEach(button => {
       button.addEventListener("click", () => {
         const id = button.dataset.dec;
-        cart[id] = (cart[id] || 0) - 1;
+        cart[id] = Number(cart[id] || 0) - 1;
 
         if (cart[id] <= 0) delete cart[id];
 
@@ -332,19 +372,46 @@
       });
     });
 
-    $("#cart-items").querySelectorAll("[data-inc]").forEach(button => {
+    cartItems.querySelectorAll("[data-inc]").forEach(button => {
       button.addEventListener("click", () => {
         const id = button.dataset.inc;
-        cart[id] = (cart[id] || 0) + 1;
+        cart[id] = Number(cart[id] || 0) + 1;
         renderCart();
       });
     });
   }
 
-  async function load() {
+  function renderOffers() {
+    const container = $("#active-offers");
+    if (!container) return;
+
+    container.replaceChildren();
+    if (!offers.length) return;
+
+    const section = document.createElement("section");
+    section.className = "notice";
+
+    const heading = document.createElement("strong");
+    heading.textContent = tr("offer");
+
+    const details = document.createElement("span");
+    details.textContent = offers.map(offer =>
+      `${offer.title || ""}${offer.details ? " — " + offer.details : ""}`
+    ).join(" · ");
+
+    section.append(heading, details);
+    container.append(section);
+  }
+
+  async function loadMenuAndSettings() {
     if (!db) {
-      setStatus(tr("setupError"), true);
-      $("#menu").innerHTML = `<p class="muted">${tr("setupError")}</p>`;
+      showAppStatus(tr("setupError"), true);
+
+      const menu = $("#menu");
+      if (menu) {
+        menu.innerHTML = `<p class="muted">${escapeHTML(tr("setupError"))}</p>`;
+      }
+
       return;
     }
 
@@ -373,158 +440,174 @@
 
       products = menuResult.data || [];
       offers = offerResult.data || [];
-      fee = Number(settingsResult.data?.delivery_fee || 0);
-      minOrder = Number(settingsResult.data?.minimum_order || 0);
+      deliveryFee = Number(settingsResult.data?.delivery_fee || 0);
+      minimumOrder = Number(settingsResult.data?.minimum_order || 0);
 
       renderCategories();
       renderMenu();
       renderCart();
       renderOffers();
-      setStatus("");
+      showAppStatus("");
     } catch (error) {
-      console.error("AL SHAMI menu load error:", error);
-      setStatus(`${tr("loadError")} ${error.message || ""}`, true);
-      $("#menu").innerHTML = `<p class="muted">${tr("loadError")}</p>`;
+      console.error("AL SHAMI menu loading error:", error);
+      showAppStatus(`${tr("loadError")} ${error?.message || ""}`, true);
+
+      const menu = $("#menu");
+      if (menu) {
+        menu.innerHTML = `<p class="muted">${escapeHTML(tr("loadError"))}</p>`;
+      }
     }
   }
 
-  function renderOffers() {
-    const container = $("#active-offers");
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    if (!offers.length) return;
-
-    const section = document.createElement("section");
-    section.className = "notice";
-
-    const title = document.createElement("strong");
-    title.textContent = tr("offer");
-
-    const details = document.createElement("span");
-    details.textContent = offers.map(offer =>
-      `${offer.title || ""}${offer.details ? " — " + offer.details : ""}`
-    ).join(" · ");
-
-    section.append(title, details);
-    container.appendChild(section);
-  }
-
-  $("#language").addEventListener("change", event => {
+  $("#language")?.addEventListener("change", event => {
     lang = event.target.value;
-    setLang();
+    setLanguage();
   });
 
-  $("#search").addEventListener("input", renderMenu);
+  $("#search")?.addEventListener("input", renderMenu);
 
-  $("#order-type").addEventListener("change", () => {
+  $("#order-type")?.addEventListener("change", () => {
     const isPickup = $("#order-type").value === "pickup";
 
-    $("#address-field").classList.toggle("hidden", isPickup);
-    $("#checkout-form").elements.delivery_address.required = !isPickup;
+    $("#address-field")?.classList.toggle("hidden", isPickup);
+
+    if (checkoutForm?.elements?.delivery_address) {
+      checkoutForm.elements.delivery_address.required = !isPickup;
+    }
 
     renderCart();
   });
 
-  $("#clear-cart").addEventListener("click", () => {
+  $("#clear-cart")?.addEventListener("click", () => {
     if (submitting) return;
 
     cart = {};
     renderCart();
-    msg("");
+    showCheckoutMessage("");
   });
 
-  $("#checkout-form").addEventListener("submit", async event => {
-    event.preventDefault();
+  if (checkoutForm) {
+    checkoutForm.addEventListener("submit", async event => {
+      event.preventDefault();
 
-    if (submitting) return;
+      // احفظ مرجع النموذج قبل بدء العملية غير المتزامنة.
+      const formElement = checkoutForm;
+      const submitButton = $("#place-order");
 
-    if (!db) {
-      msg(tr("setupError"), true);
-      return;
-    }
+      if (submitting) return;
 
-    const rows = Object.entries(cart).filter(([, quantity]) => quantity > 0);
+      if (!db) {
+        showCheckoutMessage(tr("setupError"), true);
+        return;
+      }
 
-    if (!rows.length) {
-      msg(tr("emptyCartError"), true);
-      return;
-    }
+      const rows = getCartRows();
 
-    const form = new FormData(event.currentTarget);
-    const type = String(form.get("order_type") || "delivery");
-    const address = String(form.get("delivery_address") || "").trim();
+      if (!rows.length) {
+        showCheckoutMessage(tr("emptyCartError"), true);
+        return;
+      }
 
-    if (type === "delivery" && !address) {
-      msg(tr("addressError"), true);
-      return;
-    }
+      const formData = new FormData(formElement);
+      const orderType = String(formData.get("order_type") || "delivery");
+      const address = String(formData.get("delivery_address") || "").trim();
 
-    const subtotal = rows.reduce((sum, [id, quantity]) => {
-      const product = products.find(item => String(item.id) === String(id));
-      return sum + Number(product?.price || 0) * quantity;
-    }, 0);
+      if (orderType === "delivery" && !address) {
+        showCheckoutMessage(tr("addressError"), true);
+        return;
+      }
 
-    if (subtotal < minOrder) {
-      msg(`${tr("minimumError")} ${money(minOrder)}.`, true);
-      return;
-    }
+      const subtotal = calculateSubtotal(rows);
 
-    const total = subtotal + (type === "delivery" ? fee : 0);
-    const button = $("#place-order");
+      if (subtotal < minimumOrder) {
+        showCheckoutMessage(
+          `${tr("minimumError")} ${money(minimumOrder)}.`,
+          true
+        );
+        return;
+      }
 
-    submitting = true;
-    button.disabled = true;
-    button.textContent = tr("sending");
-    msg("");
+      const submittedTotal =
+        subtotal + (orderType === "delivery" ? deliveryFee : 0);
 
-    try {
-      const { data, error } = await db.rpc("place_order", {
-        p_customer_name: String(form.get("customer_name") || "").trim(),
-        p_customer_phone: String(form.get("customer_phone") || "").trim(),
-        p_order_type: type,
-        p_delivery_address: type === "delivery" ? address : null,
-        p_notes: String(form.get("notes") || "").trim() || null,
-        p_items: rows.map(([product_id, quantity]) => ({
-          product_id,
-          quantity
-        }))
-      });
+      const submittedItems = rows.map(([product_id, quantity]) => ({
+        product_id,
+        quantity: Number(quantity)
+      }));
 
-      if (error) throw error;
+      submitting = true;
 
-      const result = Array.isArray(data) ? data[0] : data;
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = tr("sending");
+      }
 
-      const orderNumber =
-        result && typeof result === "object"
-          ? (result.order_number ?? result.id ?? "received")
-          : (result ?? "received");
+      showCheckoutMessage("");
 
-      cart = {};
-      renderCart();
+      try {
+        const { data, error } = await db.rpc("place_order", {
+          p_customer_name: String(formData.get("customer_name") || "").trim(),
+          p_customer_phone: String(formData.get("customer_phone") || "").trim(),
+          p_order_type: orderType,
+          p_delivery_address: orderType === "delivery" ? address : null,
+          p_notes: String(formData.get("notes") || "").trim() || null,
+          p_items: submittedItems
+        });
 
-      event.currentTarget.reset();
-      $("#order-type").value = "delivery";
-      $("#address-field").classList.remove("hidden");
-      event.currentTarget.elements.delivery_address.required = true;
+        if (error) throw error;
 
-      renderCart();
-      msg("");
+        // وصل تأكيد من قاعدة البيانات أن الطلب تم حفظه.
+        const result = Array.isArray(data) ? data[0] : data;
 
-      showSuccess(orderNumber, total);
-    } catch (error) {
-      console.error("AL SHAMI order error:", error);
-      msg(error.message || tr("orderError"), true);
-    } finally {
-      submitting = false;
-      button.disabled = false;
-      button.textContent = tr("send");
-    }
-  });
+        let orderNumber = "received";
 
-  $("#address-field").classList.remove("hidden");
-  $("#checkout-form").elements.delivery_address.required = true;
+        if (result && typeof result === "object") {
+          orderNumber =
+            result.order_number ?? result.order_id ?? result.id ?? "received";
+        } else if (result !== null && result !== undefined && result !== "") {
+          orderNumber = result;
+        }
 
-  load();
+        // استخدم مرجع النموذج المحفوظ، وليس event.currentTarget بعد await.
+        cart = {};
+
+        try {
+          formElement.reset();
+
+          const typeSelect = $("#order-type");
+          if (typeSelect) typeSelect.value = "delivery";
+
+          $("#address-field")?.classList.remove("hidden");
+
+          if (formElement.elements?.delivery_address) {
+            formElement.elements.delivery_address.required = true;
+          }
+
+          renderCart();
+        } catch (uiError) {
+          console.warn("Order saved, but form cleanup failed:", uiError);
+        }
+
+        showCheckoutMessage("");
+        showSuccess(orderNumber, submittedTotal);
+      } catch (error) {
+        console.error("AL SHAMI order submission error:", error);
+        showCheckoutMessage(error?.message || tr("orderError"), true);
+      } finally {
+        submitting = false;
+
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = tr("send");
+        }
+      }
+    });
+  }
+
+  const addressInput = checkoutForm?.elements?.delivery_address;
+  if (addressInput) addressInput.required = true;
+
+  $("#address-field")?.classList.remove("hidden");
+
+  loadMenuAndSettings();
 })();
