@@ -87,3 +87,155 @@ html.app-installed #admin-install-note {
     font-size: 12px;
   }
 }
+
+
+/* Refined AL SHAMI premium mobile experience */
+:root {
+  --shami-burgundy: #67101a;
+  --shami-burgundy-deep: #4f0b13;
+  --shami-gold-soft: #f7dda1;
+}
+.hero {
+  background:
+    radial-gradient(circle at 88% 12%, rgba(231,184,90,.16), transparent 28%),
+    linear-gradient(125deg, var(--shami-burgundy-deep) 0%, #76131f 52%, #a51e2c 100%);
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  right: -135px;
+  bottom: -205px;
+  border: 1px solid rgba(247,221,161,.22);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.brand-mark {
+  border-radius: 12px;
+  box-shadow: 0 0 0 5px rgba(231,184,90,.045);
+  background: rgba(255,255,255,.035);
+}
+.notice {
+  box-shadow: 0 7px 22px rgba(75,40,14,.045);
+}
+.product-card {
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.product-card:hover {
+  transform: translateY(-3px);
+  border-color: #e3c47f;
+  box-shadow: 0 16px 35px rgba(77,28,21,.10);
+}
+.product-image {
+  position: relative;
+}
+.product-info h3 {
+  line-height: 1.35;
+}
+.btn {
+  transition: background-color .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+.btn:active {
+  transform: translateY(1px) scale(.99);
+}
+.btn-primary {
+  background: linear-gradient(120deg, #76131f, #9c1e2b);
+  box-shadow: 0 5px 13px rgba(141,23,35,.12);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 8px 18px rgba(141,23,35,.20);
+}
+input, select, textarea {
+  min-height: 43px;
+}
+.checkout-section {
+  border-radius: 20px;
+}
+.admin-body {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(231,184,90,.10), transparent 24%),
+    #f7f3ef;
+}
+.admin-top {
+  background:
+    radial-gradient(circle at 90% 0%, rgba(231,184,90,.13), transparent 30%),
+    linear-gradient(110deg, #4f0b13 0%, #68121b 60%, #811723 100%);
+  box-shadow: 0 6px 24px rgba(47,9,15,.18);
+}
+.admin-brand {
+  letter-spacing: 1.3px;
+}
+.panel {
+  border-radius: 17px;
+  box-shadow: 0 9px 27px rgba(77,28,21,.045);
+}
+.stat {
+  border-radius: 14px;
+  background: linear-gradient(145deg, #fff 0%, #fffaf5 100%);
+}
+.stat strong {
+  color: var(--red);
+  font-variant-numeric: tabular-nums;
+}
+.tab {
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.tab:hover:not(.active) {
+  border-color: #d7b46b;
+  background: #fffaf2;
+}
+.tab.active {
+  background: linear-gradient(120deg, #68121b, #8d1723);
+  border-color: #8d1723;
+  box-shadow: 0 4px 12px rgba(141,23,35,.12);
+}
+.ops-stat {
+  background: linear-gradient(145deg, #fff 0%, #fff8eb 100%) !important;
+  box-shadow: 0 6px 18px rgba(77,28,21,.035);
+}
+.ops-stat strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--red);
+  font-variant-numeric: tabular-nums;
+}
+.ops-table {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.ops-table th {
+  background: #fff5e5;
+  color: #5d2026;
+  font-weight: 800;
+}
+.ops-table tbody tr:nth-child(even) {
+  background: #fffdf9;
+}
+.ops-table tbody tr:hover {
+  background: #fff5e5;
+}
+.ops-form input:focus,
+.ops-form select:focus {
+  border-color: #cba34f;
+  box-shadow: 0 0 0 3px rgba(231,184,90,.14);
+  outline: none;
+}
+.btn:focus-visible,
+.tab:focus-visible,
+a:focus-visible {
+  outline: 3px solid #e7b85a;
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
