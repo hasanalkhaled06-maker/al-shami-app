@@ -1359,7 +1359,7 @@
         '<p><strong>Estimated result after mapped ingredient cost and recorded expenses:</strong> '+money(estimatedResult)+'</p>'+
         '<p class="ops-note">This estimate excludes menu lines without recorded recipe deductions, unrecorded payroll/overhead, and any costs entered incompletely. '+unmappedLines+' completed order line(s) in this period have no recipe deduction ledger entry.</p>'+
         '<p class="ops-note">Payouts are shown separately and are not subtracted from the estimated result because they may be transfers/drawings or already recorded in expenses. Sales are grouped by completion time; expenses and payouts use their entered dates.</p>'+
-        '<p class="ops-note">Report period: '+esc(fromDate)+' through '+esc(toDate)+'.';
+        '<p class="ops-note">Report period: '+esc(fromDate)+' through '+esc(toDate)+'.</p>';
     } catch(error) {
       showError(error);
     }
