@@ -15,7 +15,9 @@ const SHELL_FILES = [
   "./manifest.webmanifest",
   "./admin.webmanifest",
   "./icons/al-shami.svg",
-  "./icons/al-shami-admin.svg"
+  "./icons/al-shami-admin.svg",
+  "./icons/apple-touch-icon.png",
+  "./icons/apple-touch-icon-admin.png"
 ];
 
 self.addEventListener("install", event => {
