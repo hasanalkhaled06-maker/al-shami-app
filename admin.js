@@ -198,6 +198,8 @@
   };
 
   $("#order-filter").onchange = renderOrders;
+  $("#order-search")?.addEventListener("input", renderOrders);
+  $("#export-orders")?.addEventListener("click", exportVisibleOrders);
 
   document.querySelectorAll(".tab").forEach(button => {
     button.onclick = () => {
@@ -325,12 +327,67 @@
     renderOrders();
   }
 
-  function renderOrders() {
-    const filter = $("#order-filter").value;
+  function visibleOrders() {
+    const filter = $("#order-filter")?.value || "all";
+    const query = String($("#order-search")?.value || "").trim().toLowerCase();
 
-    const filteredOrders = orders.filter(order =>
-      filter === "all" || order.status === filter
-    );
+    return orders.filter(order => {
+      const matchesStatus = filter === "all" || order.status === filter;
+      const searchable = [
+        order.order_number,
+        order.id,
+        order.customer_name,
+        order.customer_phone,
+        order.delivery_address,
+        order.order_type,
+        order.status,
+        ...(order.order_items || []).map(item => item.item_name || item.menu_items?.name || "")
+      ].join(" ").toLowerCase();
+      return matchesStatus && (!query || searchable.includes(query));
+    });
+  }
+
+  function exportVisibleOrders() {
+    const selected = visibleOrders();
+    if (!selected.length) {
+      toast("No visible orders to export.");
+      return;
+    }
+
+    const quote = value => '"' + String(value ?? "").replace(/"/g, '""') + '"';
+    const rows = [
+      ["Order number","Created at","Customer","Phone","Type","Address","Items","Subtotal","Delivery fee","Total","Status","Notes"],
+      ...selected.map(order => [
+        order.order_number || order.id,
+        new Date(order.created_at).toISOString(),
+        order.customer_name,
+        order.customer_phone,
+        order.order_type,
+        order.delivery_address || "",
+        (order.order_items || []).map(item =>
+          Number(item.quantity) + " x " + (item.item_name || item.menu_items?.name || "Menu item")
+        ).join("; "),
+        order.subtotal,
+        order.delivery_fee,
+        order.total,
+        order.status,
+        order.notes || ""
+      ])
+    ];
+    const csv = "\uFEFF" + rows.map(row => row.map(quote).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8;"}));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "al-shami-orders-" + new Date().toISOString().slice(0,10) + ".csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast("Exported " + selected.length + " visible orders.");
+  }
+
+  function renderOrders() {
+    const filteredOrders = visibleOrders();
 
     $("#orders-list").innerHTML = filteredOrders.length
       ? filteredOrders.map(order => `
