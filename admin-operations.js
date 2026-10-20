@@ -774,10 +774,15 @@
         shift.counted_cash == null ? "—" : money(shift.counted_cash),
         shift.difference == null ? "—" : money(shift.difference),
         shift.status === "open"
-          ? `<button class="btn btn-light" data-close-shift="${esc(shift.id)}">Close shift</button>`
+          ? { kind: "html", value: `<button class="btn btn-light" data-close-shift="${esc(shift.id)}">Close shift</button>` }
           : "Closed"
       ])
     );
+
+    const hasOpenShift = (data || []).some(shift => shift.status === "open");
+    const openButton = $("#ops-shift-open-form").querySelector('button[type="submit"]');
+    openButton.disabled = hasOpenShift;
+    openButton.textContent = hasOpenShift ? "A shift is already open" : "Open shift";
 
     $("#ops-shifts-list")
       .querySelectorAll("[data-close-shift]")
@@ -849,22 +854,27 @@
 
       const [
         { data: orders, error: ordersError },
+        { data: completedOrders, error: completedOrdersError },
         { data: expenses, error: expensesError }
       ] = await Promise.all([
         db.from("orders")
           .select("id,total,status,created_at")
           .gte("created_at", start.toISOString())
           .order("created_at", { ascending: false }),
+        db.from("orders")
+          .select("id,total")
+          .eq("status", "completed")
+          .gte("updated_at", start.toISOString()),
         db.from("expenses")
           .select("amount,category,expense_date")
           .eq("expense_date", today)
       ]);
 
       if (ordersError) throw ordersError;
+      if (completedOrdersError) throw completedOrdersError;
       if (expensesError) throw expensesError;
 
-      const completedSales = (orders || [])
-        .filter(order => order.status === "completed")
+      const completedSales = (completedOrders || [])
         .reduce((sum, order) => sum + Number(order.total), 0);
 
       const expenseTotal = (expenses || [])
@@ -907,7 +917,7 @@
           ${rows.map(row => `
             <tr>
               ${row.map(cell => `
-                <td>${String(cell).startsWith("<button") ? cell : esc(cell)}</td>
+                <td>${cell && typeof cell === "object" && cell.kind === "html" ? cell.value : esc(cell)}</td>
               `).join("")}
             </tr>
           `).join("")}
