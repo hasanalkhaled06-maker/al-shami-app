@@ -164,6 +164,7 @@
         <button class="tab" data-opstab="purchases" type="button">Purchases</button>
         <button class="tab" data-opstab="payouts" type="button">Cash payouts</button>
         <button class="tab" data-opstab="attendance" type="button">Attendance</button>
+        <button class="tab" data-opstab="recipes" type="button">Recipes &amp; food cost</button>
         <button class="tab" data-opstab="reports" type="button">Reports</button>
       </div>
 
@@ -412,6 +413,25 @@
         <div id="ops-attendance-list" class="ops-table-wrap"></div>
       </section>
 
+      <section id="ops-recipes" class="hidden">
+        <h3>Menu recipes &amp; automatic stock usage</h3>
+        <p class="ops-note">Map each menu item to its stock ingredients and the quantity used per portion. Use the same unit as inventory (for example, kg with kg). Ingredients are deducted when an order is marked Completed. Missing recipes are not auto-deducted, and an order will not complete if configured stock is insufficient.</p>
+        <div id="ops-recipe-warning" class="app-message info"></div>
+        <form id="ops-recipe-form" class="ops-form">
+          <label>Menu item
+            <select name="menu_item_id" id="ops-recipe-menu" required></select>
+          </label>
+          <label>Stock ingredient
+            <select name="inventory_item_id" id="ops-recipe-inventory" required></select>
+          </label>
+          <label>Quantity used per portion
+            <input name="quantity_per_item" type="number" min="0.001" step="0.001" required>
+          </label>
+          <button class="btn btn-primary" type="submit">Add / update ingredient</button>
+        </form>
+        <div id="ops-recipes-list" class="ops-table-wrap"></div>
+      </section>
+
       <section id="ops-reports" class="hidden">
         <h3>Sales and expense summary</h3>
         <p class="ops-note">Choose a date range to review completed sales, recorded expenses and cash payouts. This is not net profit because ingredient use, payroll and other unrecorded costs may be missing.</p>
@@ -449,7 +469,7 @@
         tab.classList.toggle("active", tab === btn);
       });
 
-      ["inventory", "suppliers", "staff", "expenses", "shifts", "purchases", "payouts", "attendance", "reports"].forEach(name => {
+      ["inventory", "suppliers", "staff", "expenses", "shifts", "purchases", "payouts", "attendance", "recipes", "reports"].forEach(name => {
         $("#ops-" + name).classList.toggle("hidden", name !== btn.dataset.opstab);
       });
 
@@ -457,6 +477,7 @@
       if (btn.dataset.opstab === "purchases") loadPurchases();
       if (btn.dataset.opstab === "payouts") loadCashPayouts();
       if (btn.dataset.opstab === "attendance") loadAttendance();
+      if (btn.dataset.opstab === "recipes") loadRecipes();
     });
 
     $("#ops-item-form").addEventListener("submit", addInventoryItem);
@@ -468,6 +489,7 @@
     $("#ops-purchase-form").addEventListener("submit", createPurchaseOrder);
     $("#ops-payout-form").addEventListener("submit", addCashPayout);
     $("#ops-attendance-form").addEventListener("submit", clockIn);
+    $("#ops-recipe-form").addEventListener("submit", saveRecipe);
     $("#ops-report-form").addEventListener("submit", event => {
       event.preventDefault();
       loadReports().catch(showError);
@@ -535,7 +557,7 @@
         loadExpenses(),
         loadShifts()
       ]);
-      await Promise.all([loadPurchases(), loadCashPayouts(), loadAttendance()]);
+      await Promise.all([loadPurchases(), loadCashPayouts(), loadAttendance(), loadRecipes()]);
 
       loaded = true;
       message("Operations data loaded.");
@@ -1144,6 +1166,78 @@
       form.elements.notes.value="";
       message("Staff clock-in recorded.");
       await loadAttendance();
+    }catch(error){showError(error);}
+  }
+
+  async function loadRecipes() {
+    const [menuResult, inventoryResult, recipesResult] = await Promise.all([
+      db.from("menu_items").select("id,name").order("name"),
+      db.from("inventory_items").select("id,name,unit,quantity").eq("is_active",true).order("name"),
+      db.from("menu_item_recipes").select("*,menu_items(name),inventory_items(name,unit)")
+        .order("created_at",{ascending:false})
+    ]);
+    if(menuResult.error) throw menuResult.error;
+    if(inventoryResult.error) throw inventoryResult.error;
+    if(recipesResult.error) throw recipesResult.error;
+
+    const menus=menuResult.data||[];
+    const inventory=inventoryResult.data||[];
+    const recipes=recipesResult.data||[];
+    $("#ops-recipe-menu").innerHTML=menus.map(item=>'<option value="'+esc(item.id)+'">'+esc(item.name)+'</option>').join("")||'<option value="">Add menu items first</option>';
+    $("#ops-recipe-inventory").innerHTML=inventory.map(item=>'<option value="'+esc(item.id)+'">'+esc(item.name)+' ('+esc(item.unit)+')</option>').join("")||'<option value="">Add stock items first</option>';
+
+    const configured=new Set(recipes.map(recipe=>recipe.menu_item_id));
+    const missing=menus.filter(item=>!configured.has(item.id));
+    const warning=$("#ops-recipe-warning");
+    warning.textContent=missing.length
+      ? missing.length+' menu item(s) have no recipe; stock will not be deducted for those items until at least one ingredient is mapped: '+missing.map(item=>item.name).join(", ")
+      : 'All menu items have at least one ingredient mapping.';
+    warning.className=missing.length?'app-message info':'app-message info';
+
+    $("#ops-recipes-list").innerHTML=table(
+      ["Menu item","Ingredient","Quantity per portion","Current stock","Action"],
+      recipes.map(recipe=>[
+        recipe.menu_items?.name||"Menu item",
+        (recipe.inventory_items?.name||"Stock item")+' ('+(recipe.inventory_items?.unit||"")+')',
+        recipe.quantity_per_item,
+        inventory.find(item=>item.id===recipe.inventory_item_id)?.quantity ?? "—",
+        {kind:"html",value:'<button class="btn btn-light" data-delete-recipe="'+esc(recipe.id)+'">Remove</button>'}
+      ])
+    );
+    $("#ops-recipes-list").querySelectorAll("[data-delete-recipe]").forEach(button=>{
+      button.addEventListener("click",async()=>{
+        if(!confirm("Remove this recipe ingredient mapping? Past stock movement history will remain unchanged.")) return;
+        button.disabled=true;
+        try{
+          const {error}=await db.from("menu_item_recipes").delete().eq("id",button.dataset.deleteRecipe);
+          if(error) throw error;
+          message("Recipe ingredient removed.");
+          await loadRecipes();
+        }catch(error){showError(error);button.disabled=false;}
+      });
+    });
+  }
+
+  async function saveRecipe(event) {
+    event.preventDefault();
+    const form=event.currentTarget;
+    const data=new FormData(form);
+    const amount=Number(data.get("quantity_per_item"));
+    if(!data.get("menu_item_id")||!data.get("inventory_item_id")||!Number.isFinite(amount)||amount<=0){
+      message("Choose a menu item and ingredient, with a positive quantity.",true);
+      return;
+    }
+    try{
+      const {error}=await db.from("menu_item_recipes").upsert({
+        menu_item_id:String(data.get("menu_item_id")),
+        inventory_item_id:String(data.get("inventory_item_id")),
+        quantity_per_item:amount,
+        updated_at:new Date().toISOString()
+      },{onConflict:"menu_item_id,inventory_item_id"});
+      if(error) throw error;
+      form.elements.quantity_per_item.value="";
+      message("Recipe ingredient saved.");
+      await loadRecipes();
     }catch(error){showError(error);}
   }
 
