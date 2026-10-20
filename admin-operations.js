@@ -1121,9 +1121,12 @@
     ]);
     if(staffResult.error) throw staffResult.error;
     if(attendanceResult.error) throw attendanceResult.error;
+    const openStaffIds=new Set((attendanceResult.data||[]).filter(record=>!record.check_out_at).map(record=>record.staff_id));
+    const eligibleStaff=(staffResult.data||[]).filter(person=>!openStaffIds.has(person.id));
     const select=$("#ops-attendance-staff");
-    if(select) select.innerHTML=(staffResult.data||[]).map(person=>'<option value="'+esc(person.id)+'">'+esc(person.full_name)+'</option>').join("")||'<option value="">Add staff first</option>';
-    $("#ops-attendance-form").querySelector('button[type="submit"]').disabled=!(staffResult.data||[]).length;
+    if(select) select.innerHTML=eligibleStaff.map(person=>'<option value="'+esc(person.id)+'">'+esc(person.full_name)+'</option>').join("")||
+      '<option value="">'+((staffResult.data||[]).length?'All staff are currently clocked in':'Add staff first')+'</option>';
+    $("#ops-attendance-form").querySelector('button[type="submit"]').disabled=!eligibleStaff.length;
     $("#ops-attendance-list").innerHTML=table(
       ["Work date","Staff","Role","Clock in","Clock out","Hours","Action"],
       (attendanceResult.data||[]).map(record=>{
