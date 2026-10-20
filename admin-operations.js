@@ -1117,7 +1117,7 @@
     const date=localDateString();
     const [staffResult,attendanceResult]=await Promise.all([
       db.from("staff_profiles").select("id,full_name").eq("is_active",true).order("full_name"),
-      db.from("staff_attendance").select("*,staff_profiles(full_name,role)").eq("work_date",date).order("check_in_at",{ascending:false}).limit(100)
+      db.from("staff_attendance").select("*,staff_profiles(full_name,role)").or("work_date.eq."+date+",check_out_at.is.null").order("check_in_at",{ascending:false}).limit(100)
     ]);
     if(staffResult.error) throw staffResult.error;
     if(attendanceResult.error) throw attendanceResult.error;
@@ -1125,12 +1125,12 @@
     if(select) select.innerHTML=(staffResult.data||[]).map(person=>'<option value="'+esc(person.id)+'">'+esc(person.full_name)+'</option>').join("")||'<option value="">Add staff first</option>';
     $("#ops-attendance-form").querySelector('button[type="submit"]').disabled=!(staffResult.data||[]).length;
     $("#ops-attendance-list").innerHTML=table(
-      ["Staff","Role","Clock in","Clock out","Hours","Action"],
+      ["Work date","Staff","Role","Clock in","Clock out","Hours","Action"],
       (attendanceResult.data||[]).map(record=>{
         const elapsed=((record.check_out_at?new Date(record.check_out_at):new Date())-new Date(record.check_in_at))/3600000;
         const hours=Math.max(0,elapsed);
         const action=record.check_out_at?"Finished":{kind:"html",value:'<button class="btn btn-light" data-clock-out="'+esc(record.id)+'">Clock out</button>'};
-        return [record.staff_profiles?.full_name||"Staff",record.staff_profiles?.role||"—",
+        return [record.work_date,record.staff_profiles?.full_name||"Staff",record.staff_profiles?.role||"—",
           new Date(record.check_in_at).toLocaleTimeString(),record.check_out_at?new Date(record.check_out_at).toLocaleTimeString():"On duty",
           hours.toFixed(2),action];
       })
