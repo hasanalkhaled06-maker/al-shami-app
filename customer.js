@@ -23,6 +23,128 @@
   const checkoutForm = $("#checkout-form");
   const orderButton = $("#place-order");
 
+
+  let authSession = null;
+  let authPhone = "";
+
+  function normalizePhone(value) {
+    let phone = String(value || "").trim().replace(/[\\s().-]/g, "");
+    if (phone.startsWith("00")) phone = "+" + phone.slice(2);
+    if (phone.startsWith("0")) phone = "+233" + phone.slice(1);
+    if (/^\\d{9}$/.test(phone)) phone = "+233" + phone;
+    if (!/^\\+[1-9]\\d{7,14}$/.test(phone)) {
+      throw new Error("Enter a valid phone number with country code, e.g. +233241234567.");
+    }
+    return phone;
+  }
+
+  function authMessage(message, error = false) {
+    const node = $("#auth-message");
+    if (!node) return;
+    node.textContent = message || "";
+    node.className = "status-message" + (error ? " error" : " success");
+  }
+
+  function applyAuthState(session) {
+    authSession = session || null;
+    const authGate = $("#customer-auth");
+    const account = $("#customer-account");
+    const signedIn = Boolean(authSession?.user);
+    if (authGate) authGate.hidden = signedIn;
+    if (account) account.hidden = !signedIn;
+    document.body.classList.toggle("auth-required", !signedIn);
+    if (signedIn) {
+      const user = authSession.user;
+      const meta = user.user_metadata || {};
+      const phone = user.phone || authPhone || "";
+      const label = $("#customer-account-label");
+      if (label) label.textContent = "Signed in: " + phone;
+      if (checkoutForm?.elements?.customer_phone && phone) {
+        checkoutForm.elements.customer_phone.value = phone;
+      }
+      if (checkoutForm?.elements?.customer_name && meta.full_name && !checkoutForm.elements.customer_name.value) {
+        checkoutForm.elements.customer_name.value = meta.full_name;
+      }
+      authMessage("");
+    }
+  }
+
+  async function initializeCustomerAuth() {
+    if (!db) {
+      authMessage("Sign-in is unavailable because the app configuration is missing.", true);
+      return;
+    }
+    try {
+      const { data, error } = await db.auth.getSession();
+      if (error) throw error;
+      applyAuthState(data.session);
+      db.auth.onAuthStateChange((_event, session) => applyAuthState(session));
+    } catch (error) {
+      console.error("Customer auth initialization failed:", error);
+      authMessage(error.message || "Could not check your sign-in status.", true);
+    }
+  }
+
+  $("#auth-send-code")?.addEventListener("click", async () => {
+    const button = $("#auth-send-code");
+    try {
+      authPhone = normalizePhone($("#auth-phone")?.value);
+      button.disabled = true;
+      authMessage("Sending SMS verification code…");
+      const { error } = await db.auth.signInWithOtp({
+        phone: authPhone,
+        options: { shouldCreateUser: true }
+      });
+      if (error) throw error;
+      $("#auth-code-area").hidden = false;
+      authMessage("Code sent. Check your SMS messages.");
+      $("#auth-code")?.focus();
+    } catch (error) {
+      authMessage(error.message || "Could not send the SMS code. Please try again.", true);
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $("#auth-verify-code")?.addEventListener("click", async () => {
+    const button = $("#auth-verify-code");
+    const token = String($("#auth-code")?.value || "").trim();
+    if (!token) {
+      authMessage("Enter the SMS verification code.", true);
+      return;
+    }
+    try {
+      button.disabled = true;
+      authMessage("Verifying code…");
+      const { data, error } = await db.auth.verifyOtp({
+        phone: authPhone || normalizePhone($("#auth-phone")?.value),
+        token,
+        type: "sms"
+      });
+      if (error) throw error;
+      applyAuthState(data.session);
+      authMessage("Phone verified. Welcome to AL SHAMI!");
+    } catch (error) {
+      authMessage(error.message || "The code could not be verified.", true);
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $("#customer-sign-out")?.addEventListener("click", async () => {
+    try {
+      const { error } = await db.auth.signOut();
+      if (error) throw error;
+      applyAuthState(null);
+      $("#auth-code-area").hidden = true;
+      $("#auth-code").value = "";
+      authMessage("You have signed out.");
+    } catch (error) {
+      authMessage(error.message || "Could not sign out.", true);
+    }
+  });
+
+
   let products = [];
   let offers = [];
   let cart = {};
@@ -500,6 +622,13 @@
         showCheckoutMessage(tr("setupError"), true);
         return;
       }
+      if (!authSession?.user) {
+        $("#customer-auth").hidden = false;
+        document.body.classList.add("auth-required");
+        authMessage("Please verify your phone number to place an order.");
+        $("#auth-phone")?.focus();
+        return;
+      }
 
       const rows = getCartRows();
 
@@ -609,5 +738,6 @@
 
   $("#address-field")?.classList.remove("hidden");
 
+  initializeCustomerAuth();
   loadMenuAndSettings();
 })();
