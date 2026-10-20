@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#8d1723">
+  <title>AL SHAMI RESTAURANT & FAST FOOD — Order Online</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="brand-mark">AL<br>SHAMI</div>
+      <div><p class="eyebrow">DARKUMAN CIRCLE STATION · ACCRA</p><h1>AL SHAMI <span>RESTAURANT & FAST FOOD</span></h1><p class="hero-sub" data-i18n="hero">Fresh favourites, made for you.</p></div>
+      <select id="language" aria-label="Language"><option value="en">English</option><option value="ar">العربية</option><option value="tw">Twi</option></select>
+    </div>
+  </header>
+  <main class="container">
+    <section class="notice"><strong data-i18n="orderNote">Order online</strong><span data-i18n="orderNote2">Your order goes directly to our restaurant ordering system.</span></section>
+    <div class="section-heading"><div><p class="eyebrow">OUR MENU</p><h2 data-i18n="menu">Menu</h2></div><input id="search" type="search" placeholder="Search menu…" aria-label="Search menu"></div>
+    <div id="categories" class="chips"></div>
+    <div id="menu" class="menu-grid"><div class="loading">Loading menu…</div></div>
+    <section class="checkout-section">
+      <div class="section-heading"><div><p class="eyebrow">YOUR ORDER</p><h2 data-i18n="yourOrder">Your order</h2></div><button id="clear-cart" class="btn btn-light" type="button">Clear</button></div>
+      <div id="cart-items" class="cart-items"><p class="muted">Your basket is empty.</p></div>
+      <div class="cart-total"><span data-i18n="total">Total</span><strong id="cart-total">GH₵ 0.00</strong></div>
+      <form id="checkout-form" class="checkout-form">
+        <div class="form-grid">
+          <label><span data-i18n="name">Your name</span><input name="customer_name" required maxlength="100" autocomplete="name"></label>
+          <label><span data-i18n="phone">Phone number</span><input name="customer_phone" required maxlength="30" autocomplete="tel" placeholder="e.g. 024…"></label>
+          <label><span data-i18n="orderType">Order type</span><select name="order_type" id="order-type"><option value="delivery">Delivery</option><option value="pickup">Pickup</option></select></label>
+          <label id="address-field"><span data-i18n="address">Delivery address / landmark</span><input name="delivery_address" maxlength="250" placeholder="House, street, landmark"></label>
+          <label class="full"><span data-i18n="notes">Notes (optional)</span><textarea name="notes" rows="2" maxlength="500" placeholder="No onions, call on arrival…"></textarea></label>
+        </div>
+        <p class="muted small">Payment: Cash on delivery or cash at pickup.</p>
+        <button id="place-order" class="btn btn-primary btn-wide" type="submit">Place order</button>
+        <p id="checkout-message" role="status" class="status-message"></p>
+      </form>
+    </section>
+  </main>
+  <footer><strong>AL SHAMI RESTAURANT & FAST FOOD</strong><span>Darkuman Circle Station, Accra, Ghana</span><a href="admin.html">Staff / Admin</a></footer>
+  <script src="assets/config.js"></script><script src="assets/customer.js"></script>
+</body></html>
