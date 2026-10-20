@@ -1,24 +1,72 @@
-# AL SHAMI Operations Upgrade (v2)
+# AL SHAMI Operations Upgrade
 
-This bundle is an **add-on**, not a replacement for your existing restaurant site.
+This upgrade adds restaurant operations features to the existing AL SHAMI application.
 
-## Included
-- `supabase-migration-v2.sql`: creates new tables for inventory, suppliers, inventory movements, expenses, staff profiles, cash shifts, and audit records. It also adds admin-only RPCs for stock movements, expenses, and shift closing.
-- `admin-operations.js`: adds an Operations tab to the current admin dashboard for inventory, suppliers, expenses, cash shifts, and basic daily figures.
+## Files
 
-## Before using it
-1. Back up the Supabase project and the GitHub repository.
-2. Review `supabase-migration-v2.sql`. It creates new tables and functions and does not drop existing tables, but SQL changes are still consequential.
-3. Run the migration manually in Supabase SQL Editor only when you choose to.
-4. Upload `admin-operations.js` to the same root directory as `admin.html`.
-5. In `admin.html`, add this line immediately after the existing `<script src="admin.js"></script>`:
-   `<script src="admin-operations.js"></script>`
-6. Commit changes and test on a non-production copy first if available.
+- admin-operations.js
+  Adds the Operations dashboard for inventory, suppliers, expenses,
+  cash shifts and basic daily reports.
 
-## Important limitations
-- This module uses the existing `is_current_user_admin()` authorization check. It does not yet implement separate per-role permissions even though it creates staff profile records.
-- Supplier records are managed, but purchase-order workflows are not yet implemented.
-- Inventory is manual: recording a sale does not automatically consume ingredients. Recipe/ingredient mapping is a later phase.
-- The daily report shows completed-order sales minus recorded expenses; this is not full net profit.
-- Payment remains cash/manual. No online payment gateway is added.
-- The module does not change existing customer ordering code or existing order/menu records.
+- supabase-migration-v2.sql
+  Creates new database tables and functions for the operations module.
+
+- README-UPGRADE.md
+  Contains setup and safety instructions.
+
+## Connect the Operations module
+
+Open admin.html and locate the script tags at the bottom of the file.
+
+Find this line:
+
+<script src="admin.js"></script>
+
+Add this line immediately after it:
+
+<script src="admin-operations.js"></script>
+
+Keep the existing config.js and admin.js script tags.
+
+Save and commit the change.
+
+## Database setup
+
+1. Back up the Supabase project before making database changes.
+2. Review supabase-migration-v2.sql.
+3. Test the migration on a separate test project when possible.
+4. Run the migration manually in the Supabase SQL Editor only after review.
+5. Sign in using an authorised restaurant admin account.
+
+Do not put the Supabase service-role key in browser JavaScript.
+
+## Current features
+
+- Existing customer menu and ordering system remains separate.
+- Inventory quantities and stock movements can be recorded manually.
+- Suppliers can be recorded.
+- Expenses can be recorded.
+- Cash shifts can be opened and closed.
+- Basic daily sales and expense figures are displayed.
+- Payments remain manual/cash; no online payment gateway is included.
+
+## Limitations
+
+- Ingredient usage is not automatically deducted when an order is sold.
+- Staff role records exist, but separate permissions for each role are not implemented.
+- Purchase orders are not fully implemented.
+- Cash expected at shift closing is not yet calculated from cash sales and payouts.
+- The daily summary is not a complete net-profit calculation.
+
+## Testing
+
+Before using this system for daily restaurant operations:
+
+1. Sign in to the admin dashboard.
+2. Confirm the existing orders and menu still load.
+3. Open the Operations tab.
+4. Test inventory and expenses with sample data.
+5. Verify database permissions and errors.
+6. Confirm existing customer orders continue to work.
+
+Do not rely on the new module for live accounting until these tests pass.
