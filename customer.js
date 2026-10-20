@@ -1,10 +1,11 @@
 
 (() => {
   const cfg = window.AL_SHAMI_CONFIG || {};
+
   const ready =
     cfg.SUPABASE_URL?.startsWith("https://") &&
-    !cfg.SUPABASE_URL.includes("PASTE_") &&
     cfg.SUPABASE_ANON_KEY &&
+    !cfg.SUPABASE_URL.includes("PASTE_") &&
     !cfg.SUPABASE_ANON_KEY.includes("PASTE_");
 
   const db = ready
@@ -14,7 +15,7 @@
       )
     : null;
 
-  const $ = s => document.querySelector(s);
+  const $ = selector => document.querySelector(selector);
 
   let products = [];
   let offers = [];
@@ -97,22 +98,32 @@
   };
 
   const money = n => "GH₵ " + Number(n || 0).toFixed(2);
-  const tr = k => (copy[lang] || copy.en)[k] || k;
+  const tr = key => (copy[lang] || copy.en)[key] || key;
 
-  function esc(s) {
-    return String(s ?? "").replace(/[&<>"']/g, c => ({
+  function esc(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
       '"': "&quot;",
       "'": "&#39;"
-    })[c]);
+    })[char]);
   }
 
   function msg(text, error = false) {
     const el = $("#checkout-message");
+    if (!el) return;
+
     el.textContent = text;
     el.className = "status-message " + (error ? "error" : "success");
+  }
+
+  function showSuccess(orderNumber) {
+    if (typeof window.AL_SHAMI_SHOW_SUCCESS === "function") {
+      window.AL_SHAMI_SHOW_SUCCESS(orderNumber);
+    } else {
+      msg(`${tr("sent")} ${orderNumber ? "Order #" + orderNumber : ""}`);
+    }
   }
 
   function setLang() {
@@ -125,6 +136,7 @@
 
     $("#search").placeholder = tr("search");
     $("#place-order").textContent = tr("send");
+
     renderCategories();
     renderMenu();
     renderCart();
@@ -136,14 +148,16 @@
       ...new Set(products.map(p => p.category).filter(Boolean))
     ];
 
-    $("#categories").innerHTML = cats.map(c =>
-      `<button class="chip ${category === c ? "active" : ""}"
-        data-cat="${esc(c)}">${c === "All" ? tr("category") : esc(c)}</button>`
-    ).join("");
+    $("#categories").innerHTML = cats.map(c => `
+      <button class="chip ${category === c ? "active" : ""}"
+        data-cat="${esc(c)}">
+        ${c === "All" ? tr("category") : esc(c)}
+      </button>
+    `).join("");
 
-    $("#categories").querySelectorAll("button").forEach(b => {
-      b.onclick = () => {
-        category = b.dataset.cat;
+    $("#categories").querySelectorAll("button").forEach(button => {
+      button.onclick = () => {
+        category = button.dataset.cat;
         renderCategories();
         renderMenu();
       };
@@ -155,7 +169,7 @@
 
     const list = products.filter(p =>
       (category === "All" || p.category === category) &&
-      `${p.name} ${p.description || ""} ${p.category}`
+      `${p.name} ${p.description || ""} ${p.category || ""}`
         .toLowerCase().includes(q)
     );
 
@@ -182,22 +196,24 @@
       `).join("")
       : `<p class="muted">${tr("noItems")}</p>`;
 
-    $("#menu").querySelectorAll("[data-add]").forEach(b => {
-      b.onclick = () => {
-        cart[b.dataset.add] = (cart[b.dataset.add] || 0) + 1;
+    $("#menu").querySelectorAll("[data-add]").forEach(button => {
+      button.onclick = () => {
+        const id = button.dataset.add;
+        cart[id] = (cart[id] || 0) + 1;
         renderCart();
       };
     });
   }
 
   function renderCart() {
-    const rows = Object.entries(cart).filter(([id, q]) =>
-      q > 0 && products.some(p => p.id === id)
+    const rows = Object.entries(cart).filter(([id, quantity]) =>
+      quantity > 0 && products.some(p => p.id === id)
     );
 
     $("#cart-items").innerHTML = rows.length
-      ? rows.map(([id, q]) => {
-          const p = products.find(x => x.id === id);
+      ? rows.map(([id, quantity]) => {
+          const p = products.find(item => item.id === id);
+
           return `
             <div class="cart-row">
               <div class="cart-name">
@@ -206,33 +222,40 @@
               </div>
               <div class="qty-controls">
                 <button type="button" data-dec="${esc(id)}">−</button>
-                <strong>${q}</strong>
+                <strong>${quantity}</strong>
                 <button type="button" data-inc="${esc(id)}">+</button>
               </div>
-              <strong>${money(Number(p.price) * q)}</strong>
-            </div>`;
+              <strong>${money(Number(p.price) * quantity)}</strong>
+            </div>
+          `;
         }).join("")
       : `<p class="muted">${tr("empty")}</p>`;
 
-    let total = rows.reduce((sum, [id, q]) => {
-      const p = products.find(x => x.id === id);
-      return sum + Number(p.price) * q;
+    let total = rows.reduce((sum, [id, quantity]) => {
+      const p = products.find(item => item.id === id);
+      return sum + Number(p.price) * quantity;
     }, 0);
 
-    if ($("#order-type").value === "delivery") total += fee;
+    if ($("#order-type").value === "delivery") {
+      total += fee;
+    }
+
     $("#cart-total").textContent = money(total);
 
-    $("#cart-items").querySelectorAll("[data-dec]").forEach(b => {
-      b.onclick = () => {
-        cart[b.dataset.dec]--;
-        if (cart[b.dataset.dec] <= 0) delete cart[b.dataset.dec];
+    $("#cart-items").querySelectorAll("[data-dec]").forEach(button => {
+      button.onclick = () => {
+        const id = button.dataset.dec;
+        cart[id]--;
+
+        if (cart[id] <= 0) delete cart[id];
+
         renderCart();
       };
     });
 
-    $("#cart-items").querySelectorAll("[data-inc]").forEach(b => {
-      b.onclick = () => {
-        cart[b.dataset.inc]++;
+    $("#cart-items").querySelectorAll("[data-inc]").forEach(button => {
+      button.onclick = () => {
+        cart[button.dataset.inc]++;
         renderCart();
       };
     });
@@ -242,23 +265,32 @@
     if (!db) {
       $("#menu").innerHTML =
         '<div class="notice"><strong>Setup required</strong>' +
-        '<span>Connect this site to Supabase in assets/config.js.</span></div>';
+        '<span>Check the Supabase configuration in config.js.</span></div>';
       return;
     }
 
     try {
       const [menuResult, offerResult, settingsResult] = await Promise.all([
-        db.from("menu_items").select("*")
-          .eq("is_available", true).order("sort_order").order("name"),
-        db.from("offers").select("*")
-          .eq("is_active", true).order("created_at", { ascending: false }),
-        db.from("restaurant_settings").select("*")
-          .eq("id", 1).maybeSingle()
+        db.from("menu_items")
+          .select("*")
+          .eq("is_available", true)
+          .order("sort_order")
+          .order("name"),
+
+        db.from("offers")
+          .select("*")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false }),
+
+        db.from("restaurant_settings")
+          .select("*")
+          .eq("id", 1)
+          .maybeSingle()
       ]);
 
       if (menuResult.error) throw menuResult.error;
-      if (settingsResult.error) throw settingsResult.error;
       if (offerResult.error) throw offerResult.error;
+      if (settingsResult.error) throw settingsResult.error;
 
       products = menuResult.data || [];
       offers = offerResult.data || [];
@@ -272,17 +304,17 @@
       if (offers.length) {
         const section = document.createElement("section");
         section.className = "notice";
+
         section.innerHTML =
           `<strong>${tr("offer")}</strong><span>${
-            offers.map(x =>
-              esc(x.title) + (x.details ? " — " + esc(x.details) : "")
+            offers.map(offer =>
+              esc(offer.title) +
+              (offer.details ? " — " + esc(offer.details) : "")
             ).join(" · ")
           }</span>`;
 
-        document.querySelector(".container").insertBefore(
-          section,
-          document.querySelector(".section-heading")
-        );
+        const heading = document.querySelector(".section-heading");
+        document.querySelector(".container").insertBefore(section, heading);
       }
     } catch (error) {
       $("#menu").innerHTML =
@@ -291,8 +323,8 @@
     }
   }
 
-  $("#language").onchange = e => {
-    lang = e.target.value;
+  $("#language").onchange = event => {
+    lang = event.target.value;
     setLang();
   };
 
@@ -300,8 +332,10 @@
 
   $("#order-type").onchange = () => {
     const pickup = $("#order-type").value === "pickup";
+
     $("#address-field").classList.toggle("hidden", pickup);
     $("#checkout-form").elements.delivery_address.required = !pickup;
+
     renderCart();
   };
 
@@ -311,21 +345,22 @@
     msg("");
   };
 
-  $("#checkout-form").addEventListener("submit", async e => {
-    e.preventDefault();
+  $("#checkout-form").addEventListener("submit", async event => {
+    event.preventDefault();
 
     if (!db) {
       msg("Setup required: connect Supabase first.", true);
       return;
     }
 
-    const rows = Object.entries(cart).filter(([id, q]) => q > 0);
+    const rows = Object.entries(cart).filter(([, quantity]) => quantity > 0);
+
     if (!rows.length) {
       msg("Add at least one item to your order.", true);
       return;
     }
 
-    const form = new FormData(e.target);
+    const form = new FormData(event.target);
     const type = form.get("order_type");
     const address = String(form.get("delivery_address") || "").trim();
 
@@ -334,9 +369,9 @@
       return;
     }
 
-    const subtotal = rows.reduce((sum, [id, q]) => {
+    const subtotal = rows.reduce((sum, [id, quantity]) => {
       const product = products.find(p => p.id === id);
-      return sum + Number(product?.price || 0) * q;
+      return sum + Number(product?.price || 0) * quantity;
     }, 0);
 
     if (subtotal < minOrder) {
@@ -345,6 +380,7 @@
     }
 
     const button = $("#place-order");
+
     if (button.disabled) return;
 
     button.disabled = true;
@@ -367,21 +403,22 @@
 
       const result = Array.isArray(data) ? data[0] : data;
       const orderNumber =
-        result?.order_number ?? result?.id ?? "received";
+        result && typeof result === "object"
+          ? (result.order_number ?? result.id ?? "received")
+          : (result ?? "received");
 
       cart = {};
       renderCart();
-      e.target.reset();
+
+      event.target.reset();
       $("#order-type").value = "delivery";
       $("#address-field").classList.remove("hidden");
-      e.target.elements.delivery_address.required = true;
-      renderCart();
+      event.target.elements.delivery_address.required = true;
 
-      msg(`${tr("sent")} Order #${String(orderNumber)}`);
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth"
-      });
+      renderCart();
+      msg("");
+
+      showSuccess(orderNumber);
     } catch (error) {
       msg(
         error.message || "Could not send order. Please try again.",
@@ -395,5 +432,6 @@
 
   $("#address-field").classList.remove("hidden");
   $("#checkout-form").elements.delivery_address.required = true;
+
   load();
 })();
