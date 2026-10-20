@@ -9,7 +9,7 @@ create table if not exists public.admin_users (
 create or replace function public.is_current_user_admin()
 returns boolean language sql stable security definer set search_path=public
 as $$ select exists(select 1 from public.admin_users where user_id=auth.uid()); $$;
-revoke all on function public.is_current_user_admin() from public;
+revoke all on function public.is_current_user_admin() from public, anon;
 grant execute on function public.is_current_user_admin() to authenticated;
 
 create table if not exists public.menu_items (
@@ -69,6 +69,7 @@ create table if not exists public.order_items (
 create index if not exists orders_created_at_idx on public.orders(created_at desc);
 create index if not exists orders_status_idx on public.orders(status);
 create index if not exists order_items_order_id_idx on public.order_items(order_id);
+create index if not exists order_items_menu_item_id_idx on public.order_items(menu_item_id);
 
 alter table public.admin_users enable row level security;
 alter table public.menu_items enable row level security;
