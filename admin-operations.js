@@ -157,6 +157,7 @@
       <div class="admin-tabs" id="ops-subtabs">
         <button class="tab active" data-opstab="inventory" type="button">Inventory</button>
         <button class="tab" data-opstab="suppliers" type="button">Suppliers</button>
+        <button class="tab" data-opstab="staff" type="button">Staff</button>
         <button class="tab" data-opstab="expenses" type="button">Expenses</button>
         <button class="tab" data-opstab="shifts" type="button">Cash shifts</button>
         <button class="tab" data-opstab="reports" type="button">Reports</button>
@@ -182,6 +183,11 @@
           </label>
           <label>Unit cost (GH₵)
             <input name="unit_cost" type="number" min="0" step="0.01" required value="0">
+          </label>
+          <label>Supplier (optional)
+            <select name="supplier_id" id="ops-item-supplier">
+              <option value="">No supplier selected</option>
+            </select>
           </label>
           <label>Notes
             <input name="notes" maxlength="250">
@@ -217,6 +223,8 @@
         </form>
 
         <div id="ops-inventory-list" class="ops-table-wrap"></div>
+        <h3>Recent stock movements</h3>
+        <div id="ops-movements-list" class="ops-table-wrap"></div>
       </section>
 
       <section id="ops-suppliers" class="hidden">
@@ -239,6 +247,30 @@
         </form>
 
         <div id="ops-suppliers-list" class="ops-table-wrap"></div>
+      </section>
+
+      <section id="ops-staff" class="hidden">
+        <h3>Staff roster</h3>
+        <p class="ops-note">This is a staff contact/role register. It does not create login accounts or change account permissions.</p>
+        <form id="ops-staff-form" class="ops-form">
+          <label>Full name
+            <input name="full_name" required maxlength="120">
+          </label>
+          <label>Phone
+            <input name="phone" maxlength="40">
+          </label>
+          <label>Role
+            <select name="role">
+              <option value="staff">Staff</option>
+              <option value="manager">Manager</option>
+              <option value="cashier">Cashier</option>
+              <option value="kitchen">Kitchen</option>
+              <option value="owner">Owner</option>
+            </select>
+          </label>
+          <button class="btn btn-primary" type="submit">Add staff record</button>
+        </form>
+        <div id="ops-staff-list" class="ops-table-wrap"></div>
       </section>
 
       <section id="ops-expenses" class="hidden">
@@ -325,7 +357,7 @@
         tab.classList.toggle("active", tab === btn);
       });
 
-      ["inventory", "suppliers", "expenses", "shifts", "reports"].forEach(name => {
+      ["inventory", "suppliers", "staff", "expenses", "shifts", "reports"].forEach(name => {
         $("#ops-" + name).classList.toggle("hidden", name !== btn.dataset.opstab);
       });
 
@@ -337,6 +369,7 @@
     $("#ops-item-form").addEventListener("submit", addInventoryItem);
     $("#ops-movement-form").addEventListener("submit", saveMovement);
     $("#ops-supplier-form").addEventListener("submit", addSupplier);
+    $("#ops-staff-form").addEventListener("submit", addStaff);
     $("#ops-expense-form").addEventListener("submit", addExpense);
     $("#ops-shift-open-form").addEventListener("submit", openShift);
   }
@@ -395,7 +428,9 @@
 
       await Promise.all([
         loadInventory(),
+        loadMovements(),
         loadSuppliers(),
+        loadStaff(),
         loadExpenses(),
         loadShifts()
       ]);
@@ -410,7 +445,7 @@
   async function loadInventory() {
     const { data, error } = await db
       .from("inventory_items")
-      .select("*")
+      .select("*, suppliers(name)")
       .eq("is_active", true)
       .order("name");
 
@@ -432,13 +467,14 @@
       : '<option value="">Add an inventory item first</option>';
 
     $("#ops-inventory-list").innerHTML = table(
-      ["Item", "Quantity", "Reorder at", "Unit cost", "Stock value"],
+      ["Item", "Quantity", "Reorder at", "Unit cost", "Stock value", "Supplier"],
       items.map(item => [
         item.name,
         `${item.quantity} ${item.unit}`,
         item.reorder_level,
         money(item.unit_cost),
-        money(Number(item.quantity) * Number(item.unit_cost))
+        money(Number(item.quantity) * Number(item.unit_cost)),
+        item.suppliers?.name || "—"
       ])
     );
   }
@@ -459,6 +495,7 @@
           quantity: 0,
           reorder_level: Number(data.get("reorder_level")),
           unit_cost: Number(data.get("unit_cost")),
+          supplier_id: String(data.get("supplier_id") || "").trim() || null,
           notes: String(data.get("notes") || "").trim() || null
         })
         .select()
@@ -491,6 +528,7 @@
       form.elements.unit.value = "kg";
       message("Inventory item saved.");
       await loadInventory();
+      await loadMovements();
     } catch (error) {
       showError(error);
     }
@@ -532,9 +570,31 @@
       form.reset();
       message("Stock movement recorded.");
       await loadInventory();
+      await loadMovements();
     } catch (error) {
       showError(error);
     }
+  }
+
+  async function loadMovements() {
+    const { data, error } = await db
+      .from("inventory_movements")
+      .select("id,movement_type,quantity_change,unit_cost,reference,notes,created_at,inventory_items(name,unit)")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    $("#ops-movements-list").innerHTML = table(
+      ["Date", "Item", "Movement", "Quantity", "Unit cost", "Reference", "Notes"],
+      (data || []).map(row => [
+        new Date(row.created_at).toLocaleString(),
+        row.inventory_items?.name || "Unknown item",
+        row.movement_type,
+        `${row.quantity_change} ${row.inventory_items?.unit || ""}`,
+        money(row.unit_cost),
+        row.reference || "—",
+        row.notes || "—"
+      ])
+    );
   }
 
   async function loadSuppliers() {
@@ -555,6 +615,14 @@
         supplier.address || "—"
       ])
     );
+
+    const supplierSelect = $("#ops-item-supplier");
+    if (supplierSelect) {
+      supplierSelect.innerHTML = '<option value="">No supplier selected</option>' +
+        (data || []).map(supplier =>
+          '<option value="' + esc(supplier.id) + '">' + esc(supplier.name) + '</option>'
+        ).join("");
+    }
   }
 
   async function addSupplier(event) {
@@ -576,6 +644,44 @@
       form.reset();
       message("Supplier saved.");
       await loadSuppliers();
+      await loadInventory();
+    } catch (error) {
+      showError(error);
+    }
+  }
+
+  async function loadStaff() {
+    const { data, error } = await db
+      .from("staff_profiles")
+      .select("*")
+      .eq("is_active", true)
+      .order("full_name");
+    if (error) throw error;
+    $("#ops-staff-list").innerHTML = table(
+      ["Name", "Phone", "Role", "Added"],
+      (data || []).map(person => [
+        person.full_name,
+        person.phone || "—",
+        person.role,
+        new Date(person.created_at).toLocaleDateString()
+      ])
+    );
+  }
+
+  async function addStaff(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    try {
+      const { error } = await db.from("staff_profiles").insert({
+        full_name: String(data.get("full_name") || "").trim(),
+        phone: String(data.get("phone") || "").trim() || null,
+        role: String(data.get("role") || "staff")
+      });
+      if (error) throw error;
+      form.reset();
+      message("Staff record saved. This does not grant login access.");
+      await loadStaff();
     } catch (error) {
       showError(error);
     }
