@@ -349,7 +349,7 @@
             soundActivationHintShown = false;
             clearTimeout(audioActivationHintTimer);
             keepOrderAudioContextAwake();
-            if (!fromUserGesture && activeIncomingOrderId) void beep();
+            if (activeIncomingOrderId) void beep();
           }).catch(error => {
             console.debug("Order audio is waiting for browser interaction:", error);
             if (fromUserGesture) showAudioActivationHint();
