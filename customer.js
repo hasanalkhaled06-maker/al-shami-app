@@ -152,6 +152,39 @@
   let offers = [];
   let cart = {};
   let category = "All";
+  let sortMode = "default";
+  const CART_KEY = "alShamiCartV1";
+  const CUSTOMER_KEY = "alShamiCustomerV1";
+  function storageGet(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
+  function storageSet(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
+  function persistCart() { storageSet(CART_KEY, JSON.stringify(cart)); }
+  function restoreCart() {
+    try {
+      const saved = JSON.parse(storageGet(CART_KEY) || "{}");
+      if (saved && typeof saved === "object" && !Array.isArray(saved)) {
+        cart = Object.fromEntries(Object.entries(saved).filter(([id, qty]) => Number.isInteger(Number(qty)) && Number(qty) > 0 && Number(qty) <= 99).map(([id, qty]) => [id, Number(qty)]));
+      }
+    } catch (_) { cart = {}; }
+  }
+  function normalizeGhanaPhone(value) {
+    const digits = String(value || "").replace(/\\D/g, "");
+    let national = digits;
+    if (national.startsWith("00233")) national = national.slice(5);
+    else if (national.startsWith("233")) national = national.slice(3);
+    else if (national.startsWith("0")) national = national.slice(1);
+    if (!/^[0-9]{9}$/.test(national)) throw new Error(lang === "ar" ? "أدخل رقم غاني صحيح، مثال 0241234567." : "Enter a valid Ghana phone number, e.g. 0241234567.");
+    return "+233" + national;
+  }
+  function restoreCustomerDetails() {
+    try {
+      const saved = JSON.parse(storageGet(CUSTOMER_KEY) || "null");
+      if (!saved || saved.consent !== true) return;
+      if (checkoutForm?.elements?.customer_name) checkoutForm.elements.customer_name.value = saved.name || "";
+      if (checkoutForm?.elements?.customer_phone) checkoutForm.elements.customer_phone.value = saved.phone || "";
+      const consent = $("#remember-customer");
+      if (consent) consent.checked = true;
+    } catch (_) {}
+  }
   let lang = "en";
   let deliveryFee = 0;
   let minimumOrder = 0;
@@ -373,6 +406,9 @@
 
       return categoryMatches && searchText.includes(query);
     });
+    if (sortMode === "price-asc") visibleProducts.sort((a, b) => Number(a.price) - Number(b.price));
+    if (sortMode === "price-desc") visibleProducts.sort((a, b) => Number(b.price) - Number(a.price));
+    if (sortMode === "popular") visibleProducts.sort((a, b) => Number(b.popularity || b.order_count || 0) - Number(a.popularity || a.order_count || 0));
 
     menu.innerHTML = visibleProducts.length
       ? visibleProducts.map(product => `
@@ -409,7 +445,8 @@
           return;
         }
 
-        cart[id] = (cart[id] || 0) + 1;
+        cart[id] = Math.min(99, (cart[id] || 0) + 1);
+        persistCart();
         renderCart();
       });
     });
@@ -434,6 +471,10 @@
     if (!cartItems) return;
 
     const rows = getCartRows();
+    persistCart();
+    if (orderButton) orderButton.disabled = submitting || rows.length === 0;
+    const clearButton = $("#clear-cart");
+    if (clearButton) clearButton.disabled = submitting || rows.length === 0;
 
     cartItems.innerHTML = rows.length
       ? rows.map(([id, quantity]) => {
@@ -492,7 +533,7 @@
         cart[id] = Number(cart[id] || 0) - 1;
 
         if (cart[id] <= 0) delete cart[id];
-
+        persistCart();
         renderCart();
       });
     });
@@ -500,7 +541,8 @@
     cartItems.querySelectorAll("[data-inc]").forEach(button => {
       button.addEventListener("click", () => {
         const id = button.dataset.inc;
-        cart[id] = Number(cart[id] || 0) + 1;
+        cart[id] = Math.min(99, Number(cart[id] || 0) + 1);
+        persistCart();
         renderCart();
       });
     });
@@ -564,7 +606,13 @@
       if (settingsResult.error) throw settingsResult.error;
 
       products = menuResult.data || [];
-      offers = offerResult.data || [];
+      offers = (offerResult.data || []).filter(offer => {
+        const now = Date.now();
+        return (!offer.starts_at || new Date(offer.starts_at).getTime() <= now) &&
+          (!offer.ends_at || new Date(offer.ends_at).getTime() >= now);
+      });
+      cart = Object.fromEntries(Object.entries(cart).filter(([id]) => products.some(product => String(product.id) === String(id))));
+      persistCart();
       deliveryFee = Number(settingsResult.data?.delivery_fee || 0);
       minimumOrder = Number(settingsResult.data?.minimum_order || 0);
 
@@ -590,6 +638,17 @@
   });
 
   $("#search")?.addEventListener("input", renderMenu);
+  $("#menu-sort")?.addEventListener("change", event => {
+    sortMode = event.target.value || "default";
+    renderMenu();
+  });
+  $("#remember-customer")?.addEventListener("change", event => {
+    if (!event.target.checked) {
+      try { localStorage.removeItem(CUSTOMER_KEY); } catch (_) {}
+    } else {
+      showCheckoutMessage(lang === "ar" ? "سيتم حفظ الاسم والرقم على هذا الجهاز فقط." : "Your name and phone will be saved on this device only.");
+    }
+  });
 
   $("#order-type")?.addEventListener("change", () => {
     const isPickup = $("#order-type").value === "pickup";
@@ -604,9 +663,10 @@
   });
 
   $("#clear-cart")?.addEventListener("click", () => {
-    if (submitting) return;
-
+    if (submitting || !getCartRows().length) return;
+    if (!window.confirm(lang === "ar" ? "متأكد بدك تفضّي السلة كلها؟" : "Clear all items from your basket?")) return;
     cart = {};
+    persistCart();
     renderCart();
     showCheckoutMessage("");
   });
@@ -635,6 +695,19 @@
       }
 
       const formData = new FormData(formElement);
+      const customerName = String(formData.get("customer_name") || "").trim();
+      let normalizedPhone;
+      try { normalizedPhone = normalizeGhanaPhone(formData.get("customer_phone")); }
+      catch (phoneError) {
+        showCheckoutMessage(phoneError.message, true);
+        formElement.elements.customer_phone.focus();
+        return;
+      }
+      if (!customerName) {
+        showCheckoutMessage(lang === "ar" ? "اكتب اسمك." : "Please enter your name.", true);
+        formElement.elements.customer_name.focus();
+        return;
+      }
       const orderType = String(formData.get("order_type") || "delivery");
       const address = String(formData.get("delivery_address") || "").trim();
 
@@ -656,6 +729,12 @@
       const submittedTotal =
         subtotal + (orderType === "delivery" ? deliveryFee : 0);
 
+      const orderSummary = rows.map(([id, quantity]) => {
+        const product = products.find(item => String(item.id) === String(id));
+        return `${quantity} × ${product?.name || "Item"}`;
+      }).join("\\n");
+      if (!window.confirm((lang === "ar" ? "تأكيد الطلب؟\\n\\n" : "Confirm your order?\\n\\n") + orderSummary + "\\n\\n" + (lang === "ar" ? "المجموع: " : "Total: ") + money(submittedTotal))) return;
+
       const submittedItems = rows.map(([product_id, quantity]) => ({
         product_id,
         quantity: Number(quantity)
@@ -673,7 +752,7 @@
       try {
         const { data, error } = await db.rpc("place_order", {
           p_customer_name: String(formData.get("customer_name") || "").trim(),
-          p_customer_phone: String(formData.get("customer_phone") || "").trim(),
+          p_customer_phone: normalizedPhone,
           p_order_type: orderType,
           p_delivery_address: orderType === "delivery" ? address : null,
           p_notes: String(formData.get("notes") || "").trim() || null,
@@ -696,6 +775,12 @@
 
         // استخدم مرجع النموذج المحفوظ، وليس event.currentTarget بعد await.
         cart = {};
+        persistCart();
+        if ($("#remember-customer")?.checked) {
+          storageSet(CUSTOMER_KEY, JSON.stringify({ consent: true, name: customerName, phone: normalizedPhone }));
+        } else {
+          try { localStorage.removeItem(CUSTOMER_KEY); } catch (_) {}
+        }
 
         try {
           formElement.reset();
@@ -735,6 +820,8 @@
 
   $("#address-field")?.classList.remove("hidden");
 
+  restoreCart();
+  restoreCustomerDetails();
   // Phone OTP initialization is paused until an SMS provider is configured.
   document.body.classList.remove("auth-required");
   const authGate = $("#customer-auth");
