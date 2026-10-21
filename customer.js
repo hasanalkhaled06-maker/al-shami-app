@@ -260,38 +260,38 @@
       orderError: "تعذّر إرسال الطلب. حاول مرة أخرى."
     },
     tw: {
-      hero: "Fresh food, made for you.",
-      orderNote: "Order online",
-      orderNote2: "Your order goes straight to the restaurant system.",
-      menu: "Menu",
-      yourOrder: "Your order",
-      total: "Total",
-      subtotal: "Subtotal",
-      deliveryFee: "Delivery fee",
-      name: "Your name",
-      phone: "Phone number",
-      orderType: "Order type",
-      address: "Delivery address / landmark",
-      notes: "Notes (optional)",
-      add: "Add to order",
-      empty: "Your basket is empty.",
-      send: "Place order",
-      delivery: "Delivery",
-      pickup: "Pickup",
-      search: "Search menu…",
-      offer: "Special offers",
-      sent: "Your order was received successfully!",
-      noItems: "No menu items available yet.",
-      category: "All",
-      clear: "Clear",
-      paymentNote: "Payment: Cash on delivery or cash at pickup.",
-      sending: "Sending…",
-      emptyCartError: "Add at least one item to your order.",
-      addressError: "Please enter a delivery address.",
-      minimumError: "Minimum order is",
-      setupError: "Check the Supabase configuration in config.js.",
-      loadError: "Could not load menu.",
-      orderError: "Could not send order. Please try again."
+      hero: "Aduan pa a, wɔasiesie ama wo.",
+      orderNote: "Fa wo nsa hyɛ nneɛma ho wɔ intanɛt so",
+      orderNote2: "Wo nhyehyɛe no kɔ tẽẽ ma adidibea no.",
+      menu: "Nneɛma a yɛtɔn",
+      yourOrder: "Wo nneɛma a woapaw",
+      total: "Ne nyinaa",
+      subtotal: "Ne nyinaa ansa na wɔde bɛbrɛ wo",
+      deliveryFee: "Ka a wɔde bɛbrɛ wo",
+      name: "Wo din",
+      phone: "Telefon nɔma",
+      orderType: "Ɔkwan a wopɛ sɛ wunya aduan no",
+      address: "Beae a wɔde bɛbrɛ wo / agyiraehyɛde",
+      notes: "Nsɛm foforo (wopɛ a)",
+      add: "Fa ka wo nneɛma ho",
+      empty: "Wunni biribiara wɔ wo nneɛma mu.",
+      send: "Fa wo nhyehyɛe no mena",
+      delivery: "Fa brɛ me",
+      pickup: "Mɛba abɛfa",
+      search: "Hwehwɛ aduan…",
+      offer: "Nneɛma a yɛde ama wɔ bo pa mu",
+      sent: "Yɛanya wo nhyehyɛe no. Yɛda wo ase!",
+      noItems: "Nneɛma biara nni hɔ seesei.",
+      category: "Ne nyinaa",
+      clear: "Pepa",
+      paymentNote: "Sika tua bere a wɔde aduan no brɛ wo anaa woba bɛfa no.",
+      sending: "Ɛrekɔ…",
+      emptyCartError: "Fa aduan biako anaa nea ɛboro saa ka wo nneɛma ho.",
+      addressError: "Kyerɛw beae a wɔde aduan no bɛbrɛ wo.",
+      minimumError: "Sika a ɛsua koraa a ɛsɛ sɛ wotɔ ne",
+      setupError: "Hwɛ Supabase nhyehyɛe a ɛwɔ config.js mu.",
+      loadError: "Yentumi annye aduan no din.",
+      orderError: "Yentumi amena wo nhyehyɛe no. Yɛsrɛ wo, san yɛ bio."
     }
   };
 
@@ -341,7 +341,7 @@
   }
 
   function setLanguage() {
-    document.documentElement.lang = lang;
+    document.documentElement.lang = lang === "ar" ? "ar" : (lang === "tw" ? "ak" : "en");
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
 
     document.querySelectorAll("[data-i18n]").forEach(element => {
@@ -350,6 +350,26 @@
         element.textContent = tr(key);
       }
     });
+
+    const sortSelect = $("#menu-sort");
+    if (sortSelect) {
+      const labels = lang === "tw"
+        ? ["Totoe", "Bo: nea ɛyɛ mmerɛw kɔ nea ɛyɛ den", "Bo: nea ɛyɛ den kɔ nea ɛyɛ mmerɛw", "Nea nkurɔfo pɛ"]
+        : lang === "ar"
+          ? ["الترتيب الافتراضي", "السعر: من الأرخص للأغلى", "السعر: من الأغلى للأرخص", "الأكثر شعبية"]
+          : ["Recommended", "Price: low to high", "Price: high to low", "Popularity"];
+      Array.from(sortSelect.options).forEach((option, index) => { option.textContent = labels[index] || option.textContent; });
+    }
+    const sortLabel = document.querySelector(".sort-label");
+    if (sortLabel && sortLabel.firstChild && sortLabel.firstChild.nodeType === Node.TEXT_NODE) {
+      sortLabel.firstChild.textContent = lang === "tw" ? "Siesie: " : lang === "ar" ? "ترتيب: " : "Sort ";
+    }
+    const remember = document.querySelector(".remember-customer");
+    if (remember) {
+      const checkbox = remember.querySelector("input");
+      remember.textContent = lang === "tw" ? "Kae me din ne telefon nɔma wɔ saa mfiri yi so" : lang === "ar" ? "احفظ اسمي ورقم هاتفي على هذا الجهاز" : "Remember my name and phone on this device";
+      if (checkbox) remember.prepend(checkbox);
+    }
 
     const search = $("#search");
     if (search) search.placeholder = tr("search");
