@@ -256,6 +256,9 @@
       loadingMenu: "Loading menu…",
       retry: "Retry",
       trackHistory: "Track your order / Order history",
+      activeOrdersHeading: "Active orders",
+      historyHeading: "History",
+      noCompletedOrders: "No completed orders yet.",
       trackHistoryHelp: "Your orders stay saved on this device. Keep the private tracking code to check an order on another device.",
       trackingCode: "Private tracking code",
       trackOrder: "Track order",
@@ -325,6 +328,9 @@
       loadingMenu: "عم نحمّل المنيو…",
       retry: "إعادة المحاولة",
       trackHistory: "تتبّع الطلبات / سجل الطلبات",
+      activeOrdersHeading: "الطلبات الحالية",
+      historyHeading: "السجل",
+      noCompletedOrders: "ما في طلبات مكتملة لسه.",
       trackHistoryHelp: "طلباتك المحفوظة بتظهر على هالجهاز. احتفظ برمز التتبّع الخاص إذا بدك تفتح الطلب من جهاز تاني.",
       trackingCode: "رمز التتبّع الخاص",
       trackOrder: "تتبّع الطلب",
@@ -394,6 +400,9 @@
       loadingMenu: "Aduan din no reba…",
       retry: "San sɔ hwɛ",
       trackHistory: "Track your order / Order history",
+      activeOrdersHeading: "Active orders",
+      historyHeading: "History",
+      noCompletedOrders: "No completed orders yet.",
       trackHistoryHelp: "Your orders stay saved on this device. Keep the private tracking code to check an order on another device.",
       trackingCode: "Private tracking code",
       trackOrder: "Track order",
@@ -496,7 +505,7 @@
           return { entry, order:data };
         } catch (_) { return { entry, failed:true }; }
       }));
-      list.innerHTML = results.map(result => {
+      const renderResult = result => {
         const entry = result.entry;
         const token = escapeHTML(entry.token);
         const remove = '<button type="button" class="btn btn-light tracked-remove" data-remove-tracked="' + token + '">' + escapeHTML(tr("removeFromHistory")) + "</button>";
@@ -527,7 +536,15 @@
           '<div class="tracked-card-heading"><div><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(number) + '</strong><p class="tracked-date">' + escapeHTML(tr("orderedAt")) + ": " + escapeHTML(trackingDate(order.created_at)) + '</p></div><span class="tracked-status status-' + escapeHTML(status.replace(/[^a-z_]/g,"")) + '">' + escapeHTML(trackingStatusText(status, order.order_type)) + "</span></div>" +
           timeline + '<div class="tracked-order-meta"><span>' + escapeHTML(order.order_type === "pickup" ? tr("pickup") : tr("delivery")) + '</span><strong>' + money(order.total) + "</strong></div>" +
           (itemHtml ? '<ul class="tracked-items">' + itemHtml + "</ul>" : "") + codeDetails + remove + "</article>";
-      }).join("");
+      };
+      const activeResults = results.filter(result => result.failed || result.missing || String(result.order?.status || "").toLowerCase() !== "completed");
+      const completedResults = results.filter(result => !result.failed && !result.missing && String(result.order?.status || "").toLowerCase() === "completed");
+      const activeHtml = activeResults.map(renderResult).join("");
+      const historyHtml = completedResults.map(renderResult).join("");
+      list.innerHTML = '<section class="customer-order-group"><h3>' + escapeHTML(tr("activeOrdersHeading")) + '</h3>' +
+        (activeHtml || '<p class="muted tracked-empty">' + escapeHTML(tr("noTrackedOrders")) + '</p>') +
+        '</section><section class="customer-order-group"><h3>' + escapeHTML(tr("historyHeading")) + '</h3>' +
+        (historyHtml || '<p class="muted tracked-empty">' + escapeHTML(tr("noCompletedOrders")) + '</p>') + '</section>';
     } finally { trackedOrdersLoading = false; }
   }
 
