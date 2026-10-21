@@ -159,6 +159,9 @@
   let sortMode = "default";
   const CART_KEY = "alShamiCartV1";
   const CUSTOMER_KEY = "alShamiCustomerV1";
+  const ORDER_HISTORY_KEY = "alShamiOrderHistoryV1";
+  const TRACKING_TOKEN_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  let trackedOrdersLoading = false;
   function storageGet(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
   function storageSet(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
   function persistCart() { storageSet(CART_KEY, JSON.stringify(cart)); }
@@ -252,6 +255,30 @@
       noSearchResults: "No menu items match your search. Clear the search or choose another category.",
       loadingMenu: "Loading menu…",
       retry: "Retry",
+      trackHistory: "Track your order / Order history",
+      trackHistoryHelp: "Your orders stay saved on this device. Keep the private tracking code to check an order on another device.",
+      trackingCode: "Private tracking code",
+      trackOrder: "Track order",
+      refreshOrders: "Refresh",
+      noTrackedOrders: "No saved orders yet. Place an order or enter your private tracking code above.",
+      loadingTrackedOrders: "Loading your saved orders…",
+      trackCodeHelp: "Enter the private tracking code from your order confirmation.",
+      invalidTrackingCode: "Enter a valid tracking code.",
+      couldNotLoadTrackedOrder: "Could not check this order right now. Check your connection and try again.",
+      orderNotFound: "No order was found for that code. Check it and try again.",
+      showTrackingCode: "Show private tracking code",
+      copyTrackingCode: "Copy code",
+      removeFromHistory: "Remove from history",
+      orderLabel: "Order",
+      orderedAt: "Placed",
+      step_received: "Received",
+      step_accepted: "Accepted",
+      step_preparing: "Preparing",
+      step_ready: "Ready",
+      step_out_for_delivery: "Out for delivery",
+      step_completed: "Completed",
+      codeCopied: "Tracking code copied.",
+      codeCopyFailed: "Copy failed. You can select and copy the code manually.",
       unavailable: "Currently unavailable"
     },
     ar: {
@@ -297,6 +324,30 @@
       noSearchResults: "ما لقينا أصناف تطابق البحث. امسح البحث أو اختار فئة تانية.",
       loadingMenu: "عم نحمّل المنيو…",
       retry: "إعادة المحاولة",
+      trackHistory: "تتبّع الطلبات / سجل الطلبات",
+      trackHistoryHelp: "طلباتك المحفوظة بتظهر على هالجهاز. احتفظ برمز التتبّع الخاص إذا بدك تفتح الطلب من جهاز تاني.",
+      trackingCode: "رمز التتبّع الخاص",
+      trackOrder: "تتبّع الطلب",
+      refreshOrders: "تحديث",
+      noTrackedOrders: "ما في طلبات محفوظة لسه. اطلب أو أدخل رمز التتبّع الخاص فوق.",
+      loadingTrackedOrders: "عم نحمّل طلباتك…",
+      trackCodeHelp: "أدخل رمز التتبّع الموجود بتأكيد الطلب.",
+      invalidTrackingCode: "أدخل رمز تتبّع صحيح.",
+      couldNotLoadTrackedOrder: "ما قدرنا نتحقق من الطلب هلأ. تأكد من الإنترنت وحاول مرة تانية.",
+      orderNotFound: "ما لقينا طلب بهالرمز. تأكد منه وحاول مرة تانية.",
+      showTrackingCode: "إظهار رمز التتبّع الخاص",
+      copyTrackingCode: "نسخ الرمز",
+      removeFromHistory: "حذف من السجل",
+      orderLabel: "الطلب",
+      orderedAt: "تاريخ الطلب",
+      step_received: "تم الاستلام",
+      step_accepted: "تم القبول",
+      step_preparing: "قيد التحضير",
+      step_ready: "جاهز",
+      step_out_for_delivery: "خرج للتوصيل",
+      step_completed: "مكتمل",
+      codeCopied: "تم نسخ رمز التتبّع.",
+      codeCopyFailed: "تعذّر النسخ. فيك تحدد الرمز وتنسخه يدوياً.",
       unavailable: "غير متوفر حالياً"
     },
     tw: {
@@ -347,7 +398,7 @@
   };
 
   const money = value => "GH₵ " + Number(value || 0).toFixed(2);
-  const tr = key => (translations[lang] || translations.en)[key] || key;
+  const tr = key => (translations[lang] && translations[lang][key]) || translations.en[key] || key;
 
   function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -358,6 +409,156 @@
       "'": "&#39;"
     })[char]);
   }
+
+  const trackingStatusNames = {
+    en: { new:"New", accepted:"Accepted", preparing:"Preparing", ready:"Ready", out_for_delivery:"Out for delivery", completed:"Completed", rejected:"Rejected" },
+    ar: { new:"جديد", accepted:"تم قبول الطلب", preparing:"قيد التحضير", ready:"جاهز", out_for_delivery:"خرج للتوصيل", completed:"مكتمل", rejected:"مرفوض" }
+  };
+
+  function readTrackedOrders() {
+    try {
+      const rows = JSON.parse(storageGet(ORDER_HISTORY_KEY) || "[]");
+      return Array.isArray(rows) ? rows.filter(row => row && typeof row.token === "string" && TRACKING_TOKEN_RE.test(row.token)).slice(0,25) : [];
+    } catch (_) { return []; }
+  }
+
+  function saveTrackedOrders(rows) { storageSet(ORDER_HISTORY_KEY, JSON.stringify(rows.slice(0,25))); }
+
+  function rememberOrderTrackingToken(token, orderNumber) {
+    token = String(token || "").trim().toLowerCase();
+    if (!TRACKING_TOKEN_RE.test(token)) return false;
+    const rows = readTrackedOrders().filter(row => row.token !== token);
+    rows.unshift({ token, orderNumber: String(orderNumber || ""), savedAt: new Date().toISOString() });
+    saveTrackedOrders(rows);
+    return true;
+  }
+
+  function trackingStatusText(status) {
+    const names = trackingStatusNames[lang] || trackingStatusNames.en;
+    return names[String(status || "").toLowerCase()] || String(status || "Unknown").replace(/_/g, " ");
+  }
+
+  function trackingDate(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleString(lang === "ar" ? "ar" : "en-GH", { dateStyle:"medium", timeStyle:"short" });
+  }
+
+  async function refreshCustomerOrderHistory() {
+    const list = $("#customer-order-history");
+    if (!list || trackedOrdersLoading) return;
+    const entries = readTrackedOrders();
+    if (!entries.length) {
+      list.innerHTML = '<p class="muted tracked-empty">' + escapeHTML(tr("noTrackedOrders")) + "</p>";
+      return;
+    }
+    if (!db) {
+      list.innerHTML = '<p class="app-message error">' + escapeHTML(tr("couldNotLoadTrackedOrder")) + "</p>";
+      return;
+    }
+    trackedOrdersLoading = true;
+    list.innerHTML = '<p class="muted">' + escapeHTML(tr("loadingTrackedOrders")) + "</p>";
+    try {
+      const results = await Promise.all(entries.map(async entry => {
+        try {
+          const { data, error } = await db.rpc("get_customer_order_tracking", { p_tracking_token: entry.token });
+          if (error) return { entry, failed:true };
+          if (!data) return { entry, missing:true };
+          return { entry, order:data };
+        } catch (_) { return { entry, failed:true }; }
+      }));
+      list.innerHTML = results.map(result => {
+        const entry = result.entry;
+        const token = escapeHTML(entry.token);
+        const remove = '<button type="button" class="btn btn-light tracked-remove" data-remove-tracked="' + token + '">' + escapeHTML(tr("removeFromHistory")) + "</button>";
+        const codeDetails = '<details class="tracked-code"><summary>' + escapeHTML(tr("showTrackingCode")) + "</summary><code>" + token + '</code><button type="button" class="btn btn-light" data-copy-tracked="' + token + '">' + escapeHTML(tr("copyTrackingCode")) + "</button></details>";
+        if (result.failed || result.missing) {
+          const message = result.failed ? tr("couldNotLoadTrackedOrder") : tr("orderNotFound");
+          return '<article class="customer-order-card"><div class="tracked-card-heading"><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(entry.orderNumber || "—") + "</strong>" + remove + "</div><p class=\"muted\">" + escapeHTML(message) + "</p>" + codeDetails + "</article>";
+        }
+        const order = result.order;
+        const status = String(order.status || "").toLowerCase();
+        const number = order.order_number ?? entry.orderNumber ?? "—";
+        const isDelivery = order.order_type === "delivery";
+        const steps = [
+          "step_received", "step_accepted", "step_preparing", "step_ready",
+          ...(isDelivery ? ["step_out_for_delivery"] : []), "step_completed"
+        ];
+        const active = status === "new" ? 0 : status === "accepted" ? 1 : status === "preparing" ? 2 :
+          status === "ready" ? 3 : status === "out_for_delivery" ? 4 :
+          status === "completed" ? (isDelivery ? 5 : 4) : -1;
+        const timeline = status === "rejected"
+          ? '<p class="tracked-rejected">' + escapeHTML(trackingStatusText(status)) + "</p>"
+          : '<ol class="tracked-steps ' + (isDelivery ? "is-delivery" : "is-pickup") + '">' + steps.map((key,i) =>
+              '<li class="' + (active >= 0 && i < active ? "is-complete " : "") + (active === i ? "is-current" : "") + '"><span>' + escapeHTML(tr(key)) + "</span></li>"
+            ).join("") + "</ol>";
+        const items = Array.isArray(order.items) ? order.items : [];
+        const itemHtml = items.map(item => '<li><span>' + escapeHTML(item.quantity) + " × " + escapeHTML(item.name || "Item") + '</span><strong>' + money(item.line_total ?? (Number(item.unit_price || 0) * Number(item.quantity || 0))) + "</strong></li>").join("");
+        return '<article class="customer-order-card">' +
+          '<div class="tracked-card-heading"><div><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(number) + '</strong><p class="tracked-date">' + escapeHTML(tr("orderedAt")) + ": " + escapeHTML(trackingDate(order.created_at)) + '</p></div><span class="tracked-status status-' + escapeHTML(status.replace(/[^a-z_]/g,"")) + '">' + escapeHTML(trackingStatusText(status)) + "</span></div>" +
+          timeline + '<div class="tracked-order-meta"><span>' + escapeHTML(order.order_type === "pickup" ? tr("pickup") : tr("delivery")) + '</span><strong>' + money(order.total) + "</strong></div>" +
+          (itemHtml ? '<ul class="tracked-items">' + itemHtml + "</ul>" : "") + codeDetails + remove + "</article>";
+      }).join("");
+    } finally { trackedOrdersLoading = false; }
+  }
+
+  async function lookupTrackingCode(raw) {
+    const token = String(raw || "").trim().toLowerCase();
+    if (!TRACKING_TOKEN_RE.test(token)) throw new Error("invalid-code");
+    if (!db) throw new Error("lookup-failed");
+    const { data, error } = await db.rpc("get_customer_order_tracking", { p_tracking_token: token });
+    if (error) throw new Error("lookup-failed");
+    if (!data) throw new Error("not-found");
+    rememberOrderTrackingToken(token, data.order_number);
+    return data;
+  }
+
+  $("#track-order-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const input = $("#tracking-code-input");
+    const button = $("#track-order-submit");
+    const message = $("#customer-orders-message");
+    if (button) button.disabled = true;
+    if (message) { message.textContent = ""; message.className = "status-message"; }
+    try {
+      const order = await lookupTrackingCode(input?.value);
+      if (message) { message.textContent = trackingStatusText(order.status); message.className = "status-message success"; }
+      if (input) input.value = "";
+      await refreshCustomerOrderHistory();
+    } catch (error) {
+      const key = error?.message === "invalid-code" ? "invalidTrackingCode" : error?.message === "not-found" ? "orderNotFound" : "couldNotLoadTrackedOrder";
+      if (message) { message.textContent = tr(key); message.className = "status-message error"; }
+    } finally { if (button) button.disabled = false; }
+  });
+
+  $("#refresh-customer-orders")?.addEventListener("click", () => { void refreshCustomerOrderHistory(); });
+
+  $("#customer-order-history")?.addEventListener("click", async event => {
+    const target = event.target instanceof Element ? event.target : null;
+    const remove = target?.closest("[data-remove-tracked]");
+    if (remove) {
+      const token = remove.getAttribute("data-remove-tracked");
+      saveTrackedOrders(readTrackedOrders().filter(row => row.token !== token));
+      void refreshCustomerOrderHistory();
+      return;
+    }
+    const copy = target?.closest("[data-copy-tracked]");
+    if (copy) {
+      const message = $("#customer-orders-message");
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
+        await navigator.clipboard.writeText(copy.getAttribute("data-copy-tracked") || "");
+        if (message) { message.textContent = tr("codeCopied"); message.className = "status-message success"; }
+      } catch (_) {
+        if (message) { message.textContent = tr("codeCopyFailed"); message.className = "status-message error"; }
+      }
+    }
+  });
+
+  window.setInterval(() => {
+    if (document.visibilityState === "visible") void refreshCustomerOrderHistory();
+  }, 45000);
+
 
   function showCheckoutMessage(text, isError = false) {
     const element = $("#checkout-message");
@@ -385,10 +586,10 @@
       : label + " " + String(productName || "") + ", " + quantity;
   }
 
-  function showSuccess(orderNumber, total) {
+  function showSuccess(orderNumber, total, trackingToken = null) {
     try {
       if (typeof window.AL_SHAMI_SHOW_SUCCESS === "function") {
-        window.AL_SHAMI_SHOW_SUCCESS({ orderNumber, total });
+        window.AL_SHAMI_SHOW_SUCCESS({ orderNumber, total, trackingToken });
       } else {
         showCheckoutMessage(
           `${tr("sent")} ${orderNumber ? "Order #" + orderNumber : ""}`
@@ -441,6 +642,7 @@
     renderCategories();
     renderMenu();
     renderCart();
+    void refreshCustomerOrderHistory();
   }
 
   function renderCategories() {
@@ -952,6 +1154,7 @@
 
         // وصل تأكيد من قاعدة البيانات أن الطلب تم حفظه.
         const result = Array.isArray(data) ? data[0] : data;
+        const trackingToken = result && typeof result === "object" ? result.tracking_token : null;
 
         let orderNumber = "received";
 
@@ -992,7 +1195,9 @@
         showCheckoutMessage("");
         const confirmedTotal = result && typeof result === "object" &&
           Number.isFinite(Number(result.total)) ? Number(result.total) : submittedTotal;
-        showSuccess(orderNumber, confirmedTotal);
+        if (trackingToken) rememberOrderTrackingToken(trackingToken, orderNumber);
+        showSuccess(orderNumber, confirmedTotal, trackingToken);
+        void refreshCustomerOrderHistory();
       } catch (error) {
         console.error("AL SHAMI order submission error:", error);
         const detail = String(error?.message || "");
@@ -1049,4 +1254,5 @@
   const authGate = $("#customer-auth");
   if (authGate) authGate.hidden = true;
   loadMenuAndSettings();
+  void refreshCustomerOrderHistory();
 })();
