@@ -276,3 +276,11 @@ a:focus-visible {
 @keyframes welcome-dot{0%,60%,100%{opacity:.35;transform:translateY(0) scale(.85)}30%{opacity:1;transform:translateY(-4px) scale(1.1)}}
 .welcome-screen{cursor:pointer}
 @media(prefers-reduced-motion:reduce){.welcome-loading span{animation:none!important}}
+
+/* Customer ordering reliability and availability states */
+.retry-menu{margin:0 0 14px;min-height:44px}
+.retry-menu[hidden]{display:none!important}
+.unavailable-badge{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 12px;border-radius:9px;background:#f3eeee;color:#6b5555;border:1px solid #d8caca;font-weight:800;text-align:center}
+.product-unavailable{opacity:.82}
+.product-unavailable .product-image img{filter:grayscale(.5)}
+@media(max-width:360px){.container{padding-left:10px;padding-right:10px}.checkout-section{padding:13px}.cart-row{flex-wrap:wrap}.cart-row .cart-name{min-width:120px}.qty-controls{flex-wrap:wrap;gap:5px}}
