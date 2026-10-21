@@ -58,6 +58,15 @@
     @keyframes shamiCheckIn{from{opacity:0;transform:scale(.45) rotate(-15deg)}to{opacity:1;transform:scale(1) rotate(0)}}
     @media (max-width:480px){.success-card{padding:28px 20px}.success-icon{width:78px;height:78px;font-size:48px}}
     @media (prefers-reduced-motion:reduce){.success-modal,.success-card,.success-icon{animation:none!important;scroll-behavior:auto!important}}
+
+    .menu-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .menu-tools #search{flex:1;min-width:170px}
+    .sort-label{display:flex;align-items:center;gap:7px;font-size:.9rem;font-weight:700}
+    .sort-label select{max-width:190px;padding:10px;border:1px solid #ddd;border-radius:9px;background:#fff;font:inherit}
+    .remember-customer{display:flex;align-items:center;gap:9px;margin:12px 0;font-size:.92rem}
+    .remember-customer input{width:18px;height:18px;accent-color:#8d1723}
+    #place-order:disabled,#clear-cart:disabled{opacity:.55;cursor:not-allowed}
+    @media(max-width:480px){.menu-tools{align-items:stretch}.sort-label{justify-content:space-between}.sort-label select{flex:1;max-width:none}}
   </style>
 </head>
 
@@ -140,7 +149,7 @@
         <p class="eyebrow">OUR MENU</p>
         <h2 data-i18n="menu">Menu</h2>
       </div>
-      <input id="search" type="search" placeholder="Search menu…" aria-label="Search menu" autocomplete="off">
+      <div class="menu-tools"><input id="search" type="search" placeholder="Search menu…" aria-label="Search menu" autocomplete="off"><label class="sort-label">Sort <select id="menu-sort" aria-label="Sort menu"><option value="default">Recommended</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option><option value="popular">Popularity</option></select></label></div>
     </div>
 
     <div id="categories" class="chips" aria-label="Menu categories"></div>
@@ -208,7 +217,7 @@
           </label>
         </div>
 
-        <p class="muted small" data-i18n="paymentNote">Payment: Cash on delivery or cash at pickup.</p>
+        <label class="remember-customer"><input id="remember-customer" type="checkbox"> Remember my name and phone on this device</label>\n        <p class="muted small" data-i18n="paymentNote">Payment: Cash on delivery or cash at pickup.</p>
         <p id="minimum-order-note" class="muted small" hidden></p>
         <button id="place-order" class="btn btn-primary btn-wide" type="submit" data-i18n="send">Place order</button>
         <p id="checkout-message" role="status" aria-live="polite" class="status-message"></p>
@@ -335,7 +344,7 @@
     })();
   </script>
   <script src="config.js"></script>
-  <script src="customer.js?v=guest-checkout-fix2-20261020"></script>
+  <script src="customer.js?v=customer-ordering-stage1-20261021"></script>
   <script src="pwa.js"></script>
 </body>
 </html>
