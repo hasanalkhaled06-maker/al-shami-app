@@ -334,3 +334,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .floating-cart-total{padding-left:7px;border-left:1px solid rgba(255,255,255,.35);white-space:nowrap;font-variant-numeric:tabular-nums}
 @media(max-width:480px){.floating-cart-button{right:12px;bottom:calc(86px + env(safe-area-inset-bottom));min-height:52px;padding:9px 13px;gap:7px}.floating-cart-label{max-width:95px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 @media(prefers-reduced-motion:reduce){.floating-cart-button{transition:none;transform:none}}
+
+
+/* Separate customer history page */
+.customer-orders-nav{display:flex;justify-content:flex-start;gap:10px;margin:0 0 16px;flex-wrap:wrap}
+.history-page #welcome-screen,.history-page .notice,.history-page #install-note,.history-page #app-status,.history-page #retry-menu,.history-page #active-offers,.history-page #categories,.history-page #menu,.history-page .menu-tools,.history-page .checkout-section,.history-page .floating-cart-button,.history-page .quick-contact{display:none!important}
+.history-page #main-content>.section-heading:not(:first-child){display:none!important}
+.history-page #customer-orders-panel{margin-top:22px}
+.history-page .customer-orders-help{display:none!important}
