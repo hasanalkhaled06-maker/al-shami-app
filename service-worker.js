@@ -11,7 +11,7 @@ const SHELL_FILES = [
   "./style.css",
   "./config.js",
   "./customer.js",
-  "./customer.js?v=customer-email-auth-20261021f",
+  "./customer.js?v=customer-phone-password-auth-20261021g",
   "./admin.js",
   "./admin.js?v=order-audio-recovery-20261021d",
   "./admin-operations.js",

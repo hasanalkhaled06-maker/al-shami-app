@@ -37,6 +37,8 @@
     node.className = "status-message" + (error ? " error" : " success");
   }
 
+  let authMethod = "phone";
+
   function setAuthMode(mode) {
     const signup = mode === "signup";
     const form = $("#customer-auth-form");
@@ -50,15 +52,45 @@
     const submit = $("#auth-submit");
     const signinButton = $("#auth-mode-signin");
     const signupButton = $("#auth-mode-signup");
+    const identifier = $("#auth-identifier");
     if (title) title.textContent = signup ? "Create your AL SHAMI account" : "Sign in to your account";
-    if (help) help.textContent = signup ? "Create an account with your email and a password. Phone numbers are still collected at checkout." : "Use your email and password. No SMS verification is required.";
+    if (help) {
+      if (authMethod === "phone" && signup) {
+        help.textContent = "Create an account with your Ghana number and a password. This avoids SMS only when phone confirmation is disabled in Supabase; if confirmation is enabled, it may request SMS.";
+      } else if (authMethod === "phone") {
+        help.textContent = "Use your Ghana phone number and password. Signing in does not request an SMS code.";
+      } else if (signup) {
+        help.textContent = "Create an account with email and password. Supabase may require an email confirmation depending on account settings.";
+      } else {
+        help.textContent = "Use the email address and password you registered with.";
+      }
+    }
     if (nameField) nameField.hidden = !signup;
     if (nameInput) nameInput.required = signup;
     if (password) password.autocomplete = signup ? "new-password" : "current-password";
+    if (identifier) identifier.autocomplete = authMethod === "phone" ? "tel" : "email";
     if (submit) submit.textContent = signup ? "Create account" : "Sign in";
     if (signinButton) { signinButton.classList.toggle("active", !signup); signinButton.setAttribute("aria-pressed", String(!signup)); }
     if (signupButton) { signupButton.classList.toggle("active", signup); signupButton.setAttribute("aria-pressed", String(signup)); }
     authMessage("");
+  }
+
+  function setAuthMethod(method) {
+    authMethod = method === "email" ? "email" : "phone";
+    const label = $("#auth-identifier-label");
+    const field = $("#auth-identifier");
+    const phoneButton = $("#auth-method-phone");
+    const emailButton = $("#auth-method-email");
+    if (label) label.textContent = authMethod === "phone" ? "Phone number" : "Email address";
+    if (field) {
+      field.type = authMethod === "phone" ? "tel" : "email";
+      field.inputMode = authMethod === "phone" ? "tel" : "email";
+      field.placeholder = authMethod === "phone" ? "+233 24 123 4567" : "you@example.com";
+      field.value = "";
+    }
+    if (phoneButton) { phoneButton.classList.toggle("active", authMethod === "phone"); phoneButton.setAttribute("aria-pressed", String(authMethod === "phone")); }
+    if (emailButton) { emailButton.classList.toggle("active", authMethod === "email"); emailButton.setAttribute("aria-pressed", String(authMethod === "email")); }
+    setAuthMode($("#customer-auth-form")?.dataset?.mode || "signin");
   }
 
   function applyAuthState(session) {
@@ -72,7 +104,7 @@
       const user = authSession.user;
       const meta = user.user_metadata || {};
       const label = $("#customer-account-label");
-      if (label) label.textContent = "Signed in as " + (user.email || user.phone || "customer");
+      if (label) label.textContent = "Signed in as " + (user.phone || user.email || "customer");
       const phone = meta.phone || user.phone || "";
       if (checkoutForm?.elements?.customer_phone && phone && !checkoutForm.elements.customer_phone.value) checkoutForm.elements.customer_phone.value = phone;
       if (checkoutForm?.elements?.customer_name && meta.full_name && !checkoutForm.elements.customer_name.value) checkoutForm.elements.customer_name.value = meta.full_name;
@@ -90,39 +122,66 @@
   }
 
   const authGate = $("#customer-auth");
-  $("#customer-auth-open")?.addEventListener("click", () => { setAuthMode("signin"); if (authGate) authGate.hidden = false; $("#auth-email")?.focus(); });
+  $("#customer-auth-open")?.addEventListener("click", () => { setAuthMode("signin"); if (authGate) authGate.hidden = false; $("#auth-identifier")?.focus(); });
   $("#auth-close")?.addEventListener("click", () => { if (authGate) authGate.hidden = true; });
   $("#auth-continue-guest")?.addEventListener("click", () => { if (authGate) authGate.hidden = true; });
   authGate?.addEventListener("click", event => { if (event.target === authGate) authGate.hidden = true; });
   $("#auth-mode-signin")?.addEventListener("click", () => setAuthMode("signin"));
   $("#auth-mode-signup")?.addEventListener("click", () => setAuthMode("signup"));
+  $("#auth-method-phone")?.addEventListener("click", () => setAuthMethod("phone"));
+  $("#auth-method-email")?.addEventListener("click", () => setAuthMethod("email"));
 
   $("#customer-auth-form")?.addEventListener("submit", async event => {
     event.preventDefault();
     const form = event.currentTarget;
     const submit = $("#auth-submit");
     if (!db) { authMessage("Account sign-in is unavailable because the app configuration is missing.", true); return; }
-    const email = String($("#auth-email")?.value || "").trim().toLowerCase();
     const password = String($("#auth-password")?.value || "");
     const mode = form.dataset.mode === "signup" ? "signup" : "signin";
     const fullName = String($("#auth-name")?.value || "").trim();
-    if (!email || !password) { authMessage("Enter your email address and password.", true); return; }
-    if (password.length < 8) { authMessage("Use a password with at least 8 characters.", true); return; }
-    if (mode === "signup" && fullName.length < 2) { authMessage("Enter your name to create an account.", true); $("#auth-name")?.focus(); return; }
-    if (submit) { submit.disabled = true; submit.textContent = mode === "signup" ? "Creating account…" : "Signing in…"; }
+    let identity = "";
     try {
+      if (authMethod === "phone") {
+        identity = normalizeGhanaPhone($("#auth-identifier")?.value);
+      } else {
+        identity = String($("#auth-identifier")?.value || "").trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity)) {
+          authMessage("Enter a valid email address.", true);
+          $("#auth-identifier")?.focus();
+          return;
+        }
+      }
+      if (!password) { authMessage("Enter your password.", true); return; }
+      if (password.length < 8) { authMessage("Use a password with at least 8 characters.", true); return; }
+      if (mode === "signup" && fullName.length < 2) {
+        authMessage("Enter your name to create an account.", true);
+        $("#auth-name")?.focus();
+        return;
+      }
+      if (submit) { submit.disabled = true; submit.textContent = mode === "signup" ? "Creating account…" : "Signing in…"; }
+      authMessage(mode === "signup" ? "Creating your account…" : "Signing in…");
       if (mode === "signup") {
-        const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
+        const options = { data: { full_name: fullName } };
+        const credentials = authMethod === "phone"
+          ? { phone: identity, password, options }
+          : { email: identity, password, options };
+        const { data, error } = await db.auth.signUp(credentials);
         if (error) throw error;
         if (data.session) {
           applyAuthState(data.session);
           if (authGate) authGate.hidden = true;
           authMessage("");
         } else {
-          authMessage("Your sign-up request was accepted. If email confirmation is enabled, open the confirmation link sent to your email. If no message arrives, email delivery must be configured for public customers in Supabase.");
+          const message = authMethod === "phone"
+            ? "Account request received, but no session was returned. Supabase may still require phone confirmation. To keep phone signup free, phone confirmation must be disabled; do not complete a paid SMS flow."
+            : "Account request received. If email confirmation is enabled, open the confirmation link sent to your email before signing in.";
+          authMessage(message);
         }
       } else {
-        const { data, error } = await db.auth.signInWithPassword({ email, password });
+        const credentials = authMethod === "phone"
+          ? { phone: identity, password }
+          : { email: identity, password };
+        const { data, error } = await db.auth.signInWithPassword(credentials);
         if (error) throw error;
         applyAuthState(data.session);
         if (authGate) authGate.hidden = true;
@@ -130,9 +189,19 @@
       }
     } catch (error) {
       console.error("Customer account action failed:", error);
-      authMessage(String(error?.message || "Account action failed. Please try again."), true);
+      const detail = String(error?.message || "");
+      if (/phone.*disabled|phone.*not enabled|phone provider/i.test(detail)) {
+        authMessage("Phone sign-in is not enabled in Supabase yet. Use the email option for now; phone sign-in requires the phone provider to be enabled.", true);
+      } else if (/sms provider|sms.*provider|sending sms|send sms/i.test(detail)) {
+        authMessage("Supabase is requiring SMS verification. To keep phone sign-up free, phone confirmation must be disabled in Supabase Auth settings.", true);
+      } else {
+        authMessage(detail || "Account action failed. Please try again.", true);
+      }
     } finally {
-      if (submit) { submit.disabled = false; submit.textContent = form.dataset.mode === "signup" ? "Create account" : "Sign in"; }
+      if (submit) {
+        submit.disabled = false;
+        submit.textContent = form.dataset.mode === "signup" ? "Create account" : "Sign in";
+      }
     }
   });
 
