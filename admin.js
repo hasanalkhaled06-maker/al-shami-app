@@ -27,6 +27,7 @@
   let orders = [];
   let products = [];
   let soundOn = false;
+  let notificationsOn = false;
   let knownOrderIds = new Set();
   let firstOrderLoad = true;
   let audioCtx = null;
@@ -220,20 +221,55 @@
     try {
       audioCtx = audioCtx ||
         new (window.AudioContext || window.webkitAudioContext)();
-
       await audioCtx.resume();
-
       soundOn = true;
 
-      $("#sound-toggle").textContent = "Sound alerts enabled";
-      $("#sound-toggle").classList.add("btn-primary");
+      if ("Notification" in window) {
+        try {
+          if (Notification.permission === "granted") {
+            notificationsOn = true;
+          } else if (Notification.permission === "default") {
+            notificationsOn = (await Notification.requestPermission()) === "granted";
+          }
+        } catch (notificationError) {
+          console.warn("Notifications unavailable:", notificationError);
+        }
+      }
 
+      $("#sound-toggle").textContent = notificationsOn
+        ? "Sound & notifications enabled"
+        : "Sound alerts enabled";
+      $("#sound-toggle").classList.add("btn-primary");
       beep();
-      toast("Sound alerts enabled on this device.");
+      toast(notificationsOn
+        ? "Sound and device notifications enabled. Keep this dashboard open for live order alerts."
+        : "Sound enabled. Keep this dashboard open for live order alerts.");
     } catch (error) {
-      toast("Could not enable sound. Check your browser settings.");
+      console.error("Could not enable sound:", error);
+      toast("Could not enable sound. Check silent mode, volume and browser settings.");
     }
   };
+
+  function notifyNewOrder(order) {
+    const number = order.order_number || String(order.id || "").slice(0, 8);
+    const title = "AL SHAMI — NEW ORDER!";
+    const body = "Order #" + number + " has arrived. Open the admin dashboard.";
+    try {
+      if (typeof navigator.vibrate === "function") navigator.vibrate([250, 120, 250, 120, 400]);
+    } catch (_) {}
+    if (notificationsOn && "Notification" in window && Notification.permission === "granted") {
+      try {
+        const notification = new Notification(title, {
+          body,
+          tag: "al-shami-order-" + order.id,
+          renotify: true
+        });
+        notification.onclick = () => { window.focus(); notification.close(); };
+      } catch (error) {
+        console.warn("System notification could not be shown:", error);
+      }
+    }
+  }
 
   function beep() {
     if (!soundOn || !audioCtx) return;
@@ -557,9 +593,10 @@ Status: ${order.status}`;
           knownOrderIds.add(payload.new.id);
 
           if (soundOn) beep();
+          notifyNewOrder(payload.new);
 
           toast(
-            "NEW ORDER! Order #" +
+            "🔔 NEW ORDER! Order #" +
             (payload.new.order_number || payload.new.id.slice(0, 8)) +
             " has arrived."
           );
