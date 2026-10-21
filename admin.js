@@ -36,6 +36,10 @@
   let knownOrderIds = new Set();
   let firstOrderLoad = true;
   let audioCtx = null;
+  let audioKeepAliveOscillator = null;
+  let audioActivationHintTimer = null;
+  let audioSessionGestureRecoveryUsed = false;
+  let lastBeepStartedAt = 0;
   let refreshInProgress = false;
   let ordersLoadPromise = null;
   let ordersReloadRequested = false;
@@ -169,7 +173,7 @@
     }
 
     // Prepare audio during the sign-in gesture; notification permission is requested after admin access is confirmed.
-    initializeOrderAlerts();
+    initializeOrderAlerts(true);
 
     const form = new FormData(event.currentTarget);
 
@@ -248,42 +252,128 @@
     };
   });
 
-  function initializeOrderAlerts() {
-    soundOn = true;
-    const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+  function showAudioActivationHint() {
+    if (soundActivationHintShown) return;
+    soundActivationHintShown = true;
+    const hint = $("#incoming-order-sound-hint");
+    if (hint) {
+      hint.textContent = "Sound is waiting for the browser's audio session. Tap once anywhere in this dashboard to activate order alerts.";
+    }
+    toast("Order sound is not active yet. Tap once anywhere in the admin dashboard; check device volume and Silent mode.");
+  }
 
+  function setOrderAudioSession(recoverOutput = false) {
+    // Safari on iOS exposes AudioSession. Playback mode prevents restaurant alerts
+    // from being routed as silent ambient audio on supported devices.
+    const session = navigator.audioSession;
+    if (!session) return;
+
+    try {
+      if (recoverOutput) {
+        // Some iOS versions can leave the route stuck while AudioContext reports "running".
+        // Force a real category change, then return to playback mode.
+        session.type = "ambient";
+        window.setTimeout(() => {
+          try { session.type = "playback"; } catch (error) {
+            console.debug("Could not restore playback audio session:", error);
+          }
+        }, 0);
+      } else if (session.type !== "playback") {
+        session.type = "playback";
+      }
+    } catch (error) {
+      console.debug("Audio session mode is not configurable in this browser:", error);
+    }
+  }
+
+  function keepOrderAudioContextAwake() {
+    if (!audioCtx || audioCtx.state !== "running" || audioKeepAliveOscillator) return;
+
+    try {
+      // Keep the audio graph active between orders instead of leaving it idle for long periods.
+      const oscillator = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(20, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.000001, audioCtx.currentTime);
+      oscillator.connect(gain);
+      gain.connect(audioCtx.destination);
+      oscillator.start();
+      audioKeepAliveOscillator = oscillator;
+    } catch (error) {
+      console.debug("Could not keep the order audio graph active:", error);
+    }
+  }
+
+  function initializeOrderAlerts(fromUserGesture = false) {
+    soundOn = true;
+
+    if (fromUserGesture && !audioSessionGestureRecoveryUsed) {
+      audioSessionGestureRecoveryUsed = true;
+      setOrderAudioSession(true);
+    } else {
+      setOrderAudioSession(false);
+    }
+
+    // iOS Safari can leave AudioContext "interrupted" after the app is backgrounded.
+    // Recreate it instead of repeatedly trying to resume a broken context.
+    if (audioCtx && (audioCtx.state === "closed" || audioCtx.state === "interrupted")) {
+      const staleContext = audioCtx;
+      audioCtx = null;
+      audioKeepAliveOscillator = null;
+      try { void staleContext.close(); } catch (_) {}
+    }
+
+    const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
     if (!audioCtx && AudioContextConstructor) {
       try {
-        audioCtx = new AudioContextConstructor();
+        audioCtx = new AudioContextConstructor({ latencyHint: "interactive" });
       } catch (error) {
         console.warn("Order audio is unavailable in this browser:", error);
       }
     }
 
-    if (audioCtx && audioCtx.state !== "running") {
+    if (!audioCtx) {
+      showAudioActivationHint();
+      return;
+    }
+
+    const contextAtResume = audioCtx;
+    if (contextAtResume.state !== "running") {
       try {
-        const resumePromise = audioCtx.resume();
+        // When possible, resume synchronously in the real pointer/keyboard event handler.
+        const resumePromise = contextAtResume.resume();
         if (resumePromise && typeof resumePromise.then === "function") {
           void resumePromise.then(() => {
-            if (audioCtx?.state !== "running") return;
+            if (audioCtx !== contextAtResume || contextAtResume.state !== "running") return;
             soundActivationHintShown = false;
-            if (activeIncomingOrderId) {
-              const activeOrder = orders.find(order => order.id === activeIncomingOrderId);
-              if (activeOrder) renderIncomingOrder(activeOrder);
-              void beep();
-            }
+            clearTimeout(audioActivationHintTimer);
+            keepOrderAudioContextAwake();
+            if (!fromUserGesture && activeIncomingOrderId) void beep();
           }).catch(error => {
             console.debug("Order audio is waiting for browser interaction:", error);
+            if (fromUserGesture) showAudioActivationHint();
           });
         }
       } catch (error) {
         console.debug("Order audio could not be resumed yet:", error);
+        if (fromUserGesture) showAudioActivationHint();
       }
+
+      if (!fromUserGesture) {
+        clearTimeout(audioActivationHintTimer);
+        audioActivationHintTimer = window.setTimeout(() => {
+          if (audioCtx && audioCtx.state !== "running") showAudioActivationHint();
+        }, 1200);
+      }
+    } else {
+      soundActivationHintShown = false;
+      clearTimeout(audioActivationHintTimer);
+      keepOrderAudioContextAwake();
     }
 
     if ("Notification" in window) notificationsOn = Notification.permission === "granted";
   }
-
   function showOrderNotification(order) {
     if (!("Notification" in window) || Notification.permission !== "granted") return;
     const number = order.order_number || String(order.id || "").slice(0, 8);
@@ -390,7 +480,7 @@
   }
 
   function handleOrderAlertGesture() {
-    initializeOrderAlerts();
+    initializeOrderAlerts(true);
     if (currentUser) void requestOrderNotificationPermission();
     if (activeIncomingOrderId) void beep();
   }
@@ -400,21 +490,45 @@
   document.addEventListener("keydown", handleOrderAlertGesture, true);
 
   async function beep() {
-    if (!soundOn || !audioCtx) return;
+    if (!soundOn) return false;
+
+    if (audioCtx && (audioCtx.state === "closed" || audioCtx.state === "interrupted")) {
+      initializeOrderAlerts(false);
+    } else if (!audioCtx) {
+      initializeOrderAlerts(false);
+    }
+    if (!audioCtx) {
+      showAudioActivationHint();
+      return false;
+    }
+
+    const context = audioCtx;
     try {
-      if (audioCtx.state !== "running") await audioCtx.resume();
-      if (audioCtx.state !== "running") {
-        if (!soundActivationHintShown) {
-          soundActivationHintShown = true;
-          toast("Tap once in the admin dashboard to let your browser play the order ring automatically.");
+      if (context.state !== "running") {
+        // iOS can leave resume() pending forever after an audio interruption.
+        // Bound the wait so the manager gets a clear hint rather than a silent failure.
+        try {
+          await Promise.race([
+            context.resume().catch(() => {}),
+            new Promise(resolve => window.setTimeout(resolve, 700))
+          ]);
+        } catch (_) {}
+        if (audioCtx !== context || context.state !== "running") {
+          showAudioActivationHint();
+          return false;
         }
-        return;
       }
+
+      keepOrderAudioContextAwake();
       soundActivationHintShown = false;
-      const startAt = audioCtx.currentTime + 0.03;
+      clearTimeout(audioActivationHintTimer);
+      if (Date.now() - lastBeepStartedAt < 450) return true;
+      lastBeepStartedAt = Date.now();
+
+      const startAt = context.currentTime + 0.03;
       [0, 0.28, 0.56, 0.84].forEach((delay, index) => {
-        const oscillator = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
         oscillator.type = "triangle";
         oscillator.frequency.setValueAtTime(index % 2 ? 1180 : 880, startAt + delay);
         gain.gain.setValueAtTime(0.0001, startAt + delay);
@@ -422,19 +536,17 @@
         gain.gain.setValueAtTime(0.32, startAt + delay + 0.13);
         gain.gain.exponentialRampToValueAtTime(0.0001, startAt + delay + 0.23);
         oscillator.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(context.destination);
         oscillator.start(startAt + delay);
         oscillator.stop(startAt + delay + 0.24);
       });
+      return true;
     } catch (error) {
       console.warn("AL SHAMI sound alert failed:", error);
-      if (!soundActivationHintShown) {
-        soundActivationHintShown = true;
-        toast("Order sound is blocked by the browser. Tap once in the admin dashboard and check device volume/silent mode.");
-      }
+      showAudioActivationHint();
+      return false;
     }
   }
-
   async function refreshAll() {
     if (!db) throw new Error("Supabase is not connected.");
 
@@ -780,7 +892,20 @@ Status: ${order.status}`;
   // If the dashboard becomes visible again, immediately resume the active alert.
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) return;
-    if (activeIncomingOrderId && soundOn) void beep();
+
+    // Reset iOS's audio output route after returning from the background.
+    setOrderAudioSession(true);
+    if (audioCtx && (audioCtx.state === "closed" || audioCtx.state === "interrupted")) {
+      const staleContext = audioCtx;
+      audioCtx = null;
+      audioKeepAliveOscillator = null;
+      try { void staleContext.close(); } catch (_) {}
+    }
+    initializeOrderAlerts(false);
+    window.setTimeout(() => {
+      if (activeIncomingOrderId && soundOn) void beep();
+    }, 50);
+
     // iOS may suspend timers/network activity while backgrounded; reconcile immediately on return.
     if (currentUser && db) {
       void loadOrders().catch(error => console.warn("Order refresh on resume failed:", error));
