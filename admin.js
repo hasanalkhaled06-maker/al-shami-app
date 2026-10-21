@@ -796,6 +796,35 @@ Status: ${order.status}`;
     if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); }
   }, true);
 
+  $("#receipt-confirm-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
+    const message = $("#receipt-confirm-message");
+    const orderNumber = Number(form.elements.order_number.value);
+    const receiptCode = String(form.elements.receipt_code.value || "").trim();
+    if (!Number.isSafeInteger(orderNumber) || orderNumber < 1 || !/^[0-9]{6}$/.test(receiptCode)) {
+      if (message) { message.textContent = "Enter a valid order number and 6-digit receipt code."; message.className = "status-message error"; }
+      return;
+    }
+    button.disabled = true;
+    if (message) { message.textContent = "Checking receipt code…"; message.className = "status-message"; }
+    try {
+      const { error } = await db.rpc("confirm_customer_receipt", {
+        p_order_number: orderNumber,
+        p_receipt_code: receiptCode
+      });
+      if (error) throw error;
+      if (message) { message.textContent = "Receipt confirmed. Order moved to History."; message.className = "status-message success"; }
+      form.reset();
+      await loadOrders();
+    } catch (error) {
+      if (message) { message.textContent = error.message || "Could not confirm receipt."; message.className = "status-message error"; }
+    } finally {
+      button.disabled = false;
+    }
+  });
+
   async function updateStatus(id, newStatus, options = {}) {
     if (newStatus === "completed") {
       toast("Use Confirm receipt with the customer's 6-digit code.");
