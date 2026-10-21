@@ -769,8 +769,8 @@ Status: ${order.status}`;
     stopIncomingOrderRinging();
     if (!activeIncomingOrderId || !soundOn) return;
 
-    // Ring immediately, then repeat until the active order is accepted or rejected.
-    void beep();
+    // The first alert is played as soon as the order is detected.
+    // Continue ringing while the order is waiting for a decision.
     incomingRingTimer = setInterval(() => {
       if (!activeIncomingOrderId || !soundOn) return;
       void beep();
@@ -799,6 +799,10 @@ Status: ${order.status}`;
   function enqueueIncomingOrder(orderId) {
     if (!orderId || incomingOrderQueue.includes(orderId) || activeIncomingOrderId === orderId) return;
     incomingOrderQueue.push(orderId);
+
+    // Alert at detection time, before waiting for the follow-up orders query/render.
+    // The incoming dialog will keep ringing until the order is accepted or rejected.
+    void beep();
   }
 
   function showNextIncomingOrder() {
