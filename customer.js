@@ -546,10 +546,18 @@
             ? '<p class="receipt-code-note">' + escapeHTML(lang === "ar" ? "رمز تأكيد الاستلام (أعطه للكاشير عند التسليم): " : "Customer receipt code (give this to the cashier when you receive the order): ") + '<strong>' + escapeHTML(order.receipt_code) + '</strong></p>'
             : "") + codeDetails + remove + "</article>";
       };
-      const activeResults = results.filter(result => result.failed || result.missing || String(result.order?.status || "").toLowerCase() !== "completed");
-      const completedResults = results.filter(result => !result.failed && !result.missing && String(result.order?.status || "").toLowerCase() === "completed");
+      // Keep only orders still being worked on in Active Orders.
+      // As soon as an order is ready, move it to History; delivery and completion
+      // remain in History as well, so old ready orders do not clutter the active list.
+      const activeStatuses = new Set(["new", "accepted", "preparing"]);
+      const activeResults = results.filter(result =>
+        result.failed || result.missing || activeStatuses.has(String(result.order?.status || "").toLowerCase())
+      );
+      const historyResults = results.filter(result =>
+        !result.failed && !result.missing && !activeStatuses.has(String(result.order?.status || "").toLowerCase())
+      );
       const activeHtml = activeResults.map(renderResult).join("");
-      const historyHtml = completedResults.map(renderResult).join("");
+      const historyHtml = historyResults.map(renderResult).join("");
       list.innerHTML = '<section class="customer-order-group"><h3>' + escapeHTML(tr("activeOrdersHeading")) + '</h3>' +
         (activeHtml || '<p class="muted tracked-empty">' + escapeHTML(tr("noTrackedOrders")) + '</p>') +
         '</section><section class="customer-order-group"><h3>' + escapeHTML(tr("historyHeading")) + '</h3>' +
