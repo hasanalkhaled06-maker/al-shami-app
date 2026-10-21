@@ -347,7 +347,7 @@
 
     $("#stat-progress").textContent =
       orders.filter(order =>
-        ["accepted", "preparing", "ready"].includes(order.status)
+        ["accepted", "preparing", "ready", "out_for_delivery"].includes(order.status)
       ).length;
 
     $("#new-count").textContent =
@@ -490,6 +490,7 @@
                   "accepted",
                   "preparing",
                   "ready",
+                  ...(order.order_type === "delivery" ? ["out_for_delivery"] : []),
                   "completed",
                   "rejected"
                 ].map(value => `
@@ -497,7 +498,7 @@
                     value="${value}"
                     ${order.status === value ? "selected" : ""}
                   >
-                    ${value[0].toUpperCase() + value.slice(1)}
+                    ${value.split("_").map(part => part[0].toUpperCase() + part.slice(1)).join(" ")}
                   </option>
                 `).join("")}
               </select>
