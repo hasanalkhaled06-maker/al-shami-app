@@ -26,8 +26,13 @@
   let currentUser = null;
   let orders = [];
   let products = [];
-  let soundOn = false;
-  let notificationsOn = false;
+  // Order alerts stay enabled; browsers may require a user gesture to unlock audio.
+  let soundOn = true;
+  let notificationsOn = "Notification" in window && Notification.permission === "granted";
+  let notificationPermissionPromise = null;
+  let notificationPermissionRequested = false;
+  const pendingOrderNotifications = new Map();
+  let soundActivationHintShown = false;
   let knownOrderIds = new Set();
   let firstOrderLoad = true;
   let audioCtx = null;
@@ -104,7 +109,7 @@
     $("#login-panel").classList.add("hidden");
     $("#dashboard").classList.remove("hidden");
     $("#signout").classList.remove("hidden");
-    $("#sound-toggle").disabled = false;
+    initializeOrderAlerts();
 
     setConnection("Connected");
 
@@ -162,6 +167,10 @@
       toast("Supabase is not connected.");
       return;
     }
+
+    // Ask for browser notification permission during this user-initiated sign-in.
+    initializeOrderAlerts();
+    requestOrderNotificationPermission();
 
     const form = new FormData(event.currentTarget);
 
@@ -240,66 +249,169 @@
     };
   });
 
-  $("#sound-toggle").onclick = async () => {
-    try {
-      audioCtx = audioCtx ||
-        new (window.AudioContext || window.webkitAudioContext)();
-      await audioCtx.resume();
-      soundOn = true;
+  function initializeOrderAlerts() {
+    soundOn = true;
+    const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
 
-      if ("Notification" in window) {
-        try {
-          if (Notification.permission === "granted") {
-            notificationsOn = true;
-          } else if (Notification.permission === "default") {
-            notificationsOn = (await Notification.requestPermission()) === "granted";
-          }
-        } catch (notificationError) {
-          console.warn("Notifications unavailable:", notificationError);
-        }
+    if (!audioCtx && AudioContextConstructor) {
+      try {
+        audioCtx = new AudioContextConstructor();
+      } catch (error) {
+        console.warn("Order audio is unavailable in this browser:", error);
       }
-
-      $("#sound-toggle").textContent = notificationsOn
-        ? "Sound & notifications enabled"
-        : "Sound alerts enabled";
-      $("#sound-toggle").classList.add("btn-primary");
-      void beep();
-      if (activeIncomingOrderId) startIncomingOrderRinging();
-      toast(notificationsOn
-        ? "Sound and device notifications enabled. Keep this dashboard open for live order alerts."
-        : "Sound enabled. Keep this dashboard open for live order alerts.");
-    } catch (error) {
-      console.error("Could not enable sound:", error);
-      toast("Could not enable sound. Check silent mode, volume and browser settings.");
     }
-  };
 
-  function notifyNewOrder(order) {
+    if (audioCtx && audioCtx.state !== "running") {
+      try {
+        const resumePromise = audioCtx.resume();
+        if (resumePromise && typeof resumePromise.then === "function") {
+          void resumePromise.then(() => {
+            if (audioCtx?.state !== "running") return;
+            soundActivationHintShown = false;
+            if (activeIncomingOrderId) {
+              const activeOrder = orders.find(order => order.id === activeIncomingOrderId);
+              if (activeOrder) renderIncomingOrder(activeOrder);
+              void beep();
+            }
+          }).catch(error => {
+            console.debug("Order audio is waiting for browser interaction:", error);
+          });
+        }
+      } catch (error) {
+        console.debug("Order audio could not be resumed yet:", error);
+      }
+    }
+
+    if ("Notification" in window) notificationsOn = Notification.permission === "granted";
+  }
+
+  function showOrderNotification(order) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
     const number = order.order_number || String(order.id || "").slice(0, 8);
     const title = "AL SHAMI — NEW ORDER!";
     const body = "Order #" + number + " has arrived. Open the admin dashboard.";
-    try {
-      if (typeof navigator.vibrate === "function") navigator.vibrate([250, 120, 250, 120, 400]);
-    } catch (_) {}
-    if (notificationsOn && "Notification" in window && Notification.permission === "granted") {
+    const options = {
+      body,
+      tag: "al-shami-order-" + order.id,
+      renotify: true,
+      icon: "./icons/al-shami-admin.svg",
+      badge: "./icons/al-shami-admin.svg",
+      data: { url: new URL("./admin.html", window.location.href).href }
+    };
+
+    const showFallbackNotification = () => {
       try {
-        const notification = new Notification(title, {
-          body,
-          tag: "al-shami-order-" + order.id,
-          renotify: true
-        });
+        const notification = new Notification(title, options);
         notification.onclick = () => { window.focus(); notification.close(); };
       } catch (error) {
         console.warn("System notification could not be shown:", error);
       }
+    };
+
+    if (navigator.serviceWorker && typeof navigator.serviceWorker.getRegistration === "function") {
+      void navigator.serviceWorker.getRegistration()
+        .then(registration => {
+          if (registration && typeof registration.showNotification === "function") {
+            return registration.showNotification(title, options);
+          }
+          showFallbackNotification();
+          return undefined;
+        })
+        .catch(error => {
+          console.warn("Service-worker order notification failed:", error);
+        });
+      return;
+    }
+
+    showFallbackNotification();
+  }
+
+  function flushPendingOrderNotifications() {
+    if (!notificationsOn) {
+      pendingOrderNotifications.clear();
+      return;
+    }
+
+    const pending = Array.from(pendingOrderNotifications.values());
+    pendingOrderNotifications.clear();
+    pending.forEach(showOrderNotification);
+  }
+
+  function requestOrderNotificationPermission() {
+    if (!("Notification" in window)) return Promise.resolve(false);
+
+    if (Notification.permission === "granted") {
+      notificationsOn = true;
+      flushPendingOrderNotifications();
+      return Promise.resolve(true);
+    }
+
+    if (Notification.permission !== "default" || notificationPermissionRequested) {
+      return notificationPermissionPromise || Promise.resolve(false);
+    }
+
+    notificationPermissionRequested = true;
+    try {
+      notificationPermissionPromise = Promise.resolve(Notification.requestPermission())
+        .then(permission => {
+          notificationsOn = permission === "granted";
+          if (notificationsOn) flushPendingOrderNotifications();
+          else pendingOrderNotifications.clear();
+          return notificationsOn;
+        })
+        .catch(error => {
+          pendingOrderNotifications.clear();
+          console.warn("Notifications unavailable:", error);
+          return false;
+        });
+    } catch (error) {
+      pendingOrderNotifications.clear();
+      console.warn("Notification permission could not be requested:", error);
+      notificationPermissionPromise = Promise.resolve(false);
+    }
+
+    return notificationPermissionPromise;
+  }
+
+  function notifyNewOrder(order) {
+    const number = order.order_number || String(order.id || "").slice(0, 8);
+    try {
+      if (typeof navigator.vibrate === "function") {
+        navigator.vibrate([250, 120, 250, 120, 400]);
+      }
+    } catch (_) {}
+
+    if (!("Notification" in window)) return;
+    if (Notification.permission === "granted") {
+      notificationsOn = true;
+      showOrderNotification(order);
+    } else if (Notification.permission === "default") {
+      pendingOrderNotifications.set(order.id || String(number), order);
     }
   }
+
+  function handleOrderAlertGesture() {
+    initializeOrderAlerts();
+    if (currentUser) void requestOrderNotificationPermission();
+    if (activeIncomingOrderId) void beep();
+  }
+
+  // Browser audio is unlocked automatically on the first real interaction; no sound toggle is shown.
+  document.addEventListener("pointerdown", handleOrderAlertGesture, true);
+  document.addEventListener("keydown", handleOrderAlertGesture, true);
 
   async function beep() {
     if (!soundOn || !audioCtx) return;
     try {
       if (audioCtx.state !== "running") await audioCtx.resume();
-      if (audioCtx.state !== "running") throw new Error("Audio context is not running");
+      if (audioCtx.state !== "running") {
+        if (!soundActivationHintShown) {
+          soundActivationHintShown = true;
+          toast("Tap once in the admin dashboard to let your browser play the order ring automatically.");
+        }
+        return;
+      }
+      soundActivationHintShown = false;
       const startAt = audioCtx.currentTime + 0.03;
       [0, 0.28, 0.56, 0.84].forEach((delay, index) => {
         const oscillator = audioCtx.createOscillator();
@@ -317,7 +429,10 @@
       });
     } catch (error) {
       console.warn("AL SHAMI sound alert failed:", error);
-      toast("Sound could not play. Tap Enable order sound again and check device volume/silent mode.");
+      if (!soundActivationHintShown) {
+        soundActivationHintShown = true;
+        toast("Order sound is blocked by the browser. Tap once in the admin dashboard and check device volume/silent mode.");
+      }
     }
   }
 
@@ -720,9 +835,15 @@ Status: ${order.status}`;
     const hint = $("#incoming-order-sound-hint");
     if (!details || !order) return;
     title.textContent = "NEW ORDER #" + (order.order_number || String(order.id).slice(0,8));
-    hint.textContent = soundOn
-      ? "Ringing alert is active. Choose Accept or Reject to clear this order."
-      : "This order is waiting for your decision. Tap “Enable order sound & notifications” at the top to enable ringing.";
+    if (!audioCtx && !(window.AudioContext || window.webkitAudioContext)) {
+      hint.textContent = "This browser does not support in-page ringing. Keep the admin dashboard open; device notifications depend on browser support and permission.";
+    } else if (audioCtx && audioCtx.state !== "running") {
+      hint.textContent = "The alert is automatic. Your browser needs one tap anywhere in this dashboard to unlock sound; after that, new orders ring automatically.";
+    } else if ("Notification" in window && Notification.permission === "granted") {
+      hint.textContent = "Automatic ringing and device notifications are active until you accept or reject this order.";
+    } else {
+      hint.textContent = "Automatic ringing continues until you accept or reject this order. Allow browser notifications when prompted for device alerts.";
+    }
     const items = (order.order_items || []).map(item =>
       "<li><span>" + Number(item.quantity) + " × " +
       esc(item.item_name || item.menu_items?.name || "Menu item") +
