@@ -152,7 +152,7 @@
     </aside>
 
     <div id="app-status" class="app-message info" role="status" aria-live="polite" hidden></div>
-    <button id="retry-menu" class="btn btn-light retry-menu" type="button" hidden>Retry menu loading</button>
+    <button id="retry-menu" class="btn btn-light retry-menu" type="button" data-i18n="retry" hidden>Retry</button>
     <div id="active-offers" aria-live="polite"></div>
 
     <div class="section-heading">
@@ -221,7 +221,7 @@
           <label id="address-field">
             <span data-i18n="address">Delivery address / landmark</span>
             <input name="delivery_address" maxlength="250" autocomplete="street-address" aria-describedby="address-help" placeholder="House number, street, landmark">
-            <small id="address-help" class="field-help">Include your house or building number, street, neighbourhood, and a nearby landmark (for example, a shop or station).</small>
+            <small id="address-help" class="field-help" data-i18n="addressHint">Include your house or building number, street, neighbourhood, and a nearby landmark (for example, a shop or station).</small>
           </label>
 
           <label class="full">
@@ -243,7 +243,7 @@
     <strong>AL SHAMI RESTAURANT &amp; FAST FOOD</strong>
     <div class="restaurant-address-wrap">
       <span id="restaurant-address">Darkuman Circle Station, Accra, Ghana</span>
-      <button id="copy-address" class="copy-address-button" type="button">Copy address</button>
+      <button id="copy-address" class="copy-address-button" type="button" data-i18n="copyAddress">Copy address</button>
       <span id="copy-address-status" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></span>
     </div>
     <div class="site-contact-links" aria-label="Restaurant phone numbers">
