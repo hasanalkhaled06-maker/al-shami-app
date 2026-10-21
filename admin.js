@@ -271,37 +271,30 @@
     }
   }
 
-  function beep() {
+  async function beep() {
     if (!soundOn || !audioCtx) return;
-
-    [0, 0.22, 0.44].forEach((delay, index) => {
-      const oscillator = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-
-      oscillator.type = "sine";
-      oscillator.frequency.value = index === 1 ? 1040 : 880;
-
-      gain.gain.setValueAtTime(
-        0.0001,
-        audioCtx.currentTime + delay
-      );
-
-      gain.gain.exponentialRampToValueAtTime(
-        0.18,
-        audioCtx.currentTime + delay + 0.02
-      );
-
-      gain.gain.exponentialRampToValueAtTime(
-        0.0001,
-        audioCtx.currentTime + delay + 0.16
-      );
-
-      oscillator.connect(gain);
-      gain.connect(audioCtx.destination);
-
-      oscillator.start(audioCtx.currentTime + delay);
-      oscillator.stop(audioCtx.currentTime + delay + 0.18);
-    });
+    try {
+      if (audioCtx.state !== "running") await audioCtx.resume();
+      if (audioCtx.state !== "running") throw new Error("Audio context is not running");
+      const startAt = audioCtx.currentTime + 0.03;
+      [0, 0.28, 0.56, 0.84].forEach((delay, index) => {
+        const oscillator = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        oscillator.type = "triangle";
+        oscillator.frequency.setValueAtTime(index % 2 ? 1180 : 880, startAt + delay);
+        gain.gain.setValueAtTime(0.0001, startAt + delay);
+        gain.gain.exponentialRampToValueAtTime(0.32, startAt + delay + 0.025);
+        gain.gain.setValueAtTime(0.32, startAt + delay + 0.13);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startAt + delay + 0.23);
+        oscillator.connect(gain);
+        gain.connect(audioCtx.destination);
+        oscillator.start(startAt + delay);
+        oscillator.stop(startAt + delay + 0.24);
+      });
+    } catch (error) {
+      console.warn("AL SHAMI sound alert failed:", error);
+      toast("Sound could not play. Tap Enable order sound again and check device volume/silent mode.");
+    }
   }
 
   async function refreshAll() {
@@ -592,7 +585,7 @@ Status: ${order.status}`;
 
           knownOrderIds.add(payload.new.id);
 
-          if (soundOn) beep();
+          if (soundOn) void beep();
           notifyNewOrder(payload.new);
 
           toast(
