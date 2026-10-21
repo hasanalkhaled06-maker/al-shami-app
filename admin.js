@@ -168,9 +168,8 @@
       return;
     }
 
-    // Ask for browser notification permission during this user-initiated sign-in.
+    // Prepare audio during the sign-in gesture; notification permission is requested after admin access is confirmed.
     initializeOrderAlerts();
-    requestOrderNotificationPermission();
 
     const form = new FormData(event.currentTarget);
 
