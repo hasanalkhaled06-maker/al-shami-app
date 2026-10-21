@@ -35,6 +35,7 @@
   let recoveryPhoneVerified = false;
   let customerPhoneValidatedUserId = null;
   let phoneProfileValidation = null;
+  let inPasswordRecovery = false;
 
   function authMessage(message, error = false) {
     const node = $("#auth-message");
@@ -54,6 +55,8 @@
   function unlockCustomerApp(userId) {
     if (!authSession?.user || authSession.user.id !== userId) return;
     customerPhoneValidatedUserId = userId;
+    // Do not dismiss the mandatory gate while a password-recovery session is active.
+    if (inPasswordRecovery) return;
     document.body.classList.remove("customer-auth-required", "auth-dialog-open");
     const gate = $("#customer-auth");
     if (gate) gate.hidden = true;
@@ -278,6 +281,7 @@
   }
 
   function showPasswordRecovery(mode) {
+    inPasswordRecovery = true;
     authRecoveryMode = mode;
     recoveryPhoneVerified = mode === "phone";
     const gate = $("#customer-auth");
@@ -311,8 +315,10 @@
     try {
       const { data, error } = await db.auth.getSession();
       if (error) throw error;
+      if (window.location.hash.includes("type=recovery")) inPasswordRecovery = true;
       applyAuthState(data.session);
       db.auth.onAuthStateChange((event, session) => {
+        if (event === "PASSWORD_RECOVERY") inPasswordRecovery = true;
         applyAuthState(session);
         if (event === "PASSWORD_RECOVERY") showPasswordRecovery("email");
       });
@@ -490,6 +496,7 @@
       if (error) throw error;
       authRecoveryMode = null;
       recoveryPhoneVerified = false;
+      inPasswordRecovery = false;
       $("#auth-recovery-panel").hidden = true;
       $("#customer-auth-form").hidden = false;
       $("#auth-mode-switch").hidden = false;
