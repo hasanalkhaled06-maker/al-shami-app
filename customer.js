@@ -122,10 +122,26 @@
   }
 
   const authGate = $("#customer-auth");
-  $("#customer-auth-open")?.addEventListener("click", () => { setAuthMode("signin"); if (authGate) authGate.hidden = false; $("#auth-identifier")?.focus(); });
-  $("#auth-close")?.addEventListener("click", () => { if (authGate) authGate.hidden = true; });
-  $("#auth-continue-guest")?.addEventListener("click", () => { if (authGate) authGate.hidden = true; });
-  authGate?.addEventListener("click", event => { if (event.target === authGate) authGate.hidden = true; });
+  function showCustomerAuth() {
+    if (!authGate) return;
+    setAuthMode("signin");
+    authGate.hidden = false;
+    authGate.removeAttribute("hidden");
+    document.body.classList.add("auth-dialog-open");
+    window.requestAnimationFrame(() => $("#auth-identifier")?.focus());
+  }
+  $("#customer-auth-open")?.addEventListener("click", showCustomerAuth);
+  // Delegated fallback for mobile/PWA clients if an earlier listener was missed.
+  document.addEventListener("click", event => {
+    const trigger = event.target?.closest?.("#customer-auth-open");
+    if (trigger) {
+      event.preventDefault();
+      showCustomerAuth();
+    }
+  }, true);
+  $("#auth-close")?.addEventListener("click", () => { if (authGate) authGate.hidden = true; document.body.classList.remove("auth-dialog-open"); });
+  $("#auth-continue-guest")?.addEventListener("click", () => { if (authGate) authGate.hidden = true; document.body.classList.remove("auth-dialog-open"); });
+  authGate?.addEventListener("click", event => { if (event.target === authGate) { authGate.hidden = true; document.body.classList.remove("auth-dialog-open"); } });
   $("#auth-mode-signin")?.addEventListener("click", () => setAuthMode("signin"));
   $("#auth-mode-signup")?.addEventListener("click", () => setAuthMode("signup"));
   $("#auth-method-phone")?.addEventListener("click", () => setAuthMethod("phone"));
