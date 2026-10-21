@@ -162,6 +162,7 @@
   const ORDER_HISTORY_KEY = "alShamiOrderHistoryV1";
   const TRACKING_TOKEN_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   let trackedOrdersLoading = false;
+  let trackedOrdersRefreshQueued = false;
   function storageGet(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
   function storageSet(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
   function persistCart() { storageSet(CART_KEY, JSON.stringify(cart)); }
@@ -484,7 +485,12 @@
 
   async function refreshCustomerOrderHistory() {
     const list = $("#customer-order-history");
-    if (!list || trackedOrdersLoading) return;
+    if (!list) return;
+    if (trackedOrdersLoading) {
+      // Do not lose a refresh requested while an earlier status check is in flight.
+      trackedOrdersRefreshQueued = true;
+      return;
+    }
     const entries = readTrackedOrders();
     if (!entries.length) {
       list.innerHTML = '<p class="muted tracked-empty">' + escapeHTML(tr("noTrackedOrders")) + "</p>";
@@ -548,7 +554,15 @@
         (activeHtml || '<p class="muted tracked-empty">' + escapeHTML(tr("noTrackedOrders")) + '</p>') +
         '</section><section class="customer-order-group"><h3>' + escapeHTML(tr("historyHeading")) + '</h3>' +
         (historyHtml || '<p class="muted tracked-empty">' + escapeHTML(tr("noCompletedOrders")) + '</p>') + '</section>';
-    } finally { trackedOrdersLoading = false; }
+    } finally {
+      trackedOrdersLoading = false;
+      if (trackedOrdersRefreshQueued) {
+        trackedOrdersRefreshQueued = false;
+        // Re-check once the in-flight request finishes so a newly completed order
+        // is moved from Active orders to History without waiting for the next poll.
+        void refreshCustomerOrderHistory();
+      }
+    }
   }
 
   async function lookupTrackingCode(raw) {
