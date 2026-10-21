@@ -1028,12 +1028,14 @@
     }
   });
 
+  let menuIsVisible = false;
+  let orderIsVisible = false;
   const floatingCartObserver = new IntersectionObserver(entries => {
-    const menu = $("#menu");
-    const order = $(".checkout-section");
-    const menuVisible = entries.some(entry => entry.target === menu && entry.isIntersecting);
-    const orderVisible = entries.some(entry => entry.target === order && entry.isIntersecting);
-    const shouldShow = !menuVisible && !orderVisible;
+    for (const entry of entries) {
+      if (entry.target === $("#menu")) menuIsVisible = entry.isIntersecting;
+      if (entry.target === $(".checkout-section")) orderIsVisible = entry.isIntersecting;
+    }
+    const shouldShow = menuIsVisible && !orderIsVisible;
     floatingCartButton?.classList.toggle("is-visible", shouldShow);
     if (floatingCartButton) floatingCartButton.setAttribute("aria-hidden", shouldShow ? "false" : "true");
   }, { threshold: 0.05 });
