@@ -222,6 +222,7 @@
 
   $("#order-filter").onchange = renderOrders;
   $("#order-search")?.addEventListener("input", renderOrders);
+  $("#history-search")?.addEventListener("input", renderHistory);
   $("#export-orders")?.addEventListener("click", exportVisibleOrders);
 
   document.querySelectorAll(".tab").forEach(button => {
@@ -230,7 +231,7 @@
         tab.classList.toggle("active", tab === button);
       });
 
-      ["orders", "menu", "offers", "settings"].forEach(name => {
+      ["orders", "history", "menu", "offers", "settings"].forEach(name => {
         $(`#tab-${name}`).classList.toggle(
           "hidden",
           name !== button.dataset.tab
@@ -333,7 +334,7 @@
     const failed = results
       .map((result, index) => ({
         result,
-        name: ["orders", "menu", "offers", "settings"][index]
+        name: ["orders", "history", "menu", "offers", "settings"][index]
       }))
       .filter(item => item.result.status === "rejected");
 
@@ -418,6 +419,7 @@
       orders.filter(order => order.status === "new").length;
 
     renderOrders();
+    renderHistory();
     showNextIncomingOrder();
   }
 
@@ -481,7 +483,7 @@
   }
 
   function renderOrders() {
-    const filteredOrders = visibleOrders();
+    const filteredOrders = visibleOrders().filter(order => order.status !== "completed");
 
     $("#orders-list").innerHTML = filteredOrders.length
       ? filteredOrders.map(order => `
@@ -618,6 +620,34 @@ Status: ${order.status}`;
   }
 
 
+
+  function renderHistory() {
+    const list = $("#history-list");
+    if (!list) return;
+    const query = String($("#history-search")?.value || "").trim().toLowerCase();
+    const completed = orders.filter(order => {
+      if (order.status !== "completed") return false;
+      const searchable = [order.order_number, order.id, order.customer_name, order.customer_phone, order.delivery_address, order.order_type, ...(order.order_items || []).map(item => item.item_name || item.menu_items?.name || "")].join(" ").toLowerCase();
+      return !query || searchable.includes(query);
+    });
+    list.innerHTML = completed.length ? completed.map(order => `
+      <article class="order-card">
+        <div class="order-header"><div><h3>Order #${esc(order.order_number || order.id.slice(0, 8))}</h3><div class="order-meta">${new Date(order.created_at).toLocaleString()} · ${esc(order.customer_name)} · ${esc(order.customer_phone)}</div></div><span class="order-status">Completed</span></div>
+        <p><strong>${order.order_type === "delivery" ? "Delivery" : "Pickup"}</strong>${order.delivery_address ? " · " + esc(order.delivery_address) : ""}${order.notes ? "<br>Notes: " + esc(order.notes) : ""}</p>
+        <ul class="order-lines">${(order.order_items || []).map(item => `<li><span>${Number(item.quantity)} × ${esc(item.item_name || item.menu_items?.name || "Menu item")}</span><strong>${money(Number(item.unit_price) * Number(item.quantity))}</strong></li>`).join("")}</ul>
+        <div class="order-footer"><div><strong>${money(order.total)}</strong><div class="order-meta">Subtotal ${money(order.subtotal)} · Delivery ${money(order.delivery_fee)}</div></div><div class="order-actions"><button class="btn btn-light" data-history-copy="${order.id}">Copy details</button></div></div>
+      </article>`).join("") : '<p class="muted">No completed orders in history yet.</p>';
+    list.querySelectorAll("[data-history-copy]").forEach(button => {
+      button.onclick = async () => {
+        const order = orders.find(item => item.id === button.dataset.historyCopy);
+        if (!order) return;
+        const details = `AL SHAMI ORDER #${order.order_number || order.id.slice(0, 8)}\n${order.customer_name} - ${order.customer_phone}\n${order.order_type} ${order.delivery_address || ""}\n${(order.order_items || []).map(item => `${item.quantity} x ${item.item_name || item.menu_items?.name || "Menu item"}`).join("\n")}\nTOTAL ${money(order.total)}\nStatus: ${order.status}`;
+        try { await navigator.clipboard.writeText(details); toast("Order details copied."); }
+        catch (_) { toast(details); }
+      };
+    });
+  }
+
   function stopIncomingOrderRinging() {
     if (incomingRingTimer !== null) { clearInterval(incomingRingTimer); incomingRingTimer = null; }
   }
@@ -722,7 +752,7 @@ Status: ${order.status}`;
       const active = tab.dataset.tab === "orders";
       tab.classList.toggle("active", active);
     });
-    ["orders", "menu", "offers", "settings"].forEach(name => {
+    ["orders", "history", "menu", "offers", "settings"].forEach(name => {
       const section = $("#tab-" + name);
       if (section) section.classList.toggle("hidden", name !== "orders");
     });
