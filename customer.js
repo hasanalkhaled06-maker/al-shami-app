@@ -457,9 +457,14 @@
     return true;
   }
 
-  function trackingStatusText(status) {
+  function trackingStatusText(status, orderType = "") {
+    const value = String(status || "").toLowerCase();
+    if (value === "completed") {
+      if (lang === "ar") return orderType === "delivery" ? "تم التوصيل" : "تم الاستلام";
+      return orderType === "delivery" ? "Delivered" : "Collected";
+    }
     const names = trackingStatusNames[lang] || trackingStatusNames.en;
-    return names[String(status || "").toLowerCase()] || String(status || "Unknown").replace(/_/g, " ");
+    return names[value] || String(status || "Unknown").replace(/_/g, " ");
   }
 
   function trackingDate(value) {
@@ -519,7 +524,7 @@
         const items = Array.isArray(order.items) ? order.items : [];
         const itemHtml = items.map(item => '<li><span>' + escapeHTML(item.quantity) + " × " + escapeHTML(item.name || "Item") + '</span><strong>' + money(item.line_total ?? (Number(item.unit_price || 0) * Number(item.quantity || 0))) + "</strong></li>").join("");
         return '<article class="customer-order-card">' +
-          '<div class="tracked-card-heading"><div><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(number) + '</strong><p class="tracked-date">' + escapeHTML(tr("orderedAt")) + ": " + escapeHTML(trackingDate(order.created_at)) + '</p></div><span class="tracked-status status-' + escapeHTML(status.replace(/[^a-z_]/g,"")) + '">' + escapeHTML(trackingStatusText(status)) + "</span></div>" +
+          '<div class="tracked-card-heading"><div><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(number) + '</strong><p class="tracked-date">' + escapeHTML(tr("orderedAt")) + ": " + escapeHTML(trackingDate(order.created_at)) + '</p></div><span class="tracked-status status-' + escapeHTML(status.replace(/[^a-z_]/g,"")) + '">' + escapeHTML(trackingStatusText(status, order.order_type)) + "</span></div>" +
           timeline + '<div class="tracked-order-meta"><span>' + escapeHTML(order.order_type === "pickup" ? tr("pickup") : tr("delivery")) + '</span><strong>' + money(order.total) + "</strong></div>" +
           (itemHtml ? '<ul class="tracked-items">' + itemHtml + "</ul>" : "") + codeDetails + remove + "</article>";
       }).join("");
@@ -546,7 +551,7 @@
     if (message) { message.textContent = ""; message.className = "status-message"; }
     try {
       const order = await lookupTrackingCode(input?.value);
-      if (message) { message.textContent = trackingStatusText(order.status); message.className = "status-message success"; }
+      if (message) { message.textContent = trackingStatusText(order.status, order.order_type); message.className = "status-message success"; }
       if (input) input.value = "";
       await refreshCustomerOrderHistory();
     } catch (error) {
@@ -582,6 +587,9 @@
   window.setInterval(() => {
     if (document.visibilityState === "visible") void refreshCustomerOrderHistory();
   }, 45000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") void refreshCustomerOrderHistory();
+  });
 
 
   function showCheckoutMessage(text, isError = false) {
