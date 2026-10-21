@@ -229,7 +229,6 @@
     $("#auth-recovery-panel").hidden = true;
     $("#customer-auth-form").hidden = false;
     $("#auth-mode-switch").hidden = false;
-    $("#auth-method-switch").hidden = false;
     $("#auth-forgot-password").hidden = false;
     $("#auth-continue-guest").hidden = true;
     $("#auth-recovery-back").hidden = false;
@@ -241,8 +240,11 @@
 
   function closeAuthDialog() {
     const gate = $("#customer-auth");
-    if (!authSession?.user) {
-      // Mandatory authentication cannot be dismissed by the close button or backdrop.
+    const user = authSession?.user;
+    const hasSavedPhone = Boolean(user?.user_metadata?.phone_e164 || user?.user_metadata?.phone);
+    const phoneValidationPending = Boolean(user && hasSavedPhone && customerPhoneValidatedUserId !== user.id);
+    if (!user || phoneValidationPending || inPasswordRecovery) {
+      // Keep the mandatory gate until auth and the unique phone reservation both pass.
       document.body.classList.add("customer-auth-required", "auth-dialog-open");
       if (gate) gate.hidden = false;
       return;
@@ -343,7 +345,6 @@
     $("#auth-recovery-panel").hidden = true;
     $("#customer-auth-form").hidden = false;
     $("#auth-mode-switch").hidden = false;
-    $("#auth-method-switch").hidden = false;
     $("#auth-forgot-password").hidden = false;
     $("#auth-continue-guest").hidden = false;
     setAuthMode("signin");
@@ -500,7 +501,6 @@
       $("#auth-recovery-panel").hidden = true;
       $("#customer-auth-form").hidden = false;
       $("#auth-mode-switch").hidden = false;
-      $("#auth-method-switch").hidden = false;
       $("#auth-forgot-password").hidden = false;
       $("#auth-continue-guest").hidden = false;
       $("#auth-password").value = "";

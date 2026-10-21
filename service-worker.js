@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v33";
+const CACHE_NAME = CACHE_PREFIX + "v34";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -11,7 +11,7 @@ const SHELL_FILES = [
   "./style.css",
   "./config.js",
   "./customer.js",
-  "./customer.js?v=customer-email-auth-20261021o",
+  "./customer.js?v=customer-email-auth-20261021p",
   "./admin.js",
   "./admin.js?v=order-audio-recovery-20261021d",
   "./admin-operations.js",
