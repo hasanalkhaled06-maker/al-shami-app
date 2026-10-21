@@ -535,7 +535,10 @@
         return '<article class="customer-order-card">' +
           '<div class="tracked-card-heading"><div><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(number) + '</strong><p class="tracked-date">' + escapeHTML(tr("orderedAt")) + ": " + escapeHTML(trackingDate(order.created_at)) + '</p></div><span class="tracked-status status-' + escapeHTML(status.replace(/[^a-z_]/g,"")) + '">' + escapeHTML(trackingStatusText(status, order.order_type)) + "</span></div>" +
           timeline + '<div class="tracked-order-meta"><span>' + escapeHTML(order.order_type === "pickup" ? tr("pickup") : tr("delivery")) + '</span><strong>' + money(order.total) + "</strong></div>" +
-          (itemHtml ? '<ul class="tracked-items">' + itemHtml + "</ul>" : "") + codeDetails + remove + "</article>";
+          (itemHtml ? '<ul class="tracked-items">' + itemHtml + "</ul>" : "") +
+          (status !== "completed" && status !== "rejected" && order.receipt_code
+            ? '<p class="receipt-code-note">' + escapeHTML(lang === "ar" ? "رمز تأكيد الاستلام (أعطه للكاشير عند التسليم): " : "Customer receipt code (give this to the cashier when you receive the order): ") + '<strong>' + escapeHTML(order.receipt_code) + '</strong></p>'
+            : "") + codeDetails + remove + "</article>";
       };
       const activeResults = results.filter(result => result.failed || result.missing || String(result.order?.status || "").toLowerCase() !== "completed");
       const completedResults = results.filter(result => !result.failed && !result.missing && String(result.order?.status || "").toLowerCase() === "completed");
