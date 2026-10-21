@@ -103,6 +103,7 @@
 
     <div class="admin-tabs">
       <button class="tab active" data-tab="orders" type="button">Orders <span id="new-count">0</span></button>
+      <button class="tab" data-tab="history" type="button">History</button>
       <button class="tab" data-tab="menu" type="button">Menu &amp; prices</button>
       <button class="tab" data-tab="offers" type="button">Offers</button>
       <button class="tab" data-tab="settings" type="button">Settings</button>
@@ -122,7 +123,6 @@
           <option value="preparing">Preparing</option>
           <option value="ready">Ready</option>
           <option value="out_for_delivery">Out for delivery</option>
-          <option value="completed">Completed</option>
           <option value="rejected">Rejected</option>
         </select>
       </div>
@@ -135,6 +135,11 @@
       <div id="orders-list" class="orders-list">
         <p class="muted">Sign in to load orders.</p>
       </div>
+    </section>
+
+    <section id="tab-history" class="panel hidden">
+      <div class="section-heading"><div><h2>Order history</h2><p class="muted">Completed orders appear here after customer receipt.</p></div><input id="history-search" type="search" placeholder="Search completed orders…" aria-label="Search order history" autocomplete="off"></div>
+      <div id="history-list" class="orders-list"><p class="muted">Sign in to load order history.</p></div>
     </section>
 
     <section id="tab-menu" class="panel hidden">
@@ -272,7 +277,7 @@
 <div id="toast" class="toast hidden" role="status"></div>
 
 <script src="config.js"></script>
-<script src="admin.js?v=order-ringing-until-decision-20261021d"></script>
+<script src="admin.js?v=order-history-split-20261021a"></script>
 <script src="admin-operations.js?v=admin-polish-20261021"></script>
 <script src="pwa.js"></script>
 
