@@ -169,7 +169,7 @@
   }
   function normalizeGhanaPhone(value) {
     const raw = String(value || "").trim();
-    const validCharacters = /^\+?[0-9][0-9\s().-]*$/.test(raw);
+    const validCharacters = /^\+?[0-9().\s-]+$/.test(raw);
     const digits = raw.replace(/\D/g, "");
     let national = digits;
     if (national.startsWith("00233")) national = national.slice(5);
