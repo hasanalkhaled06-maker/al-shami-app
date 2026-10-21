@@ -14,6 +14,31 @@
   <link rel="icon" href="icons/al-shami-admin.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-admin.png">
   <link rel="stylesheet" href="style.css">
+  <style>
+  .incoming-order-overlay[hidden]{display:none!important}
+  .incoming-order-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:clamp(10px,3vw,28px);background:rgba(16,7,8,.94);color:#211416;overflow-y:auto}
+  .incoming-order-dialog{width:min(100%,920px);max-height:calc(100dvh - 24px);overflow-y:auto;background:#fff;border-radius:22px;box-shadow:0 22px 90px rgba(0,0,0,.5);border:4px solid #a51c2a}
+  .incoming-order-banner{padding:clamp(18px,4vw,32px);background:#67101a;color:#fff;text-align:center}
+  .incoming-order-kicker{font-size:.85rem;font-weight:900;letter-spacing:.18em;text-transform:uppercase;opacity:.85}
+  .incoming-order-banner h2{font-size:clamp(2rem,7vw,4.2rem);line-height:1.05;margin:8px 0}
+  .incoming-order-banner p{margin:0;font-size:1.1rem;font-weight:700}
+  .incoming-order-content{padding:clamp(16px,4vw,30px)}
+  .incoming-order-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .incoming-order-field{padding:12px;border-radius:12px;background:#f8f3f3;overflow-wrap:anywhere}
+  .incoming-order-field small{display:block;color:#6b5558;font-weight:800;margin-bottom:4px}
+  .incoming-order-field strong{font-size:1.05rem}
+  .incoming-order-items{list-style:none;margin:18px 0;padding:0;border-top:1px solid #eee}
+  .incoming-order-items li{display:flex;justify-content:space-between;gap:14px;padding:12px 2px;border-bottom:1px solid #eee}
+  .incoming-order-total{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:1.45rem;font-weight:900;padding:14px 0}
+  .incoming-order-note{background:#fff7e5;border-left:4px solid #d49b22;padding:12px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere}
+  .incoming-order-actions{position:sticky;bottom:0;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px clamp(16px,4vw,30px);background:#fff;border-top:1px solid #eadfe0}
+  .incoming-order-actions button{min-height:64px;font-size:clamp(1.1rem,3vw,1.5rem);font-weight:900;border-radius:14px}
+  .incoming-accept{background:#14753c!important;color:#fff!important;border-color:#14753c!important}
+  .incoming-reject{background:#a61c2a!important;color:#fff!important;border-color:#a61c2a!important}
+  .incoming-order-sound-hint{margin:0 0 14px;padding:10px;border-radius:8px;background:#fff7e5;color:#6a4a00;font-weight:700}
+  body.incoming-order-open{overflow:hidden}
+  @media(max-width:560px){.incoming-order-grid{grid-template-columns:1fr}.incoming-order-dialog{border-radius:14px}.incoming-order-actions button{min-height:58px}}
+</style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
@@ -225,10 +250,29 @@
   </section>
 </main>
 
+
+<div id="incoming-order-overlay" class="incoming-order-overlay" hidden>
+  <section class="incoming-order-dialog" role="dialog" aria-modal="true" aria-labelledby="incoming-order-title" aria-describedby="incoming-order-description">
+    <header class="incoming-order-banner">
+      <div class="incoming-order-kicker">AL SHAMI · ACTION REQUIRED</div>
+      <h2 id="incoming-order-title">NEW ORDER</h2>
+      <p id="incoming-order-description">Accept or reject this order to continue.</p>
+    </header>
+    <div class="incoming-order-content">
+      <p id="incoming-order-sound-hint" class="incoming-order-sound-hint">Enable order sound at the top of the dashboard to hear the ringing alert.</p>
+      <div id="incoming-order-details"></div>
+    </div>
+    <footer class="incoming-order-actions">
+      <button id="incoming-order-reject" class="btn incoming-reject" type="button">✕ REJECT ORDER</button>
+      <button id="incoming-order-accept" class="btn incoming-accept" type="button">✓ ACCEPT ORDER</button>
+    </footer>
+  </section>
+</div>
+
 <div id="toast" class="toast hidden" role="status"></div>
 
 <script src="config.js"></script>
-<script src="admin.js?v=order-status-delivery-20261021a"></script>
+<script src="admin.js?v=fullscreen-order-alert-20261021a"></script>
 <script src="admin-operations.js?v=admin-polish-20261021"></script>
 <script src="pwa.js"></script>
 
