@@ -167,7 +167,7 @@
     } catch (_) { cart = {}; }
   }
   function normalizeGhanaPhone(value) {
-    const digits = String(value || "").replace(/\\D/g, "");
+    const digits = String(value || "").replace(/\D/g, "");
     let national = digits;
     if (national.startsWith("00233")) national = national.slice(5);
     else if (national.startsWith("233")) national = national.slice(3);
