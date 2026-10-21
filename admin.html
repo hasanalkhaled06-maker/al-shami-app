@@ -127,6 +127,13 @@
         </select>
       </div>
 
+      <form id="receipt-confirm-form" class="section-heading" aria-label="Confirm customer receipt" style="align-items:end;gap:10px;flex-wrap:wrap">
+        <label>Order number<input name="order_number" type="number" min="1" step="1" required placeholder="Order #"></label>
+        <label>Customer receipt code<input name="receipt_code" type="text" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="6-digit code" autocomplete="off"></label>
+        <button class="btn btn-primary" type="submit">Confirm receipt</button>
+        <p id="receipt-confirm-message" class="status-message" role="status"></p>
+      </form>
+
       <div class="section-heading" aria-label="Search and export orders">
         <input id="order-search" type="search" placeholder="Search order number, customer, phone or address…" aria-label="Search orders" autocomplete="off">
         <button id="export-orders" class="btn btn-light" type="button">Export visible orders (CSV)</button>
@@ -277,7 +284,7 @@
 <div id="toast" class="toast hidden" role="status"></div>
 
 <script src="config.js"></script>
-<script src="admin.js?v=order-history-split-20261021a"></script>
+<script src="admin.js?v=receipt-confirmation-20261021a"></script>
 <script src="admin-operations.js?v=admin-polish-20261021"></script>
 <script src="pwa.js"></script>
 
