@@ -241,7 +241,11 @@
 
   <footer>
     <strong>AL SHAMI RESTAURANT &amp; FAST FOOD</strong>
-    <span>Darkuman Circle Station, Accra, Ghana</span>
+    <div class="restaurant-address-wrap">
+      <span id="restaurant-address">Darkuman Circle Station, Accra, Ghana</span>
+      <button id="copy-address" class="copy-address-button" type="button">Copy address</button>
+      <span id="copy-address-status" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></span>
+    </div>
     <div class="site-contact-links" aria-label="Restaurant phone numbers">
       <a href="tel:+233547489859">☎ 054 748 9859</a>
       <a href="tel:+233557265050">☎ 055 726 5050</a>
@@ -352,7 +356,24 @@
       });
 
       document.addEventListener("keydown", event => {
-        if (event.key === "Escape" && !modal.hidden) closeModal();
+        if (modal.hidden) return;
+        if (event.key === "Escape") {
+          closeModal();
+          return;
+        }
+        if (event.key !== "Tab") return;
+        const focusable = Array.from(modal.querySelectorAll('a[href], button:not([disabled])'))
+          .filter(element => !element.hasAttribute("hidden"));
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       });
     })();
   </script>
