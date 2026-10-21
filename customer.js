@@ -168,12 +168,18 @@
     } catch (_) { cart = {}; }
   }
   function normalizeGhanaPhone(value) {
-    const digits = String(value || "").replace(/\D/g, "");
+    const raw = String(value || "").trim();
+    const validCharacters = /^\+?[0-9][0-9\s().-]*$/.test(raw);
+    const digits = raw.replace(/\D/g, "");
     let national = digits;
     if (national.startsWith("00233")) national = national.slice(5);
     else if (national.startsWith("233")) national = national.slice(3);
     else if (national.startsWith("0")) national = national.slice(1);
-    if (!/^[0-9]{9}$/.test(national)) throw new Error(lang === "ar" ? "أدخل رقم غاني صحيح، مثال 0241234567." : "Enter a valid Ghana phone number, e.g. 0241234567.");
+    if (!validCharacters || !/^[0-9]{9}$/.test(national)) {
+      throw new Error(lang === "ar"
+        ? "أدخل رقم غاني صحيح، مثال 0241234567."
+        : "Enter a valid Ghana phone number, e.g. 0241234567.");
+    }
     return "+233" + national;
   }
   function restoreCustomerDetails() {
@@ -662,10 +668,15 @@
 
     const details = document.createElement("span");
     details.textContent = offers.map(offer => {
-      const expiry = offer.ends_at && Number.isFinite(new Date(offer.ends_at).getTime())
-        ? (lang === "ar" ? " (ينتهي " : " (Ends ") + new Date(offer.ends_at).toLocaleDateString() + ")"
-        : "";
-      return `${offer.title || ""}${offer.details ? " — " + offer.details : ""}${expiry}`;
+      const dates = [];
+      if (offer.starts_at && Number.isFinite(new Date(offer.starts_at).getTime())) {
+        dates.push((lang === "ar" ? "يبدأ " : "Starts ") + new Date(offer.starts_at).toLocaleDateString());
+      }
+      if (offer.ends_at && Number.isFinite(new Date(offer.ends_at).getTime())) {
+        dates.push((lang === "ar" ? "ينتهي " : "Ends ") + new Date(offer.ends_at).toLocaleDateString());
+      }
+      const dateInfo = dates.length ? " (" + dates.join(" · ") + ")" : "";
+      return `${offer.title || ""}${offer.details ? " — " + offer.details : ""}${dateInfo}`;
     }).join(" · ");
 
     section.append(heading, details);
@@ -688,7 +699,7 @@
       if (!db) throw new Error(tr("setupError"));
       const [menuResult, offerResult, settingsResult] = await Promise.all([
         db.from("menu_items")
-          .select("id,name,category,description,price,image_url,is_available,sort_order,created_at,updated_at")
+          .select("id,name,category,description,price,image_url,is_available,sort_order")
           .order("sort_order")
           .order("name"),
         db.from("offers")
@@ -897,7 +908,7 @@
       const submittedTotal =
         subtotal + (orderType === "delivery" ? deliveryFee : 0);
 
-      const orderSummary = rows.map(([id, quantity]) => {
+      const orderSummary = `${tr("orderType")}: ${tr(orderType)}\n` + rows.map(([id, quantity]) => {
         const product = products.find(item => String(item.id) === String(id));
         return `${quantity} × ${product?.name || "Item"}`;
       }).join("\n");
@@ -978,7 +989,9 @@
         const message = (typeof navigator !== "undefined" && navigator.onLine === false) ||
           /failed to fetch|networkerror|network request failed|fetch failed/i.test(detail)
           ? (lang === "ar" ? "ما قدرنا نتصل بالمطعم. تأكد من الإنترنت وحاول مرة ثانية. طلبك لم يُؤكَّد." : "We couldn't connect to the restaurant. Check your internet and try again. Your order has not been confirmed.")
-          : (detail || tr("orderError"));
+          : /unavailable/i.test(detail)
+            ? (lang === "ar" ? "في صنف من طلبك صار غير متوفر. راجع السلة وحاول من جديد." : "One of your selected items is no longer available. Review your basket and try again.")
+            : tr("orderError");
         showCheckoutMessage(message, true);
       } finally {
         submitting = false;
