@@ -435,8 +435,8 @@
   }
 
   const trackingStatusNames = {
-    en: { new:"New", accepted:"Accepted", preparing:"Preparing", ready:"Ready", out_for_delivery:"Out for delivery", completed:"Completed", rejected:"Rejected" },
-    ar: { new:"جديد", accepted:"تم قبول الطلب", preparing:"قيد التحضير", ready:"جاهز", out_for_delivery:"خرج للتوصيل", completed:"مكتمل", rejected:"مرفوض" }
+    en: { new:"Sent — waiting for restaurant acceptance", accepted:"Accepted by restaurant", preparing:"Preparing", ready:"Ready", out_for_delivery:"Out for delivery", completed:"Completed", rejected:"Rejected" },
+    ar: { new:"تم إرسال الطلب وبانتظار قبول المطعم", accepted:"تم قبول الطلب", preparing:"قيد التحضير", ready:"جاهز", out_for_delivery:"خرج للتوصيل", completed:"مكتمل", rejected:"مرفوض" }
   };
 
   function readTrackedOrders() {
