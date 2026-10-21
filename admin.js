@@ -107,6 +107,18 @@
 
     await refreshAll();
     subscribe();
+
+    // Check for new orders every 5 seconds if realtime misses an event.
+    if (!window.__alShamiOrderPoll) {
+      window.__alShamiOrderPoll = window.setInterval(async () => {
+        if (document.hidden || !db || !currentUser) return;
+        try {
+          await loadOrders();
+        } catch (error) {
+          console.warn("Incoming-order polling failed:", error);
+        }
+      }, 5000);
+    }
   }
 
   async function start() {
@@ -343,8 +355,19 @@
     orders = data || [];
 
     if (firstOrderLoad) {
+      // Baseline existing orders; don't alert for old orders on login.
       orders.forEach(order => knownOrderIds.add(order.id));
       firstOrderLoad = false;
+    } else {
+      // Fallback for realtime events missed by the browser connection.
+      orders.forEach(order => {
+        if (knownOrderIds.has(order.id)) return;
+        knownOrderIds.add(order.id);
+        if (order.status === "new") {
+          enqueueIncomingOrder(order.id);
+          notifyNewOrder(order);
+        }
+      });
     }
 
     $("#stat-new").textContent =
@@ -359,6 +382,7 @@
       orders.filter(order => order.status === "new").length;
 
     renderOrders();
+    showNextIncomingOrder();
   }
 
   function visibleOrders() {
