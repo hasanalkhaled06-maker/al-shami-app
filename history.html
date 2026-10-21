@@ -1,0 +1,472 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#8d1723">
+  <meta name="description" content="Order fresh shawarma, burgers, pizza and more from AL SHAMI RESTAURANT & FAST FOOD, Darkuman Circle Station, Accra. Cash on delivery or pickup.">
+  <meta name="robots" content="index,follow">
+  <meta property="og:title" content="AL SHAMI RESTAURANT & FAST FOOD">
+  <meta property="og:description" content="Fresh favourites, made for you. Order from AL SHAMI in Darkuman, Accra.">
+  <meta property="og:type" content="website">
+  <meta name="color-scheme" content="light">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AL SHAMI">
+  <title>AL SHAMI — Order History</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/al-shami.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+
+    .customer-auth{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(25,10,12,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+    .customer-auth[hidden]{display:none!important}
+    /* Phone OTP is paused; keep the sign-in overlay hidden on all clients. */
+    .customer-auth{display:none!important}
+    .customer-auth-card{box-sizing:border-box;width:100%;max-width:430px;background:#fff;border-radius:22px;padding:28px;color:#242424;box-shadow:0 20px 70px #0005}
+    .customer-auth-card h2{margin:6px 0 10px;color:#8d1723}
+    .customer-auth-card label{display:block;font-weight:700;margin:16px 0 6px}
+    .customer-auth-card input{box-sizing:border-box;width:100%;padding:13px;border:1px solid #d8d8d8;border-radius:10px;font:inherit}
+    .customer-auth-card .btn{margin-top:12px}
+    .customer-account{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;margin:12px auto;max-width:1100px;background:#fff7e8;border:1px solid #ead7b3;border-radius:12px}
+    .customer-account[hidden]{display:none!important}
+    body.auth-required{overflow:hidden}
+    .site-contact-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+    .site-contact-links a{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border:1px solid rgba(141,23,35,.2);border-radius:10px;color:#8d1723;text-decoration:none;font-weight:700}
+    .cart-cost-breakdown{display:grid;gap:7px;margin:12px 0;padding:12px 0;border-top:1px solid #e8e8e8}
+    .cart-cost-line{display:flex;justify-content:space-between;gap:16px;font-size:.95rem}
+    .cart-cost-line.total{font-size:1.1rem;font-weight:800}
+    .product-image img{width:100%;height:100%;object-fit:cover}
+    .product-card button:disabled{opacity:.55;cursor:not-allowed}
+    .app-message{padding:12px 14px;border-radius:10px;margin:10px 0;line-height:1.45}
+    .app-message.error{background:#fff0f0;color:#8d1723;border:1px solid #f2caca}
+    .app-message.info{background:#f4f6f8;color:#333;border:1px solid #e0e4e8}
+    .success-modal[hidden]{display:none!important}
+    .success-modal{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom));background:rgba(12,12,12,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);animation:shamiFadeIn .22s ease}
+    .success-card{box-sizing:border-box;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;padding:32px 24px;border-radius:24px;background:#fff;color:#222;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.3);animation:shamiPopIn .38s cubic-bezier(.2,.8,.2,1)}
+    .success-icon{width:88px;height:88px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;border:5px solid #d9f7e2;border-radius:50%;background:#1eaa4b;color:#fff;font-size:54px;font-weight:800;line-height:1;box-shadow:0 0 0 7px rgba(30,170,75,.08);animation:shamiCheckIn .45s ease .1s both}
+    .success-card h2{margin:0 0 12px;color:#168238;font-size:clamp(22px,5vw,27px);line-height:1.25}
+    .success-card p{margin:10px 0;line-height:1.6}
+    .success-card .success-subtitle{color:#555}
+    #success-order-number{padding:10px 12px;border-radius:10px;background:#fff5f5;color:#8d1723;font-weight:800;overflow-wrap:anywhere}
+    #success-order-total{font-weight:800;color:#222}
+    .success-card button{margin-top:15px;min-width:140px}
+    body.modal-open{overflow:hidden}
+    .status-message:empty{display:none}
+    @keyframes shamiFadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes shamiPopIn{from{opacity:0;transform:translateY(22px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+    @keyframes shamiCheckIn{from{opacity:0;transform:scale(.45) rotate(-15deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+    @media (max-width:480px){.success-card{padding:28px 20px}.success-icon{width:78px;height:78px;font-size:48px}}
+    @media (prefers-reduced-motion:reduce){.success-modal,.success-card,.success-icon{animation:none!important;scroll-behavior:auto!important}}
+
+    .menu-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .menu-tools #search{flex:1;min-width:170px}
+    .sort-label{display:flex;align-items:center;gap:7px;font-size:.9rem;font-weight:700}
+    .sort-label select{max-width:190px;padding:10px;border:1px solid #ddd;border-radius:9px;background:#fff;font:inherit}
+    .remember-customer{display:flex;align-items:center;gap:9px;margin:12px 0;font-size:.92rem}
+    .remember-customer input{width:18px;height:18px;accent-color:#8d1723}
+    .field-help{display:block;color:#615757;font-size:.78rem;font-weight:400;line-height:1.45}
+
+    .customer-orders-panel{margin:22px 0;padding:20px;background:#fff;border:1px solid #ead7d9;border-radius:18px;box-shadow:0 8px 24px rgba(35,12,15,.05)}
+    .customer-orders-panel .section-heading{margin-bottom:8px}.customer-orders-panel .section-heading h2{margin:0}
+    .customer-orders-help{color:#5f5555;line-height:1.5;margin:8px 0 14px}
+    .track-order-form{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:12px 0}
+    .track-order-form label{display:grid;gap:6px;flex:1;min-width:220px;font-weight:700}
+    .track-order-form input{box-sizing:border-box;width:100%;min-height:44px;padding:11px 12px;border:1px solid #d9cacc;border-radius:10px;font:inherit}
+    #customer-orders-message:empty{display:none}.tracked-empty{padding:14px;background:#faf7f7;border-radius:10px}
+    .customer-order-card{margin:12px 0;padding:16px;border:1px solid #eadfe0;border-radius:14px;background:#fff}
+    .tracked-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .tracked-card-heading strong{color:#67101a;font-size:1.05rem}.tracked-date{margin:5px 0;color:#6a6060;font-size:.85rem}
+    .tracked-status{display:inline-flex;padding:6px 10px;border-radius:999px;background:#f6f0f0;color:#67101a;font-size:.82rem;font-weight:800}
+    .customer-order-group{margin-top:18px}.customer-order-group>h3{margin:0 0 10px;font-size:1.05rem}
+    .tracked-status.status-completed{background:#e7f7ec;color:#146c35}.tracked-status.status-rejected,.tracked-rejected{background:#fff0f0;color:#a31925}
+    .tracked-rejected{padding:10px;border-radius:8px;font-weight:800}
+    .tracked-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;list-style:none;padding:0;margin:18px 0}
+    .tracked-steps.is-delivery{grid-template-columns:repeat(6,minmax(0,1fr))}
+    .tracked-steps li{position:relative;text-align:center;color:#837979;font-size:.72rem;line-height:1.3;overflow-wrap:anywhere}
+    .tracked-steps li:before{content:"";display:block;width:12px;height:12px;border:2px solid #d7c8ca;border-radius:50%;background:#fff;margin:0 auto 7px;position:relative;z-index:1}
+    .tracked-steps li:not(:last-child):after{content:"";position:absolute;height:2px;background:#e5d9da;left:calc(50% + 8px);right:calc(-50% + 8px);top:7px}
+    .tracked-steps li.is-complete:before,.tracked-steps li.is-current:before{background:#8d1723;border-color:#8d1723}
+    .tracked-steps li.is-complete:after{background:#8d1723}.tracked-steps li.is-complete,.tracked-steps li.is-current{color:#67101a;font-weight:800}
+    .tracked-order-meta{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #f0e7e8;padding-top:12px;margin-top:8px}
+    .tracked-items{padding:0;margin:10px 0;list-style:none}.tracked-items li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed #eee}
+    .tracked-items li:last-child{border-bottom:0}.tracked-code{margin:12px 0;color:#514646}.tracked-code summary{cursor:pointer;font-weight:700}
+    .tracked-code code{display:block;margin:8px 0;padding:10px;border-radius:8px;background:#fff6e8;color:#67101a;overflow-wrap:anywhere;user-select:all}
+    .tracked-remove{margin-top:5px}#success-order-tracking{padding:10px;background:#fff6e8;border-radius:10px;overflow-wrap:anywhere;font-size:.9rem}
+    #success-copy-tracking[hidden]{display:none!important}
+    @media(max-width:520px){.customer-orders-panel{padding:15px}.tracked-steps li{font-size:.62rem}.track-order-form label{min-width:100%}}
+
+    .btn-remove-item{min-height:44px;padding:8px 10px;border:1px solid #e6c7c7;border-radius:8px;background:#fff5f5;color:#8d1723;font-weight:700}
+    .qty-controls button{min-width:44px;min-height:44px}
+    .success-whatsapp{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin:6px auto;padding:10px 14px;border-radius:10px;background:#1f7a43;color:#fff;text-decoration:none;font-weight:700}
+    .visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+    #place-order:disabled,#clear-cart:disabled{opacity:.55;cursor:not-allowed}
+    @media(max-width:480px){.menu-tools{align-items:stretch}.sort-label{justify-content:space-between}.sort-label select{flex:1;max-width:none}}
+  </style>
+</head>
+
+
+<body class="history-page">
+  <section id="welcome-screen" class="welcome-screen" aria-label="AL SHAMI splash screen">
+    <div class="welcome-glow welcome-glow-one"></div>
+    <div class="welcome-glow welcome-glow-two"></div>
+    <div class="welcome-content">
+      <div class="welcome-emblem" aria-hidden="true"><span>AL</span><span>SHAMI</span><i>✦</i></div>
+      <p class="welcome-kicker">RESTAURANT &amp; FAST FOOD · ACCRA</p>
+      <div class="welcome-divider"><span></span> ✦ <span></span></div>
+      <h1>Welcome to AL SHAMI Restaurant</h1>
+      <p class="welcome-tagline">The Right Choice</p>
+      <p class="welcome-description">Great flavours, quality you’ll love, and hospitality from the heart.</p>
+      <div class="welcome-loading" aria-label="Loading"><span></span><span></span><span></span></div>
+      <div class="welcome-foot"><span>Fresh · Delicious · Made with Love</span></div>
+    </div>
+  </section>
+  <a class="skip-link" href="#main-content">Skip to menu and ordering</a>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="brand-mark" aria-label="AL SHAMI">AL<br>SHAMI</div>
+      <div>
+        <p class="eyebrow">DARKUMAN CIRCLE STATION · ACCRA</p>
+        <h1>AL SHAMI <span>RESTAURANT &amp; FAST FOOD</span></h1>
+        <p class="hero-sub" data-i18n="hero">Fresh favourites, made for you.</p>
+      </div>
+      <label class="language-label">
+        <span class="visually-hidden">Language</span>
+        <select id="language" aria-label="Language">
+          <option value="en">English</option>
+          <option value="ar">العربية</option>
+          <option value="tw">Twi</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  
+  <section id="customer-auth" class="customer-auth" aria-labelledby="customer-auth-title" hidden>
+    <div class="customer-auth-card">
+      <p class="eyebrow">AL SHAMI ACCOUNT</p>
+      <h2 id="customer-auth-title">Sign in with your phone</h2>
+      <p class="muted">Enter your phone number and we’ll send you a one-time SMS code.</p>
+      <label for="auth-phone">Phone number</label>
+      <input id="auth-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+233 24 123 4567" maxlength="30" required>
+      <button id="auth-send-code" class="btn btn-primary btn-wide" type="button">Send verification code</button>
+      <div id="auth-code-area" hidden>
+        <label for="auth-code">SMS verification code</label>
+        <input id="auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Enter the code">
+        <button id="auth-verify-code" class="btn btn-primary btn-wide" type="button">Verify and continue</button>
+      </div>
+      <p id="auth-message" class="status-message" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+  <div id="customer-account" class="customer-account" hidden>
+    <span id="customer-account-label"></span>
+    <button id="customer-sign-out" class="btn btn-light" type="button">Sign out</button>
+  </div>
+
+  <main id="main-content" class="container" tabindex="-1">
+    <section class="notice" aria-label="Online ordering information">
+      <strong data-i18n="orderNote">Order online</strong>
+      <span data-i18n="orderNote2">Your order goes directly to our restaurant ordering system.</span>
+    </section>
+
+    <aside class="install-note" id="install-note" aria-label="Install AL SHAMI app">
+      <span class="install-note-icon" aria-hidden="true">✦</span>
+      <div>
+        <strong>Keep AL SHAMI on your home screen</strong>
+        <p>On iPhone: open this page in Safari, tap Share, then choose <b>Add to Home Screen</b>.</p>
+      </div>
+    </aside>
+
+    <div id="app-status" class="app-message info" role="status" aria-live="polite" hidden></div>
+    <button id="retry-menu" class="btn btn-light retry-menu" type="button" data-i18n="retry" hidden>Retry</button>
+    <div id="active-offers" aria-live="polite"></div>
+
+    <section id="customer-orders-panel" class="customer-orders-panel" aria-labelledby="customer-orders-heading">
+      <div class="section-heading"><div><p class="eyebrow">AL SHAMI</p><h2 id="customer-orders-heading" data-i18n="historyHeading">History</h2></div>
+        <button id="refresh-customer-orders" class="btn btn-light" type="button" data-i18n="refreshOrders">Refresh</button></div>
+      <div id="customer-orders-nav" class="customer-orders-nav"><a class="btn btn-light" href="./index.html">Menu &amp; New Order</a></div>
+      <p class="customer-orders-help" data-i18n="trackHistoryHelp">Your orders stay saved on this device. Keep the private tracking code to check an order on another device.</p>
+      <form id="track-order-form" class="track-order-form">
+        <label for="tracking-code-input"><span data-i18n="trackingCode">Private tracking code</span>
+          <input id="tracking-code-input" type="text" inputmode="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="36" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></label>
+        <button id="track-order-submit" class="btn btn-primary" type="submit" data-i18n="trackOrder">Track order</button>
+      </form>
+      <p class="field-help" data-i18n="trackCodeHelp">Enter the private tracking code from your order confirmation.</p>
+      <p id="customer-orders-message" role="status" aria-live="polite" class="status-message"></p>
+      <div id="customer-order-history"><p class="muted">Loading your saved orders…</p></div>
+    </section>
+
+
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">OUR MENU</p>
+        <h2 data-i18n="menu">Menu</h2>
+      </div>
+      <div class="menu-tools"><input id="search" type="search" placeholder="Search menu…" aria-label="Search menu" autocomplete="off"><label class="sort-label">Sort <select id="menu-sort" aria-label="Sort menu"><option value="default">Recommended</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option><option value="popular">Popularity</option></select></label></div>
+    </div>
+
+    <div id="categories" class="chips" aria-label="Menu categories"></div>
+
+    <div id="menu" class="menu-grid" aria-live="polite">
+      <div class="loading">Loading menu…</div>
+    </div>
+
+    <button id="floating-cart-button" class="floating-cart-button" type="button"
+      aria-label="Go to your order" aria-controls="your-order-heading">
+      <span class="floating-cart-icon" aria-hidden="true">🛒</span>
+      <span class="floating-cart-label" data-i18n="yourOrder">Your order</span>
+      <span id="floating-cart-count" class="floating-cart-count" aria-label="Items in basket">0</span>
+      <span class="floating-cart-total" id="floating-cart-total">GH₵ 0.00</span>
+    </button>
+
+    <section class="checkout-section" aria-labelledby="your-order-heading">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">YOUR ORDER</p>
+          <h2 id="your-order-heading" data-i18n="yourOrder">Your order</h2>
+        </div>
+        <button id="clear-cart" class="btn btn-light" type="button" data-i18n="clear" aria-label="Clear basket">Clear</button>
+      </div>
+
+      <div id="cart-items" class="cart-items">
+        <p class="muted">Your basket is empty.</p>
+      </div>
+      <p id="cart-announcement" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
+
+      <div class="cart-cost-breakdown" aria-live="polite">
+        <div class="cart-cost-line">
+          <span data-i18n="subtotal">Subtotal</span>
+          <strong id="cart-subtotal">GH₵ 0.00</strong>
+        </div>
+        <div id="delivery-fee-line" class="cart-cost-line">
+          <span data-i18n="deliveryFee">Delivery fee</span>
+          <strong id="cart-delivery-fee">GH₵ 0.00</strong>
+        </div>
+        <div class="cart-cost-line total">
+          <span data-i18n="total">Total</span>
+          <strong id="cart-total">GH₵ 0.00</strong>
+        </div>
+      </div>
+
+      <form id="checkout-form" class="checkout-form" novalidate>
+        <div class="form-grid">
+          <label>
+            <span data-i18n="name">Your name</span>
+            <input name="customer_name" required maxlength="100" autocomplete="name">
+          </label>
+
+          <label>
+            <span data-i18n="phone">Phone number</span>
+            <input name="customer_phone" type="tel" inputmode="tel" required maxlength="30" autocomplete="tel" placeholder="e.g. 024…">
+          </label>
+
+          <label>
+            <span data-i18n="orderType">Order type</span>
+            <select name="order_type" id="order-type">
+              <option value="delivery" data-i18n="delivery">Delivery</option>
+              <option value="pickup" data-i18n="pickup">Pickup</option>
+            </select>
+          </label>
+
+          <label id="address-field">
+            <span data-i18n="address">Delivery address / landmark</span>
+            <input name="delivery_address" maxlength="250" autocomplete="street-address" aria-describedby="address-help" placeholder="House number, street, landmark">
+            <small id="address-help" class="field-help" data-i18n="addressHint">Include your house or building number, street, neighbourhood, and a nearby landmark (for example, a shop or station).</small>
+          </label>
+
+          <label class="full">
+            <span data-i18n="notes">Notes (optional)</span>
+            <textarea name="notes" rows="2" maxlength="500" placeholder="No onions, call on arrival…"></textarea>
+          </label>
+        </div>
+
+        <label class="remember-customer"><input id="remember-customer" type="checkbox"> Remember my name and phone on this device</label>
+        <p class="muted small" data-i18n="paymentNote">Payment: Cash on delivery or cash at pickup.</p>
+        <p id="minimum-order-note" class="muted small" hidden></p>
+        <button id="place-order" class="btn btn-primary btn-wide" type="submit" data-i18n="send">Place order</button>
+        <p id="checkout-message" role="status" aria-live="polite" class="status-message"></p>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <strong>AL SHAMI RESTAURANT &amp; FAST FOOD</strong>
+    <div class="restaurant-address-wrap">
+      <span id="restaurant-address">Darkuman Circle Station, Accra, Ghana</span>
+      <button id="copy-address" class="copy-address-button" type="button" data-i18n="copyAddress">Copy address</button>
+      <span id="copy-address-status" class="copy-address-status" role="status" aria-live="polite" aria-atomic="true"></span>
+    </div>
+    <div class="site-contact-links" aria-label="Restaurant phone numbers">
+      <a href="tel:+233547489859">☎ 054 748 9859</a>
+      <a href="tel:+233557265050">☎ 055 726 5050</a>
+      <a href="https://wa.me/233547489859" target="_blank" rel="noopener noreferrer" aria-label="Chat with AL SHAMI on WhatsApp">WhatsApp 1</a>
+      <a href="https://wa.me/233557265050" target="_blank" rel="noopener noreferrer" aria-label="Chat with AL SHAMI on WhatsApp">WhatsApp 2</a>
+    </div>
+    <a href="admin.html">Staff / Admin</a>
+  </footer>
+
+  <div class="quick-contact" aria-label="Quick contact options">
+    <a class="quick-contact-main" href="https://wa.me/233547489859" target="_blank" rel="noopener noreferrer" aria-label="Order or ask a question on WhatsApp">WhatsApp · Order help</a>
+    <a class="quick-contact-call" href="tel:+233547489859" aria-label="Call AL SHAMI RESTAURANT">Call us</a>
+  </div>
+
+  <div id="success-modal" class="success-modal" role="dialog" aria-modal="true" aria-labelledby="success-title" aria-describedby="success-description" hidden>
+    <div class="success-card">
+      <div class="success-icon" aria-hidden="true">✓</div>
+      <h2 id="success-title">تم إرسال طلبك بنجاح!</h2>
+      <p id="success-description" class="success-subtitle">Your order has been sent to AL SHAMI RESTAURANT.</p>
+      <p id="success-order-number"></p>
+      <p id="success-order-total"></p>
+      <p id="success-order-tracking" hidden></p>
+      <button id="success-copy-tracking" type="button" class="btn btn-light" hidden>Copy tracking code</button>
+      <a id="success-whatsapp" class="success-whatsapp" href="https://wa.me/233547489859" target="_blank" rel="noopener noreferrer">Chat with AL SHAMI on WhatsApp</a>
+      <button id="success-close" type="button" class="btn btn-primary">حسناً</button>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const modal = document.getElementById("success-modal");
+      const closeButton = document.getElementById("success-close");
+      const title = document.getElementById("success-title");
+      const description = document.getElementById("success-description");
+      const number = document.getElementById("success-order-number");
+      const total = document.getElementById("success-order-total");
+      const tracking = document.getElementById("success-order-tracking");
+      const copyTrackingButton = document.getElementById("success-copy-tracking");
+      const whatsapp = document.getElementById("success-whatsapp");
+      let currentTrackingToken = "";
+      let previouslyFocused = null;
+
+      const modalText = {
+        en: {
+          title: "Order sent — waiting for restaurant acceptance",
+          description: "Your order reached AL SHAMI RESTAURANT and is waiting to be accepted.",
+          number: "Order number:",
+          total: "Order total:",
+          close: "Close",
+          whatsapp: "Chat with AL SHAMI on WhatsApp",
+          tracking: "Private tracking code:", copyTracking: "Copy tracking code", copiedTracking: "Copied!"
+        },
+        ar: {
+          title: "تم إرسال طلبك وبانتظار قبول المطعم",
+          description: "وصل طلبك إلى مطعم الشامي، وهلأ بانتظار قبول المطعم.",
+          number: "رقم الطلب:",
+          total: "المجموع:",
+          close: "حسناً",
+          whatsapp: "تواصل معنا عبر واتساب",
+          tracking: "رمز التتبّع الخاص:", copyTracking: "نسخ رمز التتبّع", copiedTracking: "تم النسخ"
+        },
+        tw: {
+          title: "Order sent — waiting for restaurant acceptance",
+          description: "Your order reached AL SHAMI RESTAURANT and is waiting to be accepted.",
+          number: "Order number:",
+          total: "Order total:",
+          close: "Close",
+          whatsapp: "Chat with AL SHAMI on WhatsApp",
+          tracking: "Private tracking code:", copyTracking: "Copy tracking code", copiedTracking: "Copied!"
+        }
+      };
+
+      window.AL_SHAMI_SHOW_SUCCESS = details => {
+        const item = details && typeof details === "object"
+          ? details
+          : { orderNumber: details };
+
+        const lang = document.getElementById("language")?.value || "en";
+        const words = modalText[lang] || modalText.en;
+
+        previouslyFocused = document.activeElement;
+        title.textContent = words.title;
+        description.textContent = words.description;
+        closeButton.textContent = words.close;
+        if (whatsapp) whatsapp.textContent = words.whatsapp;
+
+        const orderNumber = item.orderNumber;
+        currentTrackingToken = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(item.trackingToken || "")) ? String(item.trackingToken) : "";
+        number.textContent = orderNumber && orderNumber !== "received" ? `${words.number} ${orderNumber}` : "";
+        total.textContent = item.total !== undefined && item.total !== null && Number.isFinite(Number(item.total)) ? `${words.total} GH₵ ${Number(item.total).toFixed(2)}` : "";
+        tracking.hidden = !currentTrackingToken;
+        tracking.textContent = currentTrackingToken ? `${words.tracking} ${currentTrackingToken}` : "";
+        copyTrackingButton.hidden = !currentTrackingToken;
+        copyTrackingButton.textContent = words.copyTracking;
+
+        modal.hidden = false;
+        document.body.classList.add("modal-open");
+        closeButton.focus();
+      };
+
+      function closeModal() {
+        modal.hidden = true;
+        document.body.classList.remove("modal-open");
+
+        if (previouslyFocused && typeof previouslyFocused.focus === "function") {
+          previouslyFocused.focus();
+        }
+      }
+
+      copyTrackingButton.addEventListener("click", async () => {
+        if (!currentTrackingToken) return;
+        const lang = document.getElementById("language")?.value || "en";
+        const words = modalText[lang] || modalText.en;
+        try {
+          if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+          await navigator.clipboard.writeText(currentTrackingToken);
+          copyTrackingButton.textContent = words.copiedTracking;
+        } catch (_) {
+          tracking.textContent = `${words.tracking} ${currentTrackingToken}`;
+          tracking.style.userSelect = "all";
+        }
+      });
+
+      closeButton.addEventListener("click", closeModal);
+
+      modal.addEventListener("click", event => {
+        if (event.target === modal) closeModal();
+      });
+
+      document.addEventListener("keydown", event => {
+        if (modal.hidden) return;
+        if (event.key === "Escape") {
+          closeModal();
+          return;
+        }
+        if (event.key !== "Tab") return;
+        const focusable = Array.from(modal.querySelectorAll('a[href], button:not([disabled])'))
+          .filter(element => !element.hasAttribute("hidden"));
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      });
+    })();
+  </script>
+
+  <script>
+    (() => {
+      const screen = document.getElementById("welcome-screen");
+      if (!screen) return;
+      const dismiss = () => {
+        if (!screen.isConnected || screen.classList.contains("welcome-leaving")) return;
+        screen.classList.add("welcome-leaving");
+        window.setTimeout(() => screen.remove(), 450);
+      };
+      window.setTimeout(dismiss, 2100);
+      screen.addEventListener("click", dismiss, { once: true });
+    })();
+  </script>
+  <script src="config.js"></script>
+  <script src="customer.js?v=separate-customer-history-20261021b"></script>
+  <script src="pwa.js"></script>
+</body>
+</html>
