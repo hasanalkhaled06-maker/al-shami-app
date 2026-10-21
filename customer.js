@@ -46,17 +46,32 @@
     const signedIn = Boolean(authSession?.user);
     const openButton = $("#customer-auth-open");
     const account = $("#customer-account");
+    const gate = $("#customer-auth");
+    document.body.classList.toggle("customer-auth-required", !signedIn);
     if (openButton) openButton.hidden = signedIn;
     if (account) account.hidden = !signedIn;
-    if (signedIn) {
-      const user = authSession.user;
-      const meta = user.user_metadata || {};
-      const label = $("#customer-account-label");
-      if (label) label.textContent = "Signed in as " + (user.phone || user.email || "customer");
-      const phone = meta.phone || user.phone || "";
-      if (checkoutForm?.elements?.customer_phone && phone && !checkoutForm.elements.customer_phone.value) checkoutForm.elements.customer_phone.value = phone;
-      if (checkoutForm?.elements?.customer_name && meta.full_name && !checkoutForm.elements.customer_name.value) checkoutForm.elements.customer_name.value = meta.full_name;
+
+    if (!signedIn) {
+      // No authenticated Supabase session means no menu, order history, or checkout access.
+      document.body.classList.add("auth-dialog-open");
+      if (gate) gate.hidden = false;
+      showAuthDialog();
+      return;
     }
+
+    document.body.classList.remove("auth-dialog-open");
+    if (gate) gate.hidden = true;
+    const user = authSession.user;
+    const meta = user.user_metadata || {};
+    const label = $("#customer-account-label");
+    if (label) label.textContent = "Signed in as " + (user.phone || user.email || "customer");
+    const phone = meta.phone || user.phone || "";
+    if (checkoutForm?.elements?.customer_phone && phone && !checkoutForm.elements.customer_phone.value) checkoutForm.elements.customer_phone.value = phone;
+    if (checkoutForm?.elements?.customer_name && meta.full_name && !checkoutForm.elements.customer_name.value) checkoutForm.elements.customer_name.value = meta.full_name;
+
+    // Only authenticated customers trigger menu and order-history reads.
+    void loadMenuAndSettings();
+    void refreshCustomerOrderHistory();
   }
 
   function setAuthMode(mode) {
@@ -124,7 +139,7 @@
     $("#auth-mode-switch").hidden = false;
     $("#auth-method-switch").hidden = false;
     $("#auth-forgot-password").hidden = false;
-    $("#auth-continue-guest").hidden = false;
+    $("#auth-continue-guest").hidden = true;
     $("#auth-recovery-back").hidden = false;
     gate.hidden = false;
     document.body.classList.add("auth-dialog-open");
@@ -134,8 +149,14 @@
 
   function closeAuthDialog() {
     const gate = $("#customer-auth");
+    if (!authSession?.user) {
+      // Mandatory authentication cannot be dismissed by the close button or backdrop.
+      document.body.classList.add("customer-auth-required", "auth-dialog-open");
+      if (gate) gate.hidden = false;
+      return;
+    }
     if (gate) gate.hidden = true;
-    document.body.classList.remove("auth-dialog-open");
+    document.body.classList.remove("auth-dialog-open", "customer-auth-required");
   }
 
   function showPhoneRecovery() {
@@ -192,7 +213,12 @@
   }
 
   async function initializeCustomerAuth() {
-    if (!db) return;
+    if (!db) {
+      document.body.classList.add("customer-auth-required");
+      showAuthDialog();
+      authMessage("Account service is unavailable. Please try again after the app configuration is restored.", true);
+      return;
+    }
     try {
       const { data, error } = await db.auth.getSession();
       if (error) throw error;
@@ -204,7 +230,9 @@
       if (window.location.hash.includes("type=recovery")) showPasswordRecovery("email");
     } catch (error) {
       console.error("Customer auth initialization failed:", error);
-      authMessage(error.message || "Could not check your sign-in status.", true);
+      document.body.classList.add("customer-auth-required");
+      showAuthDialog();
+      authMessage(error.message || "Could not check your sign-in status. Please sign in to continue.", true);
     }
   }
 
@@ -214,7 +242,6 @@
     if (trigger) { event.preventDefault(); showAuthDialog(); }
   }, true);
   $("#auth-close")?.addEventListener("click", closeAuthDialog);
-  $("#auth-continue-guest")?.addEventListener("click", closeAuthDialog);
   $("#auth-recovery-back")?.addEventListener("click", () => {
     authRecoveryMode = null;
     recoveryPhoneVerified = false;
@@ -228,10 +255,10 @@
     authMessage("");
   });
   $("#customer-auth")?.addEventListener("click", event => {
-    if (event.target === $("#customer-auth") && !authRecoveryMode) closeAuthDialog();
+    if (event.target === $("#customer-auth") && !authRecoveryMode && authSession?.user) closeAuthDialog();
   });
   document.addEventListener("keydown", event => {
-    if (event.key === "Escape" && $("#customer-auth") && !$("#customer-auth").hidden && !authRecoveryMode) closeAuthDialog();
+    if (event.key === "Escape" && $("#customer-auth") && !$("#customer-auth").hidden && !authRecoveryMode && authSession?.user) closeAuthDialog();
   });
   $("#auth-mode-signin")?.addEventListener("click", () => setAuthMode("signin"));
   $("#auth-mode-signup")?.addEventListener("click", () => setAuthMode("signup"));
@@ -741,6 +768,10 @@
   async function refreshCustomerOrderHistory() {
     const list = $("#customer-order-history");
     if (!list) return;
+    if (!authSession?.user) {
+      list.replaceChildren();
+      return;
+    }
     if (trackedOrdersLoading) {
       // Do not lose a refresh requested while an earlier status check is in flight.
       trackedOrdersRefreshQueued = true;
@@ -847,6 +878,10 @@
 
   $("#track-order-form")?.addEventListener("submit", async event => {
     event.preventDefault();
+    if (!authSession?.user) {
+      showAuthDialog();
+      return;
+    }
     const input = $("#tracking-code-input");
     const button = $("#track-order-submit");
     const message = $("#customer-orders-message");
@@ -1231,6 +1266,10 @@
   }
 
   async function loadMenuAndSettings() {
+    if (!authSession?.user) {
+      showAuthDialog();
+      return;
+    }
     if (menuLoading) return;
     menuLoading = true;
     const retryButton = $("#retry-menu");
@@ -1405,6 +1444,12 @@
       const submitButton = $("#place-order");
 
       if (submitting) return;
+
+      if (!authSession?.user) {
+        showAuthDialog();
+        showCheckoutMessage(lang === "ar" ? "سجّل الدخول أو أنشئ حساباً أولاً للمتابعة." : "Please sign in or create an account before placing an order.", true);
+        return;
+      }
 
       if (!db) {
         showCheckoutMessage(tr("setupError"), true);
@@ -1591,8 +1636,6 @@
 
   restoreCart();
   restoreCustomerDetails();
-  // Customer accounts are optional. Guest checkout and cash payments remain available.
+  // Authentication is required before the menu, order history, or checkout is loaded.
   void initializeCustomerAuth();
-  loadMenuAndSettings();
-  void refreshCustomerOrderHistory();
 })();

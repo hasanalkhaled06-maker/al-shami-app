@@ -135,11 +135,27 @@
     .visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
     #place-order:disabled,#clear-cart:disabled{opacity:.55;cursor:not-allowed}
     @media(max-width:480px){.menu-tools{align-items:stretch}.sort-label{justify-content:space-between}.sort-label select{flex:1;max-width:none}}
-  </style>
+  
+    body.customer-auth-required{overflow:hidden!important}
+    body.customer-auth-required>.skip-link,
+    body.customer-auth-required>.hero,
+    body.customer-auth-required>.customer-account-toolbar,
+    body.customer-auth-required>#main-content,
+    body.customer-auth-required>footer{
+      visibility:hidden!important;
+      pointer-events:none!important;
+    }
+    body.customer-auth-required>#customer-auth{
+      visibility:visible!important;
+      pointer-events:auto!important;
+    }
+    body.customer-auth-required #auth-close,
+    body.customer-auth-required #auth-continue-guest{display:none!important}
+</style>
 </head>
 
 
-<body>
+<body class="customer-auth-required">
   <section id="welcome-screen" class="welcome-screen" aria-label="AL SHAMI splash screen">
     <div class="welcome-glow welcome-glow-one"></div>
     <div class="welcome-glow welcome-glow-two"></div>
@@ -179,7 +195,7 @@
     <div class="customer-auth-card" role="dialog" aria-modal="true" aria-describedby="customer-auth-help">
       <div class="customer-auth-heading">
         <div><p class="eyebrow">AL SHAMI ACCOUNT</p><h2 id="customer-auth-title">Sign in to your account</h2></div>
-        <button id="auth-close" class="btn btn-light auth-close" type="button" aria-label="Close sign-in">×</button>
+        <button id="auth-close" class="btn btn-light auth-close" type="button" aria-label="Close sign-in" hidden>×</button>
       </div>
       <p id="customer-auth-help" class="muted">Use your Ghana phone number and password. No SMS code is needed to sign in.</p>
       <div id="auth-mode-switch" class="auth-mode" role="group" aria-label="Account option">
@@ -222,7 +238,7 @@
         <button id="auth-recovery-back" class="btn btn-light auth-secondary" type="button">Back to sign in</button>
       </div>
       <p id="auth-message" class="status-message" role="status" aria-live="polite"></p>
-      <button id="auth-continue-guest" class="btn btn-light btn-wide" type="button">Continue without an account</button>
+      <button id="auth-continue-guest" class="btn btn-light btn-wide" type="button" hidden>Continue without an account</button>
     </div>
   </section>
   <div class="customer-account-toolbar">
@@ -529,7 +545,7 @@
     })();
   </script>
   <script src="config.js"></script>
-  <script src="customer.js?v=customer-phone-recovery-20261021j"></script>
+  <script src="customer.js?v=customer-required-account-20261021k"></script>
   <script src="pwa.js"></script>
 </body>
 </html>
