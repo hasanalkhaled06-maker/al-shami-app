@@ -643,6 +643,18 @@ Status: ${order.status}`;
     if (reject) { reject.disabled = incomingDecisionInProgress; reject.textContent = incomingDecisionInProgress ? "Saving…" : "✕ REJECT ORDER"; }
   }
 
+  function openOrdersTab() {
+    document.querySelectorAll(".tab").forEach(tab => {
+      const active = tab.dataset.tab === "orders";
+      tab.classList.toggle("active", active);
+    });
+    ["orders", "menu", "offers", "settings"].forEach(name => {
+      const section = $("#tab-" + name);
+      if (section) section.classList.toggle("hidden", name !== "orders");
+    });
+    $("#tab-orders")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   async function decideIncomingOrder(status) {
     if (!activeIncomingOrderId || incomingDecisionInProgress) return;
     const id = activeIncomingOrderId;
@@ -660,6 +672,7 @@ Status: ${order.status}`;
       incomingOrderQueue.splice(0, incomingOrderQueue.length, ...incomingOrderQueue.filter(itemId => itemId !== id));
       if (activeIncomingOrderId === id) closeIncomingOrderDialog();
       toast(status === "accepted" ? "Order accepted." : "Order rejected.");
+      openOrdersTab();
       showNextIncomingOrder();
     } catch (error) {
       console.error("Could not decide incoming order:", error);
