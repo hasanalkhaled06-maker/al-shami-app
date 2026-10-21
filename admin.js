@@ -32,6 +32,9 @@
   let firstOrderLoad = true;
   let audioCtx = null;
   let refreshInProgress = false;
+  let ordersLoadPromise = null;
+  let ordersReloadRequested = false;
+  let dashboardStartedAt = null;
   const incomingOrderQueue = [];
   let activeIncomingOrderId = null;
   let incomingRingTimer = null;
@@ -105,13 +108,16 @@
 
     setConnection("Connected");
 
+    // Capture startup before the first order query so orders arriving during that query are not silently baselined.
+    if (dashboardStartedAt === null) dashboardStartedAt = Date.now();
+
     await refreshAll();
     subscribe();
 
     // Check for new orders every 5 seconds if realtime misses an event.
     if (!window.__alShamiOrderPoll) {
       window.__alShamiOrderPoll = window.setInterval(async () => {
-        if (document.hidden || !db || !currentUser) return;
+        if (!db || !currentUser) return;
         try {
           await loadOrders();
         } catch (error) {
@@ -343,7 +349,29 @@
     }
   }
 
+  // Serialize order refreshes. If another event requests a refresh while one is running,
+  // run one more pass instead of allowing an older response to overwrite newer orders.
   async function loadOrders() {
+    if (ordersLoadPromise) {
+      ordersReloadRequested = true;
+      return ordersLoadPromise;
+    }
+
+    ordersLoadPromise = (async () => {
+      do {
+        ordersReloadRequested = false;
+        await loadOrdersOnce();
+      } while (ordersReloadRequested);
+    })();
+
+    try {
+      await ordersLoadPromise;
+    } finally {
+      ordersLoadPromise = null;
+    }
+  }
+
+  async function loadOrdersOnce() {
     const { data, error } = await db
       .from("orders")
       .select("*,order_items(*,menu_items(name))")
@@ -355,8 +383,16 @@
     orders = data || [];
 
     if (firstOrderLoad) {
-      // Baseline existing orders; don't alert for old orders on login.
-      orders.forEach(order => knownOrderIds.add(order.id));
+      // Baseline existing orders, but still alert on orders created during the initial page load.
+      const startupCutoff = (dashboardStartedAt ?? Date.now()) - 15000;
+      orders.forEach(order => {
+        knownOrderIds.add(order.id);
+        const createdAt = Date.parse(order.created_at || "");
+        if (order.status === "new" && Number.isFinite(createdAt) && createdAt >= startupCutoff) {
+          enqueueIncomingOrder(order.id);
+          notifyNewOrder(order);
+        }
+      });
       firstOrderLoad = false;
     } else {
       // Fallback for realtime events missed by the browser connection.
@@ -600,8 +636,11 @@ Status: ${order.status}`;
 
   // If the dashboard becomes visible again, immediately resume the active alert.
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && activeIncomingOrderId && soundOn) {
-      void beep();
+    if (document.hidden) return;
+    if (activeIncomingOrderId && soundOn) void beep();
+    // iOS may suspend timers/network activity while backgrounded; reconcile immediately on return.
+    if (currentUser && db) {
+      void loadOrders().catch(error => console.warn("Order refresh on resume failed:", error));
     }
   });
 
@@ -624,7 +663,9 @@ Status: ${order.status}`;
     if (!overlay) return;
     if (activeIncomingOrderId) {
       const current = orders.find(order => order.id === activeIncomingOrderId);
-      if (current && current.status === "new") { renderIncomingOrder(current); return; }
+      // A transient/stale query must not dismiss an alert the manager has not decided on.
+      if (!current) return;
+      if (current.status === "new") { renderIncomingOrder(current); return; }
       closeIncomingOrderDialog();
     }
     while (incomingOrderQueue.length) {
