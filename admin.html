@@ -49,7 +49,7 @@
 
   <div class="admin-actions">
     <span id="connection-state" class="connection">Checking connection…</span>
-    <button id="sound-toggle" class="btn btn-light" disabled>Enable order sound &amp; notifications</button>
+    
     <button id="signout" class="btn btn-light hidden">Sign out</button>
   </div>
 </header>
@@ -271,7 +271,7 @@
       <p id="incoming-order-description">Accept or reject this order to continue.</p>
     </header>
     <div class="incoming-order-content">
-      <p id="incoming-order-sound-hint" class="incoming-order-sound-hint">Enable order sound at the top of the dashboard to hear the ringing alert.</p>
+      <p id="incoming-order-sound-hint" class="incoming-order-sound-hint">New orders ring automatically. Your browser may require one tap to activate sound and may ask permission for device notifications.</p>
       <div id="incoming-order-details"></div>
     </div>
     <footer class="incoming-order-actions">
@@ -284,7 +284,7 @@
 <div id="toast" class="toast hidden" role="status"></div>
 
 <script src="config.js"></script>
-<script src="admin.js?v=receipt-confirmation-20261021a"></script>
+<script src="admin.js?v=always-order-alerts-20261021a"></script>
 <script src="admin-operations.js?v=admin-polish-20261021"></script>
 <script src="pwa.js"></script>
 
