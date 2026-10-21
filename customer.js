@@ -185,6 +185,13 @@
       if (consent) consent.checked = true;
     } catch (_) {}
   }
+
+  function saveRememberedCustomerFromForm() {
+    if (!$("#remember-customer")?.checked || !checkoutForm) return;
+    const name = String(checkoutForm.elements?.customer_name?.value || "").trim();
+    const phone = String(checkoutForm.elements?.customer_phone?.value || "").trim();
+    storageSet(CUSTOMER_KEY, JSON.stringify({ consent: true, name, phone }));
+  }
   let lang = "en";
   let deliveryFee = 0;
   let minimumOrder = 0;
@@ -666,9 +673,12 @@
     if (!event.target.checked) {
       try { localStorage.removeItem(CUSTOMER_KEY); } catch (_) {}
     } else {
+      saveRememberedCustomerFromForm();
       showCheckoutMessage(lang === "ar" ? "سيتم حفظ الاسم والرقم على هذا الجهاز فقط." : "Your name and phone will be saved on this device only.");
     }
   });
+  checkoutForm?.elements?.customer_name?.addEventListener("input", saveRememberedCustomerFromForm);
+  checkoutForm?.elements?.customer_phone?.addEventListener("input", saveRememberedCustomerFromForm);
 
   $("#order-type")?.addEventListener("change", () => {
     const isPickup = $("#order-type").value === "pickup";
@@ -733,6 +743,7 @@
 
       if (orderType === "delivery" && !address) {
         showCheckoutMessage(tr("addressError"), true);
+        formElement.elements.delivery_address.focus();
         return;
       }
 
@@ -752,8 +763,8 @@
       const orderSummary = rows.map(([id, quantity]) => {
         const product = products.find(item => String(item.id) === String(id));
         return `${quantity} × ${product?.name || "Item"}`;
-      }).join("\\n");
-      if (!window.confirm((lang === "ar" ? "تأكيد الطلب؟\\n\\n" : "Confirm your order?\\n\\n") + orderSummary + "\\n\\n" + (lang === "ar" ? "المجموع: " : "Total: ") + money(submittedTotal))) return;
+      }).join("\n");
+      if (!window.confirm((lang === "ar" ? "تأكيد الطلب؟\n\n" : "Confirm your order?\n\n") + orderSummary + "\n\n" + (lang === "ar" ? "المجموع: " : "Total: ") + money(submittedTotal))) return;
 
       const submittedItems = rows.map(([product_id, quantity]) => ({
         product_id,
@@ -823,7 +834,12 @@
         showSuccess(orderNumber, submittedTotal);
       } catch (error) {
         console.error("AL SHAMI order submission error:", error);
-        showCheckoutMessage(error?.message || tr("orderError"), true);
+        const detail = String(error?.message || "");
+        const message = (typeof navigator !== "undefined" && navigator.onLine === false) ||
+          /failed to fetch|networkerror|network request failed|fetch failed/i.test(detail)
+          ? (lang === "ar" ? "ما قدرنا نتصل بالمطعم. تأكد من الإنترنت وحاول مرة ثانية. طلبك لم يُؤكَّد." : "We couldn't connect to the restaurant. Check your internet and try again. Your order has not been confirmed.")
+          : (detail || tr("orderError"));
+        showCheckoutMessage(message, true);
       } finally {
         submitting = false;
 
