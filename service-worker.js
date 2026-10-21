@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v20";
+const CACHE_NAME = CACHE_PREFIX + "v21";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -12,7 +12,7 @@ const SHELL_FILES = [
   "./customer.js",
   "./customer.js?v=receipt-confirmation-20261021a",
   "./admin.js",
-  "./admin.js?v=receipt-confirmation-20261021a",
+  "./admin.js?v=always-order-alerts-20261021a",
   "./admin-operations.js",
   "./pwa.js",
   "./manifest.webmanifest",
@@ -37,6 +37,22 @@ self.addEventListener("activate", event => {
     await Promise.all(keys.filter(key => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
       .map(key => caches.delete(key)));
     await self.clients.claim();
+  })());
+});
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const targetUrl = new URL("./admin.html", self.registration.scope).href;
+  event.waitUntil((async () => {
+    const openClients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const appClient = openClients.find(client => client.url.startsWith(self.registration.scope));
+    if (appClient) {
+      if (appClient.url !== targetUrl && typeof appClient.navigate === "function") {
+        await appClient.navigate(targetUrl);
+      }
+      return appClient.focus();
+    }
+    return self.clients.openWindow(targetUrl);
   })());
 });
 
