@@ -29,21 +29,6 @@
 
 
   let authSession = null;
-  let authPhone = "";
-
-  function normalizePhone(value) {
-    const raw = String(value || "").trim();
-    const digitsOnly = raw.replace(/[^0-9]/g, "");
-    let national = digitsOnly;
-    if (national.startsWith("00233")) national = national.slice(5);
-    else if (national.startsWith("233")) national = national.slice(3);
-    else if (national.startsWith("0")) national = national.slice(1);
-
-    if (national.length !== 9 || !national.split("").every(ch => ch >= "0" && ch <= "9")) {
-      throw new Error("Phone format check failed. Enter 9 digits after +233, e.g. +233241234567.");
-    }
-    return "+233" + national;
-  }
 
   function authMessage(message, error = false) {
     const node = $("#auth-message");
@@ -52,105 +37,115 @@
     node.className = "status-message" + (error ? " error" : " success");
   }
 
+  function setAuthMode(mode) {
+    const signup = mode === "signup";
+    const form = $("#customer-auth-form");
+    if (!form) return;
+    form.dataset.mode = signup ? "signup" : "signin";
+    const title = $("#customer-auth-title");
+    const help = $("#customer-auth-help");
+    const nameField = $("#auth-name-field");
+    const nameInput = $("#auth-name");
+    const password = $("#auth-password");
+    const submit = $("#auth-submit");
+    const signinButton = $("#auth-mode-signin");
+    const signupButton = $("#auth-mode-signup");
+    if (title) title.textContent = signup ? "Create your AL SHAMI account" : "Sign in to your account";
+    if (help) help.textContent = signup ? "Create an account with your email and a password. Phone numbers are still collected at checkout." : "Use your email and password. No SMS verification is required.";
+    if (nameField) nameField.hidden = !signup;
+    if (nameInput) nameInput.required = signup;
+    if (password) password.autocomplete = signup ? "new-password" : "current-password";
+    if (submit) submit.textContent = signup ? "Create account" : "Sign in";
+    if (signinButton) { signinButton.classList.toggle("active", !signup); signinButton.setAttribute("aria-pressed", String(!signup)); }
+    if (signupButton) { signupButton.classList.toggle("active", signup); signupButton.setAttribute("aria-pressed", String(signup)); }
+    authMessage("");
+  }
+
   function applyAuthState(session) {
     authSession = session || null;
-    const authGate = $("#customer-auth");
-    const account = $("#customer-account");
     const signedIn = Boolean(authSession?.user);
-    if (authGate) authGate.hidden = signedIn;
+    const openButton = $("#customer-auth-open");
+    const account = $("#customer-account");
+    if (openButton) openButton.hidden = signedIn;
     if (account) account.hidden = !signedIn;
-    document.body.classList.toggle("auth-required", !signedIn);
     if (signedIn) {
       const user = authSession.user;
       const meta = user.user_metadata || {};
-      const phone = user.phone || authPhone || "";
       const label = $("#customer-account-label");
-      if (label) label.textContent = "Signed in: " + phone;
-      if (checkoutForm?.elements?.customer_phone && phone) {
-        checkoutForm.elements.customer_phone.value = phone;
-      }
-      if (checkoutForm?.elements?.customer_name && meta.full_name && !checkoutForm.elements.customer_name.value) {
-        checkoutForm.elements.customer_name.value = meta.full_name;
-      }
-      authMessage("");
+      if (label) label.textContent = "Signed in as " + (user.email || user.phone || "customer");
+      const phone = meta.phone || user.phone || "";
+      if (checkoutForm?.elements?.customer_phone && phone && !checkoutForm.elements.customer_phone.value) checkoutForm.elements.customer_phone.value = phone;
+      if (checkoutForm?.elements?.customer_name && meta.full_name && !checkoutForm.elements.customer_name.value) checkoutForm.elements.customer_name.value = meta.full_name;
     }
   }
 
   async function initializeCustomerAuth() {
-    if (!db) {
-      authMessage("Sign-in is unavailable because the app configuration is missing.", true);
-      return;
-    }
+    if (!db) return;
     try {
       const { data, error } = await db.auth.getSession();
       if (error) throw error;
       applyAuthState(data.session);
       db.auth.onAuthStateChange((_event, session) => applyAuthState(session));
-    } catch (error) {
-      console.error("Customer auth initialization failed:", error);
-      authMessage(error.message || "Could not check your sign-in status.", true);
-    }
+    } catch (error) { console.error("Customer auth initialization failed:", error); }
   }
 
-  $("#auth-send-code")?.addEventListener("click", async () => {
-    const button = $("#auth-send-code");
-    try {
-      authPhone = normalizePhone($("#auth-phone")?.value);
-      button.disabled = true;
-      authMessage("Sending SMS verification code…");
-      const { error } = await db.auth.signInWithOtp({
-        phone: authPhone,
-        options: { shouldCreateUser: true }
-      });
-      if (error) throw error;
-      $("#auth-code-area").hidden = false;
-      authMessage("Code sent. Check your SMS messages.");
-      $("#auth-code")?.focus();
-    } catch (error) {
-      authMessage(error.message || "Could not send the SMS code. Please try again.", true);
-    } finally {
-      button.disabled = false;
-    }
-  });
+  const authGate = $("#customer-auth");
+  $("#customer-auth-open")?.addEventListener("click", () => { setAuthMode("signin"); if (authGate) authGate.hidden = false; $("#auth-email")?.focus(); });
+  $("#auth-close")?.addEventListener("click", () => { if (authGate) authGate.hidden = true; });
+  $("#auth-continue-guest")?.addEventListener("click", () => { if (authGate) authGate.hidden = true; });
+  authGate?.addEventListener("click", event => { if (event.target === authGate) authGate.hidden = true; });
+  $("#auth-mode-signin")?.addEventListener("click", () => setAuthMode("signin"));
+  $("#auth-mode-signup")?.addEventListener("click", () => setAuthMode("signup"));
 
-  $("#auth-verify-code")?.addEventListener("click", async () => {
-    const button = $("#auth-verify-code");
-    const token = String($("#auth-code")?.value || "").trim();
-    if (!token) {
-      authMessage("Enter the SMS verification code.", true);
-      return;
-    }
+  $("#customer-auth-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const submit = $("#auth-submit");
+    if (!db) { authMessage("Account sign-in is unavailable because the app configuration is missing.", true); return; }
+    const email = String($("#auth-email")?.value || "").trim().toLowerCase();
+    const password = String($("#auth-password")?.value || "");
+    const mode = form.dataset.mode === "signup" ? "signup" : "signin";
+    const fullName = String($("#auth-name")?.value || "").trim();
+    if (!email || !password) { authMessage("Enter your email address and password.", true); return; }
+    if (password.length < 8) { authMessage("Use a password with at least 8 characters.", true); return; }
+    if (mode === "signup" && fullName.length < 2) { authMessage("Enter your name to create an account.", true); $("#auth-name")?.focus(); return; }
+    if (submit) { submit.disabled = true; submit.textContent = mode === "signup" ? "Creating account…" : "Signing in…"; }
     try {
-      button.disabled = true;
-      authMessage("Verifying code…");
-      const { data, error } = await db.auth.verifyOtp({
-        phone: authPhone || normalizePhone($("#auth-phone")?.value),
-        token,
-        type: "sms"
-      });
-      if (error) throw error;
-      applyAuthState(data.session);
-      authMessage("Phone verified. Welcome to AL SHAMI!");
+      if (mode === "signup") {
+        const { data, error } = await db.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
+        if (error) throw error;
+        if (data.session) {
+          applyAuthState(data.session);
+          if (authGate) authGate.hidden = true;
+          authMessage("");
+        } else {
+          authMessage("Your sign-up request was accepted. If email confirmation is enabled, open the confirmation link sent to your email. If no message arrives, email delivery must be configured for public customers in Supabase.");
+        }
+      } else {
+        const { data, error } = await db.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        applyAuthState(data.session);
+        if (authGate) authGate.hidden = true;
+        authMessage("");
+      }
     } catch (error) {
-      authMessage(error.message || "The code could not be verified.", true);
+      console.error("Customer account action failed:", error);
+      authMessage(String(error?.message || "Account action failed. Please try again."), true);
     } finally {
-      button.disabled = false;
+      if (submit) { submit.disabled = false; submit.textContent = form.dataset.mode === "signup" ? "Create account" : "Sign in"; }
     }
   });
 
   $("#customer-sign-out")?.addEventListener("click", async () => {
+    if (!db) return;
     try {
       const { error } = await db.auth.signOut();
       if (error) throw error;
       applyAuthState(null);
-      $("#auth-code-area").hidden = true;
-      $("#auth-code").value = "";
-      authMessage("You have signed out.");
-    } catch (error) {
-      authMessage(error.message || "Could not sign out.", true);
-    }
+      if (authGate) authGate.hidden = true;
+      authMessage("");
+    } catch (error) { authMessage(error.message || "Could not sign out.", true); }
   });
-
 
   let products = [];
   let offers = [];
@@ -1156,7 +1151,6 @@
         showCheckoutMessage(tr("setupError"), true);
         return;
       }
-      // Phone OTP login is temporarily disabled. Guest checkout remains available.
 
       const rows = getCartRows();
 
@@ -1232,6 +1226,14 @@
         });
 
         if (error) throw error;
+
+        // Save profile details after a confirmed order; profile errors never undo an order.
+        if (authSession?.user) {
+          try {
+            const { error: profileError } = await db.auth.updateUser({ data: { full_name: customerName, phone: normalizedPhone } });
+            if (profileError) console.warn("Customer profile could not be updated:", profileError);
+          } catch (profileError) { console.warn("Customer profile update was skipped:", profileError); }
+        }
 
         // وصل تأكيد من قاعدة البيانات أن الطلب تم حفظه.
         const result = Array.isArray(data) ? data[0] : data;
@@ -1330,10 +1332,8 @@
 
   restoreCart();
   restoreCustomerDetails();
-  // Phone OTP initialization is paused until an SMS provider is configured.
-  document.body.classList.remove("auth-required");
-  const authGate = $("#customer-auth");
-  if (authGate) authGate.hidden = true;
+  // Customer accounts are optional. Guest checkout and cash payments remain available.
+  void initializeCustomerAuth();
   loadMenuAndSettings();
   void refreshCustomerOrderHistory();
 })();
