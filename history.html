@@ -25,13 +25,29 @@
 
     .customer-auth{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(25,10,12,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
     .customer-auth[hidden]{display:none!important}
-    /* Phone OTP is paused; keep the sign-in overlay hidden on all clients. */
-    .customer-auth{display:none!important}
     .customer-auth-card{box-sizing:border-box;width:100%;max-width:430px;background:#fff;border-radius:22px;padding:28px;color:#242424;box-shadow:0 20px 70px #0005}
     .customer-auth-card h2{margin:6px 0 10px;color:#8d1723}
     .customer-auth-card label{display:block;font-weight:700;margin:16px 0 6px}
     .customer-auth-card input{box-sizing:border-box;width:100%;padding:13px;border:1px solid #d8d8d8;border-radius:10px;font:inherit}
     .customer-auth-card .btn{margin-top:12px}
+    .customer-auth-card{max-height:calc(100dvh - 32px);overflow:auto}
+    .customer-auth-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+    .customer-auth-heading h2{margin:6px 0 10px}
+    .customer-auth-heading .eyebrow{color:#8d1723}
+    .customer-auth .auth-close{flex:0 0 42px;width:42px;height:42px;padding:0;font-size:26px;line-height:1}
+    .customer-auth .auth-mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0 12px}
+    .customer-auth .auth-mode button{margin:0}
+    .customer-auth .auth-mode button.active{background:#8d1723;color:#fff;border-color:#8d1723}
+    .customer-auth form{display:grid;gap:12px}
+    .customer-auth form label{margin:0;display:grid;gap:6px}
+    .customer-auth form input{min-height:46px}
+    .customer-auth #auth-password-help{margin:0}
+    .customer-auth #auth-message{overflow-wrap:anywhere}
+    .customer-auth #auth-continue-guest{margin-top:10px}
+    .customer-account-toolbar{display:flex;justify-content:flex-end;align-items:center;gap:12px;max-width:1100px;margin:12px auto;padding:0 16px}
+    .customer-account-toolbar>#customer-auth-open{min-height:42px}
+    .customer-account-toolbar .customer-account{margin:0;max-width:none;flex:1}
+    @media(max-width:480px){.customer-auth-card{padding:22px 18px}.customer-account-toolbar{align-items:stretch;flex-direction:column}.customer-account-toolbar .customer-account{flex-wrap:wrap}}
     .customer-account{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;margin:12px auto;max-width:1100px;background:#fff7e8;border:1px solid #ead7b3;border-radius:12px}
     .customer-account[hidden]{display:none!important}
     body.auth-required{overflow:hidden}
@@ -147,24 +163,30 @@
 
   
   <section id="customer-auth" class="customer-auth" aria-labelledby="customer-auth-title" hidden>
-    <div class="customer-auth-card">
-      <p class="eyebrow">AL SHAMI ACCOUNT</p>
-      <h2 id="customer-auth-title">Sign in with your phone</h2>
-      <p class="muted">Enter your phone number and we’ll send you a one-time SMS code.</p>
-      <label for="auth-phone">Phone number</label>
-      <input id="auth-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+233 24 123 4567" maxlength="30" required>
-      <button id="auth-send-code" class="btn btn-primary btn-wide" type="button">Send verification code</button>
-      <div id="auth-code-area" hidden>
-        <label for="auth-code">SMS verification code</label>
-        <input id="auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Enter the code">
-        <button id="auth-verify-code" class="btn btn-primary btn-wide" type="button">Verify and continue</button>
+    <div class="customer-auth-card" role="dialog" aria-modal="true" aria-describedby="customer-auth-help">
+      <div class="customer-auth-heading">
+        <div><p class="eyebrow">AL SHAMI ACCOUNT</p><h2 id="customer-auth-title">Sign in to your account</h2></div>
+        <button id="auth-close" class="btn btn-light auth-close" type="button" aria-label="Close sign-in">×</button>
       </div>
+      <p id="customer-auth-help" class="muted">Use your email and password. No SMS verification is required.</p>
+      <div class="auth-mode" role="group" aria-label="Account option">
+        <button id="auth-mode-signin" class="btn btn-light active" type="button" aria-pressed="true">Sign in</button>
+        <button id="auth-mode-signup" class="btn btn-light" type="button" aria-pressed="false">Create account</button>
+      </div>
+      <form id="customer-auth-form" data-mode="signin">
+        <label id="auth-name-field" hidden>Full name<input id="auth-name" type="text" autocomplete="name" maxlength="100" placeholder="Your full name"></label>
+        <label>Email address<input id="auth-email" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required></label>
+        <label>Password<input id="auth-password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="At least 8 characters" required></label>
+        <p id="auth-password-help" class="field-help">Use at least 8 characters.</p>
+        <button id="auth-submit" class="btn btn-primary btn-wide" type="submit">Sign in</button>
+      </form>
       <p id="auth-message" class="status-message" role="status" aria-live="polite"></p>
+      <button id="auth-continue-guest" class="btn btn-light btn-wide" type="button">Continue without an account</button>
     </div>
   </section>
-  <div id="customer-account" class="customer-account" hidden>
-    <span id="customer-account-label"></span>
-    <button id="customer-sign-out" class="btn btn-light" type="button">Sign out</button>
+  <div class="customer-account-toolbar">
+    <button id="customer-auth-open" class="btn btn-light" type="button">Sign in / Create account</button>
+    <div id="customer-account" class="customer-account" hidden><span id="customer-account-label"></span><button id="customer-sign-out" class="btn btn-light" type="button">Sign out</button></div>
   </div>
 
   <main id="main-content" class="container" tabindex="-1">
@@ -466,7 +488,7 @@
     })();
   </script>
   <script src="config.js"></script>
-  <script src="customer.js?v=separate-customer-history-20261021b"></script>
+  <script src="customer.js?v=customer-email-auth-20261021f"></script>
   <script src="pwa.js"></script>
 </body>
 </html>
