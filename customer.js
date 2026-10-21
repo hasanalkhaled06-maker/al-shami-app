@@ -196,6 +196,7 @@
   let deliveryFee = 0;
   let minimumOrder = 0;
   let submitting = false;
+  let menuLoading = false;
 
   const translations = {
     en: {
@@ -474,14 +475,21 @@
     if (sortMode === "popular") visibleProducts.sort((a, b) => Number(b.popularity || b.order_count || 0) - Number(a.popularity || a.order_count || 0));
 
     menu.innerHTML = visibleProducts.length
-      ? visibleProducts.map(product => `
-        <article class="product-card">
+      ? visibleProducts.map(product => {
+          const addControl = product.is_available === false
+            ? `<span class="unavailable-badge" role="status">${escapeHTML(tr("unavailable"))}</span>`
+            : `<button type="button" class="btn btn-primary"
+                data-add="${escapeHTML(product.id)}"
+                aria-label="${escapeHTML(tr("add") + " " + product.name)}">${tr("add")}</button>`;
+          return `
+        <article class="product-card ${product.is_available === false ? "product-unavailable" : ""}">
           <div class="product-image">
             ${product.image_url
               ? `<img src="${escapeHTML(product.image_url)}"
                   alt="${escapeHTML(product.name)}"
+                  width="640" height="420"
                   loading="lazy"
-                  onerror="this.remove()">`
+                  onerror="this.onerror=null;this.parentElement.textContent='🍽️'">`
               : "🍽️"}
           </div>
           <div class="product-info">
@@ -489,15 +497,12 @@
             <p>${escapeHTML(product.description || "Freshly prepared at AL SHAMI.")}</p>
             <div class="product-bottom">
               <span class="price">${money(product.price)}</span>
-              <button type="button"
-                class="btn btn-primary"
-                data-add="${escapeHTML(product.id)}">
-                ${tr("add")}
-              </button>
+              ${addControl}
             </div>
           </div>
         </article>
-      `).join("")
+      `;
+      }).join("")
       : `<p class="muted">${query ? tr("noSearchResults") : tr("noItems")}</p>`;
 
     menu.querySelectorAll("[data-add]").forEach(button => {
@@ -518,7 +523,7 @@
   function getCartRows() {
     return Object.entries(cart).filter(([id, quantity]) =>
       Number(quantity) > 0 &&
-      products.some(product => String(product.id) === String(id))
+      products.some(product => String(product.id) === String(id) && product.is_available !== false)
     );
   }
 
@@ -643,41 +648,42 @@
     heading.textContent = tr("offer");
 
     const details = document.createElement("span");
-    details.textContent = offers.map(offer =>
-      `${offer.title || ""}${offer.details ? " — " + offer.details : ""}`
-    ).join(" · ");
+    details.textContent = offers.map(offer => {
+      const expiry = offer.ends_at && Number.isFinite(new Date(offer.ends_at).getTime())
+        ? (lang === "ar" ? " (ينتهي " : " (Ends ") + new Date(offer.ends_at).toLocaleDateString() + ")"
+        : "";
+      return `${offer.title || ""}${offer.details ? " — " + offer.details : ""}${expiry}`;
+    }).join(" · ");
 
     section.append(heading, details);
     container.append(section);
   }
 
   async function loadMenuAndSettings() {
-    if (!db) {
-      showAppStatus(tr("setupError"), true);
-
-      const menu = $("#menu");
-      if (menu) {
-        menu.innerHTML = `<p class="muted">${escapeHTML(tr("setupError"))}</p>`;
-      }
-
-      return;
+    if (menuLoading) return;
+    menuLoading = true;
+    const retryButton = $("#retry-menu");
+    const menu = $("#menu");
+    if (retryButton) {
+      retryButton.hidden = true;
+      retryButton.disabled = true;
     }
+    if (menu) menu.innerHTML = `<p class="loading" role="status">${escapeHTML(tr("loadingMenu"))}</p>`;
+    showAppStatus(tr("loadingMenu"));
 
     try {
+      if (!db) throw new Error(tr("setupError"));
       const [menuResult, offerResult, settingsResult] = await Promise.all([
         db.from("menu_items")
-          .select("*")
-          .eq("is_available", true)
+          .select("id,name,category,description,price,image_url,is_available,sort_order,created_at,updated_at")
           .order("sort_order")
           .order("name"),
-
         db.from("offers")
           .select("*")
           .eq("is_active", true)
           .order("created_at", { ascending: false }),
-
         db.from("restaurant_settings")
-          .select("*")
+          .select("delivery_fee,minimum_order,restaurant_name")
           .eq("id", 1)
           .maybeSingle()
       ]);
@@ -687,29 +693,38 @@
       if (settingsResult.error) throw settingsResult.error;
 
       products = menuResult.data || [];
-      offers = (offerResult.data || []).filter(offer => {
-        const now = Date.now();
-        return (!offer.starts_at || new Date(offer.starts_at).getTime() <= now) &&
-          (!offer.ends_at || new Date(offer.ends_at).getTime() >= now);
-      });
-      cart = Object.fromEntries(Object.entries(cart).filter(([id]) => products.some(product => String(product.id) === String(id))));
+      const now = Date.now();
+      offers = (offerResult.data || []).filter(offer =>
+        (!offer.starts_at || new Date(offer.starts_at).getTime() <= now) &&
+        (!offer.ends_at || new Date(offer.ends_at).getTime() >= now)
+      );
+      cart = Object.fromEntries(Object.entries(cart).filter(([id, quantity]) =>
+        Number.isInteger(Number(quantity)) && Number(quantity) > 0 && Number(quantity) <= 99 &&
+        products.some(product => String(product.id) === String(id) && product.is_available !== false)
+      ));
       persistCart();
-      deliveryFee = Number(settingsResult.data?.delivery_fee || 0);
-      minimumOrder = Number(settingsResult.data?.minimum_order || 0);
+      deliveryFee = Math.max(0, Number(settingsResult.data?.delivery_fee || 0));
+      minimumOrder = Math.max(0, Number(settingsResult.data?.minimum_order || 0));
 
       renderCategories();
       renderMenu();
       renderCart();
       renderOffers();
       showAppStatus("");
+      if (retryButton) retryButton.hidden = true;
     } catch (error) {
       console.error("AL SHAMI menu loading error:", error);
-      showAppStatus(`${tr("loadError")} ${error?.message || ""}`, true);
-
-      const menu = $("#menu");
-      if (menu) {
-        menu.innerHTML = `<p class="muted">${escapeHTML(tr("loadError"))}</p>`;
-      }
+      const detail = String(error?.message || "");
+      const message = (typeof navigator !== "undefined" && navigator.onLine === false) ||
+        /failed to fetch|networkerror|network request failed|fetch failed/i.test(detail)
+        ? (lang === "ar" ? "تعذر الاتصال لتحميل المنيو. تحقق من الإنترنت ثم أعد المحاولة." : "Couldn't connect to load the menu. Check your connection and retry.")
+        : (detail || tr("loadError"));
+      showAppStatus(message, true);
+      if (menu) menu.innerHTML = `<p class="muted">${escapeHTML(tr("loadError"))}</p>`;
+      if (retryButton) retryButton.hidden = false;
+    } finally {
+      menuLoading = false;
+      if (retryButton) retryButton.disabled = false;
     }
   }
 
@@ -719,6 +734,9 @@
   });
 
   $("#search")?.addEventListener("input", renderMenu);
+  $("#retry-menu")?.addEventListener("click", () => {
+    if (!menuLoading) loadMenuAndSettings();
+  });
   $("#menu-sort")?.addEventListener("change", event => {
     sortMode = event.target.value || "default";
     renderMenu();
