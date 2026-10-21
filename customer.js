@@ -22,6 +22,9 @@
   const $ = selector => document.querySelector(selector);
   const checkoutForm = $("#checkout-form");
   const orderButton = $("#place-order");
+  const floatingCartButton = $("#floating-cart-button");
+  const floatingCartCount = $("#floating-cart-count");
+  const floatingCartTotal = $("#floating-cart-total");
 
 
   let authSession = null;
@@ -592,6 +595,13 @@
     const isDelivery = $("#order-type")?.value !== "pickup";
     const currentFee = isDelivery ? deliveryFee : 0;
     const total = subtotal + currentFee;
+    const itemCount = rows.reduce((sum, [, quantity]) => sum + Number(quantity || 0), 0);
+    if (floatingCartCount) floatingCartCount.textContent = String(itemCount);
+    if (floatingCartTotal) floatingCartTotal.textContent = money(total);
+    if (floatingCartButton) {
+      floatingCartButton.setAttribute("aria-label", (lang === "ar" ? "انتقل إلى طلبك، عدد القطع " : lang === "tw" ? "Kɔ wo order so, nneɛma " : "Go to your order, items ") + itemCount + ", " + money(total));
+      floatingCartButton.classList.toggle("has-items", rows.length > 0);
+    }
 
     if ($("#cart-subtotal")) {
       $("#cart-subtotal").textContent = money(subtotal);
@@ -1005,6 +1015,30 @@
   if (addressInput) addressInput.required = true;
 
   $("#address-field")?.classList.remove("hidden");
+
+  floatingCartButton?.addEventListener("click", () => {
+    const target = $("#your-order-heading")?.closest(".checkout-section") || $("#cart-items");
+    if (!target) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    const heading = $("#your-order-heading");
+    if (heading) {
+      heading.setAttribute("tabindex", "-1");
+      window.setTimeout(() => heading.focus({ preventScroll: true }), reduceMotion ? 0 : 350);
+    }
+  });
+
+  const floatingCartObserver = new IntersectionObserver(entries => {
+    const menu = $("#menu");
+    const order = $(".checkout-section");
+    const menuVisible = entries.some(entry => entry.target === menu && entry.isIntersecting);
+    const orderVisible = entries.some(entry => entry.target === order && entry.isIntersecting);
+    const shouldShow = !menuVisible && !orderVisible;
+    floatingCartButton?.classList.toggle("is-visible", shouldShow);
+    if (floatingCartButton) floatingCartButton.setAttribute("aria-hidden", shouldShow ? "false" : "true");
+  }, { threshold: 0.05 });
+  if ($("#menu")) floatingCartObserver.observe($("#menu"));
+  if ($(".checkout-section")) floatingCartObserver.observe($(".checkout-section"));
 
   restoreCart();
   restoreCustomerDetails();
