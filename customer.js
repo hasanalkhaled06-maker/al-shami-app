@@ -373,7 +373,10 @@
       if (submit) { submit.disabled = true; submit.textContent = mode === "signup" ? "Creating account…" : "Signing in…"; }
       authMessage(mode === "signup" ? "Creating your account…" : "Signing in…");
       if (mode === "signup") {
-        const options = { data: { full_name: fullName, phone: signupPhone, phone_e164: signupPhone } };
+        const options = {
+          emailRedirectTo: window.location.origin + window.location.pathname,
+          data: { full_name: fullName, phone: signupPhone, phone_e164: signupPhone }
+        };
         const { data, error } = await db.auth.signUp({ email: identity, password, options });
         if (error) throw error;
         if (data.session) {
@@ -397,10 +400,12 @@
     } catch (error) {
       console.error("Customer account action failed:", error);
       const detail = String(error?.message || "");
-      if (/phone.*disabled|phone.*not enabled|phone provider/i.test(detail)) {
-        authMessage("Phone sign-in is not enabled in Supabase yet. Use the email option for now; phone sign-in requires the phone provider to be enabled.", true);
-      } else if (/phone.*already|already.*phone|phone_exists|user already registered|duplicate/i.test(detail)) {
-        authMessage("This phone or email may already be registered. Try signing in or use Forgot password.", true);
+      if (/email address not authorized|not authorized|confirmation email|SMTP|email provider/i.test(detail)) {
+        authMessage("Email delivery is not configured for public customers yet. Supabase's default sender only delivers to project team addresses. Configure a custom SMTP sender before customer signup and password recovery.", true);
+      } else if (/duplicate key|unique constraint|23505|already linked/i.test(detail)) {
+        authMessage("This phone number is already linked to another customer account. Sign in to the existing account or use a different number.", true);
+      } else if (/user already registered|email.*already|already.*email/i.test(detail)) {
+        authMessage("This email is already registered. Sign in with that account or use Forgot password.", true);
       } else {
         authMessage(detail || "Account action failed. Please try again.", true);
       }
