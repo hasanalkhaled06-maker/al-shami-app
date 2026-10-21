@@ -29,10 +29,12 @@
 
 
   let authSession = null;
-  let authMethod = "phone";
+  let authMethod = "email";
   let authRecoveryMode = null;
   let recoveryPhone = "";
   let recoveryPhoneVerified = false;
+  let customerPhoneValidatedUserId = null;
+  let phoneProfileValidation = null;
 
   function authMessage(message, error = false) {
     const node = $("#auth-message");
@@ -41,37 +43,120 @@
     node.className = "status-message" + (error ? " error" : " success");
   }
 
+  function lockCustomerApp(message = "") {
+    document.body.classList.add("customer-auth-required", "auth-dialog-open");
+    const gate = $("#customer-auth");
+    if (gate) gate.hidden = false;
+    showAuthDialog();
+    if (message) authMessage(message, true);
+  }
+
+  function unlockCustomerApp(userId) {
+    if (!authSession?.user || authSession.user.id !== userId) return;
+    customerPhoneValidatedUserId = userId;
+    document.body.classList.remove("customer-auth-required", "auth-dialog-open");
+    const gate = $("#customer-auth");
+    if (gate) gate.hidden = true;
+    void loadMenuAndSettings();
+    void refreshCustomerOrderHistory();
+  }
+
+  async function ensureCustomerPhoneProfile(session) {
+    const user = session?.user;
+    if (!user || !db) return;
+    if (customerPhoneValidatedUserId === user.id) {
+      unlockCustomerApp(user.id);
+      return;
+    }
+    if (phoneProfileValidation?.userId === user.id) {
+      await phoneProfileValidation.promise;
+      return;
+    }
+
+    const promise = (async () => {
+      const meta = user.user_metadata || {};
+      const phone = meta.phone_e164 || meta.phone || "";
+      // Legacy accounts without a saved phone stay usable; new accounts must reserve a unique number.
+      if (!phone) {
+        unlockCustomerApp(user.id);
+        return;
+      }
+
+      let canonicalPhone;
+      try {
+        canonicalPhone = normalizeGhanaPhone(phone);
+      } catch (_) {
+        throw new Error("The phone number saved on this account is invalid. Contact AL SHAMI for help.");
+      }
+
+      const { data: existing, error: lookupError } = await db
+        .from("customer_profiles")
+        .select("user_id,phone_e164")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (lookupError) throw lookupError;
+
+      if (existing) {
+        if (existing.phone_e164 !== canonicalPhone) {
+          throw new Error("The phone number saved on this account does not match its profile. Contact AL SHAMI for help.");
+        }
+      } else {
+        const { error: insertError } = await db.from("customer_profiles").insert({
+          user_id: user.id,
+          phone_e164: canonicalPhone,
+          full_name: String(meta.full_name || "Customer").trim() || "Customer"
+        });
+        if (insertError) {
+          if (insertError.code === "23505" || /duplicate key|unique constraint/i.test(insertError.message || "")) {
+            throw new Error("This phone number is already linked to another customer account. Sign in to the existing account or use a different number.");
+          }
+          throw insertError;
+        }
+      }
+      unlockCustomerApp(user.id);
+    })();
+
+    phoneProfileValidation = { userId: user.id, promise };
+    try {
+      await promise;
+    } catch (error) {
+      console.error("Customer phone uniqueness check failed:", error);
+      if (authSession?.user?.id === user.id && /already linked|does not match|invalid/i.test(String(error?.message || ""))) {
+        await db.auth.signOut();
+        authSession = null;
+      }
+      lockCustomerApp(error?.message || "Could not verify this customer account. Please try again.");
+    } finally {
+      if (phoneProfileValidation?.userId === user.id && phoneProfileValidation.promise === promise) phoneProfileValidation = null;
+    }
+  }
+
   function applyAuthState(session) {
     authSession = session || null;
     const signedIn = Boolean(authSession?.user);
     const openButton = $("#customer-auth-open");
     const account = $("#customer-account");
-    const gate = $("#customer-auth");
-    document.body.classList.toggle("customer-auth-required", !signedIn);
     if (openButton) openButton.hidden = signedIn;
     if (account) account.hidden = !signedIn;
 
     if (!signedIn) {
-      // No authenticated Supabase session means no menu, order history, or checkout access.
-      document.body.classList.add("auth-dialog-open");
-      if (gate) gate.hidden = false;
-      showAuthDialog();
+      customerPhoneValidatedUserId = null;
+      phoneProfileValidation = null;
+      lockCustomerApp("Please sign in or create an account to continue.");
       return;
     }
 
-    document.body.classList.remove("auth-dialog-open");
-    if (gate) gate.hidden = true;
     const user = authSession.user;
     const meta = user.user_metadata || {};
     const label = $("#customer-account-label");
-    if (label) label.textContent = "Signed in as " + (user.phone || user.email || "customer");
-    const phone = meta.phone || user.phone || "";
+    if (label) label.textContent = "Signed in as " + (user.email || "customer");
+    const phone = meta.phone_e164 || meta.phone || user.phone || "";
     if (checkoutForm?.elements?.customer_phone && phone && !checkoutForm.elements.customer_phone.value) checkoutForm.elements.customer_phone.value = phone;
     if (checkoutForm?.elements?.customer_name && meta.full_name && !checkoutForm.elements.customer_name.value) checkoutForm.elements.customer_name.value = meta.full_name;
 
-    // Only authenticated customers trigger menu and order-history reads.
-    void loadMenuAndSettings();
-    void refreshCustomerOrderHistory();
+    // Keep the mandatory gate closed until the unique phone profile is confirmed.
+    lockCustomerApp("Checking your account…");
+    void ensureCustomerPhoneProfile(authSession);
   }
 
   function setAuthMode(mode) {
@@ -85,6 +170,8 @@
     const nameInput = $("#auth-name");
     const confirmField = $("#auth-confirm-field");
     const confirmInput = $("#auth-confirm-password");
+    const signupPhoneField = $("#auth-phone-field");
+    const signupPhoneInput = $("#auth-phone");
     const password = $("#auth-password");
     const submit = $("#auth-submit");
     const signinButton = $("#auth-mode-signin");
@@ -94,11 +181,13 @@
     if (help) {
       if (authMethod === "phone" && signup) help.textContent = "Create an account with your Ghana number and password. Supabase Auth prevents duplicate phone identities. Phone confirmation, if enabled, requires an SMS provider.";
       else if (authMethod === "phone") help.textContent = "Use your Ghana phone number and password. Signing in does not send an SMS code.";
-      else if (signup) help.textContent = "Create an account with your email and password. Supabase may ask you to confirm your email.";
+      else if (signup) help.textContent = "Create an account with your email, Ghana phone number, and password. Use an email address you can access for confirmation and password recovery.";
       else help.textContent = "Use the email address and password you registered with.";
     }
     if (nameField) nameField.hidden = !signup;
     if (nameInput) nameInput.required = signup;
+    if (signupPhoneField) signupPhoneField.hidden = !signup;
+    if (signupPhoneInput) signupPhoneInput.required = signup;
     if (confirmField) confirmField.hidden = !signup;
     if (confirmInput) confirmInput.required = signup;
     if (password) password.autocomplete = signup ? "new-password" : "current-password";
@@ -262,8 +351,6 @@
   });
   $("#auth-mode-signin")?.addEventListener("click", () => setAuthMode("signin"));
   $("#auth-mode-signup")?.addEventListener("click", () => setAuthMode("signup"));
-  $("#auth-method-phone")?.addEventListener("click", () => setAuthMethod("phone"));
-  $("#auth-method-email")?.addEventListener("click", () => setAuthMethod("email"));
 
   $("#customer-auth-form")?.addEventListener("submit", async event => {
     event.preventDefault();
@@ -274,12 +361,11 @@
     const mode = form.dataset.mode === "signup" ? "signup" : "signin";
     const fullName = String($("#auth-name")?.value || "").trim();
     let identity = "";
+    let signupPhone = "";
     try {
-      if (authMethod === "phone") identity = normalizeGhanaPhone($("#auth-identifier")?.value);
-      else {
-        identity = String($("#auth-identifier")?.value || "").trim().toLowerCase();
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity)) throw new Error("Enter a valid email address.");
-      }
+      identity = String($("#auth-identifier")?.value || "").trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity)) throw new Error("Enter a valid email address.");
+      if (mode === "signup") signupPhone = normalizeGhanaPhone($("#auth-phone")?.value);
       if (!password) throw new Error("Enter your password.");
       if (password.length < 8) throw new Error("Use a password with at least 8 characters.");
       if (mode === "signup" && fullName.length < 2) throw new Error("Enter your name to create an account.");
@@ -287,9 +373,8 @@
       if (submit) { submit.disabled = true; submit.textContent = mode === "signup" ? "Creating account…" : "Signing in…"; }
       authMessage(mode === "signup" ? "Creating your account…" : "Signing in…");
       if (mode === "signup") {
-        const options = { data: { full_name: fullName } };
-        const credentials = authMethod === "phone" ? { phone: identity, password, options } : { email: identity, password, options };
-        const { data, error } = await db.auth.signUp(credentials);
+        const options = { data: { full_name: fullName, phone: signupPhone, phone_e164: signupPhone } };
+        const { data, error } = await db.auth.signUp({ email: identity, password, options });
         if (error) throw error;
         if (data.session) {
           applyAuthState(data.session);
@@ -768,7 +853,7 @@
   async function refreshCustomerOrderHistory() {
     const list = $("#customer-order-history");
     if (!list) return;
-    if (!authSession?.user) {
+    if (!authSession?.user || (authSession.user.user_metadata?.phone_e164 && customerPhoneValidatedUserId !== authSession.user.id)) {
       list.replaceChildren();
       return;
     }
@@ -878,8 +963,8 @@
 
   $("#track-order-form")?.addEventListener("submit", async event => {
     event.preventDefault();
-    if (!authSession?.user) {
-      showAuthDialog();
+    if (!authSession?.user || (authSession.user.user_metadata?.phone_e164 && customerPhoneValidatedUserId !== authSession.user.id)) {
+      lockCustomerApp("Please sign in before tracking orders.");
       return;
     }
     const input = $("#tracking-code-input");
@@ -1266,8 +1351,8 @@
   }
 
   async function loadMenuAndSettings() {
-    if (!authSession?.user) {
-      showAuthDialog();
+    if (!authSession?.user || (authSession.user.user_metadata?.phone_e164 && customerPhoneValidatedUserId !== authSession.user.id)) {
+      lockCustomerApp("Please sign in or finish account verification before viewing the menu.");
       return;
     }
     if (menuLoading) return;
@@ -1445,9 +1530,9 @@
 
       if (submitting) return;
 
-      if (!authSession?.user) {
-        showAuthDialog();
-        showCheckoutMessage(lang === "ar" ? "سجّل الدخول أو أنشئ حساباً أولاً للمتابعة." : "Please sign in or create an account before placing an order.", true);
+      if (!authSession?.user || (authSession.user.user_metadata?.phone_e164 && customerPhoneValidatedUserId !== authSession.user.id)) {
+        lockCustomerApp("Please sign in or finish account verification before ordering.");
+        showCheckoutMessage(lang === "ar" ? "سجّل الدخول أو أكمل التحقق من الحساب أولاً." : "Please sign in or finish account verification before ordering.", true);
         return;
       }
 
