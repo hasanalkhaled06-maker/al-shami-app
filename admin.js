@@ -584,7 +584,6 @@ Status: ${order.status}`;
   function enqueueIncomingOrder(orderId) {
     if (!orderId || incomingOrderQueue.includes(orderId) || activeIncomingOrderId === orderId) return;
     incomingOrderQueue.push(orderId);
-    showNextIncomingOrder();
   }
 
   function showNextIncomingOrder() {
@@ -659,7 +658,7 @@ Status: ${order.status}`;
         return;
       }
       incomingOrderQueue.splice(0, incomingOrderQueue.length, ...incomingOrderQueue.filter(itemId => itemId !== id));
-      closeIncomingOrderDialog();
+      if (activeIncomingOrderId === id) closeIncomingOrderDialog();
       toast(status === "accepted" ? "Order accepted." : "Order rejected.");
       showNextIncomingOrder();
     } catch (error) {
