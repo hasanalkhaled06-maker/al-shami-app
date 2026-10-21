@@ -874,16 +874,16 @@
 
       const formData = new FormData(formElement);
       const customerName = String(formData.get("customer_name") || "").trim();
+      if (!customerName) {
+        showCheckoutMessage(lang === "ar" ? "اكتب اسمك." : "Please enter your name.", true);
+        formElement.elements.customer_name.focus();
+        return;
+      }
       let normalizedPhone;
       try { normalizedPhone = normalizeGhanaPhone(formData.get("customer_phone")); }
       catch (phoneError) {
         showCheckoutMessage(phoneError.message, true);
         formElement.elements.customer_phone.focus();
-        return;
-      }
-      if (!customerName) {
-        showCheckoutMessage(lang === "ar" ? "اكتب اسمك." : "Please enter your name.", true);
-        formElement.elements.customer_name.focus();
         return;
       }
       const orderType = String(formData.get("order_type") || "delivery");
