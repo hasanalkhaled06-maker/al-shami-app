@@ -5,7 +5,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#8d1723">
-  <meta name="description" content="Order fresh shawarma, burgers, pizza and more from AL SHAMI RESTAURANT & FAST FOOD, Darkuman Circle Station, Accra. Cash on delivery or pickup.">\n  <meta name="robots" content="index,follow">\n  <meta property="og:title" content="AL SHAMI RESTAURANT & FAST FOOD">\n  <meta property="og:description" content="Fresh favourites, made for you. Order from AL SHAMI in Darkuman, Accra.">\n  <meta property="og:type" content="website">
+  <meta name="description" content="Order fresh shawarma, burgers, pizza and more from AL SHAMI RESTAURANT & FAST FOOD, Darkuman Circle Station, Accra. Cash on delivery or pickup.">
+  <meta name="robots" content="index,follow">
+  <meta property="og:title" content="AL SHAMI RESTAURANT & FAST FOOD">
+  <meta property="og:description" content="Fresh favourites, made for you. Order from AL SHAMI in Darkuman, Accra.">
+  <meta property="og:type" content="website">
   <meta name="color-scheme" content="light">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -86,7 +90,8 @@
       <div class="welcome-foot"><span>Fresh · Delicious · Made with Love</span></div>
     </div>
   </section>
-  <a class="skip-link" href="#main-content">Skip to menu and ordering</a>\n  <header class="hero">
+  <a class="skip-link" href="#main-content">Skip to menu and ordering</a>
+  <header class="hero">
     <div class="hero-inner">
       <div class="brand-mark" aria-label="AL SHAMI">AL<br>SHAMI</div>
       <div>
@@ -208,7 +213,8 @@
 
           <label id="address-field">
             <span data-i18n="address">Delivery address / landmark</span>
-            <input name="delivery_address" maxlength="250" autocomplete="street-address" placeholder="House, street, landmark">
+            <input name="delivery_address" maxlength="250" autocomplete="street-address" aria-describedby="address-help" placeholder="House number, street, landmark">
+            <small id="address-help" class="field-help">Include your house or building number, street, neighbourhood, and a nearby landmark (for example, a shop or station).</small>
           </label>
 
           <label class="full">
@@ -217,7 +223,8 @@
           </label>
         </div>
 
-        <label class="remember-customer"><input id="remember-customer" type="checkbox"> Remember my name and phone on this device</label>\n        <p class="muted small" data-i18n="paymentNote">Payment: Cash on delivery or cash at pickup.</p>
+        <label class="remember-customer"><input id="remember-customer" type="checkbox"> Remember my name and phone on this device</label>
+        <p class="muted small" data-i18n="paymentNote">Payment: Cash on delivery or cash at pickup.</p>
         <p id="minimum-order-note" class="muted small" hidden></p>
         <button id="place-order" class="btn btn-primary btn-wide" type="submit" data-i18n="send">Place order</button>
         <p id="checkout-message" role="status" aria-live="polite" class="status-message"></p>
@@ -230,18 +237,26 @@
     <span>Darkuman Circle Station, Accra, Ghana</span>
     <div class="site-contact-links" aria-label="Restaurant phone numbers">
       <a href="tel:+233547489859">☎ 054 748 9859</a>
-      <a href="tel:+233557265050">☎ 055 726 5050</a>\n      <a href="https://wa.me/233547489859" target="_blank" rel="noopener noreferrer" aria-label="Chat with AL SHAMI on WhatsApp">WhatsApp 1</a>\n      <a href="https://wa.me/233557265050" target="_blank" rel="noopener noreferrer" aria-label="Chat with AL SHAMI on WhatsApp">WhatsApp 2</a>
+      <a href="tel:+233557265050">☎ 055 726 5050</a>
+      <a href="https://wa.me/233547489859" target="_blank" rel="noopener noreferrer" aria-label="Chat with AL SHAMI on WhatsApp">WhatsApp 1</a>
+      <a href="https://wa.me/233557265050" target="_blank" rel="noopener noreferrer" aria-label="Chat with AL SHAMI on WhatsApp">WhatsApp 2</a>
     </div>
     <a href="admin.html">Staff / Admin</a>
   </footer>
 
-  <div class="quick-contact" aria-label="Quick contact options">\n    <a class="quick-contact-main" href="https://wa.me/233547489859" target="_blank" rel="noopener noreferrer" aria-label="Order or ask a question on WhatsApp">WhatsApp · Order help</a>\n    <a class="quick-contact-call" href="tel:+233547489859" aria-label="Call AL SHAMI RESTAURANT">Call us</a>\n  </div>\n\n  <div id="success-modal" class="success-modal" role="dialog" aria-modal="true" aria-labelledby="success-title" aria-describedby="success-description" hidden>
+  <div class="quick-contact" aria-label="Quick contact options">
+    <a class="quick-contact-main" href="https://wa.me/233547489859" target="_blank" rel="noopener noreferrer" aria-label="Order or ask a question on WhatsApp">WhatsApp · Order help</a>
+    <a class="quick-contact-call" href="tel:+233547489859" aria-label="Call AL SHAMI RESTAURANT">Call us</a>
+  </div>
+
+  <div id="success-modal" class="success-modal" role="dialog" aria-modal="true" aria-labelledby="success-title" aria-describedby="success-description" hidden>
     <div class="success-card">
       <div class="success-icon" aria-hidden="true">✓</div>
       <h2 id="success-title">تم إرسال طلبك بنجاح!</h2>
       <p id="success-description" class="success-subtitle">Your order has been sent to AL SHAMI RESTAURANT.</p>
       <p id="success-order-number"></p>
       <p id="success-order-total"></p>
+      <a id="success-whatsapp" class="success-whatsapp" href="https://wa.me/233547489859" target="_blank" rel="noopener noreferrer">Chat with AL SHAMI on WhatsApp</a>
       <button id="success-close" type="button" class="btn btn-primary">حسناً</button>
     </div>
   </div>
@@ -254,6 +269,7 @@
       const description = document.getElementById("success-description");
       const number = document.getElementById("success-order-number");
       const total = document.getElementById("success-order-total");
+      const whatsapp = document.getElementById("success-whatsapp");
       let previouslyFocused = null;
 
       const modalText = {
@@ -262,21 +278,24 @@
           description: "AL SHAMI RESTAURANT has received your order.",
           number: "Order number:",
           total: "Order total:",
-          close: "Close"
+          close: "Close",
+          whatsapp: "Chat with AL SHAMI on WhatsApp"
         },
         ar: {
           title: "تم إرسال طلبك بنجاح!",
           description: "استلم مطعم الشامي طلبك بنجاح.",
           number: "رقم الطلب:",
           total: "المجموع:",
-          close: "حسناً"
+          close: "حسناً",
+          whatsapp: "تواصل معنا عبر واتساب"
         },
         tw: {
           title: "Your order was sent successfully!",
           description: "AL SHAMI RESTAURANT has received your order.",
           number: "Order number:",
           total: "Order total:",
-          close: "Close"
+          close: "Close",
+          whatsapp: "Chat with AL SHAMI on WhatsApp"
         }
       };
 
@@ -292,6 +311,7 @@
         title.textContent = words.title;
         description.textContent = words.description;
         closeButton.textContent = words.close;
+        if (whatsapp) whatsapp.textContent = words.whatsapp;
 
         const orderNumber = item.orderNumber;
 
