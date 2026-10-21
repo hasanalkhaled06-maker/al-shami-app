@@ -29,68 +29,16 @@
 
 
   let authSession = null;
+  let authMethod = "phone";
+  let authRecoveryMode = null;
+  let recoveryPhone = "";
+  let recoveryPhoneVerified = false;
 
   function authMessage(message, error = false) {
     const node = $("#auth-message");
     if (!node) return;
     node.textContent = message || "";
     node.className = "status-message" + (error ? " error" : " success");
-  }
-
-  let authMethod = "phone";
-
-  function setAuthMode(mode) {
-    const signup = mode === "signup";
-    const form = $("#customer-auth-form");
-    if (!form) return;
-    form.dataset.mode = signup ? "signup" : "signin";
-    const title = $("#customer-auth-title");
-    const help = $("#customer-auth-help");
-    const nameField = $("#auth-name-field");
-    const nameInput = $("#auth-name");
-    const password = $("#auth-password");
-    const submit = $("#auth-submit");
-    const signinButton = $("#auth-mode-signin");
-    const signupButton = $("#auth-mode-signup");
-    const identifier = $("#auth-identifier");
-    if (title) title.textContent = signup ? "Create your AL SHAMI account" : "Sign in to your account";
-    if (help) {
-      if (authMethod === "phone" && signup) {
-        help.textContent = "Create an account with your Ghana number and a password. This avoids SMS only when phone confirmation is disabled in Supabase; if confirmation is enabled, it may request SMS.";
-      } else if (authMethod === "phone") {
-        help.textContent = "Use your Ghana phone number and password. Signing in does not request an SMS code.";
-      } else if (signup) {
-        help.textContent = "Create an account with email and password. Supabase may require an email confirmation depending on account settings.";
-      } else {
-        help.textContent = "Use the email address and password you registered with.";
-      }
-    }
-    if (nameField) nameField.hidden = !signup;
-    if (nameInput) nameInput.required = signup;
-    if (password) password.autocomplete = signup ? "new-password" : "current-password";
-    if (identifier) identifier.autocomplete = authMethod === "phone" ? "tel" : "email";
-    if (submit) submit.textContent = signup ? "Create account" : "Sign in";
-    if (signinButton) { signinButton.classList.toggle("active", !signup); signinButton.setAttribute("aria-pressed", String(!signup)); }
-    if (signupButton) { signupButton.classList.toggle("active", signup); signupButton.setAttribute("aria-pressed", String(signup)); }
-    authMessage("");
-  }
-
-  function setAuthMethod(method) {
-    authMethod = method === "email" ? "email" : "phone";
-    const label = $("#auth-identifier-label");
-    const field = $("#auth-identifier");
-    const phoneButton = $("#auth-method-phone");
-    const emailButton = $("#auth-method-email");
-    if (label) label.textContent = authMethod === "phone" ? "Phone number" : "Email address";
-    if (field) {
-      field.type = authMethod === "phone" ? "tel" : "email";
-      field.inputMode = authMethod === "phone" ? "tel" : "email";
-      field.placeholder = authMethod === "phone" ? "+233 24 123 4567" : "you@example.com";
-      field.value = "";
-    }
-    if (phoneButton) { phoneButton.classList.toggle("active", authMethod === "phone"); phoneButton.setAttribute("aria-pressed", String(authMethod === "phone")); }
-    if (emailButton) { emailButton.classList.toggle("active", authMethod === "email"); emailButton.setAttribute("aria-pressed", String(authMethod === "email")); }
-    setAuthMode($("#customer-auth-form")?.dataset?.mode || "signin");
   }
 
   function applyAuthState(session) {
@@ -111,37 +59,180 @@
     }
   }
 
+  function setAuthMode(mode) {
+    const signup = mode === "signup";
+    const form = $("#customer-auth-form");
+    if (!form) return;
+    form.dataset.mode = signup ? "signup" : "signin";
+    const title = $("#customer-auth-title");
+    const help = $("#customer-auth-help");
+    const nameField = $("#auth-name-field");
+    const nameInput = $("#auth-name");
+    const confirmField = $("#auth-confirm-field");
+    const confirmInput = $("#auth-confirm-password");
+    const password = $("#auth-password");
+    const submit = $("#auth-submit");
+    const signinButton = $("#auth-mode-signin");
+    const signupButton = $("#auth-mode-signup");
+    const forgot = $("#auth-forgot-password");
+    if (title) title.textContent = signup ? "Create your AL SHAMI account" : "Sign in to your account";
+    if (help) {
+      if (authMethod === "phone" && signup) help.textContent = "Create an account with your Ghana number and password. Supabase Auth prevents duplicate phone identities. Phone confirmation, if enabled, requires an SMS provider.";
+      else if (authMethod === "phone") help.textContent = "Use your Ghana phone number and password. Signing in does not send an SMS code.";
+      else if (signup) help.textContent = "Create an account with your email and password. Supabase may ask you to confirm your email.";
+      else help.textContent = "Use the email address and password you registered with.";
+    }
+    if (nameField) nameField.hidden = !signup;
+    if (nameInput) nameInput.required = signup;
+    if (confirmField) confirmField.hidden = !signup;
+    if (confirmInput) confirmInput.required = signup;
+    if (password) password.autocomplete = signup ? "new-password" : "current-password";
+    if (submit) submit.textContent = signup ? "Create account" : "Sign in";
+    if (forgot) forgot.hidden = signup || Boolean(authRecoveryMode);
+    if (signinButton) { signinButton.classList.toggle("active", !signup); signinButton.setAttribute("aria-pressed", String(!signup)); }
+    if (signupButton) { signupButton.classList.toggle("active", signup); signupButton.setAttribute("aria-pressed", String(signup)); }
+    authMessage("");
+  }
+
+  function setAuthMethod(method) {
+    authMethod = method === "email" ? "email" : "phone";
+    const label = $("#auth-identifier-label");
+    const field = $("#auth-identifier");
+    const phoneButton = $("#auth-method-phone");
+    const emailButton = $("#auth-method-email");
+    if (label) label.textContent = authMethod === "phone" ? "Phone number" : "Email address";
+    if (field) {
+      field.type = authMethod === "phone" ? "tel" : "email";
+      field.inputMode = authMethod === "phone" ? "tel" : "email";
+      field.autocomplete = authMethod === "phone" ? "tel" : "email";
+      field.placeholder = authMethod === "phone" ? "+233 24 123 4567" : "you@example.com";
+      field.value = "";
+    }
+    if (phoneButton) { phoneButton.classList.toggle("active", authMethod === "phone"); phoneButton.setAttribute("aria-pressed", String(authMethod === "phone")); }
+    if (emailButton) { emailButton.classList.toggle("active", authMethod === "email"); emailButton.setAttribute("aria-pressed", String(authMethod === "email")); }
+    setAuthMode($("#customer-auth-form")?.dataset?.mode || "signin");
+  }
+
+  function showAuthDialog() {
+    const gate = $("#customer-auth");
+    if (!gate) return;
+    authRecoveryMode = null;
+    recoveryPhoneVerified = false;
+    recoveryPhone = "";
+    $("#auth-recovery-panel").hidden = true;
+    $("#customer-auth-form").hidden = false;
+    $("#auth-mode-switch").hidden = false;
+    $("#auth-method-switch").hidden = false;
+    $("#auth-forgot-password").hidden = false;
+    $("#auth-continue-guest").hidden = false;
+    $("#auth-recovery-back").hidden = false;
+    gate.hidden = false;
+    document.body.classList.add("auth-dialog-open");
+    setAuthMode("signin");
+    window.requestAnimationFrame(() => $("#auth-identifier")?.focus());
+  }
+
+  function closeAuthDialog() {
+    const gate = $("#customer-auth");
+    if (gate) gate.hidden = true;
+    document.body.classList.remove("auth-dialog-open");
+  }
+
+  function showPhoneRecovery() {
+    authRecoveryMode = "phone";
+    recoveryPhoneVerified = false;
+    recoveryPhone = "";
+    const gate = $("#customer-auth");
+    if (gate) gate.hidden = false;
+    document.body.classList.add("auth-dialog-open");
+    $("#customer-auth-title").textContent = "Recover your account by SMS";
+    $("#customer-auth-help").textContent = "A one-time code will be sent to the phone linked to your account. An SMS provider must be configured.";
+    $("#auth-mode-switch").hidden = true;
+    $("#auth-method-switch").hidden = true;
+    $("#customer-auth-form").hidden = true;
+    $("#auth-forgot-password").hidden = true;
+    $("#auth-continue-guest").hidden = true;
+    $("#auth-recovery-panel").hidden = false;
+    $("#auth-recovery-title").textContent = "Verify your phone";
+    $("#auth-recovery-help").textContent = "Enter the Ghana phone number used when you created your account.";
+    $("#auth-recovery-send-area").hidden = false;
+    $("#auth-recovery-code-area").hidden = true;
+    $("#auth-recovery-password-area").hidden = true;
+    $("#auth-recovery-back").hidden = false;
+    $("#auth-recovery-code").value = "";
+    $("#auth-recovery-new-password").value = "";
+    $("#auth-recovery-confirm-password").value = "";
+    $("#auth-recovery-phone").value = $("#auth-identifier")?.value || "";
+    authMessage("");
+    window.requestAnimationFrame(() => $("#auth-recovery-phone")?.focus());
+  }
+
+  function showPasswordRecovery(mode) {
+    authRecoveryMode = mode;
+    recoveryPhoneVerified = mode === "phone";
+    const gate = $("#customer-auth");
+    if (gate) gate.hidden = false;
+    document.body.classList.add("auth-dialog-open");
+    $("#customer-auth-title").textContent = mode === "phone" ? "Choose a new password" : "Reset your password";
+    $("#customer-auth-help").textContent = mode === "phone" ? "Your phone number was verified. Choose a new password." : "Your recovery link was accepted. Choose a new password.";
+    $("#auth-mode-switch").hidden = true;
+    $("#auth-method-switch").hidden = true;
+    $("#customer-auth-form").hidden = true;
+    $("#auth-forgot-password").hidden = true;
+    $("#auth-continue-guest").hidden = true;
+    $("#auth-recovery-panel").hidden = false;
+    $("#auth-recovery-title").textContent = "Set a new password";
+    $("#auth-recovery-help").textContent = "Use at least 8 characters and keep it private.";
+    $("#auth-recovery-send-area").hidden = true;
+    $("#auth-recovery-code-area").hidden = true;
+    $("#auth-recovery-password-area").hidden = false;
+    $("#auth-recovery-back").hidden = true;
+    authMessage("");
+    window.requestAnimationFrame(() => $("#auth-recovery-new-password")?.focus());
+  }
+
   async function initializeCustomerAuth() {
     if (!db) return;
     try {
       const { data, error } = await db.auth.getSession();
       if (error) throw error;
       applyAuthState(data.session);
-      db.auth.onAuthStateChange((_event, session) => applyAuthState(session));
-    } catch (error) { console.error("Customer auth initialization failed:", error); }
+      db.auth.onAuthStateChange((event, session) => {
+        applyAuthState(session);
+        if (event === "PASSWORD_RECOVERY") showPasswordRecovery("email");
+      });
+      if (window.location.hash.includes("type=recovery")) showPasswordRecovery("email");
+    } catch (error) {
+      console.error("Customer auth initialization failed:", error);
+      authMessage(error.message || "Could not check your sign-in status.", true);
+    }
   }
 
-  const authGate = $("#customer-auth");
-  function showCustomerAuth() {
-    if (!authGate) return;
-    setAuthMode("signin");
-    authGate.hidden = false;
-    authGate.removeAttribute("hidden");
-    document.body.classList.add("auth-dialog-open");
-    window.requestAnimationFrame(() => $("#auth-identifier")?.focus());
-  }
-  $("#customer-auth-open")?.addEventListener("click", showCustomerAuth);
-  // Delegated fallback for mobile/PWA clients if an earlier listener was missed.
+  $("#customer-auth-open")?.addEventListener("click", showAuthDialog);
   document.addEventListener("click", event => {
     const trigger = event.target?.closest?.("#customer-auth-open");
-    if (trigger) {
-      event.preventDefault();
-      showCustomerAuth();
-    }
+    if (trigger) { event.preventDefault(); showAuthDialog(); }
   }, true);
-  $("#auth-close")?.addEventListener("click", () => { if (authGate) authGate.hidden = true; document.body.classList.remove("auth-dialog-open"); });
-  $("#auth-continue-guest")?.addEventListener("click", () => { if (authGate) authGate.hidden = true; document.body.classList.remove("auth-dialog-open"); });
-  authGate?.addEventListener("click", event => { if (event.target === authGate) { authGate.hidden = true; document.body.classList.remove("auth-dialog-open"); } });
+  $("#auth-close")?.addEventListener("click", closeAuthDialog);
+  $("#auth-continue-guest")?.addEventListener("click", closeAuthDialog);
+  $("#auth-recovery-back")?.addEventListener("click", () => {
+    authRecoveryMode = null;
+    recoveryPhoneVerified = false;
+    $("#auth-recovery-panel").hidden = true;
+    $("#customer-auth-form").hidden = false;
+    $("#auth-mode-switch").hidden = false;
+    $("#auth-method-switch").hidden = false;
+    $("#auth-forgot-password").hidden = false;
+    $("#auth-continue-guest").hidden = false;
+    setAuthMode("signin");
+    authMessage("");
+  });
+  $("#customer-auth")?.addEventListener("click", event => {
+    if (event.target === $("#customer-auth") && !authRecoveryMode) closeAuthDialog();
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && $("#customer-auth") && !$("#customer-auth").hidden && !authRecoveryMode) closeAuthDialog();
+  });
   $("#auth-mode-signin")?.addEventListener("click", () => setAuthMode("signin"));
   $("#auth-mode-signup")?.addEventListener("click", () => setAuthMode("signup"));
   $("#auth-method-phone")?.addEventListener("click", () => setAuthMethod("phone"));
@@ -151,74 +242,154 @@
     event.preventDefault();
     const form = event.currentTarget;
     const submit = $("#auth-submit");
-    if (!db) { authMessage("Account sign-in is unavailable because the app configuration is missing.", true); return; }
+    if (!db) { authMessage("Account sign-in is unavailable because app configuration is missing.", true); return; }
     const password = String($("#auth-password")?.value || "");
     const mode = form.dataset.mode === "signup" ? "signup" : "signin";
     const fullName = String($("#auth-name")?.value || "").trim();
     let identity = "";
     try {
-      if (authMethod === "phone") {
-        identity = normalizeGhanaPhone($("#auth-identifier")?.value);
-      } else {
+      if (authMethod === "phone") identity = normalizeGhanaPhone($("#auth-identifier")?.value);
+      else {
         identity = String($("#auth-identifier")?.value || "").trim().toLowerCase();
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity)) {
-          authMessage("Enter a valid email address.", true);
-          $("#auth-identifier")?.focus();
-          return;
-        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity)) throw new Error("Enter a valid email address.");
       }
-      if (!password) { authMessage("Enter your password.", true); return; }
-      if (password.length < 8) { authMessage("Use a password with at least 8 characters.", true); return; }
-      if (mode === "signup" && fullName.length < 2) {
-        authMessage("Enter your name to create an account.", true);
-        $("#auth-name")?.focus();
-        return;
-      }
+      if (!password) throw new Error("Enter your password.");
+      if (password.length < 8) throw new Error("Use a password with at least 8 characters.");
+      if (mode === "signup" && fullName.length < 2) throw new Error("Enter your name to create an account.");
+      if (mode === "signup" && password !== String($("#auth-confirm-password")?.value || "")) throw new Error("The passwords do not match.");
       if (submit) { submit.disabled = true; submit.textContent = mode === "signup" ? "Creating account…" : "Signing in…"; }
       authMessage(mode === "signup" ? "Creating your account…" : "Signing in…");
       if (mode === "signup") {
         const options = { data: { full_name: fullName } };
-        const credentials = authMethod === "phone"
-          ? { phone: identity, password, options }
-          : { email: identity, password, options };
+        const credentials = authMethod === "phone" ? { phone: identity, password, options } : { email: identity, password, options };
         const { data, error } = await db.auth.signUp(credentials);
         if (error) throw error;
         if (data.session) {
           applyAuthState(data.session);
-          if (authGate) authGate.hidden = true;
+          closeAuthDialog();
           authMessage("");
+        } else if (authMethod === "phone" && Array.isArray(data.user?.identities) && data.user.identities.length === 0) {
+          authMessage("An account may already exist for this phone number. Try signing in or use Forgot password.");
         } else {
-          const message = authMethod === "phone"
-            ? "Account request received, but no session was returned. Supabase may still require phone confirmation. To keep phone signup free, phone confirmation must be disabled; do not complete a paid SMS flow."
-            : "Account request received. If email confirmation is enabled, open the confirmation link sent to your email before signing in.";
-          authMessage(message);
+          authMessage(authMethod === "phone"
+            ? "Account request received. If phone confirmation is enabled, follow the SMS instructions. Phone confirmation requires an SMS provider; without confirmation, phone ownership remains unverified."
+            : "Account request received. If email confirmation is enabled, open the confirmation link sent to your email before signing in.");
         }
       } else {
-        const credentials = authMethod === "phone"
-          ? { phone: identity, password }
-          : { email: identity, password };
+        const credentials = authMethod === "phone" ? { phone: identity, password } : { email: identity, password };
         const { data, error } = await db.auth.signInWithPassword(credentials);
         if (error) throw error;
         applyAuthState(data.session);
-        if (authGate) authGate.hidden = true;
-        authMessage("");
+        closeAuthDialog();
       }
     } catch (error) {
       console.error("Customer account action failed:", error);
       const detail = String(error?.message || "");
       if (/phone.*disabled|phone.*not enabled|phone provider/i.test(detail)) {
         authMessage("Phone sign-in is not enabled in Supabase yet. Use the email option for now; phone sign-in requires the phone provider to be enabled.", true);
-      } else if (/sms provider|sms.*provider|sending sms|send sms/i.test(detail)) {
-        authMessage("Supabase is requiring SMS verification. To keep phone sign-up free, phone confirmation must be disabled in Supabase Auth settings.", true);
+      } else if (/phone.*already|already.*phone|phone_exists|user already registered|duplicate/i.test(detail)) {
+        authMessage("This phone or email may already be registered. Try signing in or use Forgot password.", true);
       } else {
         authMessage(detail || "Account action failed. Please try again.", true);
       }
     } finally {
-      if (submit) {
-        submit.disabled = false;
-        submit.textContent = form.dataset.mode === "signup" ? "Create account" : "Sign in";
-      }
+      if (submit) { submit.disabled = false; submit.textContent = form.dataset.mode === "signup" ? "Create account" : "Sign in"; }
     }
+  });
+
+  $("#auth-forgot-password")?.addEventListener("click", async () => {
+    if (!db) { authMessage("Password recovery is unavailable because app configuration is missing.", true); return; }
+    if (authMethod === "phone") { showPhoneRecovery(); return; }
+    const email = String($("#auth-identifier")?.value || "").trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      authMessage("Enter your email address first.", true);
+      $("#auth-identifier")?.focus();
+      return;
+    }
+    const button = $("#auth-forgot-password");
+    if (button) button.disabled = true;
+    try {
+      const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+      if (error) throw error;
+      authMessage("If the account supports email recovery, a reset link will be sent. Check your inbox.");
+    } catch (error) {
+      authMessage(error.message || "Could not request a password reset.", true);
+    } finally { if (button) button.disabled = false; }
+  });
+
+  $("#auth-recovery-send")?.addEventListener("click", async () => {
+    const button = $("#auth-recovery-send");
+    try {
+      if (!db) throw new Error("Account service is not configured.");
+      recoveryPhone = normalizeGhanaPhone($("#auth-recovery-phone")?.value);
+      if (button) { button.disabled = true; button.textContent = "Sending SMS…"; }
+      authMessage("Requesting a recovery code…");
+      const { error } = await db.auth.signInWithOtp({ phone: recoveryPhone, options: { shouldCreateUser: false } });
+      if (error) throw error;
+      $("#auth-recovery-code-area").hidden = false;
+      $("#auth-recovery-code").focus();
+      authMessage("If an account is registered for this number, a verification code has been requested. Check your SMS.");
+    } catch (error) {
+      console.error("Phone recovery SMS request failed:", error);
+      const detail = String(error?.message || "");
+      authMessage(/sms|provider|phone auth|not enabled/i.test(detail)
+        ? "SMS recovery is not available yet. Supabase needs phone authentication enabled and an SMS provider configured. No password has been changed."
+        : detail || "Could not request a recovery code. Try again later.", true);
+    } finally { if (button) { button.disabled = false; button.textContent = "Send SMS code"; } }
+  });
+
+  $("#auth-recovery-verify")?.addEventListener("click", async () => {
+    const button = $("#auth-recovery-verify");
+    const token = String($("#auth-recovery-code")?.value || "").trim();
+    if (!token) { authMessage("Enter the SMS verification code.", true); return; }
+    try {
+      if (button) { button.disabled = true; button.textContent = "Verifying…"; }
+      const { data, error } = await db.auth.verifyOtp({ phone: recoveryPhone || normalizeGhanaPhone($("#auth-recovery-phone")?.value), token, type: "sms" });
+      if (error) throw error;
+      if (!data.session) throw new Error("The code was accepted but no sign-in session was returned. Please try again.");
+      applyAuthState(data.session);
+      recoveryPhoneVerified = true;
+      showPasswordRecovery("phone");
+      authMessage("Phone verified. You can now choose a new password.");
+    } catch (error) {
+      console.error("Phone recovery verification failed:", error);
+      authMessage(error.message || "That code could not be verified. Request a new code and try again.", true);
+    } finally { if (button) { button.disabled = false; button.textContent = "Verify code"; } }
+  });
+
+  $("#auth-recovery-save")?.addEventListener("click", async () => {
+    const password = String($("#auth-recovery-new-password")?.value || "");
+    const confirmation = String($("#auth-recovery-confirm-password")?.value || "");
+    if (password.length < 8) { authMessage("Use a password with at least 8 characters.", true); return; }
+    if (password !== confirmation) { authMessage("The passwords do not match.", true); return; }
+    if (!authSession || (authRecoveryMode === "phone" && !recoveryPhoneVerified)) {
+      authMessage("Verify your phone or open your email recovery link before changing the password.", true);
+      return;
+    }
+    const button = $("#auth-recovery-save");
+    if (button) { button.disabled = true; button.textContent = "Saving password…"; }
+    try {
+      const { error } = await db.auth.updateUser({ password });
+      if (error) throw error;
+      authRecoveryMode = null;
+      recoveryPhoneVerified = false;
+      $("#auth-recovery-panel").hidden = true;
+      $("#customer-auth-form").hidden = false;
+      $("#auth-mode-switch").hidden = false;
+      $("#auth-method-switch").hidden = false;
+      $("#auth-forgot-password").hidden = false;
+      $("#auth-continue-guest").hidden = false;
+      $("#auth-password").value = "";
+      $("#auth-recovery-new-password").value = "";
+      $("#auth-recovery-confirm-password").value = "";
+      setAuthMode("signin");
+      applyAuthState(authSession);
+      authMessage("Password updated successfully. You can continue using AL SHAMI.");
+      closeAuthDialog();
+    } catch (error) {
+      console.error("Password recovery update failed:", error);
+      authMessage(error.message || "Could not update your password. Verify the recovery step and try again.", true);
+    } finally { if (button) { button.disabled = false; button.textContent = "Save new password"; } }
   });
 
   $("#customer-sign-out")?.addEventListener("click", async () => {
@@ -227,10 +398,13 @@
       const { error } = await db.auth.signOut();
       if (error) throw error;
       applyAuthState(null);
-      if (authGate) authGate.hidden = true;
-      authMessage("");
-    } catch (error) { authMessage(error.message || "Could not sign out.", true); }
+      closeAuthDialog();
+    } catch (error) {
+      console.error("Customer sign-out failed:", error);
+      authMessage(error.message || "Could not sign out.", true);
+    }
   });
+
 
   let products = [];
   let offers = [];
