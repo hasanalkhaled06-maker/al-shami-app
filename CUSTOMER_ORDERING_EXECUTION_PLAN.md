@@ -269,57 +269,67 @@
 - **Acceptance:** The displayed address can be selected/copied and a Copy address action works with Clipboard API plus a graceful fallback/message when clipboard access is blocked.
 
 ## Per-item execution ledger
-The ledger below starts unverified. Update each row only after applying the code change and running the acceptance check described above.
+
+**Current test boundary:** all 50 items have implementation/source evidence, but only the Ghana phone normalizer has passed its direct helper tests. A real browser/end-to-end smoke test has not been run; GitHub Pages was inaccessible through the available page-check tool in this session. Do not treat “Implemented — awaiting browser test” as released/verified. Existing orders and customer data were not changed.
 
 | Item | Status | Evidence / commit / test |
 |---:|---|---|
-| 1 | Not started | — |
-| 2 | Not started | — |
-| 3 | Not started | — |
-| 4 | Not started | — |
-| 5 | Not started | — |
-| 6 | Not started | — |
-| 7 | Not started | — |
-| 8 | Not started | — |
-| 9 | Not started | — |
-| 10 | Not started | — |
-| 11 | Not started | — |
-| 12 | Not started | — |
-| 13 | Not started | — |
-| 14 | Not started | — |
-| 15 | Not started | — |
-| 16 | Not started | — |
-| 17 | Not started | — |
-| 18 | Not started | — |
-| 19 | Not started | — |
-| 20 | Not started | — |
-| 21 | Not started | — |
-| 22 | Not started | — |
-| 23 | Not started | — |
-| 24 | Not started | — |
-| 25 | Not started | — |
-| 26 | Not started | — |
-| 27 | Not started | — |
-| 28 | Not started | — |
-| 29 | Not started | — |
-| 30 | Not started | — |
-| 31 | Not started | — |
-| 32 | Not started | — |
-| 33 | Not started | — |
-| 34 | Not started | — |
-| 35 | Not started | — |
-| 36 | Not started | — |
-| 37 | Not started | — |
-| 38 | Not started | — |
-| 39 | Not started | — |
-| 40 | Not started | — |
-| 41 | Not started | — |
-| 42 | Not started | — |
-| 43 | Not started | — |
-| 44 | Not started | — |
-| 45 | Not started | — |
-| 46 | Not started | — |
-| 47 | Not started | — |
-| 48 | Not started | — |
-| 49 | Not started | — |
-| 50 | Not started | — |
+| 1 | Implemented — awaiting browser test | Guest checkout path remains active without requiring OTP; static source check passed. Browser smoke test pending. |
+| 2 | Implemented — awaiting browser test | Consent checkbox gates local storage; opt-out deletes saved detail; form reset restores opted-in detail. Refresh test pending. |
+| 3 | Verified | Unit check: 6 valid phone formats normalized to +233; 7 malformed inputs rejected; validation runs before RPC. |
+| 4 | Implemented — awaiting browser test | RPC failure keeps form/cart reset path unexecuted and shows network-specific feedback; offline browser test pending. |
+| 5 | Implemented — awaiting browser test | Submitting guard + disabled button checked in source; rapid repeated-click test pending. |
+| 6 | Implemented — awaiting browser test | Success UI reads database order_number/id only after successful RPC; success/error runtime tests pending. |
+| 7 | Implemented — awaiting browser test | Success modal has safe WhatsApp link to restaurant; click test pending. |
+| 8 | Implemented — awaiting browser test | Delivery/pickup select present; fee and address rules update on order-type change; mobile visual test pending. |
+| 9 | Implemented — awaiting browser test | Required address toggles on delivery/pickup; server receives null on pickup; flow test pending. |
+| 10 | Implemented — awaiting browser test | Address helper in EN/AR/Twi and aria-describedby wired; visual/localization test pending. |
+| 11 | Implemented — awaiting browser test | Product-aware increase/decrease accessible names and 44px controls in source; screen-reader test pending. |
+| 12 | Implemented — awaiting browser test | Per-line Remove control persists cart and recalculates totals; interaction test pending. |
+| 13 | Implemented — awaiting browser test | Clear button confirms and refuses during submission/when empty; browser dialog test pending. |
+| 14 | Implemented — awaiting browser test | Cart uses alShamiCartV1 and is restored from local storage; refresh test pending. |
+| 15 | Implemented — awaiting browser test | On menu load stale, invalid and unavailable IDs are filtered; test with stale fixture pending. |
+| 16 | Implemented — awaiting browser test | Add, increase, decrease, remove call renderCart and recompute line/subtotal/fee/total; interaction test pending. |
+| 17 | Implemented — awaiting browser test | Subtotal, delivery fee and total UI exist; successful display uses result.total when server returns it; end-to-end comparison pending. |
+| 18 | Implemented — awaiting browser test | Cash-at-delivery/pickup note exists; translations/UI review pending. |
+| 19 | Implemented — awaiting browser test | Minimum shown from restaurant_settings and enforced in customer code; below/above-boundary test pending. |
+| 20 | Implemented — awaiting browser test | renderCart disables order button for empty cart and while submitting; browser interaction test pending. |
+| 21 | Implemented — awaiting browser test | Inline validation checks name, Ghana phone and delivery address; form novalidate enables custom messages; runtime test pending. |
+| 22 | Implemented — awaiting browser test | Name is validated/focused before phone; phone then address focus is coded; keyboard validation test pending. |
+| 23 | Implemented — awaiting browser test | Handler guard exits while submitting and submit button is disabled during RPC; double-click test pending. |
+| 24 | Implemented — awaiting browser test | Offline/fetch errors show plain-language not-confirmed message and preserve cart/form; browser offline test pending. |
+| 25 | Implemented — awaiting browser test | Loader inserts role=status loading text and clears status on success/failure; delayed response test pending. |
+| 26 | Implemented — awaiting browser test | Retry button reruns read-only menu/settings loader, not order RPC; failure-then-success test pending. |
+| 27 | Implemented — awaiting browser test | Case-insensitive name/description/category search wired; search behavior test pending. |
+| 28 | Implemented — awaiting browser test | Category chips generated from loaded products; category test pending. |
+| 29 | Implemented — awaiting browser test | Visible products must match both selected category and search; combined-filter test pending. |
+| 30 | Implemented — awaiting browser test | Distinct translated no-search-results message implemented; empty-state test pending. |
+| 31 | Implemented — awaiting browser test | Price ascending/descending and order popularity sorts implemented; known fixture sort test pending. |
+| 32 | Implemented — awaiting browser test | Unavailable item badge exists; live data currently has zero unavailable menu rows so badge rendering not exercised against real data. |
+| 33 | Implemented — awaiting browser test | Unavailable items render no add-to-cart button, cart restore drops unavailable items, and place_order checks is_available=true; disabled-item flow test pending. |
+| 34 | Implemented — awaiting browser test | Fallback description used for blank descriptions; browser display test pending. |
+| 35 | Implemented — awaiting browser test | Image error fallback replaces broken image with food icon; broken-image test pending. |
+| 36 | Implemented — awaiting browser test | Menu images carry loading=lazy; browser network behavior test pending. |
+| 37 | Implemented — awaiting browser test | Menu img has width/height attributes and fixed responsive image container; viewport/layout shift visual test pending. |
+| 38 | Implemented — awaiting browser test | Migration adds nullable starts_at/ends_at; active offers display configured dates; offer-data test pending (offers table was empty). |
+| 39 | Implemented — awaiting browser test | UI query filters is_active=true and date interval; inactive/future/expired fixture test pending. |
+| 40 | Implemented — awaiting browser test | Notice and text wrap rules plus mobile CSS exist; 320px visual check pending. |
+| 41 | Implemented — awaiting browser test | Confirmation includes order type, product names, quantities and total with actual line breaks; confirm/cancel RPC test pending. |
+| 42 | Implemented — awaiting browser test | Cart/remove/clear/place/retry/copy controls have clear visible/accessible labels; accessibility audit pending. |
+| 43 | Implemented — awaiting browser test | Skip link, visible focus and success modal Tab trap/return-focus logic present; full keyboard walkthrough pending. |
+| 44 | Implemented — awaiting browser test | Dedicated polite live region announces cart add/change/remove/clear without repeating full cart; screen-reader test pending. |
+| 45 | Implemented — awaiting browser test | prefers-reduced-motion rules are present in CSS; emulated preference visual test pending. |
+| 46 | Implemented — awaiting browser test | Responsive breakpoints for 390px/360px and narrow cart wrapping included; 320px browser viewport test pending. |
+| 47 | Implemented — awaiting browser test | Primary and cart controls use 44px minimum heights; visual/touch testing pending. |
+| 48 | Implemented — awaiting browser test | Both restaurant numbers use tel: links with +233 Ghana numbers; source check passed, device call test pending. |
+| 49 | Implemented — awaiting browser test | Both restaurant numbers have wa.me links with noopener/noreferrer; click test pending. |
+| 50 | Implemented — awaiting browser test | Copy address uses Clipboard API, fallback, and live feedback; real device clipboard permission test pending. |
+
+### Shared verification results
+- JavaScript parse check: passed for `customer.js`.
+- Inline script parse check: both inline scripts in `index.html` passed.
+- Phone normalizer unit test: 6 valid formats normalized to `+233XXXXXXXXX`; 7 invalid values rejected.
+- Static source assertions: 53/53 passed.
+- Supabase migration `customer_ordering_popularity_and_offer_dates`: applied successfully; schema confirmed for `offers.starts_at` / `offers.ends_at`; anon-role read confirmed for aggregated menu popularity (3 grouped rows) and public menu rows (80 rows, zero currently unavailable).
+- No production order was created and no existing order/customer row was altered by the migration.
+- Shared change references: checkout + consent `2c207451`, HTML/contact `edbd752f`, cart/accessibility `2244e42c`, loading/availability `ae5df409`, popularity/quantity cap `c3c85e0e`, clipboard/focus `02c1fcea`, phone validation `1449c126` and `1449c126`/latest normalizer follow-up.
