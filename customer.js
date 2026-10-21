@@ -230,7 +230,16 @@
       minimumError: "Minimum order is",
       setupError: "Setup required: check the Supabase configuration in config.js.",
       loadError: "Could not load menu.",
-      orderError: "Could not send order. Please try again."
+      orderError: "Could not send order. Please try again.",
+      cartAdded: "Added to basket:",
+      cartRemoved: "Removed from basket:",
+      cartQuantity: "Quantity updated:",
+      cartCleared: "Basket cleared.",
+      remove: "Remove",
+      noSearchResults: "No menu items match your search. Clear the search or choose another category.",
+      loadingMenu: "Loading menu…",
+      retry: "Retry",
+      unavailable: "Currently unavailable"
     },
     ar: {
       hero: "أطيب الأكلات محضّرة إلك.",
@@ -264,7 +273,16 @@
       minimumError: "الحد الأدنى للطلب هو",
       setupError: "تحقق من إعدادات Supabase في ملف config.js.",
       loadError: "تعذّر تحميل المنيو.",
-      orderError: "تعذّر إرسال الطلب. حاول مرة أخرى."
+      orderError: "تعذّر إرسال الطلب. حاول مرة أخرى.",
+      cartAdded: "أُضيف إلى السلة:",
+      cartRemoved: "تمت إزالة من السلة:",
+      cartQuantity: "تم تعديل الكمية:",
+      cartCleared: "تم إفراغ السلة.",
+      remove: "إزالة",
+      noSearchResults: "ما لقينا أصناف تطابق البحث. امسح البحث أو اختار فئة تانية.",
+      loadingMenu: "عم نحمّل المنيو…",
+      retry: "إعادة المحاولة",
+      unavailable: "غير متوفر حالياً"
     },
     tw: {
       hero: "Aduan pa a, wɔasiesie ama wo.",
@@ -298,7 +316,16 @@
       minimumError: "Sika a ɛsua koraa a ɛsɛ sɛ wotɔ ne",
       setupError: "Hwɛ Supabase nhyehyɛe a ɛwɔ config.js mu.",
       loadError: "Yentumi annye aduan no din.",
-      orderError: "Yentumi amena wo nhyehyɛe no. Yɛsrɛ wo, san yɛ bio."
+      orderError: "Yentumi amena wo nhyehyɛe no. Yɛsrɛ wo, san yɛ bio.",
+      cartAdded: "Wɔde kaa wo nneɛma ho:",
+      cartRemoved: "Wɔayi afi wo nneɛma mu:",
+      cartQuantity: "Wɔasesa dodow:",
+      cartCleared: "Wɔapepa wo nneɛma nyinaa.",
+      remove: "Yi fi mu",
+      noSearchResults: "Yɛannya aduan a ɛne wo hwehwɛde hyia. Pepa hwehwɛde no anaa paw kuw foforo.",
+      loadingMenu: "Aduan din no reba…",
+      retry: "San sɔ hwɛ",
+      unavailable: "Ɛnni hɔ seesei"
     }
   };
 
@@ -330,6 +357,15 @@
     element.textContent = text || "";
     element.className = "app-message " + (isError ? "error" : "info");
     element.hidden = !text;
+  }
+
+  function announceCartChange(kind, productName, quantity) {
+    const element = $("#cart-announcement");
+    if (!element) return;
+    const label = tr(kind);
+    element.textContent = quantity === undefined
+      ? label + " " + String(productName || "")
+      : label + " " + String(productName || "") + ", " + quantity;
   }
 
   function showSuccess(orderNumber, total) {
@@ -462,19 +498,19 @@
           </div>
         </article>
       `).join("")
-      : `<p class="muted">${tr("noItems")}</p>`;
+      : `<p class="muted">${query ? tr("noSearchResults") : tr("noItems")}</p>`;
 
     menu.querySelectorAll("[data-add]").forEach(button => {
       button.addEventListener("click", () => {
         const id = button.dataset.add;
 
-        if (!products.some(product => String(product.id) === String(id))) {
-          return;
-        }
+        const product = products.find(item => String(item.id) === String(id));
+        if (!product || product.is_available === false) return;
 
         cart[id] = Math.min(99, (cart[id] || 0) + 1);
         persistCart();
         renderCart();
+        announceCartChange("cartAdded", product.name, cart[id]);
       });
     });
   }
@@ -513,12 +549,14 @@
                 <strong>${escapeHTML(product.name)}</strong>
                 <small>${money(product.price)} each</small>
               </div>
-              <div class="qty-controls">
+              <div class="qty-controls" aria-label="Quantity controls for ${escapeHTML(product.name)}">
                 <button type="button" data-dec="${escapeHTML(id)}"
-                  aria-label="Remove one">−</button>
-                <strong>${Number(quantity)}</strong>
+                  aria-label="${lang === "ar" ? "إنقاص كمية " : lang === "tw" ? "Te dodow so " : "Decrease quantity of "}${escapeHTML(product.name)}">−</button>
+                <strong aria-label="${lang === "ar" ? "الكمية " : "Quantity "}${Number(quantity)}">${Number(quantity)}</strong>
                 <button type="button" data-inc="${escapeHTML(id)}"
-                  aria-label="Add one">+</button>
+                  aria-label="${lang === "ar" ? "زيادة كمية " : lang === "tw" ? "Ma dodow nyin " : "Increase quantity of "}${escapeHTML(product.name)}">+</button>
+                <button type="button" class="btn-remove-item" data-remove="${escapeHTML(id)}"
+                  aria-label="${tr("remove")} ${escapeHTML(product.name)}">${tr("remove")}</button>
               </div>
               <strong>${money(Number(product.price) * Number(quantity))}</strong>
             </div>
@@ -559,18 +597,34 @@
         const id = button.dataset.dec;
         cart[id] = Number(cart[id] || 0) - 1;
 
-        if (cart[id] <= 0) delete cart[id];
+        const product = products.find(item => String(item.id) === String(id));
+        const removed = cart[id] <= 0;
+        if (removed) delete cart[id];
         persistCart();
         renderCart();
+        if (product) announceCartChange(removed ? "cartRemoved" : "cartQuantity", product.name, removed ? undefined : cart[id]);
       });
     });
 
     cartItems.querySelectorAll("[data-inc]").forEach(button => {
       button.addEventListener("click", () => {
         const id = button.dataset.inc;
+        const product = products.find(item => String(item.id) === String(id));
         cart[id] = Math.min(99, Number(cart[id] || 0) + 1);
         persistCart();
         renderCart();
+        if (product) announceCartChange("cartQuantity", product.name, cart[id]);
+      });
+    });
+
+    cartItems.querySelectorAll("[data-remove]").forEach(button => {
+      button.addEventListener("click", () => {
+        const id = button.dataset.remove;
+        const product = products.find(item => String(item.id) === String(id));
+        delete cart[id];
+        persistCart();
+        renderCart();
+        if (product) announceCartChange("cartRemoved", product.name);
       });
     });
   }
@@ -698,6 +752,7 @@
     cart = {};
     persistCart();
     renderCart();
+    announceCartChange("cartCleared", "");
     showCheckoutMessage("");
   });
 
@@ -842,11 +897,8 @@
         showCheckoutMessage(message, true);
       } finally {
         submitting = false;
-
-        if (submitButton) {
-          submitButton.disabled = false;
-          submitButton.textContent = tr("send");
-        }
+        if (submitButton) submitButton.textContent = tr("send");
+        renderCart();
       }
     });
   }
