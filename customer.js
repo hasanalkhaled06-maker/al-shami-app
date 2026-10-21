@@ -747,6 +747,45 @@
     }
   }
 
+  $("#copy-address")?.addEventListener("click", async () => {
+    const address = $("#restaurant-address")?.textContent?.trim() || "";
+    const status = $("#copy-address-status");
+    const announce = message => {
+      if (status) status.textContent = message;
+    };
+    if (!address) {
+      announce(lang === "ar" ? "عنوان المطعم غير متوفر." : "Restaurant address is unavailable.");
+      return;
+    }
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(address);
+      } else {
+        const fallback = document.createElement("textarea");
+        fallback.value = address;
+        fallback.setAttribute("readonly", "");
+        fallback.style.position = "fixed";
+        fallback.style.opacity = "0";
+        document.body.appendChild(fallback);
+        fallback.select();
+        const copied = document.execCommand("copy");
+        fallback.remove();
+        if (!copied) throw new Error("Clipboard command did not succeed");
+      }
+      announce(lang === "ar" ? "تم نسخ عنوان المطعم." : lang === "tw" ? "Wɔakɔpi adidibea no address." : "Restaurant address copied.");
+    } catch (_) {
+      const addressNode = $("#restaurant-address");
+      if (addressNode && window.getSelection && document.createRange) {
+        const range = document.createRange();
+        range.selectNodeContents(addressNode);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      announce(lang === "ar" ? "تعذّر النسخ تلقائياً. تم تحديد العنوان؛ انسخه يدوياً." : "Automatic copy was blocked. The address is selected so you can copy it manually.");
+    }
+  });
+
   $("#language")?.addEventListener("change", event => {
     lang = event.target.value;
     setLanguage();
