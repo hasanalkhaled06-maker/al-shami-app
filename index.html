@@ -69,6 +69,11 @@
     .sort-label select{max-width:190px;padding:10px;border:1px solid #ddd;border-radius:9px;background:#fff;font:inherit}
     .remember-customer{display:flex;align-items:center;gap:9px;margin:12px 0;font-size:.92rem}
     .remember-customer input{width:18px;height:18px;accent-color:#8d1723}
+    .field-help{display:block;color:#615757;font-size:.78rem;font-weight:400;line-height:1.45}
+    .btn-remove-item{min-height:44px;padding:8px 10px;border:1px solid #e6c7c7;border-radius:8px;background:#fff5f5;color:#8d1723;font-weight:700}
+    .qty-controls button{min-width:44px;min-height:44px}
+    .success-whatsapp{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin:6px auto;padding:10px 14px;border-radius:10px;background:#1f7a43;color:#fff;text-decoration:none;font-weight:700}
+    .visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
     #place-order:disabled,#clear-cart:disabled{opacity:.55;cursor:not-allowed}
     @media(max-width:480px){.menu-tools{align-items:stretch}.sort-label{justify-content:space-between}.sort-label select{flex:1;max-width:none}}
   </style>
@@ -169,12 +174,13 @@
           <p class="eyebrow">YOUR ORDER</p>
           <h2 id="your-order-heading" data-i18n="yourOrder">Your order</h2>
         </div>
-        <button id="clear-cart" class="btn btn-light" type="button" data-i18n="clear">Clear</button>
+        <button id="clear-cart" class="btn btn-light" type="button" data-i18n="clear" aria-label="Clear basket">Clear</button>
       </div>
 
-      <div id="cart-items" class="cart-items" aria-live="polite">
+      <div id="cart-items" class="cart-items">
         <p class="muted">Your basket is empty.</p>
       </div>
+      <p id="cart-announcement" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
 
       <div class="cart-cost-breakdown" aria-live="polite">
         <div class="cart-cost-line">
