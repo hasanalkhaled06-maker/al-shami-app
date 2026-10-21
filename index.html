@@ -70,6 +70,35 @@
     .remember-customer{display:flex;align-items:center;gap:9px;margin:12px 0;font-size:.92rem}
     .remember-customer input{width:18px;height:18px;accent-color:#8d1723}
     .field-help{display:block;color:#615757;font-size:.78rem;font-weight:400;line-height:1.45}
+
+    .customer-orders-panel{margin:22px 0;padding:20px;background:#fff;border:1px solid #ead7d9;border-radius:18px;box-shadow:0 8px 24px rgba(35,12,15,.05)}
+    .customer-orders-panel .section-heading{margin-bottom:8px}.customer-orders-panel .section-heading h2{margin:0}
+    .customer-orders-help{color:#5f5555;line-height:1.5;margin:8px 0 14px}
+    .track-order-form{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:12px 0}
+    .track-order-form label{display:grid;gap:6px;flex:1;min-width:220px;font-weight:700}
+    .track-order-form input{box-sizing:border-box;width:100%;min-height:44px;padding:11px 12px;border:1px solid #d9cacc;border-radius:10px;font:inherit}
+    #customer-orders-message:empty{display:none}.tracked-empty{padding:14px;background:#faf7f7;border-radius:10px}
+    .customer-order-card{margin:12px 0;padding:16px;border:1px solid #eadfe0;border-radius:14px;background:#fff}
+    .tracked-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .tracked-card-heading strong{color:#67101a;font-size:1.05rem}.tracked-date{margin:5px 0;color:#6a6060;font-size:.85rem}
+    .tracked-status{display:inline-flex;padding:6px 10px;border-radius:999px;background:#f6f0f0;color:#67101a;font-size:.82rem;font-weight:800}
+    .tracked-status.status-completed{background:#e7f7ec;color:#146c35}.tracked-status.status-rejected,.tracked-rejected{background:#fff0f0;color:#a31925}
+    .tracked-rejected{padding:10px;border-radius:8px;font-weight:800}
+    .tracked-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;list-style:none;padding:0;margin:18px 0}
+    .tracked-steps.is-delivery{grid-template-columns:repeat(6,minmax(0,1fr))}
+    .tracked-steps li{position:relative;text-align:center;color:#837979;font-size:.72rem;line-height:1.3;overflow-wrap:anywhere}
+    .tracked-steps li:before{content:"";display:block;width:12px;height:12px;border:2px solid #d7c8ca;border-radius:50%;background:#fff;margin:0 auto 7px;position:relative;z-index:1}
+    .tracked-steps li:not(:last-child):after{content:"";position:absolute;height:2px;background:#e5d9da;left:calc(50% + 8px);right:calc(-50% + 8px);top:7px}
+    .tracked-steps li.is-complete:before,.tracked-steps li.is-current:before{background:#8d1723;border-color:#8d1723}
+    .tracked-steps li.is-complete:after{background:#8d1723}.tracked-steps li.is-complete,.tracked-steps li.is-current{color:#67101a;font-weight:800}
+    .tracked-order-meta{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #f0e7e8;padding-top:12px;margin-top:8px}
+    .tracked-items{padding:0;margin:10px 0;list-style:none}.tracked-items li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed #eee}
+    .tracked-items li:last-child{border-bottom:0}.tracked-code{margin:12px 0;color:#514646}.tracked-code summary{cursor:pointer;font-weight:700}
+    .tracked-code code{display:block;margin:8px 0;padding:10px;border-radius:8px;background:#fff6e8;color:#67101a;overflow-wrap:anywhere;user-select:all}
+    .tracked-remove{margin-top:5px}#success-order-tracking{padding:10px;background:#fff6e8;border-radius:10px;overflow-wrap:anywhere;font-size:.9rem}
+    #success-copy-tracking[hidden]{display:none!important}
+    @media(max-width:520px){.customer-orders-panel{padding:15px}.tracked-steps li{font-size:.62rem}.track-order-form label{min-width:100%}}
+
     .btn-remove-item{min-height:44px;padding:8px 10px;border:1px solid #e6c7c7;border-radius:8px;background:#fff5f5;color:#8d1723;font-weight:700}
     .qty-controls button{min-width:44px;min-height:44px}
     .success-whatsapp{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin:6px auto;padding:10px 14px;border-radius:10px;background:#1f7a43;color:#fff;text-decoration:none;font-weight:700}
@@ -154,6 +183,21 @@
     <div id="app-status" class="app-message info" role="status" aria-live="polite" hidden></div>
     <button id="retry-menu" class="btn btn-light retry-menu" type="button" data-i18n="retry" hidden>Retry</button>
     <div id="active-offers" aria-live="polite"></div>
+
+    <section id="customer-orders-panel" class="customer-orders-panel" aria-labelledby="customer-orders-heading">
+      <div class="section-heading"><div><p class="eyebrow">AL SHAMI</p><h2 id="customer-orders-heading" data-i18n="trackHistory">Track your order / Order history</h2></div>
+        <button id="refresh-customer-orders" class="btn btn-light" type="button" data-i18n="refreshOrders">Refresh</button></div>
+      <p class="customer-orders-help" data-i18n="trackHistoryHelp">Your orders stay saved on this device. Keep the private tracking code to check an order on another device.</p>
+      <form id="track-order-form" class="track-order-form">
+        <label for="tracking-code-input"><span data-i18n="trackingCode">Private tracking code</span>
+          <input id="tracking-code-input" type="text" inputmode="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="36" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></label>
+        <button id="track-order-submit" class="btn btn-primary" type="submit" data-i18n="trackOrder">Track order</button>
+      </form>
+      <p class="field-help" data-i18n="trackCodeHelp">Enter the private tracking code from your order confirmation.</p>
+      <p id="customer-orders-message" role="status" aria-live="polite" class="status-message"></p>
+      <div id="customer-order-history" aria-live="polite"><p class="muted">Loading your saved orders…</p></div>
+    </section>
+
 
     <div class="section-heading">
       <div>
@@ -275,6 +319,8 @@
       <p id="success-description" class="success-subtitle">Your order has been sent to AL SHAMI RESTAURANT.</p>
       <p id="success-order-number"></p>
       <p id="success-order-total"></p>
+      <p id="success-order-tracking" hidden></p>
+      <button id="success-copy-tracking" type="button" class="btn btn-light" hidden>Copy tracking code</button>
       <a id="success-whatsapp" class="success-whatsapp" href="https://wa.me/233547489859" target="_blank" rel="noopener noreferrer">Chat with AL SHAMI on WhatsApp</a>
       <button id="success-close" type="button" class="btn btn-primary">حسناً</button>
     </div>
@@ -288,7 +334,10 @@
       const description = document.getElementById("success-description");
       const number = document.getElementById("success-order-number");
       const total = document.getElementById("success-order-total");
+      const tracking = document.getElementById("success-order-tracking");
+      const copyTrackingButton = document.getElementById("success-copy-tracking");
       const whatsapp = document.getElementById("success-whatsapp");
+      let currentTrackingToken = "";
       let previouslyFocused = null;
 
       const modalText = {
@@ -298,7 +347,8 @@
           number: "Order number:",
           total: "Order total:",
           close: "Close",
-          whatsapp: "Chat with AL SHAMI on WhatsApp"
+          whatsapp: "Chat with AL SHAMI on WhatsApp",
+          tracking: "Private tracking code:", copyTracking: "Copy tracking code", copiedTracking: "Copied!"
         },
         ar: {
           title: "تم إرسال طلبك بنجاح!",
@@ -306,7 +356,8 @@
           number: "رقم الطلب:",
           total: "المجموع:",
           close: "حسناً",
-          whatsapp: "تواصل معنا عبر واتساب"
+          whatsapp: "تواصل معنا عبر واتساب",
+          tracking: "رمز التتبّع الخاص:", copyTracking: "نسخ رمز التتبّع", copiedTracking: "تم النسخ"
         },
         tw: {
           title: "Your order was sent successfully!",
@@ -314,7 +365,8 @@
           number: "Order number:",
           total: "Order total:",
           close: "Close",
-          whatsapp: "Chat with AL SHAMI on WhatsApp"
+          whatsapp: "Chat with AL SHAMI on WhatsApp",
+          tracking: "Private tracking code:", copyTracking: "Copy tracking code", copiedTracking: "Copied!"
         }
       };
 
@@ -333,15 +385,13 @@
         if (whatsapp) whatsapp.textContent = words.whatsapp;
 
         const orderNumber = item.orderNumber;
-
-        number.textContent = orderNumber && orderNumber !== "received"
-          ? `${words.number} ${orderNumber}`
-          : "";
-
-        total.textContent = item.total !== undefined && item.total !== null &&
-          Number.isFinite(Number(item.total))
-          ? `${words.total} GH₵ ${Number(item.total).toFixed(2)}`
-          : "";
+        currentTrackingToken = TRACKING_TOKEN_RE.test(String(item.trackingToken || "")) ? String(item.trackingToken) : "";
+        number.textContent = orderNumber && orderNumber !== "received" ? `${words.number} ${orderNumber}` : "";
+        total.textContent = item.total !== undefined && item.total !== null && Number.isFinite(Number(item.total)) ? `${words.total} GH₵ ${Number(item.total).toFixed(2)}` : "";
+        tracking.hidden = !currentTrackingToken;
+        tracking.textContent = currentTrackingToken ? `${words.tracking} ${currentTrackingToken}` : "";
+        copyTrackingButton.hidden = !currentTrackingToken;
+        copyTrackingButton.textContent = words.copyTracking;
 
         modal.hidden = false;
         document.body.classList.add("modal-open");
@@ -356,6 +406,20 @@
           previouslyFocused.focus();
         }
       }
+
+      copyTrackingButton.addEventListener("click", async () => {
+        if (!currentTrackingToken) return;
+        const lang = document.getElementById("language")?.value || "en";
+        const words = modalText[lang] || modalText.en;
+        try {
+          if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+          await navigator.clipboard.writeText(currentTrackingToken);
+          copyTrackingButton.textContent = words.copiedTracking;
+        } catch (_) {
+          tracking.textContent = `${words.tracking} ${currentTrackingToken}`;
+          tracking.style.userSelect = "all";
+        }
+      });
 
       closeButton.addEventListener("click", closeModal);
 
@@ -400,7 +464,7 @@
     })();
   </script>
   <script src="config.js"></script>
-  <script src="customer.js?v=floating-cart-20261021"></script>
+  <script src="customer.js?v=order-tracking-history-20261021a"></script>
   <script src="pwa.js"></script>
 </body>
 </html>
