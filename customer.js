@@ -150,6 +150,7 @@
 
   let products = [];
   let offers = [];
+  let popularityByMenuItem = new Map();
   let cart = {};
   let category = "All";
   let sortMode = "default";
@@ -162,7 +163,7 @@
     try {
       const saved = JSON.parse(storageGet(CART_KEY) || "{}");
       if (saved && typeof saved === "object" && !Array.isArray(saved)) {
-        cart = Object.fromEntries(Object.entries(saved).filter(([id, qty]) => Number.isInteger(Number(qty)) && Number(qty) > 0 && Number(qty) <= 99).map(([id, qty]) => [id, Number(qty)]));
+        cart = Object.fromEntries(Object.entries(saved).filter(([id, qty]) => Number.isInteger(Number(qty)) && Number(qty) > 0 && Number(qty) <= 50).map(([id, qty]) => [id, Number(qty)]));
       }
     } catch (_) { cart = {}; }
   }
@@ -472,7 +473,13 @@
     });
     if (sortMode === "price-asc") visibleProducts.sort((a, b) => Number(a.price) - Number(b.price));
     if (sortMode === "price-desc") visibleProducts.sort((a, b) => Number(b.price) - Number(a.price));
-    if (sortMode === "popular") visibleProducts.sort((a, b) => Number(b.popularity || b.order_count || 0) - Number(a.popularity || a.order_count || 0));
+    if (sortMode === "popular") visibleProducts.sort((a, b) => {
+      const popularityA = Number(popularityByMenuItem.get(String(a.id)) ?? a.popularity ?? a.order_count ?? 0);
+      const popularityB = Number(popularityByMenuItem.get(String(b.id)) ?? b.popularity ?? b.order_count ?? 0);
+      return popularityB - popularityA ||
+        Number(a.sort_order || 0) - Number(b.sort_order || 0) ||
+        String(a.name || "").localeCompare(String(b.name || ""));
+    });
 
     menu.innerHTML = visibleProducts.length
       ? visibleProducts.map(product => {
@@ -512,7 +519,7 @@
         const product = products.find(item => String(item.id) === String(id));
         if (!product || product.is_available === false) return;
 
-        cart[id] = Math.min(99, (cart[id] || 0) + 1);
+        cart[id] = Math.min(50, (cart[id] || 0) + 1);
         persistCart();
         renderCart();
         announceCartChange("cartAdded", product.name, cart[id]);
@@ -615,7 +622,7 @@
       button.addEventListener("click", () => {
         const id = button.dataset.inc;
         const product = products.find(item => String(item.id) === String(id));
-        cart[id] = Math.min(99, Number(cart[id] || 0) + 1);
+        cart[id] = Math.min(50, Number(cart[id] || 0) + 1);
         persistCart();
         renderCart();
         if (product) announceCartChange("cartQuantity", product.name, cart[id]);
@@ -692,6 +699,18 @@
       if (offerResult.error) throw offerResult.error;
       if (settingsResult.error) throw settingsResult.error;
 
+      popularityByMenuItem = new Map();
+      try {
+        const popularityResult = await db.rpc("get_public_menu_popularity");
+        if (popularityResult.error) throw popularityResult.error;
+        for (const row of popularityResult.data || []) {
+          if (row.menu_item_id) popularityByMenuItem.set(String(row.menu_item_id), Number(row.order_count || 0));
+        }
+      } catch (popularityError) {
+        // Popularity is optional; menu and checkout must remain usable if this read fails.
+        console.warn("Menu popularity could not be loaded; using restaurant order:", popularityError);
+      }
+
       products = menuResult.data || [];
       const now = Date.now();
       offers = (offerResult.data || []).filter(offer =>
@@ -699,7 +718,7 @@
         (!offer.ends_at || new Date(offer.ends_at).getTime() >= now)
       );
       cart = Object.fromEntries(Object.entries(cart).filter(([id, quantity]) =>
-        Number.isInteger(Number(quantity)) && Number(quantity) > 0 && Number(quantity) <= 99 &&
+        Number.isInteger(Number(quantity)) && Number(quantity) > 0 && Number(quantity) <= 50 &&
         products.some(product => String(product.id) === String(id) && product.is_available !== false)
       ));
       persistCart();
@@ -888,6 +907,7 @@
 
         try {
           formElement.reset();
+          restoreCustomerDetails();
 
           const typeSelect = $("#order-type");
           if (typeSelect) typeSelect.value = "delivery";
@@ -904,7 +924,9 @@
         }
 
         showCheckoutMessage("");
-        showSuccess(orderNumber, submittedTotal);
+        const confirmedTotal = result && typeof result === "object" &&
+          Number.isFinite(Number(result.total)) ? Number(result.total) : submittedTotal;
+        showSuccess(orderNumber, confirmedTotal);
       } catch (error) {
         console.error("AL SHAMI order submission error:", error);
         const detail = String(error?.message || "");
