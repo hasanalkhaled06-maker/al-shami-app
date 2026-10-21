@@ -32,6 +32,10 @@
   let firstOrderLoad = true;
   let audioCtx = null;
   let refreshInProgress = false;
+  const incomingOrderQueue = [];
+  let activeIncomingOrderId = null;
+  let incomingRingTimer = null;
+  let incomingDecisionInProgress = false;
 
   const money = value => "GH₵ " + Number(value || 0).toFixed(2);
 
@@ -240,7 +244,8 @@
         ? "Sound & notifications enabled"
         : "Sound alerts enabled";
       $("#sound-toggle").classList.add("btn-primary");
-      beep();
+      void beep();
+      if (activeIncomingOrderId) startIncomingOrderRinging();
       toast(notificationsOn
         ? "Sound and device notifications enabled. Keep this dashboard open for live order alerts."
         : "Sound enabled. Keep this dashboard open for live order alerts.");
@@ -552,7 +557,131 @@ Status: ${order.status}`;
       });
   }
 
-  async function updateStatus(id, newStatus) {
+
+  function stopIncomingOrderRinging() {
+    if (incomingRingTimer !== null) { clearInterval(incomingRingTimer); incomingRingTimer = null; }
+  }
+
+  function startIncomingOrderRinging() {
+    stopIncomingOrderRinging();
+    if (!activeIncomingOrderId || !soundOn) return;
+    void beep();
+    incomingRingTimer = setInterval(() => {
+      if (!activeIncomingOrderId || !soundOn || document.hidden) return;
+      void beep();
+    }, 1750);
+  }
+
+  function closeIncomingOrderDialog() {
+    stopIncomingOrderRinging();
+    activeIncomingOrderId = null;
+    incomingDecisionInProgress = false;
+    const overlay = $("#incoming-order-overlay");
+    if (overlay) overlay.hidden = true;
+    document.body.classList.remove("incoming-order-open");
+  }
+
+  function enqueueIncomingOrder(orderId) {
+    if (!orderId || incomingOrderQueue.includes(orderId) || activeIncomingOrderId === orderId) return;
+    incomingOrderQueue.push(orderId);
+    showNextIncomingOrder();
+  }
+
+  function showNextIncomingOrder() {
+    const overlay = $("#incoming-order-overlay");
+    if (!overlay) return;
+    if (activeIncomingOrderId) {
+      const current = orders.find(order => order.id === activeIncomingOrderId);
+      if (current && current.status === "new") { renderIncomingOrder(current); return; }
+      closeIncomingOrderDialog();
+    }
+    while (incomingOrderQueue.length) {
+      const nextId = incomingOrderQueue.shift();
+      const nextOrder = orders.find(order => order.id === nextId);
+      if (!nextOrder || nextOrder.status !== "new") continue;
+      activeIncomingOrderId = nextId;
+      incomingDecisionInProgress = false;
+      overlay.hidden = false;
+      document.body.classList.add("incoming-order-open");
+      renderIncomingOrder(nextOrder);
+      startIncomingOrderRinging();
+      $("#incoming-order-reject")?.focus({ preventScroll:true });
+      return;
+    }
+    overlay.hidden = true;
+    document.body.classList.remove("incoming-order-open");
+  }
+
+  function renderIncomingOrder(order) {
+    const details = $("#incoming-order-details");
+    const title = $("#incoming-order-title");
+    const hint = $("#incoming-order-sound-hint");
+    if (!details || !order) return;
+    title.textContent = "NEW ORDER #" + (order.order_number || String(order.id).slice(0,8));
+    hint.textContent = soundOn
+      ? "Ringing alert is active. Choose Accept or Reject to clear this order."
+      : "This order is waiting for your decision. Tap “Enable order sound & notifications” at the top to enable ringing.";
+    const items = (order.order_items || []).map(item =>
+      "<li><span>" + Number(item.quantity) + " × " +
+      esc(item.item_name || item.menu_items?.name || "Menu item") +
+      "</span><strong>" + money(Number(item.unit_price) * Number(item.quantity)) + "</strong></li>"
+    ).join("");
+    const field = (label, value) =>
+      '<div class="incoming-order-field"><small>' + esc(label) + "</small><strong>" + esc(value || "—") + "</strong></div>";
+    details.innerHTML =
+      '<div class="incoming-order-grid">' +
+      field("Customer", order.customer_name) +
+      field("Phone", order.customer_phone) +
+      field("Order type", order.order_type === "delivery" ? "Delivery" : "Pickup") +
+      field("Time received", new Date(order.created_at).toLocaleString()) +
+      (order.delivery_address ? field("Delivery address", order.delivery_address) : "") +
+      '</div><ul class="incoming-order-items">' + (items || "<li>No item details loaded yet.</li>") + "</ul>" +
+      (order.notes ? '<p class="incoming-order-note"><strong>Customer notes:</strong> ' + esc(order.notes) + "</p>" : "") +
+      '<div class="incoming-order-total"><span>ORDER TOTAL</span><strong>' + money(order.total) + "</strong></div>";
+    const accept = $("#incoming-order-accept");
+    const reject = $("#incoming-order-reject");
+    if (accept) { accept.disabled = incomingDecisionInProgress; accept.textContent = incomingDecisionInProgress ? "Saving…" : "✓ ACCEPT ORDER"; }
+    if (reject) { reject.disabled = incomingDecisionInProgress; reject.textContent = incomingDecisionInProgress ? "Saving…" : "✕ REJECT ORDER"; }
+  }
+
+  async function decideIncomingOrder(status) {
+    if (!activeIncomingOrderId || incomingDecisionInProgress) return;
+    const id = activeIncomingOrderId;
+    incomingDecisionInProgress = true;
+    const order = orders.find(item => item.id === id);
+    if (order) renderIncomingOrder(order);
+    try {
+      const updated = await updateStatus(id, status, { fromIncomingDialog:true });
+      if (!updated) {
+        incomingDecisionInProgress = false;
+        const current = orders.find(item => item.id === id);
+        if (current) renderIncomingOrder(current);
+        return;
+      }
+      incomingOrderQueue.splice(0, incomingOrderQueue.length, ...incomingOrderQueue.filter(itemId => itemId !== id));
+      closeIncomingOrderDialog();
+      toast(status === "accepted" ? "Order accepted." : "Order rejected.");
+      showNextIncomingOrder();
+    } catch (error) {
+      console.error("Could not decide incoming order:", error);
+      incomingDecisionInProgress = false;
+      const current = orders.find(item => item.id === id);
+      if (current) renderIncomingOrder(current);
+      toast("Could not update this order. It will stay on screen; please try again.");
+    }
+  }
+
+  $("#incoming-order-accept")?.addEventListener("click", () => { void decideIncomingOrder("accepted"); });
+  $("#incoming-order-reject")?.addEventListener("click", () => { void decideIncomingOrder("rejected"); });
+  $("#incoming-order-overlay")?.addEventListener("click", event => {
+    if (event.target === $("#incoming-order-overlay")) event.preventDefault();
+  });
+  document.addEventListener("keydown", event => {
+    if (!activeIncomingOrderId) return;
+    if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); }
+  }, true);
+
+  async function updateStatus(id, newStatus, options = {}) {
     try {
       const { error } = await db
         .from("orders")
@@ -566,9 +695,16 @@ Status: ${order.status}`;
 
       toast("Order status updated.");
       await loadOrders();
+      if (!options.fromIncomingDialog && id === activeIncomingOrderId && ["accepted","rejected"].includes(newStatus)) {
+        incomingOrderQueue.splice(0, incomingOrderQueue.length, ...incomingOrderQueue.filter(itemId => itemId !== id));
+        closeIncomingOrderDialog();
+        showNextIncomingOrder();
+      }
+      return true;
     } catch (error) {
       console.error("Status update failed:", error);
       toast("Could not update status: " + (error.message || "Unknown error"));
+      return false;
     }
   }
 
@@ -586,7 +722,7 @@ Status: ${order.status}`;
 
           knownOrderIds.add(payload.new.id);
 
-          if (soundOn) void beep();
+          enqueueIncomingOrder(payload.new.id);
           notifyNewOrder(payload.new);
 
           toast(
@@ -597,6 +733,7 @@ Status: ${order.status}`;
 
           try {
             await loadOrders();
+            showNextIncomingOrder();
           } catch (error) {
             console.error("Could not reload new orders:", error);
           }
@@ -609,9 +746,17 @@ Status: ${order.status}`;
           schema: "public",
           table: "orders"
         },
-        async () => {
+        async payload => {
           try {
             await loadOrders();
+            const changed = payload.new;
+            if (changed && changed.id === activeIncomingOrderId && changed.status !== "new") {
+              incomingOrderQueue.splice(0, incomingOrderQueue.length, ...incomingOrderQueue.filter(itemId => itemId !== changed.id));
+              closeIncomingOrderDialog();
+              showNextIncomingOrder();
+            } else {
+              showNextIncomingOrder();
+            }
           } catch (error) {
             console.error("Could not reload updated orders:", error);
           }
