@@ -385,7 +385,7 @@
         if (whatsapp) whatsapp.textContent = words.whatsapp;
 
         const orderNumber = item.orderNumber;
-        currentTrackingToken = TRACKING_TOKEN_RE.test(String(item.trackingToken || "")) ? String(item.trackingToken) : "";
+        currentTrackingToken = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(item.trackingToken || "")) ? String(item.trackingToken) : "";
         number.textContent = orderNumber && orderNumber !== "received" ? `${words.number} ${orderNumber}` : "";
         total.textContent = item.total !== undefined && item.total !== null && Number.isFinite(Number(item.total)) ? `${words.total} GH₵ ${Number(item.total).toFixed(2)}` : "";
         tracking.hidden = !currentTrackingToken;
