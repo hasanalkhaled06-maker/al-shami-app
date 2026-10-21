@@ -589,12 +589,21 @@ Status: ${order.status}`;
   function startIncomingOrderRinging() {
     stopIncomingOrderRinging();
     if (!activeIncomingOrderId || !soundOn) return;
+
+    // Ring immediately, then repeat until the active order is accepted or rejected.
     void beep();
     incomingRingTimer = setInterval(() => {
-      if (!activeIncomingOrderId || !soundOn || document.hidden) return;
+      if (!activeIncomingOrderId || !soundOn) return;
       void beep();
-    }, 1750);
+    }, 1500);
   }
+
+  // If the dashboard becomes visible again, immediately resume the active alert.
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && activeIncomingOrderId && soundOn) {
+      void beep();
+    }
+  });
 
   function closeIncomingOrderDialog() {
     stopIncomingOrderRinging();
