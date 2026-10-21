@@ -558,7 +558,6 @@
                   "preparing",
                   "ready",
                   ...(order.order_type === "delivery" ? ["out_for_delivery"] : []),
-                  "completed",
                   "rejected"
                 ].map(value => `
                   <option
@@ -798,6 +797,11 @@ Status: ${order.status}`;
   }, true);
 
   async function updateStatus(id, newStatus, options = {}) {
+    if (newStatus === "completed") {
+      toast("Use Confirm receipt with the customer's 6-digit code.");
+      await loadOrders();
+      return false;
+    }
     try {
       const { error } = await db
         .from("orders")
