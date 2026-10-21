@@ -20,6 +20,7 @@
     : null;
 
   const $ = selector => document.querySelector(selector);
+  const isHistoryPage = /(?:^|\/)history\.html$/i.test(window.location.pathname);
   const checkoutForm = $("#checkout-form");
   const orderButton = $("#place-order");
   const floatingCartButton = $("#floating-cart-button");
@@ -556,12 +557,18 @@
       const historyResults = results.filter(result =>
         !result.failed && !result.missing && !activeStatuses.has(String(result.order?.status || "").toLowerCase())
       );
-      const activeHtml = activeResults.map(renderResult).join("");
-      const historyHtml = historyResults.map(renderResult).join("");
-      list.innerHTML = '<section class="customer-order-group"><h3>' + escapeHTML(tr("activeOrdersHeading")) + '</h3>' +
-        (activeHtml || '<p class="muted tracked-empty">' + escapeHTML(tr("noTrackedOrders")) + '</p>') +
-        '</section><section class="customer-order-group"><h3>' + escapeHTML(tr("historyHeading")) + '</h3>' +
-        (historyHtml || '<p class="muted tracked-empty">' + escapeHTML(tr("noCompletedOrders")) + '</p>') + '</section>';
+      const visibleResults = isHistoryPage ? historyResults : activeResults;
+      const visibleHtml = visibleResults.map(renderResult).join("");
+      const emptyMessage = isHistoryPage ? tr("noCompletedOrders") : tr("noTrackedOrders");
+      list.innerHTML = visibleHtml || '<p class="muted tracked-empty">' + escapeHTML(emptyMessage) + '</p>';
+      const heading = $("#customer-orders-heading");
+      if (heading) heading.textContent = isHistoryPage ? tr("historyHeading") : tr("activeOrdersHeading");
+      const nav = $("#customer-orders-nav");
+      if (nav) {
+        nav.innerHTML = isHistoryPage
+          ? '<a class="btn btn-light" href="./index.html">' + escapeHTML(lang === "ar" ? "العودة للمنيو والطلبات الجديدة" : "Menu & New Order") + '</a>'
+          : '<a class="btn btn-light" href="./history.html">' + escapeHTML(lang === "ar" ? "سجل الطلبات" : "Order History") + '</a>';
+      }
     } finally {
       trackedOrdersLoading = false;
       if (trackedOrdersRefreshQueued) {
