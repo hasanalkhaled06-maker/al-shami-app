@@ -20,6 +20,14 @@
     : null;
 
   const $ = selector => document.querySelector(selector);
+  const CUSTOMER_PUBLIC_URL = "https://alshamiapp.xyz/";
+  const getCustomerAuthRedirectUrl = () => {
+    const hostname = String(window.location.hostname || "").toLowerCase();
+    if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+      return CUSTOMER_PUBLIC_URL;
+    }
+    return window.location.origin + window.location.pathname;
+  };
   const isHistoryPage = /(?:^|\/)history\.html$/i.test(window.location.pathname);
   const checkoutForm = $("#checkout-form");
   const orderButton = $("#place-order");
@@ -381,7 +389,7 @@
       authMessage(mode === "signup" ? "Creating your account…" : "Signing in…");
       if (mode === "signup") {
         const options = {
-          emailRedirectTo: window.location.origin + window.location.pathname,
+          emailRedirectTo: getCustomerAuthRedirectUrl(),
           data: { full_name: fullName, phone: signupPhone, phone_e164: signupPhone }
         };
         const { data, error } = await db.auth.signUp({ email: identity, password, options });
@@ -433,7 +441,7 @@
     const button = $("#auth-forgot-password");
     if (button) button.disabled = true;
     try {
-      const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+      const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: getCustomerAuthRedirectUrl() });
       if (error) throw error;
       authMessage("If the account supports email recovery, a reset link will be sent. Check your inbox.");
     } catch (error) {
