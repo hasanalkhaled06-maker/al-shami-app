@@ -210,3 +210,18 @@ test("all currently referenced stylesheet versions remain in the service-worker 
     assert.ok(shell.has(stylesheet), "currently referenced stylesheet is missing from cache shell: " + stylesheet);
   }
 });;;
+
+
+test("customer order status automatically refreshes every five seconds while visible", () => {
+  const customer = source("customer.js");
+  assert.ok(customer.includes("const CUSTOMER_ORDER_STATUS_POLL_INTERVAL_MS = 5000;"));
+  assert.ok(customer.includes(`window.setInterval(() => {
+    if (document.visibilityState === "visible") void refreshCustomerOrderHistory();
+  }, CUSTOMER_ORDER_STATUS_POLL_INTERVAL_MS);`));
+  for (const page of ["index.html", "history.html"]) {
+    assert.ok(source(page).includes("customer.js?v=auto-status-20261023a"),
+      page + " must request the updated status-polling script");
+  }
+  assert.ok(source("service-worker.js").includes('"./customer.js?v=auto-status-20261023a"'),
+    "service-worker shell must cache the updated status-polling script");
+});
