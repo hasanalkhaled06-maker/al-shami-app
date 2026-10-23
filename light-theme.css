@@ -904,3 +904,20 @@ html body.rider-app .dashboard-footer span:last-child{display:none!important}
     transition:none!important;animation:none!important;scroll-behavior:auto!important;
   }
 }
+
+
+/* Final contrast and primary/secondary distinction audit. */
+body.customer-home-page :is(input,select,textarea)::placeholder,
+body.customer-history-page :is(input,select,textarea)::placeholder,
+body.admin-body :is(input,select,textarea)::placeholder,
+body.rider-app :is(input,select,textarea)::placeholder{color:#75696b!important;opacity:1}
+html body.rider-app .secondary-button:not(.is-sharing){
+  background:#fffdf9!important;color:var(--shami-wine)!important;border:1px solid #ddcabb!important;
+  box-shadow:none!important;
+}
+html body.rider-app .secondary-button:not(.is-sharing):hover{background:#f8efdf!important;border-color:#cdb083!important}
+html body.rider-app .secondary-button.is-sharing{
+  background:var(--shami-wine)!important;color:#fffaf5!important;border:1px solid var(--shami-wine)!important;
+}
+html body.rider-app .refresh-button{background:#fffdf9!important;color:var(--shami-wine)!important;border:1px solid #ddcabb!important}
+html body.rider-app #signout-button{background:rgba(255,255,255,.12)!important;color:#fffaf5!important;border:1px solid rgba(255,255,255,.27)!important}
