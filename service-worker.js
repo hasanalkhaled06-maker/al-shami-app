@@ -12,8 +12,6 @@ const SHELL_FILES = [
   "./app-refresh.css",
   "./app-refresh.css?v=radical-ui-20261023a",
   "./style.css?v=radical-ui-20261023a",
-  "./modern-ui.css",
-  "./modern-ui.css?v=modern-ui-20261023c",
   "./config.js",
   "./customer.js",
   "./customer.js?v=radical-ui-20261023a",
