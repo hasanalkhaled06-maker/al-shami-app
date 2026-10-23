@@ -83,7 +83,7 @@ self.addEventListener("fetch", event => {
       const cached = await cache.match(request);
       if (cached) return cached;
       if (request.mode === "navigate") {
-        const path = url.pathname.endsWith("/admin.html") ? "./admin.html" : "./index.html";
+        const path = url.pathname.endsWith("/admin.html") ? "./admin.html" : (url.pathname.endsWith("/rider.html") ? "./rider.html" : (url.pathname.endsWith("/history.html") ? "./history.html" : "./index.html"));
         return (await cache.match(path)) || Response.error();
       }
       return Response.error();
