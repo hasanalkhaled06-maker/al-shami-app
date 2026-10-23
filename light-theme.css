@@ -1362,3 +1362,47 @@ html body.customer-home-page footer a,html body.customer-history-page footer a{c
     animation:none!important;transition:none!important;scroll-behavior:auto!important;
   }
 }
+
+
+/* Compact utility controls only: champagne gold; never apply this to large primary actions. */
+html body.customer-home-page #customer-sign-out,
+html body.customer-home-page .customer-account-toolbar #customer-auth-open,
+html body.customer-history-page #customer-sign-out,
+html body.customer-history-page .customer-account-toolbar #customer-auth-open,
+html body.admin-body #signout,
+html body.admin-body #back-to-home,
+html body.rider-app #signout-button{
+  min-height:35px!important;padding:7px 11px!important;
+  background:var(--shami-gold)!important;color:#382B1D!important;
+  border:1px solid #C6A35A!important;border-radius:10px!important;
+  font-size:11px!important;font-weight:850!important;box-shadow:none!important;
+}
+html body.customer-home-page #clear-cart,
+html body.customer-history-page #clear-cart,
+html body.customer-home-page .customer-orders-nav .btn-light,
+html body.customer-history-page .customer-orders-nav .btn-light,
+html body.customer-home-page #delivery-map-close{
+  min-height:35px!important;padding:7px 11px!important;
+  background:var(--shami-gold)!important;color:#382B1D!important;
+  border:1px solid #C6A35A!important;border-radius:10px!important;
+}
+html body.customer-home-page #cart-items [data-dec],
+html body.customer-home-page #cart-items [data-inc],
+html body.customer-history-page #cart-items [data-dec],
+html body.customer-history-page #cart-items [data-inc]{
+  min-width:34px!important;min-height:34px!important;padding:0!important;
+  background:var(--shami-gold-soft)!important;color:#4A371D!important;
+  border:1px solid #D8BD7D!important;border-radius:9px!important;font-weight:900!important;
+}
+html body.customer-home-page #cart-items [data-remove],
+html body.customer-history-page #cart-items [data-remove]{
+  background:#FFF2EF!important;color:#832A34!important;border:1px solid #E7C9C5!important;
+}
+html body.admin-body #orders-list .order-actions [data-copy],
+html body.admin-body #history-list .order-actions [data-copy]{
+  background:var(--shami-gold)!important;color:#382B1D!important;border:1px solid #C6A35A!important;
+}
+html body.admin-body #orders-list .order-actions [data-delete-order],
+html body.admin-body #history-list .order-actions [data-delete-order]{
+  background:#FFF2EF!important;color:#832A34!important;border:1px solid #E7C9C5!important;
+}
