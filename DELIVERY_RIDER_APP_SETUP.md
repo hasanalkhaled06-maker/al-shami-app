@@ -13,18 +13,18 @@ The rider screen is read-only for order workflow: there are no accept, reject, c
 
 ## Important rollout rule
 
-This implementation is on the feature branch feature/delivery-rider-live-tracking. It has not been merged to main or deployed. Do not treat it as live until the migration, deployment, and end-to-end checks below succeed.
+The rider app is deployed from main. The registration screen creates a Supabase Auth account but does not approve it; only management can grant access by linking that Auth UUID to an active Delivery Rider employee profile. End-to-end phone-to-customer GPS tracking still requires a controlled test.
 
 Before using it in production, back up the Supabase project and review both migrations. The production migration list previously showed delivery_map_location_v1 but did not list the repository migration 20261023130000_order_status_visibility_and_location_security.sql. Check whether that security migration has already been applied. If not, review and apply it first, then apply 20261023131500_delivery_rider_live_tracking_v1.sql. Do not apply a migration again under another name without checking its state.
 
 ## Set up a rider account
 
-1. In Supabase Authentication, create a separate login for each delivery rider. Never share the administrator login with a rider.
-2. Sign in to the AL SHAMI admin app and open Operations, then Employee management.
-3. Create or edit the employee profile; set System role to Delivery Rider and employment status to Active.
-4. Copy that rider's Auth user UUID from Supabase Authentication → Users and paste it into the employee profile's Auth user UUID field. Save the profile. The form links an existing login; it does not create the login itself.
+1. On the rider app, choose **Create account**, enter the rider's full name, email, and a password of at least 8 characters. Complete email confirmation if Supabase requests it. Never share the administrator login with a rider.
+2. Account creation does **not** approve the rider or grant order access. The new account must wait for restaurant management approval.
+3. In Supabase Authentication → Users, find the new account and copy its Auth user UUID.
+4. Sign in to the AL SHAMI admin app and open Operations → Employee management. Create or edit the employee profile; set System role to Delivery Rider, employment status to Active, and paste the exact Auth user UUID. Save the profile. This link is the approval gate enforced by the server.
 5. Keep the profile active. On the next accepted delivery order, the database trigger chooses an eligible linked rider. The first version uses load-based automatic assignment rather than an assignment selector.
-6. Open the rider app after deployment: https://alshamiapp.xyz/rider.html or https://hasanalkhaled06-maker.github.io/al-shami-app/rider.html. Sign in with the dedicated rider credentials. In Safari, use Share → Add to Home Screen to install it separately.
+6. Open the rider app: https://alshamiapp.xyz/rider.html or https://hasanalkhaled06-maker.github.io/al-shami-app/rider.html. Sign in with the dedicated rider credentials. In Safari, use Share → Add to Home Screen to install it separately.
 
 ## How live tracking works
 
