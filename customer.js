@@ -1825,6 +1825,41 @@
     $("#customer-order-back")?.addEventListener("click", closeCustomerOrdering);
   }
 
+
+  $("#choose-delivery-location")?.addEventListener("click", () => { void openDeliveryMapPicker(); });
+  $("#delivery-map-close")?.addEventListener("click", closeDeliveryMapPicker);
+  $("#delivery-map-cancel")?.addEventListener("click", closeDeliveryMapPicker);
+  $("#delivery-map-modal [data-close-delivery-map]")?.addEventListener("click", closeDeliveryMapPicker);
+  $("#delivery-map-confirm")?.addEventListener("click", confirmDeliveryLocation);
+  $("#clear-delivery-location")?.addEventListener("click", clearDeliveryLocationSelection);
+  $("#delivery-map-modal")?.addEventListener("keydown", event => {
+    if (event.key === "Escape") closeDeliveryMapPicker();
+  });
+  $("#delivery-map-use-current")?.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+      setMapMessage(lang === "ar" ? "هذا الجهاز لا يدعم تحديد الموقع. اضغط على الخريطة لاختيار الموقع يدوياً." : "This device does not support location access. Tap the map to choose a location.", true);
+      return;
+    }
+    const button = $("#delivery-map-use-current");
+    if (button) button.disabled = true;
+    navigator.geolocation.getCurrentPosition(position => {
+      if (button) button.disabled = false;
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      setPendingDeliveryLocation(lat, lng);
+      if (deliveryMapInstance) {
+        deliveryMapInstance.setCenter({ lat, lng });
+        deliveryMapInstance.setZoom(17);
+      }
+    }, error => {
+      if (button) button.disabled = false;
+      const msg = error?.code === 1
+        ? (lang === "ar" ? "اسمح للموقع بالوصول لموقع جهازك، أو اختار الموقع بالضغط على الخريطة." : "Allow location access, or tap the map to choose your location.")
+        : (lang === "ar" ? "تعذّر تحديد موقع جهازك. اختار الموقع بالضغط على الخريطة." : "Couldn't get your location. Tap the map to choose it manually.");
+      setMapMessage(msg, true);
+    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+  });
+
   $("#language")?.addEventListener("change", event => {
     lang = event.target.value;
     setLanguage();
@@ -1853,6 +1888,7 @@
     const isPickup = $("#order-type").value === "pickup";
 
     $("#address-field")?.classList.toggle("hidden", isPickup);
+    if (isPickup) clearDeliveryLocationSelection();
 
     if (checkoutForm?.elements?.delivery_address) {
       checkoutForm.elements.delivery_address.required = !isPickup;
