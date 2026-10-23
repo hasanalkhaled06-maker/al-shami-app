@@ -810,6 +810,7 @@
   const CUSTOMER_KEY = "alShamiCustomerV1";
   const ORDER_HISTORY_KEY = "alShamiOrderHistoryV1";
   const TRACKING_TOKEN_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const CUSTOMER_ORDER_STATUS_POLL_INTERVAL_MS = 5000;
   let trackedOrdersLoading = false;
   let trackedOrdersRefreshQueued = false;
   let trackedOrderRemovalTokens = new Map();
@@ -1880,12 +1881,12 @@
     void refreshCustomerOrderHistory();
   });
 
+  // Reconcile customer-visible order states frequently while this page is in front.
+  // The existing loading/queued guards serialize slow requests; rider GPS keeps its
+  // own six-second cadence below so status polling does not duplicate GPS queries.
   window.setInterval(() => {
-    if (document.visibilityState === "visible") {
-      void refreshCustomerOrderHistory();
-      void refreshCustomerRiderLocations();
-    }
-  }, 30000);
+    if (document.visibilityState === "visible") void refreshCustomerOrderHistory();
+  }, CUSTOMER_ORDER_STATUS_POLL_INTERVAL_MS);
   window.setInterval(() => {
     if (document.visibilityState === "visible") void refreshCustomerRiderLocations();
   }, 6000);
