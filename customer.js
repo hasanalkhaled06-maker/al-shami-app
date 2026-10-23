@@ -1266,9 +1266,24 @@
       return;
     }
     if (record.isStale) {
-      record.etaValueNode.textContent = lang === "ar"
-        ? "إشارة GPS متأخرة — عم ننتظر تحديث الموقع"
-        : "GPS signal delayed — waiting for a fresh location";
+      if (Number.isFinite(record.etaDurationSeconds) && record.etaCalculatedAt) {
+        const elapsed = Math.max(0, Math.floor((Date.now() - record.etaCalculatedAt) / 1000));
+        const remaining = Math.max(0, record.etaDurationSeconds - elapsed);
+        const minutes = Math.max(1, Math.ceil(remaining / 60));
+        record.etaValueNode.textContent = remaining <= 45
+          ? (lang === "ar" ? "وقت الوصول السابق: كان السائق قريباً" : "Last ETA: rider was nearly there")
+          : (lang === "ar" ? "حوالي " + minutes + " دقيقة حسب آخر مسار" : "About " + minutes + " min based on last route");
+        if (record.distanceNode) {
+          record.distanceNode.textContent = lang === "ar"
+            ? "تقدير قديم — إشارة GPS متأخرة، والوقت الفعلي غير مؤكّد"
+            : "Outdated estimate — GPS is delayed, actual arrival time is uncertain";
+        }
+      } else {
+        record.etaValueNode.textContent = lang === "ar"
+          ? "بانتظار موقع حديث لحساب وقت الوصول"
+          : "Waiting for a fresh GPS fix to calculate arrival";
+        if (record.distanceNode) record.distanceNode.textContent = "";
+      }
       return;
     }
     if (!Number.isFinite(record.etaDurationSeconds) || !record.etaCalculatedAt) {
