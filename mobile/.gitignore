@@ -1,0 +1,5 @@
+node_modules/
+web/
+android/
+ios/
+.DS_Store

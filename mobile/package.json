@@ -1,0 +1,21 @@
+{
+  "name": "al-shami-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Native build shell for the AL SHAMI customer ordering app",
+  "type": "module",
+  "scripts": {
+    "prepare:web": "node scripts/prepare-web.mjs",
+    "cap:sync:android": "npm run prepare:web && cap sync android",
+    "cap:sync:ios": "npm run prepare:web && cap sync ios",
+    "cap:doctor": "cap doctor"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.2",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/ios": "8.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.2"
+  }
+}

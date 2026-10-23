@@ -1,0 +1,98 @@
+name: Mobile preview builds
+
+on:
+  push:
+    branches:
+      - mobile-store-prep
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android-preview:
+    name: Android APK and AAB preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Generate customer web assets and Android project
+        working-directory: mobile
+        run: |
+          npm install --no-audit --no-fund
+          npm run prepare:web
+          npx cap add android
+          npx cap sync android
+
+      - name: Build Android preview artifacts
+        working-directory: mobile/android
+        run: ./gradlew --no-daemon assembleDebug bundleRelease
+
+      - name: Upload Android preview artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: al-shami-android-preview
+          if-no-files-found: error
+          path: |
+            mobile/android/app/build/outputs/apk/debug/*.apk
+            mobile/android/app/build/outputs/bundle/release/*.aab
+          retention-days: 14
+
+  ios-simulator-preview:
+    name: iOS Simulator compile preview
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Generate customer web assets and iOS project
+        working-directory: mobile
+        run: |
+          npm install --no-audit --no-fund
+          npm run prepare:web
+          npx cap add ios
+          npx cap sync ios
+
+      - name: Compile for iOS Simulator (no signing)
+        working-directory: mobile
+        run: |
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ios/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Upload iOS Simulator preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: al-shami-ios-simulator-preview
+          if-no-files-found: error
+          path: mobile/ios/DerivedData/Build/Products/Debug-iphonesimulator/App.app
+          retention-days: 14
