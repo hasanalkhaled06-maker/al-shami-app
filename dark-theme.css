@@ -1216,3 +1216,86 @@ html body.customer-history-page .customer-order-card .receipt-code-value{color:#
 html body.customer-home-page .customer-order-card :is(.tracked-card-heading,.tracked-order-meta,.tracked-items li),
 html body.customer-history-page .customer-order-card :is(.tracked-card-heading,.tracked-order-meta,.tracked-items li){border-color:#D5E3EA!important}
 
+
+
+
+/* AL SHAMI customer order screen — distinct accent colors, cream canvas preserved. */
+html body.customer-home-page,
+html body.customer-history-page{
+  background:#F7F1E7!important;
+  background-color:#F7F1E7!important;
+  color:#172F52!important;
+}
+html body.customer-home-page .customer-order-card,
+html body.customer-history-page .customer-order-card{
+  background:#FFFEFA!important;
+  background-image:none!important;
+  color:#172F52!important;
+  border:1px solid #DCE8EC!important;
+  box-shadow:0 5px 18px rgba(23,47,82,.055)!important;
+}
+html body.customer-home-page .customer-order-card :is(.tracked-card-heading,.tracked-order-meta,.tracked-items,.customer-rider-map-heading strong,.customer-rider-map-heading p,.customer-rider-eta-copy strong,.customer-rider-eta-copy small,.customer-rider-map-status,.receipt-code-label),
+html body.customer-history-page .customer-order-card :is(.tracked-card-heading,.tracked-order-meta,.tracked-items,.customer-rider-map-heading strong,.customer-rider-map-heading p,.customer-rider-eta-copy strong,.customer-rider-eta-copy small,.customer-rider-map-status,.receipt-code-label){
+  color:#243B5A!important;
+}
+/* Deep blue: delivery status, progress and Google Maps action. */
+html body.customer-home-page .customer-order-card :is(.customer-rider-google-maps,[class*="status-out"],.status-out-for-delivery),
+html body.customer-history-page .customer-order-card :is(.customer-rider-google-maps,[class*="status-out"],.status-out-for-delivery){
+  background:#155B8B!important;
+  background-image:none!important;
+  color:#FFFFFF!important;
+  border-color:#155B8B!important;
+}
+html body.customer-home-page .customer-order-card .customer-rider-google-maps,
+html body.customer-history-page .customer-order-card .customer-rider-google-maps{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  min-height:54px!important;border-radius:14px!important;font-weight:750!important;
+  box-shadow:0 5px 12px rgba(21,91,139,.14)!important;
+}
+/* Deep green: copy/confirm actions. */
+html body.customer-home-page .customer-order-card .receipt-code-copy,
+html body.customer-history-page .customer-order-card .receipt-code-copy{
+  background:#147747!important;
+  background-image:none!important;
+  color:#FFFFFF!important;
+  border:1px solid #147747!important;
+  border-radius:13px!important;
+  box-shadow:0 5px 12px rgba(20,119,71,.13)!important;
+}
+html body.customer-home-page .customer-order-card .receipt-code-copy.is-copied,
+html body.customer-history-page .customer-order-card .receipt-code-copy.is-copied{
+  background:#0F6239!important;color:#FFFFFF!important;border-color:#0F6239!important;
+}
+/* Burgundy: pickup-code emphasis, distinct from the green copy button. */
+html body.customer-home-page .customer-order-card .receipt-code-value,
+html body.customer-history-page .customer-order-card .receipt-code-value{
+  color:#9F1239!important;
+  font-weight:850!important;
+  letter-spacing:.035em!important;
+}
+html body.customer-home-page .customer-order-card .receipt-code-label,
+html body.customer-history-page .customer-order-card .receipt-code-label{
+  color:#243B5A!important;font-weight:750!important;
+}
+/* Keep the ETA/GPS note lightly green, not a dark panel. */
+html body.customer-home-page .customer-order-card .customer-rider-eta,
+html body.customer-history-page .customer-order-card .customer-rider-eta{
+  background:linear-gradient(135deg,#F0F8F1,#E8F4EC)!important;
+  background-image:none!important;
+  color:#243B5A!important;
+  border:1px solid #D0E8D8!important;
+  border-radius:18px!important;
+}
+html body.customer-home-page .customer-order-card .customer-rider-eta-copy span,
+html body.customer-history-page .customer-order-card .customer-rider-eta-copy span{
+  color:#147747!important;font-weight:750!important;
+}
+/* Order progress: blue active steps, pale grey only for unfinished steps. */
+html body.customer-home-page .customer-order-card .tracked-steps .active,
+html body.customer-home-page .customer-order-card .tracked-steps .done,
+html body.customer-history-page .customer-order-card .tracked-steps .active,
+html body.customer-history-page .customer-order-card .tracked-steps .done{
+  color:#155B8B!important;
+}
+/* Preserve the existing cream-and-gold Refresh button and page background. */
+
