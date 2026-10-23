@@ -82,6 +82,40 @@
     loginMessage.textContent = message || "";
     loginMessage.className = "form-message" + (isError ? " error" : "");
   }
+
+  let authMode = "signin";
+  const nameInput = $("#rider-name");
+  const nameLabel = $("#rider-name-label");
+  const signInModeButton = $("#show-signin");
+  const signUpModeButton = $("#show-signup");
+
+  function setAuthMode(mode) {
+    authMode = mode === "signup" ? "signup" : "signin";
+    const isSignUp = authMode === "signup";
+    if (nameInput) {
+      nameInput.hidden = !isSignUp;
+      nameInput.required = isSignUp;
+    }
+    if (nameLabel) nameLabel.hidden = !isSignUp;
+    if ($("#rider-password")) {
+      $("#rider-password").autocomplete = isSignUp ? "new-password" : "current-password";
+      $("#rider-password").placeholder = isSignUp ? "At least 8 characters" : "Your password";
+    }
+    if (loginButton) loginButton.innerHTML = isSignUp
+      ? 'Request rider account <span aria-hidden="true">→</span>'
+      : 'Sign in securely <span aria-hidden="true">→</span>';
+    if (signInModeButton) {
+      signInModeButton.classList.toggle("is-active", !isSignUp);
+      signInModeButton.setAttribute("aria-pressed", String(!isSignUp));
+    }
+    if (signUpModeButton) {
+      signUpModeButton.classList.toggle("is-active", isSignUp);
+      signUpModeButton.setAttribute("aria-pressed", String(isSignUp));
+    }
+    setLoginMessage(isSignUp
+      ? "Create your account request. Restaurant management must approve and link it before you can see deliveries."
+      : "");
+  }
   function setSignedInView(signedIn) {
     if (loginPanel) loginPanel.hidden = signedIn;
     if (dashboard) dashboard.hidden = !signedIn;
@@ -360,22 +394,66 @@
     if (loginButton) loginButton.disabled = true;
     setConnectionState(false, "Not configured");
   } else {
+    signInModeButton?.addEventListener("click", () => setAuthMode("signin"));
+    signUpModeButton?.addEventListener("click", () => setAuthMode("signup"));
+
     loginForm?.addEventListener("submit", async event => {
       event.preventDefault();
       loginButton.disabled = true;
-      setLoginMessage("Signing in…");
       const form = event.currentTarget;
+      const email = String(form.elements.email.value || "").trim();
+      const password = String(form.elements.password.value || "");
       try {
-        const { data, error } = await db.auth.signInWithPassword({
-          email: String(form.elements.email.value || "").trim(),
-          password: String(form.elements.password.value || "")
-        });
+        if (authMode === "signup") {
+          const fullName = String(form.elements.fullName?.value || "").trim();
+          if (fullName.length < 2) throw new Error("Enter your full name.");
+          if (password.length < 8) throw new Error("Use a password with at least 8 characters.");
+          if (!email) throw new Error("Enter your email address.");
+
+          setLoginMessage("Submitting your account request…");
+          const { data, error } = await db.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                full_name: fullName,
+                requested_role: "delivery_rider",
+                approval_status: "pending"
+              },
+              emailRedirectTo: window.location.origin + window.location.pathname
+            }
+          });
+          if (error) throw error;
+
+          // Never leave a newly registered account signed in before management
+          // links its Auth UUID to an active Delivery Rider staff profile.
+          if (data.session) {
+            await db.auth.signOut();
+          }
+          setAuthMode("signin");
+          form.reset();
+          setLoginMessage(
+            data.user?.identities?.length === 0
+              ? "If this email is eligible, an account confirmation message will be sent. If you already registered, sign in instead."
+              : "Account request submitted. Check your email for confirmation if requested. You must wait for AL SHAMI management to approve and link your account before you can access deliveries."
+          );
+          return;
+        }
+
+        setLoginMessage("Signing in…");
+        const { data, error } = await db.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        setLoginMessage("Signed in. Loading your assigned deliveries…");
+        setLoginMessage("Signed in. Checking rider approval…");
         await handleSession(data.session);
-        setLoginMessage("");
+        if (orders.length === 0) {
+          setLoginMessage("You are signed in, but no active deliveries are assigned yet. If management has not approved and linked your rider profile, ask them to do that first.");
+        } else {
+          setLoginMessage("");
+        }
       } catch (error) {
-        setLoginMessage(error?.message || "Sign-in failed. Check your email and password.", true);
+        setLoginMessage(error?.message || (authMode === "signup"
+          ? "Could not submit account request. Check the details and try again."
+          : "Sign-in failed. Check your email and password."), true);
       } finally {
         loginButton.disabled = false;
       }
