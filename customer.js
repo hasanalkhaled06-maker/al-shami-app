@@ -36,11 +36,10 @@
   const floatingCartTotal = $("#floating-cart-total");
 
 
-  let googleMapsLoadPromise = null;
   let deliveryMapInstance = null;
   let deliveryMapMarker = null;
-  let deliveryPlaceAutocomplete = null;
   let pendingDeliveryLocation = null;
+  let lastGeocodingRequestAt = 0;
 
   function currentDeliveryCoordinates() {
     const latitudeValue = $("#delivery-latitude")?.value;
@@ -72,127 +71,67 @@
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
     const previousAddress = pendingDeliveryLocation?.address || "";
     pendingDeliveryLocation = { lat, lng, address: address || previousAddress };
-    if (deliveryMapMarker) deliveryMapMarker.setPosition({ lat, lng });
-    if (deliveryMapInstance) deliveryMapInstance.panTo({ lat, lng });
+    if (deliveryMapInstance) {
+      if (!deliveryMapMarker) {
+        deliveryMapMarker = L.marker([lat, lng], { draggable: true, title: tr("chooseLocation") }).addTo(deliveryMapInstance);
+        deliveryMapMarker.on("dragend", () => {
+          if (!deliveryMapMarker) return;
+          const position = deliveryMapMarker.getLatLng();
+          setPendingDeliveryLocation(position.lat, position.lng);
+        });
+      } else {
+        deliveryMapMarker.setLatLng([lat, lng]);
+      }
+      deliveryMapInstance.panTo([lat, lng]);
+    }
     locationLabel(lat, lng, pendingDeliveryLocation.address);
     const confirm = $("#delivery-map-confirm");
     if (confirm) confirm.disabled = false;
     setMapMessage("");
   }
 
-  function loadGoogleMapsApi() {
-    if (window.google?.maps?.importLibrary) return Promise.resolve();
-    if (googleMapsLoadPromise) return googleMapsLoadPromise;
-    const apiKey = String(cfg.GOOGLE_MAPS_API_KEY || "").trim();
-    if (!apiKey) return Promise.reject(new Error(tr("mapsNotConfigured")));
-
-    googleMapsLoadPromise = new Promise((resolve, reject) => {
-      const callbackName = "__alShamiGoogleMapsReady";
-      let timeoutId;
-      const cleanup = () => {
-        if (timeoutId) window.clearTimeout(timeoutId);
-        try { delete window[callbackName]; } catch (_) { window[callbackName] = undefined; }
-      };
-      window[callbackName] = () => {
-        cleanup();
-        resolve();
-      };
-      const script = document.createElement("script");
-      script.src = "https://maps.googleapis.com/maps/api/js?key=" +
-        encodeURIComponent(apiKey) + "&v=weekly&loading=async&libraries=places&callback=" + callbackName;
-      script.async = true;
-      script.defer = true;
-      script.onerror = () => {
-        cleanup();
-        googleMapsLoadPromise = null;
-        reject(new Error(tr("mapsLoadError")));
-      };
-      timeoutId = window.setTimeout(() => {
-        cleanup();
-        googleMapsLoadPromise = null;
-        reject(new Error(tr("mapsLoadError")));
-      }, 18000);
-      document.head.appendChild(script);
-    }).then(async () => {
-      await Promise.all([
-        window.google.maps.importLibrary("maps"),
-        window.google.maps.importLibrary("places")
-      ]);
-    }).catch(error => {
-      googleMapsLoadPromise = null;
-      throw error;
-    });
-    return googleMapsLoadPromise;
+  function loadLeafletApi() {
+    if (window.L && typeof window.L.map === "function") return Promise.resolve();
+    return Promise.reject(new Error(tr("mapsLoadError")));
   }
 
-  async function initializeDeliveryMap() {
+  function initializeDeliveryMap() {
     const canvas = $("#delivery-map-canvas");
-    if (!canvas || !window.google?.maps) throw new Error(tr("mapsLoadError"));
+    if (!canvas || !window.L) throw new Error(tr("mapsLoadError"));
     const saved = currentDeliveryCoordinates();
-    const center = saved || { lat: 5.6037, lng: -0.1870 }; // Accra, Ghana
+    const active = pendingDeliveryLocation || saved;
+    const center = active || { lat: 5.6037, lng: -0.1870 }; // Accra, Ghana
+
     if (!deliveryMapInstance) {
-      deliveryMapInstance = new google.maps.Map(canvas, {
-        center,
-        zoom: saved ? 16 : 12,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-        clickableIcons: false
-      });
-      deliveryMapMarker = new google.maps.Marker({
-        map: deliveryMapInstance,
-        position: saved || null,
-        draggable: true,
-        title: tr("chooseLocation")
-      });
-      deliveryMapInstance.addListener("click", event => {
-        if (!event?.latLng) return;
-        setPendingDeliveryLocation(event.latLng.lat(), event.latLng.lng());
-      });
-      deliveryMapMarker.addListener("dragend", event => {
-        if (!event?.latLng) return;
-        setPendingDeliveryLocation(event.latLng.lat(), event.latLng.lng());
+      deliveryMapInstance = L.map(canvas, {
+        zoomControl: true,
+        scrollWheelZoom: true,
+        attributionControl: true
+      }).setView([center.lat, center.lng], active ? 16 : 12);
+
+      const tileUrl = String(cfg.MAP_TILE_URL || "https://tile.openstreetmap.org/{z}/{x}/{y}.png");
+      L.tileLayer(tileUrl, {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>'
+      }).addTo(deliveryMapInstance);
+
+      deliveryMapInstance.on("click", event => {
+        if (!event?.latlng) return;
+        setPendingDeliveryLocation(event.latlng.lat, event.latlng.lng);
       });
     } else {
-      deliveryMapInstance.setCenter(center);
-      deliveryMapInstance.setZoom(saved ? 16 : 12);
-      deliveryMapMarker.setPosition(saved || null);
-      google.maps.event.trigger(deliveryMapInstance, "resize");
+      deliveryMapInstance.setView([center.lat, center.lng], active ? 16 : 12);
+      deliveryMapInstance.invalidateSize({ pan: false });
     }
 
-    if (!deliveryPlaceAutocomplete) {
-      const { PlaceAutocompleteElement } = await google.maps.importLibrary("places");
-      deliveryPlaceAutocomplete = new PlaceAutocompleteElement();
-      deliveryPlaceAutocomplete.setAttribute("placeholder", tr("mapSearchPlaceholder"));
-      deliveryPlaceAutocomplete.includedRegionCodes = ["gh"];
-      const slot = $("#delivery-map-search-container");
-      slot.replaceChildren(deliveryPlaceAutocomplete);
-      deliveryPlaceAutocomplete.addEventListener("gmp-select", async event => {
-        try {
-          const prediction = event.placePrediction;
-          if (!prediction) return;
-          const place = prediction.toPlace();
-          await place.fetchFields({ fields: ["displayName", "formattedAddress", "location", "viewport"] });
-          if (!place.location) return;
-          const lat = typeof place.location.lat === "function" ? place.location.lat() : place.location.lat;
-          const lng = typeof place.location.lng === "function" ? place.location.lng() : place.location.lng;
-          setPendingDeliveryLocation(lat, lng, place.formattedAddress || place.displayName || "");
-          if (place.viewport) deliveryMapInstance.fitBounds(place.viewport);
-          else {
-            deliveryMapInstance.setCenter({ lat, lng });
-            deliveryMapInstance.setZoom(17);
-          }
-        } catch (error) {
-          setMapMessage(tr("mapsLoadError"), true);
-          console.warn("Delivery place search failed:", error);
-        }
-      });
-    }
-
-    if (saved) {
-      pendingDeliveryLocation = { ...saved, address: pendingDeliveryLocation?.address || "" };
-      setPendingDeliveryLocation(saved.lat, saved.lng, pendingDeliveryLocation.address);
-    } else if (!pendingDeliveryLocation) {
+    if (active) {
+      setPendingDeliveryLocation(active.lat, active.lng, pendingDeliveryLocation?.address || "");
+    } else {
+      if (deliveryMapMarker) {
+        deliveryMapInstance.removeLayer(deliveryMapMarker);
+        deliveryMapMarker = null;
+      }
+      pendingDeliveryLocation = null;
       const confirm = $("#delivery-map-confirm");
       if (confirm) confirm.disabled = true;
       const selection = $("#delivery-map-selection");
@@ -200,27 +139,104 @@
     }
   }
 
+  async function searchDeliveryAddress(event) {
+    event.preventDefault();
+    const input = $("#delivery-map-search-input");
+    const button = $("#delivery-map-search-button");
+    const results = $("#delivery-map-search-results");
+    const query = String(input?.value || "").trim();
+    if (!query || query.length < 3) {
+      setMapMessage(lang === "ar" ? "اكتب اسم مكان أو عنواناً أطول للبحث." : "Enter a place name or a longer address to search.", true);
+      return;
+    }
+    if (!results || !button) return;
+
+    button.disabled = true;
+    results.hidden = true;
+    results.replaceChildren();
+    setMapMessage("");
+    try {
+      // The public Nominatim endpoint is for deliberate, user-triggered searches only.
+      // The brief client-side pause prevents rapid repeat searches in this browser tab.
+      const wait = Math.max(0, 1100 - (Date.now() - lastGeocodingRequestAt));
+      if (wait > 0) await new Promise(resolve => window.setTimeout(resolve, wait));
+      lastGeocodingRequestAt = Date.now();
+
+      const searchUrl = new URL(String(cfg.GEOCODING_SEARCH_URL || "https://nominatim.openstreetmap.org/search"));
+      searchUrl.searchParams.set("format", "jsonv2");
+      searchUrl.searchParams.set("limit", "5");
+      searchUrl.searchParams.set("countrycodes", "gh");
+      searchUrl.searchParams.set("q", query);
+      const response = await fetch(searchUrl.toString(), {
+        method: "GET",
+        headers: { "Accept": "application/json" },
+        credentials: "omit"
+      });
+      if (!response.ok) throw new Error("Address search service returned HTTP " + response.status);
+      const places = await response.json();
+      if (!Array.isArray(places) || places.length === 0) {
+        setMapMessage(tr("mapSearchNoResults"), true);
+        return;
+      }
+
+      const heading = document.createElement("p");
+      heading.className = "delivery-map-search-results-heading";
+      heading.textContent = lang === "ar" ? "اختر نتيجة للانتقال إليها:" : "Choose a result to move the map:";
+      results.appendChild(heading);
+      places.slice(0, 5).forEach(place => {
+        const lat = Number(place.lat);
+        const lng = Number(place.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "delivery-map-search-result";
+        item.textContent = String(place.display_name || query);
+        item.addEventListener("click", () => {
+          setPendingDeliveryLocation(lat, lng, String(place.display_name || ""));
+          if (deliveryMapInstance) deliveryMapInstance.flyTo([lat, lng], 17);
+          results.hidden = true;
+          results.replaceChildren();
+        });
+        results.appendChild(item);
+      });
+      results.hidden = results.children.length === 0;
+      if (results.hidden) setMapMessage(tr("mapSearchNoResults"), true);
+    } catch (error) {
+      console.warn("OpenStreetMap address search failed:", error);
+      setMapMessage(tr("mapSearchError"), true);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   async function openDeliveryMapPicker() {
     const modal = $("#delivery-map-modal");
     if (!modal) return;
     const saved = currentDeliveryCoordinates();
-    pendingDeliveryLocation = saved ? { ...saved, address: checkoutForm?.elements?.delivery_address?.value || "" } : null;
+    pendingDeliveryLocation = saved
+      ? { ...saved, address: checkoutForm?.elements?.delivery_address?.value || "" }
+      : null;
     modal.hidden = false;
     document.body.classList.add("delivery-map-open");
     setMapMessage("");
     const confirm = $("#delivery-map-confirm");
     if (confirm) confirm.disabled = !pendingDeliveryLocation;
+    const searchInput = $("#delivery-map-search-input");
+    if (searchInput) searchInput.placeholder = tr("mapSearchPlaceholder");
+    const results = $("#delivery-map-search-results");
+    if (results) {
+      results.hidden = true;
+      results.replaceChildren();
+    }
     try {
-      await loadGoogleMapsApi();
-      await initializeDeliveryMap();
+      await loadLeafletApi();
+      initializeDeliveryMap();
       window.setTimeout(() => {
-        if (deliveryMapInstance && window.google?.maps) google.maps.event.trigger(deliveryMapInstance, "resize");
-      }, 80);
+        if (deliveryMapInstance) deliveryMapInstance.invalidateSize({ pan: false });
+      }, 100);
     } catch (error) {
       setMapMessage(error?.message || tr("mapsLoadError"), true);
-      const canvas = $("#delivery-map-canvas");
-      if (canvas) canvas.innerHTML = "";
-      console.warn("Google Maps delivery picker is not ready:", error);
+      console.warn("OpenStreetMap delivery picker is not ready:", error);
     }
   }
 
@@ -234,6 +250,10 @@
     if ($("#delivery-latitude")) $("#delivery-latitude").value = "";
     if ($("#delivery-longitude")) $("#delivery-longitude").value = "";
     pendingDeliveryLocation = null;
+    if (deliveryMapMarker && deliveryMapInstance) {
+      deliveryMapInstance.removeLayer(deliveryMapMarker);
+      deliveryMapMarker = null;
+    }
     const status = $("#delivery-location-status");
     if (status) {
       status.textContent = tr("locationNotSelected");
@@ -265,8 +285,6 @@
     if (clearButton) clearButton.hidden = false;
     closeDeliveryMapPicker();
   }
-
-
 
   let authSession = null;
   let authMethod = "email";
@@ -858,18 +876,21 @@
       orderType: "Order type",
       address: "Delivery address / landmark",
       addressHint: "Include your house or building number, street, neighbourhood, and a nearby landmark (for example, a shop or station).",
-      chooseLocation: "Choose location on Google Maps",
+      chooseLocation: "Choose location on OpenStreetMap",
       clearLocation: "Clear map pin",
       locationNotSelected: "No map location selected yet. You can still enter your address manually.",
       locationSelected: "Map location selected",
       mapTitle: "Choose delivery location",
       mapHelp: "Search for a place or tap the map to position the pin. Keep your house number or landmark in the address field.",
       mapSearchPlaceholder: "Search for a place or address",
+      mapSearchButton: "Search",
+      mapSearchNoResults: "No matching places found. Try a nearby landmark or tap the map.",
+      mapSearchError: "Address search is temporarily unavailable. Tap the map to select the location.",
       useCurrentLocation: "Use my current location",
       confirmLocation: "Use this location",
       cancel: "Cancel",
-      mapsNotConfigured: "Google Maps is not configured yet. Please enter your delivery address manually for now.",
-      mapsLoadError: "Google Maps could not load. Check the API key and enabled APIs, or enter your address manually.",
+      mapsNotConfigured: "The map is not ready yet. Please enter your delivery address manually for now.",
+      mapsLoadError: "The map library could not load. Check your connection or enter the address manually.",
       copyAddress: "Copy address",
       notes: "Notes (optional)",
       add: "Add to order",
@@ -954,17 +975,20 @@
       orderType: "نوع الطلب",
       address: "عنوان التوصيل / علامة مميزة",
       addressHint: "اكتب رقم البيت أو المبنى والشارع والحي وعلامة قريبة مثل محل أو محطة.",
-      chooseLocation: "حدد موقعك على خرائط Google",
+      chooseLocation: "حدد موقعك على الخريطة",
       clearLocation: "إزالة موقع الخريطة",
       locationNotSelected: "ما حددت موقعك على الخريطة لسه. فيك تكتب عنوانك يدوياً.",
       locationSelected: "تم تحديد موقع التوصيل",
       mapTitle: "حدد موقع التوصيل",
       mapHelp: "ابحث عن مكان أو اضغط على الخريطة لتحريك الدبوس. اكتب رقم البيت أو علامة مميزة بحقل العنوان.",
       mapSearchPlaceholder: "ابحث عن مكان أو عنوان",
+      mapSearchButton: "بحث",
+      mapSearchNoResults: "ما لقينا نتائج مناسبة. جرّب معلماً قريباً أو اضغط على الخريطة.",
+      mapSearchError: "البحث عن العنوان غير متاح مؤقتاً. اضغط على الخريطة لتحديد الموقع.",
       useCurrentLocation: "استخدم موقعي الحالي",
       confirmLocation: "اعتماد هالموقع",
       cancel: "إلغاء",
-      mapsNotConfigured: "خرائط Google لسه مو مهيأة. حالياً اكتب عنوان التوصيل يدوياً.",
+      mapsNotConfigured: "الخريطة مو جاهزة حالياً. اكتب عنوان التوصيل يدوياً مؤقتاً.",
       mapsLoadError: "ما قدرنا نحمل خرائط Google. تأكد من مفتاح API والخدمات المفعّلة، أو اكتب العنوان يدوياً.",
       copyAddress: "نسخ العنوان",
       notes: "ملاحظات (اختياري)",
@@ -1050,17 +1074,20 @@
       orderType: "Ɔkwan a wopɛ sɛ wunya aduan no",
       address: "Beae a wɔde bɛbrɛ wo / agyiraehyɛde",
       addressHint: "Kyerɛw fie nɔma, kwan, mpɔtam ne beae bi a ɛda hɔ pefee te sɛ sotɔɔ anaa gyinabea.",
-      chooseLocation: "Paw beae wɔ Google Maps so",
+      chooseLocation: "Paw beae wɔ map no so",
       clearLocation: "Yi beae no fi map no so",
       locationNotSelected: "Wonpaw beae bi wɔ map no so. Wubetumi akyerɛw wo address.",
       locationSelected: "Wɔapaw beae a wɔde bɛbrɛ wo",
       mapTitle: "Paw beae a wɔde bɛbrɛ wo",
       mapHelp: "Hwehwɛ beae bi anaa mia map no so na fa pin no to hɔ. Kyerɛw fie nɔma anaa agyiraehyɛde wɔ address field no mu.",
       mapSearchPlaceholder: "Hwehwɛ beae anaa address",
+      mapSearchButton: "Hwehwɛ",
+      mapSearchNoResults: "Yenhu beae a ɛfata. Sɔ agyiraehyɛde a ɛbɛn no hwɛ anaa mia map no so.",
+      mapSearchError: "Address search no nni hɔ seesei. Mia map no so na paw beae no.",
       useCurrentLocation: "Fa me baabi a mewɔ seesei",
       confirmLocation: "Fa beae yi di dwuma",
       cancel: "Twa mu",
-      mapsNotConfigured: "Wɔnhyehyɛɛ Google Maps no seesei. Kyerɛw wo address wɔ ase ha.",
+      mapsNotConfigured: "Map no nnya mmra. Kyerɛw wo address wɔ ase ha seesei.",
       mapsLoadError: "Google Maps antumi amma. Hwɛ API key ne APIs a wɔasɔ ano, anaa kyerɛw wo address.",
       copyAddress: "Kɔpi address",
       notes: "Nsɛm foforo (wopɛ a)",
@@ -1826,6 +1853,7 @@
   }
 
 
+  $("#delivery-map-search-form")?.addEventListener("submit", event => { void searchDeliveryAddress(event); });
   $("#choose-delivery-location")?.addEventListener("click", () => { void openDeliveryMapPicker(); });
   $("#delivery-map-close")?.addEventListener("click", closeDeliveryMapPicker);
   $("#delivery-map-cancel")?.addEventListener("click", closeDeliveryMapPicker);
@@ -1848,8 +1876,7 @@
       const lng = position.coords.longitude;
       setPendingDeliveryLocation(lat, lng);
       if (deliveryMapInstance) {
-        deliveryMapInstance.setCenter({ lat, lng });
-        deliveryMapInstance.setZoom(17);
+        deliveryMapInstance.flyTo([lat, lng], 17);
       }
     }, error => {
       if (button) button.disabled = false;
