@@ -1406,3 +1406,31 @@ html body.admin-body #orders-list .order-actions [data-delete-order],
 html body.admin-body #history-list .order-actions [data-delete-order]{
   background:#FFF2EF!important;color:#832A34!important;border:1px solid #E7C9C5!important;
 }
+
+
+/* Customer home feature icons — one clear pastel color per action.
+   Place after inherited card text rules so SVG strokes also receive the chosen color. */
+html body.customer-home-page .customer-home-card.customer-card-order .customer-card-icon,
+html body.customer-home-page .customer-home-card.customer-card-order .customer-card-icon svg,
+html body.customer-home-page .customer-home-card.customer-card-order .customer-card-icon svg *{
+  background-color:#E4EFF9!important;
+  color:#376F9A!important;
+  border-color:#CDDFEF!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-history .customer-card-icon,
+html body.customer-home-page .customer-home-card.customer-card-history .customer-card-icon svg,
+html body.customer-home-page .customer-home-card.customer-card-history .customer-card-icon svg *{
+  background-color:#E2F0E7!important;
+  color:#36765B!important;
+  border-color:#C8E2D2!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-help .customer-card-icon,
+html body.customer-home-page .customer-home-card.customer-card-help .customer-card-icon svg,
+html body.customer-home-page .customer-home-card.customer-card-help .customer-card-icon svg *{
+  background-color:#FFF2CB!important;
+  color:#8B6A21!important;
+  border-color:#F0DE9B!important;
+}
+html body.customer-home-page .customer-home-card .customer-card-icon svg{
+  width:27px!important;height:27px!important;
+}
