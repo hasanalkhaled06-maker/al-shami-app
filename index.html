@@ -189,7 +189,22 @@
     @media(max-width:760px){.customer-home-actions{margin:20px 0;padding:15px;border-radius:19px}.customer-home-actions-intro{margin-bottom:16px}.customer-home-grid{grid-template-columns:1fr;gap:12px}.customer-home-card{min-height:175px;padding:17px;border-radius:17px}.customer-card-icon{width:47px;height:47px;flex-basis:47px;border-radius:14px}.customer-card-icon svg{width:29px;height:29px}.customer-card-title{font-size:24px;margin:17px 0 6px}.customer-card-description{min-height:0;font-size:12px}.customer-card-bottom{padding-top:11px;margin-top:14px}.customer-home-actions-intro h2{font-size:25px}}
     @media(max-width:360px){.customer-card-badge{font-size:8px;padding:6px 7px}.customer-home-card{padding:14px}}
 
-</style>
+
+    /* Customer landing page shows only the three action cards until a choice is made. */
+    body.customer-home-page #customer-orders-panel{display:none!important}
+    body.customer-home-page:not(.customer-ordering-open) #customer-ordering-view{display:none!important}
+    body.customer-home-page.customer-ordering-open .customer-home-actions{display:none!important}
+    .customer-ordering-view{margin:10px 0 28px;scroll-margin-top:18px}
+    .customer-ordering-view[hidden]{display:none!important}
+    .customer-ordering-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 20px;padding:0 0 14px;border-bottom:1px solid #ead8d4}
+    .customer-ordering-toolbar-title{margin:0;color:#7f1824;font-size:11px;font-weight:900;letter-spacing:.13em}
+    .customer-ordering-toolbar-title span{color:#c7a15a}
+    #customer-order-back{flex:0 0 auto}
+    body.customer-home-page #floating-cart-button{display:none}
+    body.customer-home-page.customer-ordering-open #floating-cart-button{display:flex}
+    @media(max-width:480px){.customer-ordering-toolbar{align-items:flex-start}.customer-ordering-toolbar-title{font-size:9px;padding-top:15px}}
+
+  </style>
 </head>
 
 
@@ -355,6 +370,11 @@
     </section>
 
 
+    <section id="customer-ordering-view" class="customer-ordering-view" hidden aria-labelledby="menu-section">
+      <div class="customer-ordering-toolbar">
+        <button id="customer-order-back" type="button" class="btn btn-light" data-i18n="backToHome">← Back to home</button>
+        <p class="customer-ordering-toolbar-title">AL SHAMI <span>·</span> ORDER ONLINE</p>
+      </div>
     <div class="section-heading customer-menu-heading" id="menu-section">
       <div>
         <p class="eyebrow">OUR MENU</p>
@@ -444,6 +464,7 @@
         <button id="place-order" class="btn btn-primary btn-wide" type="submit" data-i18n="send">Place order</button>
         <p id="checkout-message" role="status" aria-live="polite" class="status-message"></p>
       </form>
+    </section>
     </section>
   </main>
 
@@ -620,7 +641,7 @@
     })();
   </script>
   <script src="config.js"></script>
-  <script src="customer.js?v=customer-home-cards-20261023a"></script>
+  <script src="customer.js?v=customer-order-flow-20261023b"></script>
   <script src="pwa.js"></script>
 </body>
 </html>
