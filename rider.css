@@ -149,3 +149,15 @@ a{color:inherit}
 .auth-mode-button{min-height:42px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-weight:800;font-size:13px}
 .auth-mode-button.is-active{background:#fff;color:var(--wine);box-shadow:0 2px 8px rgba(55,25,28,.09)}
 .auth-mode-button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+
+.approval-panel{max-width:540px}
+.approval-panel h1{margin-top:12px}
+.approval-status-chip{display:inline-flex;align-items:center;gap:9px;margin:12px 0 20px;padding:10px 13px;border:1px solid #f0deb0;border-radius:999px;background:#fff9e9;color:#76531b;font-size:12px;font-weight:850}
+.approval-status-dot{width:8px;height:8px;border-radius:50%;background:#c99b38}
+.approval-panel.is-approved .approval-status-chip{border-color:#cde5d3;background:#eff8f1;color:#246941}
+.approval-panel.is-approved .approval-status-dot{background:#2f965e}
+.approval-panel.is-error .approval-status-chip{border-color:#f0d1c9;background:#fff2ee;color:#a12b2b}
+.approval-panel.is-error .approval-status-dot{background:#bd3434}
+.approval-refresh-button{width:100%;margin:4px 0 8px}
+.approval-refresh-button:disabled{opacity:.7}
