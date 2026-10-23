@@ -252,6 +252,10 @@
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
     if ($("#delivery-latitude")) $("#delivery-latitude").value = String(lat);
     if ($("#delivery-longitude")) $("#delivery-longitude").value = String(lng);
+    const addressInput = checkoutForm?.elements?.delivery_address;
+    if (addressInput && pendingDeliveryLocation.address && !String(addressInput.value || "").trim()) {
+      addressInput.value = String(pendingDeliveryLocation.address).slice(0, 250);
+    }
     const status = $("#delivery-location-status");
     if (status) {
       status.textContent = tr("locationSelected") + ": " + lat.toFixed(6) + ", " + lng.toFixed(6);
