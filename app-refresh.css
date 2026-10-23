@@ -656,3 +656,127 @@ body.rider-app{min-height:100vh;background:#f2f1ee!important;color:var(--shami-i
 .receipt-code-copy:active{transform:scale(.98)}
 .receipt-code-copy.is-copied{background:#286747;border-color:#286747}
 @media(max-width:420px){.receipt-code-row{align-items:stretch}.receipt-code-copy{width:100%}}
+
+/* AL SHAMI contemporary premium theme — charcoal, wine and gold; no green accent. */
+:root{
+  --shami-wine:#8d172b;
+  --shami-wine-deep:#310e16;
+  --shami-ink:#f7f1ed;
+  --shami-muted:#b8aeb0;
+  --shami-line:#403438;
+  --shami-paper:#171416;
+  --shami-gold:#d9b46b;
+}
+body.customer-home-page,body.customer-history-page,body.rider-app,body.admin-app{
+  background:#111011!important;color:#f7f1ed!important;
+}
+body.customer-home-page .hero,body.customer-history-page .hero{
+  background:radial-gradient(circle at 90% 0%,rgba(217,180,107,.18),transparent 34%),linear-gradient(135deg,#211418 0%,#40101b 60%,#741824 100%)!important;
+  box-shadow:0 12px 36px rgba(0,0,0,.28)!important;
+}
+body.customer-home-page .hero:before,body.customer-history-page .hero:before{
+  border-color:rgba(217,180,107,.22)!important;
+  box-shadow:0 0 0 24px rgba(217,180,107,.035),0 0 0 54px rgba(217,180,107,.02)!important;
+}
+body.customer-home-page .hero h1,body.customer-history-page .hero h1,
+body.customer-home-page .hero p,body.customer-history-page .hero p{color:#fff8f0!important}
+body.customer-home-page .customer-home-actions{
+  margin:18px 0 22px!important;padding:18px!important;border:1px solid #403137!important;
+  border-radius:24px!important;background:linear-gradient(145deg,#201a1c,#171416)!important;
+  box-shadow:0 16px 38px rgba(0,0,0,.2)!important;
+}
+body.customer-home-page .customer-home-actions-intro h2{color:#fff8f0!important;letter-spacing:-.035em}
+body.customer-home-page .customer-home-actions-intro>p:not(.eyebrow){color:#bdb2b4!important}
+body.customer-home-page .customer-home-card{
+  background:linear-gradient(145deg,#2a2023,#1a1718)!important;border:1px solid #44363a!important;
+  border-radius:19px!important;color:#fff8f0!important;box-shadow:0 8px 22px rgba(0,0,0,.18)!important;
+}
+body.customer-home-page .customer-home-card:hover{border-color:#b68c4e!important;transform:translateY(-2px)}
+body.customer-home-page .customer-card-icon{background:#3a2027!important;color:#e1bd78!important}
+body.customer-home-page .customer-home-card p,body.customer-home-page .customer-home-card small{color:#c5b9bb!important}
+body.customer-home-page .section-heading h2,body.customer-history-page .section-heading h2,
+body.customer-home-page h2,body.customer-history-page h2{color:#fff7f0!important;letter-spacing:-.035em}
+body.customer-home-page .eyebrow,body.customer-history-page .eyebrow{color:#d9b46b!important}
+body.customer-home-page #menu-section,body.customer-history-page #menu-section{scroll-margin-top:18px}
+body.customer-home-page #search,body.customer-home-page .menu-tools select,
+body.customer-history-page #search,body.customer-history-page .menu-tools select{
+  background:#211c1e!important;color:#fff7f0!important;border:1px solid #47383c!important;
+  border-radius:15px!important;min-height:48px!important;
+}
+body.customer-home-page #search::placeholder,body.customer-history-page #search::placeholder{color:#a99da0!important}
+body.customer-home-page .chips button,body.customer-home-page .chips .chip,
+body.customer-history-page .chips button,body.customer-history-page .chips .chip{
+  background:#211c1e!important;color:#e8dfe0!important;border:1px solid #44363a!important;border-radius:999px!important;
+}
+body.customer-home-page .chips button.active,body.customer-home-page .chips .active,
+body.customer-history-page .chips button.active,body.customer-history-page .chips .active{
+  background:#8d172b!important;color:#fff!important;border-color:#b43a4c!important;
+}
+body.customer-home-page .product-card,body.customer-history-page .product-card{
+  background:#1c191a!important;border:1px solid #393033!important;border-radius:20px!important;
+  box-shadow:0 12px 28px rgba(0,0,0,.24)!important;color:#fff8f0!important;
+}
+body.customer-home-page .product-card h3,body.customer-home-page .product-card h4,
+body.customer-history-page .product-card h3,body.customer-history-page .product-card h4{color:#fff8f0!important}
+body.customer-home-page .product-card p,body.customer-home-page .product-card .muted,
+body.customer-history-page .product-card p,body.customer-history-page .product-card .muted{color:#b9afb1!important}
+body.customer-home-page .product-image,body.customer-history-page .product-image{background:#2b2426!important}
+body.customer-home-page .product-card button,body.customer-history-page .product-card button,
+body.customer-home-page .btn-primary,body.customer-history-page .btn-primary{
+  background:linear-gradient(135deg,#a32236,#741824)!important;color:#fff8f0!important;border-color:#a83a49!important;
+  border-radius:13px!important;font-weight:800!important;box-shadow:0 6px 16px rgba(116,24,36,.24)!important;
+}
+body.customer-home-page .btn-light,body.customer-history-page .btn-light,
+body.customer-home-page .customer-orders-panel .btn,body.customer-history-page .customer-orders-panel .btn{
+  background:#262022!important;color:#f6ece8!important;border:1px solid #493a3e!important;border-radius:13px!important;
+}
+body.customer-home-page .customer-orders-panel,body.customer-history-page .customer-orders-panel,
+body.customer-home-page .customer-order-card,body.customer-history-page .customer-order-card{
+  background:#1b1819!important;border-color:#403438!important;color:#f7f1ed!important;border-radius:20px!important;
+}
+body.customer-home-page .customer-orders-note,body.customer-home-page .customer-order-card p,
+body.customer-history-page .customer-orders-note,body.customer-history-page .customer-order-card p{color:#b8aeb0!important}
+body.customer-home-page .receipt-code-note,body.customer-history-page .receipt-code-note{
+  background:#2a2021!important;border-color:#6b4b35!important;
+}
+body.customer-home-page .receipt-code-label,body.customer-history-page .receipt-code-label{color:#e1d4d0!important}
+body.customer-home-page .receipt-code-value,body.customer-history-page .receipt-code-value{color:#f0ca83!important}
+body.customer-home-page .receipt-code-copy,body.customer-history-page .receipt-code-copy{
+  background:#8d172b!important;color:#fff!important;border-color:#a33b49!important;
+}
+body.customer-home-page .receipt-code-copy.is-copied,body.customer-history-page .receipt-code-copy.is-copied{
+  background:#8d172b!important;border-color:#d9b46b!important;
+}
+body.customer-home-page footer,body.customer-history-page footer{
+  background:#1b1416!important;color:#e7d8d2!important;border-color:#403137!important;
+}
+body.customer-home-page footer a,body.customer-history-page footer a{color:#e4bd76!important}
+body.customer-home-page .floating-cart-button{
+  background:linear-gradient(120deg,#9d1e32,#661421)!important;color:#fff!important;border:1px solid #b84452!important;
+  box-shadow:0 12px 32px rgba(0,0,0,.35)!important;border-radius:17px!important;
+}
+body.rider-app .rider-header,body.rider-app .welcome-panel,body.rider-app .summary-card,
+body.rider-app .location-panel,body.rider-app .delivery-card,body.rider-app .empty-state,
+body.admin-app .admin-shell,body.admin-app .dashboard-card,body.admin-app .home-card,
+body.admin-app .settings-hub-card,body.admin-app .order-card{
+  background:#1c191a!important;color:#f7f1ed!important;border-color:#403438!important;
+}
+body.rider-app h1,body.rider-app h2,body.rider-app h3,body.admin-app h1,body.admin-app h2,body.admin-app h3{color:#fff7f0!important}
+body.rider-app p,body.rider-app small,body.admin-app p,body.admin-app small{color:#b8aeb0}
+body.rider-app button,body.admin-app button,
+body.rider-app .primary-button,body.admin-app .btn-primary{
+  background:#8d172b!important;color:#fff8f0!important;border-color:#a83a49!important;
+}
+body.rider-app .status-success,body.admin-app .status-success,
+body.rider-app .success,body.admin-app .success{color:#e2bd78!important;background:#34271c!important;border-color:#72542d!important}
+body.rider-app .summary-icon,body.admin-app .summary-icon{background:#34271c!important;color:#e2bd78!important}
+@media(max-width:760px){
+  body.customer-home-page .customer-home-actions{padding:14px!important;border-radius:20px!important}
+  body.customer-home-page .customer-home-grid{gap:10px!important}
+  body.customer-home-page .customer-home-card{border-radius:16px!important}
+  body.customer-home-page .menu-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:11px!important}
+  body.customer-home-page .product-card{border-radius:17px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  body.customer-home-page *,body.customer-history-page *,body.rider-app *,body.admin-app *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
