@@ -1324,7 +1324,7 @@
     }
   }
 
-  function animateCustomerRiderMarker(record, point) {
+  function animateCustomerRiderMarker(record, point, durationMs) {
     if (!record.riderMarker) return;
     if (record.animationFrame && typeof window.cancelAnimationFrame === "function") {
       window.cancelAnimationFrame(record.animationFrame);
@@ -1338,7 +1338,7 @@
       return;
     }
     const startedAt = window.performance?.now ? window.performance.now() : Date.now();
-    const duration = Math.min(1100, Math.max(450, moved * 2.5));
+    const duration = Math.min(18000, Math.max(450, Number(durationMs) || 6000));
     const frame = nowValue => {
       if (!customerRiderMapInstances.has(record.token) || !record.riderMarker) return;
       const now = Number.isFinite(nowValue) ? nowValue : Date.now();
@@ -1520,6 +1520,7 @@
         lastMovementPoint: initialRider,
         lastMovementAt: host.dataset.riderUpdatedAt ? Date.parse(host.dataset.riderUpdatedAt) : 0,
         derivedSpeedMps: null,
+        lastFixIntervalMs: 15000,
         latestSpeedMps: host.dataset.riderSpeed || null,
         headingDeg: initialHeading,
         isStale: host.dataset.riderStale === "true",
@@ -1599,8 +1600,11 @@
           const movedMeters = customerPointDistanceMeters(record.lastMovementPoint || previousPoint, point);
           if (elapsedSeconds > 0 && elapsedSeconds <= 120 && Number.isFinite(movedMeters)) {
             record.derivedSpeedMps = movedMeters / elapsedSeconds;
+            const sampleAgeMs = Math.max(0, Date.now() - sampleTime);
+            record.lastFixIntervalMs = Math.max(1800, Math.min(18000, elapsedSeconds * 1000 - sampleAgeMs - 700));
           } else {
             record.derivedSpeedMps = null;
+            record.lastFixIntervalMs = 6000;
           }
           record.lastMovementPoint = point;
           record.lastMovementAt = sampleTime;
@@ -1623,8 +1627,15 @@
             record.map.setView([point.lat, point.lng], 15);
           }
         } else {
-          if (!previousPoint || customerPointDistanceMeters(previousPoint, point) > 2) {
-            animateCustomerRiderMarker(record, point);
+          const movedFromPreviousFix = previousPoint ? customerPointDistanceMeters(previousPoint, point) : 0;
+          const reportedSpeed = Number(data.speed_mps);
+          const reportedMoving = data.speed_mps !== null && data.speed_mps !== "" &&
+            Number.isFinite(reportedSpeed) && reportedSpeed > 0.9;
+          const derivedMoving = Number.isFinite(record.derivedSpeedMps) && record.derivedSpeedMps > 0.9;
+          if (previousPoint && movedFromPreviousFix >= 7 && (reportedMoving || derivedMoving)) {
+            animateCustomerRiderMarker(record, point, record.lastFixIntervalMs || 6000);
+          } else {
+            record.riderMarker.setLatLng([point.lat, point.lng]);
           }
           if (data.heading_deg !== null && data.heading_deg !== undefined && data.heading_deg !== "") {
             record.riderMarker.setIcon(riderBikeIcon(data.heading_deg));
