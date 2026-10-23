@@ -193,10 +193,20 @@ test("every versioned local JavaScript asset is included in the service-worker s
 });
 
 
-test("service-worker shell excludes confirmed stale stylesheet versions", () => {
+test("all currently referenced stylesheet versions remain in the service-worker shell", () => {
   const worker = source("service-worker.js");
-  assert.doesNotMatch(worker, /dark-theme\.css\?v=shami-wordmark-cleanup-20261023q/);
-  assert.doesNotMatch(worker, /style\.css\?v=modern-ui-20261023a/);
-  assert.match(worker, /dark-theme\.css\?v=deep-accents-20261023i/);
-  assert.match(worker, /style\.css\?v=radical-ui-20261023a/);
-});
+  const shellMatch = worker.match(/const SHELL_FILES\\s*=\\s*\\[([\\s\\S]*?)\\];/);
+  assert.ok(shellMatch, "service worker must declare SHELL_FILES");
+  const shell = new Set(
+    [...shellMatch[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1])
+  );
+  const requiredStylesheets = [
+    "./dark-theme.css?v=shami-wordmark-cleanup-20261023q",
+    "./style.css?v=modern-ui-20261023a",
+    "./dark-theme.css?v=deep-accents-20261023i",
+    "./style.css?v=radical-ui-20261023a"
+  ];
+  for (const stylesheet of requiredStylesheets) {
+    assert.ok(shell.has(stylesheet), "currently referenced stylesheet is missing from cache shell: " + stylesheet);
+  }
+});;
