@@ -39,11 +39,17 @@
       <div class="eyebrow">PRIVATE RIDER ACCESS</div>
       <h1>Your deliveries,<br><span>clear and on track.</span></h1>
       <p class="muted">Sign in with the rider account provided by AL SHAMI. This app is for viewing assigned delivery details and sharing GPS location only.</p>
+      <div class="auth-mode-switch" role="group" aria-label="Account action">
+        <button id="show-signin" class="auth-mode-button is-active" type="button" aria-pressed="true">Sign in</button>
+        <button id="show-signup" class="auth-mode-button" type="button" aria-pressed="false">Create account</button>
+      </div>
       <form id="login-form" class="login-form">
+        <label for="rider-name" id="rider-name-label" hidden>Full name</label>
+        <input id="rider-name" name="fullName" type="text" autocomplete="name" maxlength="100" placeholder="Your full name" hidden>
         <label for="rider-email">Email address</label>
         <input id="rider-email" name="email" type="email" autocomplete="username" required placeholder="rider@example.com">
         <label for="rider-password">Password</label>
-        <input id="rider-password" name="password" type="password" autocomplete="current-password" required placeholder="Your password">
+        <input id="rider-password" name="password" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters">
         <button class="primary-button" type="submit" id="login-button">Sign in securely <span aria-hidden="true">→</span></button>
         <p id="login-message" class="form-message" role="status"></p>
       </form>
