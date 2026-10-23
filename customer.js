@@ -1986,6 +1986,17 @@
       const deliveryLatitude = deliveryLatitudeRaw ? Number(deliveryLatitudeRaw) : null;
       const deliveryLongitude = deliveryLongitudeRaw ? Number(deliveryLongitudeRaw) : null;
 
+      if (orderType === "delivery" && (deliveryLatitude === null || deliveryLongitude === null)) {
+        showCheckoutMessage(
+          lang === "ar"
+            ? "اختار موقع التوصيل من الخريطة وثبّته قبل إرسال الطلب. تحديد الموقع إلزامي للتوصيل."
+            : "Please select and confirm your delivery location on the map before placing the order. Map location is required for delivery.",
+          true
+        );
+        $("#choose-delivery-location")?.focus();
+        return;
+      }
+
       if (orderType === "delivery" && !address) {
         showCheckoutMessage(tr("addressError"), true);
         formElement.elements.delivery_address.focus();
