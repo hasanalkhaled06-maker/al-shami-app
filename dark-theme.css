@@ -1265,3 +1265,50 @@ html body.customer-history-page .tracked-order .customer-rider-google-maps{
   background:#EAF2F7!important;background-image:none!important;color:#203748!important;border-color:#CADCE7!important;
 }
 
+
+
+
+/* FINAL FIX: the actual order markup is .customer-order-card, and the rider
+   tracking section is a direct descendant of that card (not .tracked-order). */
+html body.customer-home-page #customer-orders-panel,
+html body.customer-history-page #customer-orders-panel,
+html body.customer-home-page .customer-orders-panel,
+html body.customer-history-page .customer-orders-panel,
+html body.customer-home-page .customer-order-card,
+html body.customer-history-page .customer-order-card{
+  background:#FFFDF8!important;
+  background-image:none!important;
+  color:#203748!important;
+  border-color:#CADCE7!important;
+  box-shadow:0 8px 24px rgba(35,71,95,.07)!important;
+}
+html body.customer-home-page .customer-order-card :is(.customer-rider-tracking,.customer-rider-eta,.receipt-code-note),
+html body.customer-history-page .customer-order-card :is(.customer-rider-tracking,.customer-rider-eta,.receipt-code-note){
+  background:#EAF2F7!important;
+  background-image:none!important;
+  color:#203748!important;
+  border-color:#C7DCE8!important;
+}
+html body.customer-home-page .customer-order-card .customer-rider-eta,
+html body.customer-history-page .customer-order-card .customer-rider-eta,
+html body.customer-home-page .customer-order-card .receipt-code-note,
+html body.customer-history-page .customer-order-card .receipt-code-note{
+  background:#FFFDF8!important;
+}
+html body.customer-home-page .customer-order-card :is(.customer-rider-map-heading strong,.customer-rider-map-heading p,.customer-rider-eta-copy strong,.customer-rider-eta-copy small,.customer-rider-map-status,.tracked-date,.tracked-order-meta,.tracked-items),
+html body.customer-history-page .customer-order-card :is(.customer-rider-map-heading strong,.customer-rider-map-heading p,.customer-rider-eta-copy strong,.customer-rider-eta-copy small,.customer-rider-map-status,.tracked-date,.tracked-order-meta,.tracked-items){
+  color:#203748!important;
+}
+html body.customer-home-page .customer-order-card .customer-rider-eta-copy span,
+html body.customer-history-page .customer-order-card .customer-rider-eta-copy span{color:#26734B!important}
+html body.customer-home-page .customer-order-card .customer-rider-google-maps,
+html body.customer-history-page .customer-order-card .customer-rider-google-maps{
+  background:#315F7E!important;color:#FFFFFF!important;border:1px solid #315F7E!important;
+}
+html body.customer-home-page .customer-order-card .receipt-code-label,
+html body.customer-history-page .customer-order-card .receipt-code-label{color:#526D7E!important}
+html body.customer-home-page .customer-order-card .receipt-code-value,
+html body.customer-history-page .customer-order-card .receipt-code-value{color:#315F7E!important}
+html body.customer-home-page .customer-order-card :is(.tracked-card-heading,.tracked-order-meta,.tracked-items li),
+html body.customer-history-page .customer-order-card :is(.tracked-card-heading,.tracked-order-meta,.tracked-items li){border-color:#D5E3EA!important}
+
