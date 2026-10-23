@@ -255,16 +255,72 @@
       </section>
 
       <section id="ops-staff" class="hidden">
-        <h3>Staff roster</h3>
-        <p class="ops-note">This is a staff contact/role register. It does not create login accounts or change account permissions.</p>
-        <form id="ops-staff-form" class="ops-form">
-          <label>Full name
-            <input name="full_name" required maxlength="120">
+        <h3>Employee management</h3>
+        <p class="ops-note">Private employee records. Photos, ID scans and contracts are stored in a private bucket and can only be accessed by authorised administrators. Staff records do not create login accounts or change account permissions.</p>
+        <form id="ops-staff-form" class="ops-form" enctype="multipart/form-data">
+          <input name="id" type="hidden">
+          <label>Full name *
+            <input name="full_name" required maxlength="120" autocomplete="name">
+          </label>
+          <label>Photo (JPG, PNG, WEBP; max 10 MB)
+            <input name="photo_file" type="file" accept="image/jpeg,image/png,image/webp">
           </label>
           <label>Phone
-            <input name="phone" maxlength="40">
+            <input name="phone" maxlength="40" autocomplete="tel">
           </label>
-          <label>Role
+          <label>Email
+            <input name="email" type="email" maxlength="150" autocomplete="email">
+          </label>
+          <label>Date of birth
+            <input name="date_of_birth" type="date">
+          </label>
+          <label>Nationality
+            <input name="nationality" maxlength="80">
+          </label>
+          <label class="wide">Home address
+            <input name="address" maxlength="300" autocomplete="street-address">
+          </label>
+          <label>Emergency contact name
+            <input name="emergency_contact_name" maxlength="120">
+          </label>
+          <label>Emergency contact phone
+            <input name="emergency_contact_phone" maxlength="40">
+          </label>
+          <label>Identity document type
+            <select name="id_type">
+              <option value="">Not specified</option>
+              <option value="Ghana Card">Ghana Card</option>
+              <option value="Passport">Passport</option>
+              <option value="National ID">National ID</option>
+              <option value="Residence Permit">Residence Permit</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+          <label>ID / passport number
+            <input name="id_number" maxlength="100" autocomplete="off">
+          </label>
+          <label>ID expiry date
+            <input name="id_expiry_date" type="date">
+          </label>
+          <label>ID scan or passport copy (PDF/JPG/PNG/WEBP; max 10 MB)
+            <input name="id_file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
+          </label>
+          <label>Job title / position
+            <input name="position_title" maxlength="120" placeholder="e.g. Chef, Waiter, Cashier">
+          </label>
+          <label>Department
+            <select name="department">
+              <option value="">Not specified</option>
+              <option value="Management">Management</option>
+              <option value="Front of house">Front of house</option>
+              <option value="Kitchen">Kitchen</option>
+              <option value="Delivery">Delivery</option>
+              <option value="Cleaning">Cleaning</option>
+              <option value="Accounts">Accounts</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+          <label>System role
             <select name="role">
               <option value="staff">Staff</option>
               <option value="manager">Manager</option>
@@ -273,8 +329,72 @@
               <option value="owner">Owner</option>
             </select>
           </label>
-          <button class="btn btn-primary" type="submit">Add staff record</button>
+          <label>Employment type
+            <select name="employment_type">
+              <option value="full_time">Full-time</option>
+              <option value="part_time">Part-time</option>
+              <option value="temporary">Temporary</option>
+              <option value="casual">Casual</option>
+              <option value="contract">Contract</option>
+            </select>
+          </label>
+          <label>Employment status
+            <select name="employment_status">
+              <option value="active">Active</option>
+              <option value="on_leave">On leave</option>
+              <option value="suspended">Suspended</option>
+              <option value="terminated">Terminated</option>
+            </select>
+          </label>
+          <label>Start date
+            <input name="start_date" type="date">
+          </label>
+          <label>End date (if applicable)
+            <input name="end_date" type="date">
+          </label>
+          <label>Salary amount (GH₵)
+            <input name="salary_amount" type="number" min="0" step="0.01">
+          </label>
+          <label>Salary frequency
+            <select name="salary_frequency">
+              <option value="monthly">Monthly</option>
+              <option value="weekly">Weekly</option>
+              <option value="daily">Daily</option>
+              <option value="hourly">Hourly</option>
+            </select>
+          </label>
+          <label>Payment method
+            <select name="payment_method">
+              <option value="">Not specified</option>
+              <option value="cash">Cash</option>
+              <option value="mobile_money">Mobile Money</option>
+              <option value="bank">Bank transfer</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <label>Contract / employment document (PDF/JPG/PNG/WEBP; max 10 MB)
+            <input name="contract_file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
+          </label>
+          <label class="wide">Job duties / responsibilities
+            <textarea name="job_description" rows="3" maxlength="3000"></textarea>
+          </label>
+          <label class="wide">Private notes
+            <textarea name="notes" rows="3" maxlength="3000"></textarea>
+          </label>
+          <div class="wide" id="ops-staff-existing-files"></div>
+          <div class="wide" style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" id="ops-staff-save" type="submit">Save employee</button>
+            <button class="btn btn-light hidden" id="ops-staff-cancel" type="button">Cancel edit</button>
+          </div>
         </form>
+        <div class="ops-grid">
+          <div class="ops-stat"><small>Total employee records</small><strong id="ops-staff-total">—</strong></div>
+          <div class="ops-stat"><small>Active employees</small><strong id="ops-staff-active">—</strong></div>
+          <div class="ops-stat"><small>Employment records needing review</small><strong id="ops-staff-review">—</strong></div>
+        </div>
+        <label style="display:flex;gap:8px;align-items:center;margin:10px 0">Search employees
+          <input id="ops-staff-search" type="search" placeholder="Name, phone, ID or position" style="max-width:420px">
+        </label>
         <div id="ops-staff-list" class="ops-table-wrap"></div>
       </section>
 
@@ -487,6 +607,8 @@
     $("#ops-movement-form").addEventListener("submit", saveMovement);
     $("#ops-supplier-form").addEventListener("submit", addSupplier);
     $("#ops-staff-form").addEventListener("submit", addStaff);
+    $("#ops-staff-cancel").addEventListener("click", resetStaffForm);
+    $("#ops-staff-search").addEventListener("input", () => { void renderStaffList().catch(showError); });
     $("#ops-expense-form").addEventListener("submit", addExpense);
     $("#ops-shift-open-form").addEventListener("submit", openShift);
     $("#ops-purchase-form").addEventListener("submit", createPurchaseOrder);
@@ -777,40 +899,216 @@
     }
   }
 
+  let staffCache = [];
+
+  function staffText(value) {
+    return String(value ?? "").trim() || null;
+  }
+
+  function staffDate(value) {
+    return String(value || "").trim() || null;
+  }
+
+  async function staffSignedUrl(path) {
+    if (!path) return null;
+    const { data, error } = await db.storage.from("staff-private").createSignedUrl(path, 300);
+    if (error) {
+      console.warn("Could not create a temporary staff document link:", error.message);
+      return null;
+    }
+    return data?.signedUrl || null;
+  }
+
   async function loadStaff() {
     const { data, error } = await db
       .from("staff_profiles")
       .select("*")
-      .eq("is_active", true)
       .order("full_name");
     if (error) throw error;
-    $("#ops-staff-list").innerHTML = table(
-      ["Name", "Phone", "Role", "Added"],
-      (data || []).map(person => [
+    staffCache = data || [];
+    $("#ops-staff-total").textContent = staffCache.length;
+    $("#ops-staff-active").textContent = staffCache.filter(person => person.employment_status === "active" && person.is_active).length;
+    $("#ops-staff-review").textContent = staffCache.filter(person =>
+      (person.id_expiry_date && person.id_expiry_date < localDateString()) ||
+      (person.employment_status === "active" && !person.start_date) ||
+      (person.employment_status === "terminated" && !person.end_date)
+    ).length;
+    await renderStaffList();
+  }
+
+  async function renderStaffList() {
+    const query = String($("#ops-staff-search")?.value || "").trim().toLowerCase();
+    const people = staffCache.filter(person => !query || [
+      person.full_name, person.phone, person.id_number, person.position_title,
+      person.department, person.role, person.email
+    ].some(value => String(value || "").toLowerCase().includes(query)));
+
+    const rows = await Promise.all(people.map(async person => {
+      const photoUrl = await staffSignedUrl(person.photo_path);
+      const idUrl = await staffSignedUrl(person.id_document_path);
+      const contractUrl = await staffSignedUrl(person.contract_path);
+      const photo = photoUrl
+        ? '<img src="' + esc(photoUrl) + '" alt="Employee photo" style="width:42px;height:42px;object-fit:cover;border-radius:50%">'
+        : '<span aria-label="No photo">—</span>';
+      const files = [
+        idUrl ? '<a href="' + esc(idUrl) + '" target="_blank" rel="noopener">ID document</a>' : "",
+        contractUrl ? '<a href="' + esc(contractUrl) + '" target="_blank" rel="noopener">Contract</a>' : ""
+      ].filter(Boolean).join(" · ") || "—";
+      const statusLabels = {active:"Active",on_leave:"On leave",suspended:"Suspended",terminated:"Terminated"};
+      return [
+        {kind:"html",value:photo},
         person.full_name,
+        person.position_title || person.role || "—",
         person.phone || "—",
-        person.role,
-        new Date(person.created_at).toLocaleDateString()
-      ])
+        person.id_type ? person.id_type + ": " + (person.id_number || "number not entered") : (person.id_number || "—"),
+        person.start_date || "—",
+        person.salary_amount == null ? "—" : money(person.salary_amount) + " / " + (person.salary_frequency || "monthly"),
+        statusLabels[person.employment_status] || person.employment_status || "Active",
+        {kind:"html",value:files},
+        {kind:"html",value:'<button type="button" class="btn btn-light" data-edit-staff="' + esc(person.id) + '">Open / edit</button>'}
+      ];
+    }));
+    $("#ops-staff-list").innerHTML = table(
+      ["Photo","Employee","Position","Phone","Identity","Start date","Salary","Status","Documents","Actions"],
+      rows
     );
+    $("#ops-staff-list").querySelectorAll("[data-edit-staff]").forEach(button => {
+      button.addEventListener("click", () => editStaff(button.dataset.editStaff));
+    });
+  }
+
+  async function uploadStaffFile(file, staffId, kind) {
+    if (!file || !file.name) return null;
+    if (file.size > 10 * 1024 * 1024) throw new Error("Each employee file must be 10 MB or smaller.");
+    const allowed = ["image/jpeg","image/png","image/webp","application/pdf"];
+    if (!allowed.includes(file.type)) throw new Error("Unsupported file type. Use JPG, PNG, WEBP or PDF.");
+    if (kind === "photo" && file.type === "application/pdf") throw new Error("The employee photo must be an image.");
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100) || "document";
+    const path = staffId + "/" + kind + "-" + Date.now() + "-" + safeName;
+    const { error } = await db.storage.from("staff-private").upload(path, file, {
+      upsert: false,
+      contentType: file.type,
+      cacheControl: "3600"
+    });
+    if (error) throw error;
+    return path;
+  }
+
+  function setStaffFormValue(form, name, value) {
+    const input = form.elements.namedItem(name);
+    if (input && input.type !== "file") input.value = value == null ? "" : String(value);
+  }
+
+  async function editStaff(id) {
+    const person = staffCache.find(item => item.id === id);
+    if (!person) return;
+    const form = $("#ops-staff-form");
+    form.reset();
+    Object.keys(person).forEach(key => setStaffFormValue(form, key, person[key]));
+    form.elements.id.value = person.id;
+    $("#ops-staff-save").textContent = "Update employee";
+    $("#ops-staff-cancel").classList.remove("hidden");
+    const links = [];
+    const photoUrl = await staffSignedUrl(person.photo_path);
+    const idUrl = await staffSignedUrl(person.id_document_path);
+    const contractUrl = await staffSignedUrl(person.contract_path);
+    if (photoUrl) links.push('<a href="' + esc(photoUrl) + '" target="_blank" rel="noopener">View current photo</a>');
+    if (idUrl) links.push('<a href="' + esc(idUrl) + '" target="_blank" rel="noopener">View current ID document</a>');
+    if (contractUrl) links.push('<a href="' + esc(contractUrl) + '" target="_blank" rel="noopener">View current contract</a>');
+    $("#ops-staff-existing-files").innerHTML = links.length ? "<strong>Current files:</strong> " + links.join(" · ") + "<p class='ops-note'>Leave a file field empty to keep the current file.</p>" : "";
+    $("#ops-staff-form").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+
+  function resetStaffForm() {
+    const form = $("#ops-staff-form");
+    form.reset();
+    form.elements.id.value = "";
+    $("#ops-staff-save").textContent = "Save employee";
+    $("#ops-staff-cancel").classList.add("hidden");
+    $("#ops-staff-existing-files").textContent = "";
   }
 
   async function addStaff(event) {
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
+    const staffId = String(data.get("id") || "").trim();
+    const employmentStatus = String(data.get("employment_status") || "active");
+    const payload = {
+      full_name: String(data.get("full_name") || "").trim(),
+      phone: staffText(data.get("phone")),
+      email: staffText(data.get("email")),
+      date_of_birth: staffDate(data.get("date_of_birth")),
+      nationality: staffText(data.get("nationality")),
+      address: staffText(data.get("address")),
+      emergency_contact_name: staffText(data.get("emergency_contact_name")),
+      emergency_contact_phone: staffText(data.get("emergency_contact_phone")),
+      id_type: staffText(data.get("id_type")),
+      id_number: staffText(data.get("id_number")),
+      id_expiry_date: staffDate(data.get("id_expiry_date")),
+      position_title: staffText(data.get("position_title")),
+      department: staffText(data.get("department")),
+      role: String(data.get("role") || "staff"),
+      employment_type: String(data.get("employment_type") || "full_time"),
+      employment_status: employmentStatus,
+      is_active: employmentStatus !== "terminated",
+      start_date: staffDate(data.get("start_date")),
+      end_date: staffDate(data.get("end_date")),
+      salary_amount: data.get("salary_amount") === "" ? null : Number(data.get("salary_amount")),
+      salary_frequency: String(data.get("salary_frequency") || "monthly"),
+      payment_method: staffText(data.get("payment_method")),
+      job_description: staffText(data.get("job_description")),
+      notes: staffText(data.get("notes"))
+    };
+
+    if (!payload.full_name) {
+      message("Employee full name is required.", true);
+      return;
+    }
+    if (payload.salary_amount !== null && (!Number.isFinite(payload.salary_amount) || payload.salary_amount < 0)) {
+      message("Salary must be zero or a positive number.", true);
+      return;
+    }
+    if (payload.end_date && payload.start_date && payload.end_date < payload.start_date) {
+      message("End date cannot be before start date.", true);
+      return;
+    }
+
+    const saveButton = $("#ops-staff-save");
+    saveButton.disabled = true;
+    const originalLabel = saveButton.textContent;
+    saveButton.textContent = "Saving…";
+    let createdId = staffId;
     try {
-      const { error } = await db.from("staff_profiles").insert({
-        full_name: String(data.get("full_name") || "").trim(),
-        phone: String(data.get("phone") || "").trim() || null,
-        role: String(data.get("role") || "staff")
-      });
-      if (error) throw error;
-      form.reset();
-      message("Staff record saved. This does not grant login access.");
+      if (staffId) {
+        const { error } = await db.from("staff_profiles").update(payload).eq("id", staffId);
+        if (error) throw error;
+      } else {
+        const { data: inserted, error } = await db.from("staff_profiles").insert(payload).select("id").single();
+        if (error) throw error;
+        createdId = inserted.id;
+      }
+
+      const fileUpdates = {};
+      const photo = data.get("photo_file");
+      const idFile = data.get("id_file");
+      const contract = data.get("contract_file");
+      if (photo && photo.size) fileUpdates.photo_path = await uploadStaffFile(photo, createdId, "photo");
+      if (idFile && idFile.size) fileUpdates.id_document_path = await uploadStaffFile(idFile, createdId, "identity");
+      if (contract && contract.size) fileUpdates.contract_path = await uploadStaffFile(contract, createdId, "contract");
+      if (Object.keys(fileUpdates).length) {
+        const { error } = await db.from("staff_profiles").update(fileUpdates).eq("id", createdId);
+        if (error) throw error;
+      }
+
+      resetStaffForm();
+      message(staffId ? "Employee record updated." : "Employee record saved.");
       await loadStaff();
     } catch (error) {
       showError(error);
+    } finally {
+      saveButton.disabled = false;
+      saveButton.textContent = staffId ? "Update employee" : originalLabel;
     }
   }
 
