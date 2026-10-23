@@ -204,6 +204,34 @@
     body.customer-home-page.customer-ordering-open #floating-cart-button{display:flex}
     @media(max-width:480px){.customer-ordering-toolbar{align-items:flex-start}.customer-ordering-toolbar-title{font-size:9px;padding-top:15px}}
 
+  
+    /* Delivery location picker */
+    .delivery-location-controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}
+    .delivery-location-controls .btn{margin:0;min-height:43px}
+    .delivery-location-status{margin:7px 0 0;color:#615757;font-size:.82rem;line-height:1.45}
+    .delivery-location-status.has-location{color:#17633d;font-weight:700}
+    .delivery-map-modal[hidden]{display:none!important}
+    .delivery-map-modal{position:fixed;inset:0;z-index:10020;display:flex;align-items:center;justify-content:center;padding:14px;padding-bottom:calc(14px + env(safe-area-inset-bottom));}
+    .delivery-map-backdrop{position:absolute;inset:0;background:rgba(18,10,11,.78);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+    .delivery-map-dialog{position:relative;z-index:1;box-sizing:border-box;width:min(760px,100%);max-height:calc(100dvh - 28px - env(safe-area-inset-bottom));overflow:auto;background:#fffdf9;border:1px solid #ead8d4;border-radius:22px;padding:clamp(15px,3vw,24px);box-shadow:0 24px 80px rgba(0,0,0,.28)}
+    .delivery-map-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:10px}
+    .delivery-map-header .eyebrow{margin:0 0 5px;color:#8d1723;font-size:10px;font-weight:900;letter-spacing:.14em}
+    .delivery-map-header h2{margin:0;color:#29191b;font-size:clamp(22px,3vw,29px)}
+    .delivery-map-close{flex:0 0 42px;width:42px;height:42px;padding:0;font-size:25px}
+    .delivery-map-help{margin:8px 0 14px;color:#675b5c;font-size:13px;line-height:1.6}
+    .delivery-map-search-container{margin:0 0 10px}
+    .delivery-map-search-container gmp-place-autocomplete{display:block;width:100%;max-width:100%;--gmpx-color-surface:#fff;--gmpx-color-on-surface:#2b2021}
+    .delivery-map-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0;flex-wrap:wrap}
+    .delivery-map-toolbar .btn{margin:0;min-height:42px}
+    .delivery-map-selection{flex:1;min-width:130px;color:#17633d;font-size:12px;font-weight:700;line-height:1.4;text-align:right;overflow-wrap:anywhere}
+    .delivery-map-canvas{width:100%;height:min(43vh,380px);min-height:260px;border:1px solid #ead8d4;border-radius:14px;overflow:hidden;background:#f4f0eb}
+    .delivery-map-message{margin:10px 0 0;padding:11px 12px;border-radius:10px;background:#fff2df;color:#6f4110;font-size:13px;line-height:1.5}
+    .delivery-map-message.error{background:#fff0f0;color:#8d1723}
+    .delivery-map-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:15px;flex-wrap:wrap}
+    .delivery-map-footer .btn{margin:0;min-height:44px}
+    body.delivery-map-open{overflow:hidden}
+    @media(max-width:520px){.delivery-map-modal{padding:7px;padding-bottom:calc(7px + env(safe-area-inset-bottom))}.delivery-map-dialog{max-height:calc(100dvh - 14px - env(safe-area-inset-bottom));border-radius:17px;padding:14px}.delivery-map-canvas{height:42vh;min-height:250px}.delivery-map-selection{text-align:left}.delivery-map-toolbar{align-items:stretch}.delivery-map-toolbar .btn{width:100%}}
+
   </style>
 </head>
 
@@ -449,6 +477,13 @@
           <label id="address-field">
             <span data-i18n="address">Delivery address / landmark</span>
             <input name="delivery_address" maxlength="250" autocomplete="street-address" aria-describedby="address-help" placeholder="House number, street, landmark">
+            <div class="delivery-location-controls">
+              <button id="choose-delivery-location" class="btn btn-light" type="button" data-i18n="chooseLocation">Choose location on Google Maps</button>
+              <button id="clear-delivery-location" class="btn btn-light" type="button" data-i18n="clearLocation" hidden>Clear location</button>
+            </div>
+            <input id="delivery-latitude" name="delivery_latitude" type="hidden">
+            <input id="delivery-longitude" name="delivery_longitude" type="hidden">
+            <p id="delivery-location-status" class="delivery-location-status" role="status" aria-live="polite" data-i18n="locationNotSelected">No map location selected yet. You can still enter your address manually.</p>
             <small id="address-help" class="field-help" data-i18n="addressHint">Include your house or building number, street, neighbourhood, and a nearby landmark (for example, a shop or station).</small>
           </label>
 
@@ -465,7 +500,31 @@
         <p id="checkout-message" role="status" aria-live="polite" class="status-message"></p>
       </form>
     </section>
-    </section>
+
+    <div id="delivery-map-modal" class="delivery-map-modal" hidden role="dialog" aria-modal="true" aria-labelledby="delivery-map-title">
+      <div class="delivery-map-backdrop" data-close-delivery-map></div>
+      <section class="delivery-map-dialog">
+        <header class="delivery-map-header">
+          <div>
+            <p class="eyebrow">AL SHAMI · DELIVERY</p>
+            <h2 id="delivery-map-title" data-i18n="mapTitle">Choose delivery location</h2>
+          </div>
+          <button id="delivery-map-close" class="btn btn-light delivery-map-close" type="button" aria-label="Close map">×</button>
+        </header>
+        <p class="delivery-map-help" data-i18n="mapHelp">Search for a place or tap the map to position the pin. Keep your house number or landmark in the address field.</p>
+        <div id="delivery-map-search-container" class="delivery-map-search-container"></div>
+        <div class="delivery-map-toolbar">
+          <button id="delivery-map-use-current" class="btn btn-light" type="button" data-i18n="useCurrentLocation">Use my current location</button>
+          <span id="delivery-map-selection" class="delivery-map-selection" role="status" aria-live="polite"></span>
+        </div>
+        <div id="delivery-map-canvas" class="delivery-map-canvas" aria-label="Google map for selecting delivery location"></div>
+        <p id="delivery-map-message" class="delivery-map-message" role="status" aria-live="polite" hidden></p>
+        <footer class="delivery-map-footer">
+          <button id="delivery-map-cancel" class="btn btn-light" type="button" data-i18n="cancel">Cancel</button>
+          <button id="delivery-map-confirm" class="btn btn-primary" type="button" data-i18n="confirmLocation" disabled>Use this location</button>
+        </footer>
+      </section>
+    </div>
   </main>
 
   <footer>
@@ -641,7 +700,7 @@
     })();
   </script>
   <script src="config.js"></script>
-  <script src="customer.js?v=customer-order-flow-20261023b"></script>
+  <script src="customer.js?v=delivery-map-picker-20261023a"></script>
   <script src="pwa.js"></script>
 </body>
 </html>
