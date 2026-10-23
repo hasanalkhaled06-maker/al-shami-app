@@ -164,6 +164,8 @@
 
     $("#login-panel").classList.add("hidden");
     $("#dashboard").classList.remove("hidden");
+    // Always land on the new three-card home after a successful admin sign-in.
+    showAdminHome();
     $("#signout").classList.remove("hidden");
     initializeOrderAlerts();
 
@@ -289,18 +291,13 @@
   $("#history-search")?.addEventListener("input", renderHistory);
   $("#export-orders")?.addEventListener("click", exportVisibleOrders);
 
-  document.querySelectorAll(".tab").forEach(button => {
+  // Only wire the legacy main-navigation tabs here. Operations has its own
+  // subtabs and must not be treated as orders/history/menu navigation.
+  document.querySelectorAll(".legacy-main-tabs [data-tab]").forEach(button => {
     button.onclick = () => {
-      document.querySelectorAll(".tab").forEach(tab => {
-        tab.classList.toggle("active", tab === button);
-      });
-
-      ["orders", "history", "menu", "offers", "settings"].forEach(name => {
-        $(`#tab-${name}`).classList.toggle(
-          "hidden",
-          name !== button.dataset.tab
-        );
-      });
+      const name = button.dataset.tab;
+      if (!["orders", "history", "menu", "offers", "settings"].includes(name)) return;
+      showAdminMainPanel(name);
     };
   });
 
