@@ -75,24 +75,33 @@
     .app-message{padding:12px 14px;border-radius:10px;margin:10px 0;line-height:1.45}
     .app-message.error{background:#fff0f0;color:#8d1723;border:1px solid #f2caca}
     .app-message.info{background:#f4f6f8;color:#333;border:1px solid #e0e4e8}
+    /* Order confirmation: compact, non-blocking status panel pinned to the top. */
     .success-modal[hidden]{display:none!important}
-    .success-modal{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom));background:rgba(12,12,12,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);animation:shamiFadeIn .22s ease}
-    .success-card{box-sizing:border-box;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;padding:32px 24px;border-radius:24px;background:#fff;color:#222;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.3);animation:shamiPopIn .38s cubic-bezier(.2,.8,.2,1)}
-    .success-icon{width:88px;height:88px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;border:5px solid #d9f7e2;border-radius:50%;background:#1eaa4b;color:#fff;font-size:54px;font-weight:800;line-height:1;box-shadow:0 0 0 7px rgba(30,170,75,.08);animation:shamiCheckIn .45s ease .1s both}
-    .success-card h2{margin:0 0 12px;color:#168238;font-size:clamp(22px,5vw,27px);line-height:1.25}
-    .success-card p{margin:10px 0;line-height:1.6}
-    .success-card .success-subtitle{color:#555}
-    #success-order-number{padding:10px 12px;border-radius:10px;background:#fff5f5;color:#8d1723;font-weight:800;overflow-wrap:anywhere}
-    #success-order-total{font-weight:800;color:#222}
-    .success-card button{margin-top:15px;min-width:140px}
-    body.modal-open{overflow:hidden}
-    .status-message:empty{display:none}
-    @keyframes shamiFadeIn{from{opacity:0}to{opacity:1}}
-    @keyframes shamiPopIn{from{opacity:0;transform:translateY(22px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
-    @keyframes shamiCheckIn{from{opacity:0;transform:scale(.45) rotate(-15deg)}to{opacity:1;transform:scale(1) rotate(0)}}
-    @media (max-width:480px){.success-card{padding:28px 20px}.success-icon{width:78px;height:78px;font-size:48px}}
-    @media (prefers-reduced-motion:reduce){.success-modal,.success-card,.success-icon{animation:none!important;scroll-behavior:auto!important}}
-
+    .success-modal{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:50%;z-index:10000;display:block;width:min(680px,calc(100% - 20px));transform:translateX(-50%);pointer-events:none}
+    .success-card{box-sizing:border-box;width:100%;max-height:38vh;overflow:auto;pointer-events:auto;padding:16px 18px 14px;border:1px solid #ead8d4;border-top:4px solid #caa45e;border-radius:18px;background:rgba(255,253,249,.98);color:#281c1d;text-align:left;box-shadow:0 14px 44px rgba(32,12,15,.22);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);animation:successPanelIn .28s ease-out both}
+    .success-header{display:flex;align-items:flex-start;gap:12px}
+    .success-icon{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;margin:2px 0 0;border:1px solid #ead8b7;border-radius:13px;background:#fff7e7;color:#8d1723;font-size:29px;font-weight:800;line-height:1}
+    .success-icon span{display:block;animation:successClockPulse 1.5s ease-in-out infinite}
+    .success-heading{flex:1;min-width:0}
+    .success-eyebrow{margin:0 0 4px!important;color:#8d1723!important;font-size:10px!important;font-weight:900;letter-spacing:.12em;line-height:1.3!important}
+    .success-card h2{margin:0 0 5px;color:#45151b;font-size:clamp(17px,3.3vw,22px);font-weight:850;letter-spacing:-.02em;line-height:1.22}
+    .success-card p{margin:0;line-height:1.45}
+    .success-card .success-subtitle{color:#665a5b;font-size:12px}
+    .success-progress{position:relative;overflow:hidden;height:4px;margin:13px 0 11px;border-radius:99px;background:#f0e5d9}
+    .success-progress span{position:absolute;top:0;left:0;width:30%;height:100%;border-radius:99px;background:linear-gradient(90deg,#8d1723,#d7b36a,#8d1723);animation:successProgressSweep 1.7s ease-in-out infinite}
+    .success-details{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+    #success-order-number,#success-order-total{margin:0;padding:7px 10px;border:1px solid #f0e4e1;border-radius:9px;background:#fff8f6;color:#5a1b22;font-size:12px;font-weight:800;overflow-wrap:anywhere}
+    #success-order-total{background:#fbf6eb;border-color:#eee0c3;color:#3e3030}
+    .success-actions{display:flex;align-items:center;gap:9px}
+    .success-whatsapp{display:inline-flex;align-items:center;justify-content:center;min-height:39px;flex:1;margin:0;padding:9px 12px;border:1px solid #1f7a43;border-radius:10px;background:#1f7a43;color:#fff;text-decoration:none;text-align:center;font-size:12px;font-weight:800}
+    .success-card #success-close{min-height:39px;margin:0;padding:8px 15px;border:1px solid #e5d8d2;border-radius:10px;background:#f6eee8;color:#422628;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+    .success-card #success-close:hover{background:#eee0d8}
+    @keyframes successPanelIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes successProgressSweep{0%{transform:translateX(-115%)}100%{transform:translateX(360%)}}
+    @keyframes successClockPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.58;transform:scale(.91)}}
+    @media(max-width:480px){.success-card{max-height:39vh;padding:13px 13px 12px;border-radius:15px}.success-icon{flex-basis:38px;width:38px;height:38px;font-size:25px;border-radius:11px}.success-card h2{font-size:17px}.success-card .success-subtitle{font-size:11px}.success-progress{margin:10px 0 9px}.success-details{gap:6px;margin-bottom:9px}#success-order-number,#success-order-total{font-size:11px;padding:6px 8px}.success-actions{gap:7px}.success-whatsapp{font-size:11px;min-height:37px;padding:8px 9px}.success-card #success-close{font-size:11px;min-height:37px;padding:7px 11px}}
+    @media(prefers-reduced-motion:reduce){.success-card,.success-icon span,.success-progress span{animation:none!important}.success-progress span{width:100%;opacity:.7}}
+    
     .menu-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .menu-tools #search{flex:1;min-width:170px}
     .sort-label{display:flex;align-items:center;gap:7px;font-size:.9rem;font-weight:700}
@@ -563,35 +572,41 @@
     <a class="quick-contact-call" href="tel:+233547489859" aria-label="Call AL SHAMI RESTAURANT">Call us</a>
   </div>
 
-  <div id="success-modal" class="success-modal" role="dialog" aria-modal="true" aria-labelledby="success-title" aria-describedby="success-description" hidden>
+  <section id="success-modal" class="success-modal" role="status" aria-live="polite" aria-labelledby="success-title" aria-describedby="success-description" hidden>
     <div class="success-card">
-      <div class="success-icon" aria-hidden="true">✓</div>
-      <h2 id="success-title">تم إرسال طلبك بنجاح!</h2>
-      <p id="success-description" class="success-subtitle">Your order has been sent to AL SHAMI RESTAURANT.</p>
-      <p id="success-order-number"></p>
-      <p id="success-order-total"></p>
-      <p id="success-order-tracking" hidden></p>
-      <button id="success-copy-tracking" type="button" class="btn btn-light" hidden>Copy tracking code</button>
-      <a id="success-whatsapp" class="success-whatsapp" href="https://wa.me/233547489859" target="_blank" rel="noopener noreferrer">Chat with AL SHAMI on WhatsApp</a>
-      <button id="success-close" type="button" class="btn btn-primary">حسناً</button>
+      <div class="success-header">
+        <div class="success-icon" aria-hidden="true"><span>◷</span></div>
+        <div class="success-heading">
+          <p id="success-status-label" class="success-eyebrow">ORDER STATUS · WAITING</p>
+          <h2 id="success-title">Order sent — waiting for restaurant acceptance</h2>
+          <p id="success-description" class="success-subtitle">Your order reached AL SHAMI RESTAURANT and is waiting to be accepted.</p>
+        </div>
+      </div>
+      <div class="success-progress" aria-hidden="true"><span></span></div>
+      <div class="success-details">
+        <p id="success-order-number"></p>
+        <p id="success-order-total"></p>
+      </div>
+      <div class="success-actions">
+        <a id="success-whatsapp" class="success-whatsapp" href="https://wa.me/233547489859" target="_blank" rel="noopener noreferrer">Chat with AL SHAMI on WhatsApp</a>
+        <button id="success-close" type="button" class="btn btn-light">Close</button>
+      </div>
     </div>
-  </div>
+  </section>
 
   <script>
     (() => {
-      const modal = document.getElementById("success-modal");
+      const panel = document.getElementById("success-modal");
       const closeButton = document.getElementById("success-close");
       const title = document.getElementById("success-title");
       const description = document.getElementById("success-description");
+      const statusLabel = document.getElementById("success-status-label");
       const number = document.getElementById("success-order-number");
       const total = document.getElementById("success-order-total");
-      const tracking = document.getElementById("success-order-tracking");
-      const copyTrackingButton = document.getElementById("success-copy-tracking");
       const whatsapp = document.getElementById("success-whatsapp");
-      let currentTrackingToken = "";
       let previouslyFocused = null;
 
-      const modalText = {
+      const panelText = {
         en: {
           title: "Order sent — waiting for restaurant acceptance",
           description: "Your order reached AL SHAMI RESTAURANT and is waiting to be accepted.",
@@ -599,16 +614,16 @@
           total: "Order total:",
           close: "Close",
           whatsapp: "Chat with AL SHAMI on WhatsApp",
-          tracking: "Private tracking code:", copyTracking: "Copy tracking code", copiedTracking: "Copied!"
+          status: "ORDER STATUS · WAITING FOR ACCEPTANCE"
         },
         ar: {
           title: "تم إرسال طلبك وبانتظار قبول المطعم",
           description: "وصل طلبك إلى مطعم الشامي، وهلأ بانتظار قبول المطعم.",
           number: "رقم الطلب:",
           total: "المجموع:",
-          close: "حسناً",
+          close: "إغلاق",
           whatsapp: "تواصل معنا عبر واتساب",
-          tracking: "رمز التتبّع الخاص:", copyTracking: "نسخ رمز التتبّع", copiedTracking: "تم النسخ"
+          status: "حالة الطلب · بانتظار القبول"
         },
         tw: {
           title: "Order sent — waiting for restaurant acceptance",
@@ -617,86 +632,45 @@
           total: "Order total:",
           close: "Close",
           whatsapp: "Chat with AL SHAMI on WhatsApp",
-          tracking: "Private tracking code:", copyTracking: "Copy tracking code", copiedTracking: "Copied!"
+          status: "ORDER STATUS · WAITING FOR ACCEPTANCE"
         }
       };
 
       window.AL_SHAMI_SHOW_SUCCESS = details => {
-        const item = details && typeof details === "object"
-          ? details
-          : { orderNumber: details };
-
+        const item = details && typeof details === "object" ? details : { orderNumber: details };
         const lang = document.getElementById("language")?.value || "en";
-        const words = modalText[lang] || modalText.en;
+        const words = panelText[lang] || panelText.en;
 
         previouslyFocused = document.activeElement;
         title.textContent = words.title;
         description.textContent = words.description;
+        statusLabel.textContent = words.status;
         closeButton.textContent = words.close;
+        closeButton.setAttribute("aria-label", words.close);
         if (whatsapp) whatsapp.textContent = words.whatsapp;
 
         const orderNumber = item.orderNumber;
-        currentTrackingToken = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(item.trackingToken || "")) ? String(item.trackingToken) : "";
         number.textContent = orderNumber && orderNumber !== "received" ? `${words.number} ${orderNumber}` : "";
-        total.textContent = item.total !== undefined && item.total !== null && Number.isFinite(Number(item.total)) ? `${words.total} GH₵ ${Number(item.total).toFixed(2)}` : "";
-        tracking.hidden = !currentTrackingToken;
-        tracking.textContent = currentTrackingToken ? `${words.tracking} ${currentTrackingToken}` : "";
-        copyTrackingButton.hidden = !currentTrackingToken;
-        copyTrackingButton.textContent = words.copyTracking;
+        total.textContent = item.total !== undefined && item.total !== null && Number.isFinite(Number(item.total))
+          ? `${words.total} GH₵ ${Number(item.total).toFixed(2)}`
+          : "";
 
-        modal.hidden = false;
-        document.body.classList.add("modal-open");
-        closeButton.focus();
+        panel.hidden = false;
+        panel.classList.remove("is-visible");
+        requestAnimationFrame(() => panel.classList.add("is-visible"));
       };
 
-      function closeModal() {
-        modal.hidden = true;
-        document.body.classList.remove("modal-open");
-
+      function closePanel() {
+        panel.hidden = true;
+        panel.classList.remove("is-visible");
         if (previouslyFocused && typeof previouslyFocused.focus === "function") {
           previouslyFocused.focus();
         }
       }
 
-      copyTrackingButton.addEventListener("click", async () => {
-        if (!currentTrackingToken) return;
-        const lang = document.getElementById("language")?.value || "en";
-        const words = modalText[lang] || modalText.en;
-        try {
-          if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
-          await navigator.clipboard.writeText(currentTrackingToken);
-          copyTrackingButton.textContent = words.copiedTracking;
-        } catch (_) {
-          tracking.textContent = `${words.tracking} ${currentTrackingToken}`;
-          tracking.style.userSelect = "all";
-        }
-      });
-
-      closeButton.addEventListener("click", closeModal);
-
-      modal.addEventListener("click", event => {
-        if (event.target === modal) closeModal();
-      });
-
+      closeButton.addEventListener("click", closePanel);
       document.addEventListener("keydown", event => {
-        if (modal.hidden) return;
-        if (event.key === "Escape") {
-          closeModal();
-          return;
-        }
-        if (event.key !== "Tab") return;
-        const focusable = Array.from(modal.querySelectorAll('a[href], button:not([disabled])'))
-          .filter(element => !element.hasAttribute("hidden"));
-        if (!focusable.length) return;
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
+        if (!panel.hidden && event.key === "Escape") closePanel();
       });
     })();
   </script>
