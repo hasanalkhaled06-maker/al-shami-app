@@ -1118,7 +1118,7 @@
       noTrackedOrders: "Wonni nhyehyɛe biara a wɔakora so. Sɛ wode bi to hɔ a, ɛbɛda ha.",
       loadingTrackedOrders: "Loading your saved orders…",
       couldNotLoadTrackedOrder: "Could not check this order right now. Check your connection and try again.",
-      removeFromHistory: "Remove from history",
+      removeFromHistory: "Yi fi mfiri yi so",
       orderLabel: "Order",
       orderedAt: "Bere a wɔde too hɔ",
       step_received: "Wɔagye",
