@@ -1,0 +1,509 @@
+/* AL SHAMI — Dark premium design system.
+   Loaded last on customer, history, admin and rider pages to override legacy palettes.
+   Palette: near-black charcoal, layered graphite, deep burgundy, champagne gold,
+   with restrained deep-blue/mint icon accents and high-contrast ivory text. */
+:root{
+  color-scheme:dark;
+  --shami-bg:#121013;
+  --shami-surface:#1B171A;
+  --shami-surface-2:#241D21;
+  --shami-surface-3:#2C2227;
+  --shami-line:#47363D;
+  --shami-line-soft:#372A30;
+  --shami-text:#F8F2EE;
+  --shami-muted:#C8B9BE;
+  --shami-subtle:#A9989E;
+  --shami-wine:#8D2438;
+  --shami-wine-strong:#A42B42;
+  --shami-wine-dark:#4A1723;
+  --shami-gold:#D8B779;
+  --shami-gold-text:#332717;
+  --shami-blue:#8EC2F0;
+  --shami-blue-bg:#1F3042;
+  --shami-green:#92D3B0;
+  --shami-green-bg:#20382F;
+  --shami-yellow:#F0D38B;
+  --shami-yellow-bg:#3D311D;
+  --shami-danger:#F1AAA8;
+  --shami-danger-bg:#422327;
+  --shami-radius:17px;
+  --shami-shadow:0 10px 28px rgba(0,0,0,.22);
+}
+html:has(body.customer-home-page),html:has(body.customer-history-page),
+html:has(body.admin-body),html:has(body.rider-app){
+  color-scheme:dark!important;background:var(--shami-bg)!important;
+}
+html body.customer-home-page,html body.customer-history-page,
+html body.admin-body,html body.rider-app{
+  color-scheme:dark!important;background:var(--shami-bg)!important;color:var(--shami-text)!important;
+}
+html body.customer-home-page *,html body.customer-history-page *,
+html body.admin-body *,html body.rider-app *{text-shadow:none}
+html body.customer-home-page :focus-visible,html body.customer-history-page :focus-visible,
+html body.admin-body :focus-visible,html body.rider-app :focus-visible{
+  outline:3px solid var(--shami-gold)!important;outline-offset:3px;
+}
+html body.customer-home-page h1,html body.customer-home-page h2,html body.customer-home-page h3,
+html body.customer-home-page h4,html body.customer-history-page h1,html body.customer-history-page h2,
+html body.customer-history-page h3,html body.customer-history-page h4,
+html body.admin-body h1,html body.admin-body h2,html body.admin-body h3,html body.admin-body h4,
+html body.rider-app h1,html body.rider-app h2,html body.rider-app h3,html body.rider-app h4{
+  color:var(--shami-text)!important;
+}
+html body.customer-home-page p,html body.customer-history-page p,
+html body.admin-body p,html body.rider-app p{color:var(--shami-muted)}
+html body.customer-home-page .muted,html body.customer-history-page .muted,
+html body.admin-body .muted,html body.rider-app .muted{color:var(--shami-muted)!important}
+
+/* Universal control styles. Primary = burgundy; secondary = graphite; small utilities = gold. */
+html body.customer-home-page :is(button,a.btn),html body.customer-history-page :is(button,a.btn),
+html body.admin-body :is(button,a.btn),html body.rider-app :is(button,a.btn){
+  -webkit-tap-highlight-color:transparent;text-shadow:none!important;font-family:inherit!important;
+  font-weight:800!important;letter-spacing:-.01em;transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+html body.customer-home-page button:active,html body.customer-history-page button:active,
+html body.admin-body button:active,html body.rider-app button:active{transform:translateY(1px)}
+html body.customer-home-page :is(.btn,button.btn),html body.customer-history-page :is(.btn,button.btn),
+html body.admin-body :is(.btn,button.btn),html body.rider-app :is(.btn,button.btn){
+  min-height:42px!important;padding:9px 13px!important;border-radius:11px!important;font-size:12px!important;line-height:1.22!important;
+}
+html body.customer-home-page :is(.btn-primary,button.btn-primary),
+html body.customer-history-page :is(.btn-primary,button.btn-primary),
+html body.admin-body :is(.btn-primary,button.btn-primary),
+html body.rider-app :is(.primary-button,button.primary-button),
+html body.rider-app .navigation-button:not(.secondary){
+  background:linear-gradient(135deg,var(--shami-wine-strong),var(--shami-wine))!important;
+  color:#FFFFFF!important;border:1px solid #B54A5D!important;border-radius:11px!important;
+  font-weight:850!important;box-shadow:0 5px 14px rgba(120,22,43,.24)!important;
+}
+html body.customer-home-page :is(.btn-primary,button.btn-primary):hover,
+html body.customer-history-page :is(.btn-primary,button.btn-primary):hover,
+html body.admin-body :is(.btn-primary,button.btn-primary):hover,
+html body.rider-app :is(.primary-button,button.primary-button):hover{background:var(--shami-wine-strong)!important}
+html body.customer-home-page :is(.btn-light,button.btn-light),
+html body.customer-history-page :is(.btn-light,button.btn-light),
+html body.admin-body :is(.btn-light,button.btn-light),
+html body.rider-app .navigation-button.secondary{
+  background:var(--shami-surface-2)!important;color:var(--shami-text)!important;
+  border:1px solid var(--shami-line)!important;border-radius:11px!important;box-shadow:none!important;
+}
+html body.customer-home-page :is(input,select,textarea),
+html body.customer-history-page :is(input,select,textarea),
+html body.admin-body :is(input,select,textarea),
+html body.rider-app :is(input,select,textarea){
+  color-scheme:dark!important;background:#211B1F!important;color:var(--shami-text)!important;
+  border:1px solid #59444D!important;border-radius:11px!important;box-shadow:none!important;
+}
+html body.customer-home-page :is(input,select,textarea)::placeholder,
+html body.customer-history-page :is(input,select,textarea)::placeholder,
+html body.admin-body :is(input,select,textarea)::placeholder,
+html body.rider-app :is(input,select,textarea)::placeholder{color:#B7A7AE!important;opacity:1!important}
+html body.customer-home-page :is(button,input,select,textarea):disabled,
+html body.customer-history-page :is(button,input,select,textarea):disabled,
+html body.admin-body :is(button,input,select,textarea):disabled,
+html body.rider-app :is(button,input,select,textarea):disabled{opacity:.52!important;cursor:not-allowed!important}
+
+/* ── Customer home and order history ── */
+html body.customer-home-page .hero,html body.customer-history-page .hero{
+  position:relative;isolation:isolate;overflow:hidden;
+  background:radial-gradient(circle at 92% 0%,rgba(216,183,121,.12),transparent 35%),
+    linear-gradient(125deg,#241317 0%,#511724 58%,#7B1E31 100%)!important;
+  border:0!important;box-shadow:0 10px 26px rgba(0,0,0,.25)!important;
+}
+html body.customer-home-page .hero:before,html body.customer-history-page .hero:before{
+  border-color:rgba(216,183,121,.23)!important;
+  box-shadow:0 0 0 24px rgba(216,183,121,.025),0 0 0 54px rgba(216,183,121,.015)!important;
+}
+html body.customer-home-page .hero h1,html body.customer-home-page .hero h1 span,
+html body.customer-home-page .hero p,html body.customer-home-page .hero .eyebrow,
+html body.customer-history-page .hero h1,html body.customer-history-page .hero h1 span,
+html body.customer-history-page .hero p,html body.customer-history-page .hero .eyebrow{color:var(--shami-text)!important}
+html body.customer-home-page .hero .eyebrow,html body.customer-history-page .hero .eyebrow{color:var(--shami-gold)!important}
+html body.customer-home-page .hero select,html body.customer-history-page .hero select{
+  color:var(--shami-text)!important;background:#38232A!important;border-color:#71404A!important;
+}
+html body.customer-home-page .hero select option,html body.customer-history-page .hero select option{background:#211B1F!important;color:var(--shami-text)!important}
+html body.customer-home-page .customer-account-toolbar,html body.customer-history-page .customer-account-toolbar{color:var(--shami-text)!important}
+html body.customer-home-page .customer-account,html body.customer-history-page .customer-account,
+html body.customer-home-page .customer-account-toolbar .customer-account{
+  background:var(--shami-surface)!important;color:var(--shami-text)!important;border:1px solid var(--shami-line)!important;
+}
+html body.customer-home-page .customer-account-toolbar>#customer-auth-open,
+html body.customer-history-page .customer-account-toolbar>#customer-auth-open,
+html body.customer-home-page .customer-account-toolbar .btn,
+html body.customer-history-page .customer-account-toolbar .btn{
+  background:var(--shami-gold)!important;color:var(--shami-gold-text)!important;border:1px solid #F0D7A1!important;
+}
+html body.customer-home-page .container,html body.customer-history-page .container{background:transparent!important;color:var(--shami-text)!important}
+html body.customer-home-page .customer-home-actions{
+  background:linear-gradient(145deg,#20191D,#191518)!important;color:var(--shami-text)!important;
+  border:1px solid var(--shami-line)!important;border-radius:22px!important;box-shadow:var(--shami-shadow)!important;
+}
+html body.customer-home-page .customer-home-actions-intro h2{color:var(--shami-text)!important}
+html body.customer-home-page .customer-home-actions-intro p{color:var(--shami-muted)!important}
+html body.customer-home-page .customer-home-card{
+  color:var(--shami-text)!important;border:1px solid #4A3840!important;border-radius:18px!important;
+  box-shadow:0 9px 24px rgba(0,0,0,.18)!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-order{
+  background:radial-gradient(circle at 95% 0%,rgba(216,183,121,.1),transparent 34%),linear-gradient(145deg,#4B1A27,#321720)!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-history{
+  background:radial-gradient(circle at 90% 0%,rgba(142,194,240,.09),transparent 34%),linear-gradient(145deg,#1D3042,#17232F)!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-help{
+  background:radial-gradient(circle at 90% 0%,rgba(240,211,139,.1),transparent 34%),linear-gradient(145deg,#3A301E,#292319)!important;
+}
+html body.customer-home-page .customer-home-card .customer-card-title,
+html body.customer-home-page .customer-home-card .customer-card-bottom,
+html body.customer-home-page .customer-home-card .customer-card-bottom strong,
+html body.customer-home-page .customer-home-card .customer-card-badge{color:var(--shami-text)!important}
+html body.customer-home-page .customer-home-card .customer-card-description{color:#D1C4C8!important}
+html body.customer-home-page .customer-home-card .customer-card-top .customer-card-badge{
+  background:rgba(14,11,13,.36)!important;border-color:#59414A!important;color:#F1E7E4!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-order .customer-card-icon{
+  background:var(--shami-blue-bg)!important;color:var(--shami-blue)!important;border:1px solid #385572!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-history .customer-card-icon{
+  background:var(--shami-green-bg)!important;color:var(--shami-green)!important;border:1px solid #355849!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-help .customer-card-icon{
+  background:var(--shami-yellow-bg)!important;color:var(--shami-yellow)!important;border:1px solid #67512B!important;
+}
+html body.customer-home-page .customer-home-card .customer-card-icon svg,
+html body.customer-home-page .customer-home-card .customer-card-icon svg *{color:inherit!important;stroke:currentColor!important}
+html body.customer-home-page .customer-home-card .customer-card-bottom{border-top-color:rgba(248,242,238,.17)!important}
+html body.customer-home-page .customer-home-card .customer-card-arrow{
+  background:var(--shami-gold)!important;color:var(--shami-gold-text)!important;border:1px solid #F0D7A1!important;
+}
+html body.customer-home-page .customer-home-card:after{background:var(--shami-wine-strong)!important}
+html body.customer-home-page .customer-home-card.customer-card-order:after{background:var(--shami-wine-strong)!important}
+html body.customer-home-page .customer-home-card.customer-card-history:after{background:#477AA3!important}
+html body.customer-home-page .customer-home-card.customer-card-help:after{background:#B3914E!important}
+html body.customer-home-page .section-heading h2,html body.customer-history-page .section-heading h2{color:var(--shami-text)!important}
+html body.customer-home-page .section-heading .eyebrow,html body.customer-history-page .section-heading .eyebrow{color:var(--shami-gold)!important}
+html body.customer-home-page .chips .chip,html body.customer-home-page .chips button,
+html body.customer-history-page .chips .chip,html body.customer-history-page .chips button{
+  background:var(--shami-surface-2)!important;color:#EDE3E5!important;border:1px solid var(--shami-line)!important;
+}
+html body.customer-home-page .chips .chip.active,html body.customer-home-page .chips button.active,
+html body.customer-history-page .chips .chip.active,html body.customer-history-page .chips button.active{
+  background:var(--shami-wine)!important;color:#FFFFFF!important;border-color:#B24B5B!important;
+}
+html body.customer-home-page .menu-tools #search,html body.customer-history-page .menu-tools #search,
+html body.customer-home-page .sort-label select,html body.customer-history-page .sort-label select{
+  background:#211B1F!important;color:var(--shami-text)!important;border:1px solid #59444D!important;
+}
+html body.customer-home-page .sort-label,html body.customer-history-page .sort-label{color:var(--shami-muted)!important}
+html body.customer-home-page .product-card,html body.customer-history-page .product-card{
+  background:linear-gradient(160deg,#241D21,#1B171A)!important;color:var(--shami-text)!important;
+  border:1px solid #47363D!important;border-radius:17px!important;box-shadow:0 8px 20px rgba(0,0,0,.18)!important;
+}
+html body.customer-home-page .product-card h3,html body.customer-home-page .product-card h4,
+html body.customer-home-page .product-card .price,html body.customer-history-page .product-card h3,
+html body.customer-history-page .product-card h4,html body.customer-history-page .product-card .price{color:var(--shami-text)!important}
+html body.customer-home-page .product-card p,html body.customer-home-page .product-card .muted,
+html body.customer-history-page .product-card p,html body.customer-history-page .product-card .muted{color:var(--shami-muted)!important}
+html body.customer-home-page .product-image,html body.customer-history-page .product-image{background:#30272B!important}
+html body.customer-home-page .product-bottom .price,html body.customer-history-page .product-bottom .price{color:var(--shami-gold)!important}
+html body.customer-home-page .product-bottom .btn,html body.customer-history-page .product-bottom .btn{
+  background:var(--shami-wine)!important;color:#FFFFFF!important;border:1px solid #B54A5D!important;
+}
+html body.customer-home-page .checkout-section,html body.customer-history-page .checkout-section,
+html body.customer-home-page #cart,html body.customer-history-page #cart,
+html body.customer-home-page .cart-panel,html body.customer-history-page .cart-panel{
+  background:var(--shami-surface)!important;color:var(--shami-text)!important;border:1px solid var(--shami-line)!important;
+}
+html body.customer-home-page .checkout-section h2,html body.customer-home-page .checkout-section h3,
+html body.customer-history-page .checkout-section h2,html body.customer-history-page .checkout-section h3{color:var(--shami-text)!important}
+html body.customer-home-page .customer-orders-panel,html body.customer-history-page .customer-orders-panel,
+html body.customer-home-page #customer-orders-panel,html body.customer-history-page #customer-orders-panel,
+html body.customer-home-page .customer-order-card,html body.customer-history-page .customer-order-card,
+html body.customer-home-page .tracked-order,html body.customer-history-page .tracked-order{
+  background:linear-gradient(160deg,#241D21,#1A1619)!important;color:var(--shami-text)!important;
+  border:1px solid var(--shami-line)!important;border-radius:16px!important;box-shadow:var(--shami-shadow)!important;
+}
+html body.customer-home-page .customer-order-card *,html body.customer-history-page .customer-order-card *,
+html body.customer-home-page .tracked-order *,html body.customer-history-page .tracked-order *{text-shadow:none!important}
+html body.customer-home-page .tracked-card-heading strong,html body.customer-history-page .tracked-card-heading strong,
+html body.customer-home-page .customer-order-card p,html body.customer-history-page .customer-order-card p,
+html body.customer-home-page .tracked-order h3,html body.customer-history-page .tracked-order h3{color:var(--shami-text)!important}
+html body.customer-home-page .tracked-status,html body.customer-history-page .tracked-status{
+  background:#38212B!important;color:#F0D8DE!important;border:1px solid #70404D!important;
+}
+html body.customer-home-page .tracked-steps,html body.customer-history-page .tracked-steps,
+html body.customer-home-page .tracked-steps li,html body.customer-history-page .tracked-steps li{color:#D7C9CD!important}
+html body.customer-home-page .customer-rider-tracking,html body.customer-history-page .customer-rider-tracking{
+  background:#211B1F!important;color:var(--shami-text)!important;border:1px solid #59444D!important;
+}
+html body.customer-home-page .customer-rider-tracking *,
+html body.customer-history-page .customer-rider-tracking *{text-shadow:none!important}
+html body.customer-home-page .customer-rider-eta,html body.customer-history-page .customer-rider-eta{
+  background:#2A2226!important;color:var(--shami-text)!important;border:1px solid #59444D!important;
+}
+html body.customer-home-page .customer-rider-eta-copy strong,html body.customer-history-page .customer-rider-eta-copy strong{color:#F3D6DA!important}
+html body.customer-home-page .customer-rider-eta-copy span,html body.customer-history-page .customer-rider-eta-copy span{color:var(--shami-green)!important}
+html body.customer-home-page .customer-rider-eta-copy small,html body.customer-history-page .customer-rider-eta-copy small,
+html body.customer-home-page .customer-rider-map-status,html body.customer-history-page .customer-rider-map-status{color:var(--shami-muted)!important}
+html body.customer-home-page .customer-rider-google-maps,html body.customer-history-page .customer-rider-google-maps{
+  background:var(--shami-surface-2)!important;color:var(--shami-text)!important;border:1px solid #68545C!important;
+}
+html body.customer-home-page .receipt-code-note,html body.customer-history-page .receipt-code-note{
+  background:#332A1F!important;border:1px solid #75603B!important;color:var(--shami-text)!important;
+}
+html body.customer-home-page .receipt-code-label,html body.customer-history-page .receipt-code-label{color:#F0E2C9!important}
+html body.customer-home-page .receipt-code-value,html body.customer-history-page .receipt-code-value{color:var(--shami-gold)!important}
+html body.customer-home-page .receipt-code-copy,html body.customer-history-page .receipt-code-copy{
+  background:var(--shami-gold)!important;color:var(--shami-gold-text)!important;border:1px solid #F0D7A1!important;
+}
+html body.customer-home-page .receipt-code-copy.is-copied,html body.customer-history-page .receipt-code-copy.is-copied{
+  background:#A68A52!important;color:#FFFFFF!important;border-color:#D8B779!important;
+}
+html body.customer-home-page .floating-cart-button{
+  background:linear-gradient(130deg,#A42B42,#68192A)!important;color:#FFFFFF!important;border:1px solid #BD5868!important;
+  box-shadow:0 12px 28px rgba(0,0,0,.34)!important;
+}
+html body.customer-home-page footer,html body.customer-history-page footer{
+  background:#191518!important;color:#D8CBCF!important;border-top:1px solid #423139!important;
+}
+html body.customer-home-page footer a,html body.customer-history-page footer a{color:var(--shami-gold)!important}
+html body.customer-home-page .success-actions .success-whatsapp,
+html body.customer-home-page .success-actions .success-track{
+  background:var(--shami-wine)!important;color:#FFFFFF!important;border:1px solid #B54A5D!important;
+}
+html body.customer-home-page .success-actions #success-close{
+  background:var(--shami-surface-2)!important;color:var(--shami-text)!important;border:1px solid var(--shami-line)!important;
+}
+
+/* ── Administration workspace ── */
+html body.admin-body{background:var(--shami-bg)!important;color:var(--shami-text)!important}
+html body.admin-body .admin-top{
+  background:linear-gradient(120deg,#211317,#501724)!important;color:var(--shami-text)!important;
+  border-bottom:1px solid #4B3039!important;box-shadow:0 8px 25px rgba(0,0,0,.24)!important;
+}
+html body.admin-body .admin-brand,html body.admin-body .admin-brand span{color:var(--shami-text)!important}
+html body.admin-body .admin-brand:before{background:#312126!important;border-color:#8B7043!important;color:var(--shami-gold)!important}
+html body.admin-body .admin-actions .connection{background:#292026!important;border-color:#59414A!important;color:#E8DADF!important}
+html body.admin-body #signout{background:#38212B!important;color:var(--shami-text)!important;border:1px solid #72414D!important}
+html body.admin-body #dashboard .dashboard-heading{
+  background:radial-gradient(circle at 95% 0%,rgba(216,183,121,.12),transparent 36%),
+    linear-gradient(120deg,#30151D,#641B2A)!important;
+  border:1px solid #733545!important;color:var(--shami-text)!important;box-shadow:0 12px 30px rgba(0,0,0,.25)!important;
+}
+html body.admin-body #dashboard .dashboard-heading h1,html body.admin-body #dashboard .dashboard-heading h2,
+html body.admin-body #dashboard .dashboard-heading p,html body.admin-body #dashboard .dashboard-heading .muted{color:var(--shami-text)!important}
+html body.admin-body #dashboard .dashboard-heading .eyebrow{color:var(--shami-gold)!important}
+html body.admin-body #dashboard .dashboard-heading .btn{
+  background:#3B242C!important;color:var(--shami-text)!important;border:1px solid #80515B!important;
+}
+html body.admin-body #dashboard .panel,html body.admin-body #dashboard .stat,
+html body.admin-body #dashboard .admin-home-card,html body.admin-body #dashboard .settings-hub-card,
+html body.admin-body #dashboard .settings-hub-intro,html body.admin-body #dashboard .order-card,
+html body.admin-body #dashboard .admin-form,html body.admin-body #dashboard .admin-menu-row,
+html body.admin-body #dashboard .ops-stat,html body.admin-body #dashboard .ops-tool-tile{
+  background:linear-gradient(155deg,#241D21,#1A1619)!important;color:var(--shami-text)!important;
+  border:1px solid #47363D!important;border-radius:16px!important;box-shadow:0 8px 22px rgba(0,0,0,.17)!important;
+}
+html body.admin-body #dashboard .panel h2,html body.admin-body #dashboard .panel h3,
+html body.admin-body #dashboard .stat strong,html body.admin-body #dashboard .order-header h3,
+html body.admin-body #dashboard .order-card h3,html body.admin-body #dashboard .home-card-title,
+html body.admin-body #dashboard .settings-hub-title,html body.admin-body #dashboard .ops-stat strong{
+  color:var(--shami-text)!important;
+}
+html body.admin-body #dashboard .stat span,html body.admin-body #dashboard .muted,
+html body.admin-body #dashboard .home-card-bottom,html body.admin-body #dashboard .order-meta,
+html body.admin-body #dashboard .order-lines,html body.admin-body #dashboard .ops-note,
+html body.admin-body #dashboard .order-footer span{color:var(--shami-muted)!important}
+html body.admin-body #dashboard .stat:before,html body.admin-body #dashboard .stat:nth-child(n):before{background:var(--shami-gold)!important}
+html body.admin-body #dashboard .home-card-icon,html body.admin-body #dashboard .settings-hub-icon,
+html body.admin-body #dashboard #ops-subtabs .ops-tool-icon{
+  background:var(--shami-blue-bg)!important;color:var(--shami-blue)!important;border-color:#385572!important;
+}
+html body.admin-body #dashboard .settings-link-operations .settings-hub-icon,
+html body.admin-body #dashboard .home-card-orders .home-card-icon{
+  background:var(--shami-green-bg)!important;color:var(--shami-green)!important;border-color:#355849!important;
+}
+html body.admin-body #dashboard .home-card-status,html body.admin-body #dashboard .order-status{
+  background:#38212B!important;color:#F0D8DE!important;border:1px solid #70404D!important;
+}
+html body.admin-body #dashboard .admin-home-card:before,
+html body.admin-body #dashboard .settings-hub-card:before{border-color:rgba(216,183,121,.12)!important}
+html body.admin-body #dashboard .home-card-bottom{border-top-color:#47363D!important}
+html body.admin-body #dashboard .admin-tabs .tab,html body.admin-body #dashboard .tab{
+  background:#2A2226!important;color:#EDE3E5!important;border:1px solid #57434B!important;
+}
+html body.admin-body #dashboard .admin-tabs .tab.active,html body.admin-body #dashboard .tab.active{
+  background:var(--shami-wine)!important;color:#FFFFFF!important;border-color:#B54A5D!important;
+}
+html body.admin-body #dashboard input,html body.admin-body #dashboard select,html body.admin-body #dashboard textarea{
+  background:#211B1F!important;color:var(--shami-text)!important;border:1px solid #59444D!important;
+}
+html body.admin-body #dashboard input::placeholder,html body.admin-body #dashboard textarea::placeholder{color:#B7A7AE!important}
+html body.admin-body #dashboard label{color:#E7DADD!important}
+html body.admin-body #receipt-confirm-form,html body.admin-body #dashboard .admin-form,
+html body.admin-body #dashboard #tab-operations .ops-form{
+  background:#211B1F!important;color:var(--shami-text)!important;border:1px solid #47363D!important;
+}
+html body.admin-body #receipt-confirm-form label{color:#E7DADD!important}
+html body.admin-body #orders-list .order-card,html body.admin-body #history-list .order-card{
+  background:#211B1F!important;color:var(--shami-text)!important;border-color:#4A3840!important;
+}
+html body.admin-body #orders-list .order-card *,html body.admin-body #history-list .order-card *{text-shadow:none!important}
+html body.admin-body #orders-list .order-card h3,html body.admin-body #history-list .order-card h3,
+html body.admin-body #orders-list .order-card .order-lines,html body.admin-body #history-list .order-card .order-lines,
+html body.admin-body #orders-list .order-card .order-total,html body.admin-body #history-list .order-card .order-total{
+  color:var(--shami-text)!important;
+}
+html body.admin-body #orders-list .order-card a,html body.admin-body #history-list .order-card a{color:var(--shami-gold)!important}
+html body.admin-body #dashboard .order-rider-note{
+  background:#332A1F!important;color:#F0E2C9!important;border:1px solid #75603B!important;
+}
+html body.admin-body #dashboard .order-rider-note strong,html body.admin-body #dashboard .order-rider-note-label{color:var(--shami-gold)!important}
+html body.admin-body #dashboard .order-actions select{
+  background:#211B1F!important;color:var(--shami-text)!important;border:1px solid #59444D!important;
+}
+html body.admin-body #dashboard .order-actions [data-copy]{
+  background:var(--shami-gold)!important;color:var(--shami-gold-text)!important;border:1px solid #F0D7A1!important;
+}
+html body.admin-body #dashboard .delete-order-btn,html body.admin-body #dashboard [data-delete-order]{
+  background:var(--shami-danger-bg)!important;color:var(--shami-danger)!important;border:1px solid #744048!important;
+}
+html body.admin-body .incoming-order-dialog{background:#20191D!important;color:var(--shami-text)!important;border:1px solid #59414A!important}
+html body.admin-body .incoming-order-banner{background:linear-gradient(120deg,#35131D,#751E30)!important}
+html body.admin-body .incoming-order-dialog h2,html body.admin-body .incoming-order-dialog p{color:var(--shami-text)!important}
+html body.admin-body .incoming-order-actions .incoming-reject,
+html body.admin-body .incoming-order-actions #incoming-order-reject{
+  background:#2A2226!important;color:var(--shami-text)!important;border:1px solid #59444D!important;
+}
+html body.admin-body .incoming-order-actions .incoming-accept,
+html body.admin-body .incoming-order-actions #incoming-order-accept{
+  background:var(--shami-wine)!important;color:#FFFFFF!important;border:1px solid #B54A5D!important;
+}
+html body.admin-body .toast{background:#2C2227!important;color:var(--shami-text)!important;border-color:#59444D!important}
+
+/* ── Rider workspace ── */
+html body.rider-app{background:var(--shami-bg)!important;color:var(--shami-text)!important}
+html body.rider-app .rider-header{
+  background:linear-gradient(120deg,#211317,#501724)!important;color:var(--shami-text)!important;
+  border-bottom:1px solid #4B3039!important;box-shadow:0 8px 24px rgba(0,0,0,.24)!important;
+}
+html body.rider-app .rider-header .brand strong,html body.rider-app .rider-header .brand small{color:var(--shami-text)!important}
+html body.rider-app .rider-header .brand-mark{background:#352128!important;border-color:#8D7045!important;color:var(--shami-gold)!important}
+html body.rider-app .connection-pill{background:#2B2025!important;color:#F0E4E6!important;border-color:#59414A!important}
+html body.rider-app .welcome-row{
+  background:radial-gradient(circle at 95% 0%,rgba(216,183,121,.12),transparent 34%),linear-gradient(120deg,#2C151C,#621B2A)!important;
+  color:var(--shami-text)!important;border:1px solid #733545!important;border-top:3px solid var(--shami-gold)!important;
+  box-shadow:0 12px 28px rgba(0,0,0,.24)!important;
+}
+html body.rider-app .welcome-row h1,html body.rider-app .welcome-row p{color:var(--shami-text)!important}
+html body.rider-app .welcome-row .eyebrow{color:var(--shami-gold)!important}
+html body.rider-app .live-pill{background:#2B2025!important;color:var(--shami-text)!important;border-color:#59414A!important}
+html body.rider-app .pulse-dot{background:var(--shami-green)!important;box-shadow:0 0 0 4px rgba(146,211,176,.12)!important}
+html body.rider-app .summary-card,html body.rider-app .location-panel,
+html body.rider-app .delivery-card,html body.rider-app .empty-state,
+html body.rider-app .loading-card,html body.rider-app .login-panel,
+html body.rider-app .approval-panel{
+  background:linear-gradient(155deg,#241D21,#1A1619)!important;color:var(--shami-text)!important;
+  border:1px solid #47363D!important;box-shadow:0 8px 22px rgba(0,0,0,.18)!important;
+}
+html body.rider-app .summary-card .summary-label,html body.rider-app .summary-card small,
+html body.rider-app .location-panel-copy p,html body.rider-app .privacy-note,
+html body.rider-app .order-time,html body.rider-app .delivery-notes,
+html body.rider-app .detail-label{color:var(--shami-muted)!important}
+html body.rider-app .summary-card strong,html body.rider-app .order-number,
+html body.rider-app .customer-name,html body.rider-app .delivery-address,
+html body.rider-app .empty-state strong,html body.rider-app .delivery-card h3{color:var(--shami-text)!important}
+html body.rider-app .summary-grid .summary-card:nth-child(1) .summary-icon{
+  background:var(--shami-green-bg)!important;color:var(--shami-green)!important;border-color:#355849!important;
+}
+html body.rider-app .summary-grid .summary-card:nth-child(2) .summary-icon{
+  background:var(--shami-blue-bg)!important;color:var(--shami-blue)!important;border-color:#385572!important;
+}
+html body.rider-app .location-icon,html body.rider-app .empty-icon{
+  background:var(--shami-blue-bg)!important;color:var(--shami-blue)!important;border-color:#385572!important;
+}
+html body.rider-app .location-panel{background:linear-gradient(130deg,#292126,#211A1E)!important;border-color:#5A434A!important}
+html body.rider-app .detail-label{color:var(--shami-gold)!important}
+html body.rider-app .status-badge,html body.rider-app .status-badge.status-out_for_delivery,
+html body.rider-app .status-badge.status-ready{
+  background:#38212B!important;color:#F0D8DE!important;border:1px solid #70404D!important;
+}
+html body.rider-app .delivery-actions .navigation-button:not(.secondary){
+  background:var(--shami-wine)!important;color:#FFFFFF!important;border:1px solid #B54A5D!important;
+}
+html body.rider-app .delivery-actions .navigation-button.secondary{
+  background:#2A2226!important;color:var(--shami-text)!important;border:1px solid #59444D!important;
+}
+html body.rider-app .login-panel:before{background:linear-gradient(120deg,#2C151C,#701E30)!important}
+html body.rider-app .login-panel h1,html body.rider-app .approval-panel h1{color:var(--shami-text)!important}
+html body.rider-app .login-panel .eyebrow,html body.rider-app .approval-panel .eyebrow{color:var(--shami-gold)!important}
+html body.rider-app .login-form label{color:#E8DDE0!important}
+html body.rider-app .auth-mode-switch{background:#171316!important;border-color:#4A383F!important}
+html body.rider-app .auth-mode-button{color:#EDE3E5!important}
+html body.rider-app .auth-mode-button.is-active{background:#38212B!important;color:#FFFFFF!important}
+html body.rider-app .security-note{background:#30271C!important;color:#EAD9B7!important;border-color:#695536!important}
+html body.rider-app .dashboard-message{background:#2A2226!important;color:var(--shami-text)!important;border-color:#59444D!important}
+html body.rider-app .dashboard-footer{color:var(--shami-muted)!important;border-color:#47363D!important}
+html body.rider-app .secondary-button:not(.is-sharing),html body.rider-app .refresh-button{
+  background:var(--shami-gold)!important;color:var(--shami-gold-text)!important;border:1px solid #F0D7A1!important;
+}
+html body.rider-app #location-toggle.is-sharing{
+  background:#3B3020!important;color:var(--shami-yellow)!important;border-color:#8E713C!important;
+}
+html body.rider-app #signout-button{background:#38212B!important;color:var(--shami-text)!important;border-color:#72414D!important}
+
+/* Shared utility, danger and status controls */
+html body.customer-home-page .customer-card-arrow,
+html body.customer-home-page #refresh-customer-orders,
+html body.customer-home-page #copy-address,
+html body.customer-home-page .receipt-code-copy,
+html body.customer-history-page #refresh-customer-orders,
+html body.customer-history-page .receipt-code-copy,
+html body.admin-body #refresh,
+html body.admin-body #export-orders,
+html body.admin-body #cancel-product,
+html body.admin-body #cancel-offer{
+  background:var(--shami-gold)!important;color:var(--shami-gold-text)!important;border:1px solid #F0D7A1!important;
+  border-radius:10px!important;font-weight:850!important;box-shadow:none!important;
+}
+html body.customer-home-page #cart-items [data-dec],
+html body.customer-home-page #cart-items [data-inc],
+html body.customer-history-page #cart-items [data-dec],
+html body.customer-history-page #cart-items [data-inc]{
+  background:#3D311D!important;color:var(--shami-yellow)!important;border:1px solid #75603B!important;
+  min-width:34px!important;min-height:34px!important;border-radius:9px!important;
+}
+html body.customer-home-page #cart-items [data-remove],
+html body.customer-history-page #cart-items [data-remove]{
+  background:var(--shami-danger-bg)!important;color:var(--shami-danger)!important;border:1px solid #744048!important;
+}
+html body.customer-home-page .quick-contact a,html body.customer-history-page .quick-contact a{
+  background:var(--shami-wine)!important;color:#FFFFFF!important;border:1px solid #B54A5D!important;
+}
+html body.customer-home-page .quick-contact a.quick-contact-call,
+html body.customer-history-page .quick-contact a.quick-contact-call{
+  background:#2A2226!important;color:var(--shami-text)!important;border:1px solid #59444D!important;
+}
+html body.customer-home-page footer,html body.customer-history-page footer{background:#191518!important;color:#D8CBCF!important;border-top:1px solid #423139!important}
+html body.customer-home-page footer a,html body.customer-history-page footer a{color:var(--shami-gold)!important}
+@media(max-width:760px){
+  html body.customer-home-page .customer-home-actions{background:#1B171A!important;border-radius:18px!important}
+  html body.customer-home-page .customer-home-card{min-height:130px!important;padding:13px!important}
+  html body.customer-home-page .customer-home-card.customer-card-order{grid-column:1/-1}
+  html body.customer-home-page .customer-home-card .customer-card-title{font-size:18px!important}
+  html body.customer-home-page .menu-grid,html body.customer-history-page .menu-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+  html body.admin-body #dashboard .order-footer{grid-template-columns:1fr!important}
+  html body.admin-body #dashboard .order-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  html body.rider-app .delivery-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+}
+@media(max-width:390px){
+  html body.customer-home-page .customer-home-card{border-radius:14px!important}
+  html body.admin-body #dashboard .order-actions .btn{font-size:9px!important;padding:7px 5px!important}
+  html body.rider-app .delivery-actions{grid-template-columns:1fr!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html body.customer-home-page *,html body.customer-history-page *,html body.admin-body *,html body.rider-app *{
+    animation:none!important;transition:none!important;scroll-behavior:auto!important;
+  }
+}

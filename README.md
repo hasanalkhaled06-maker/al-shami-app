@@ -12,7 +12,7 @@ The customer, admin, and rider entry points share the existing Supabase project 
 
 ## Visual design
 
-The shared visual palette is warm cream (#F7F1E7) and off-white surfaces (#FFFCF7), burgundy for primary actions (#761B2A), charcoal text (#2A2224), soft green icon accents (#E2F0E7 / #36765B), light blue icon accents (#E4EFF9 / #376F9A), and champagne gold (#D8B779) for compact utility buttons only. `light-theme.css` must load last so it overrides legacy/experimental styles; obsolete dark-theme overrides must not be reintroduced in `app-refresh.css`. Keep all headings, descriptions, status steps, and order details readable against their surfaces. Interface copy should stay concise; preserve operational, privacy, status, and checkout instructions needed to finish a task.
+The approved shared visual palette is premium dark: charcoal backgrounds (#121013), layered graphite cards (#1B171A / #241D21), burgundy primary actions (#8D2438), ivory high-contrast text (#F8F2EE), champagne gold utility controls (#D8B779), deep-blue icon accents (#1F3042 with #8EC2F0 icons), and deep-green icon accents (#20382F with #92D3B0 icons). `dark-theme.css` must load after all legacy and experiment styles on customer, order-history, admin, and rider pages. Do not reintroduce conflicting pale-theme or low-contrast rules in `app-refresh.css` or `light-theme.css`. Keep all order details, headings, descriptions, statuses, inputs, and buttons readable. Keep interface copy concise while preserving operational, privacy, status, and checkout instructions users need.
 
 ## Install on iPhone
 
@@ -28,7 +28,7 @@ This installs web apps on the iPhone Home Screen; these are not native apps publ
 ## Main files
 
 - `index.html`, `customer.js`: customer menu, basket, cash-only checkout, order tracking and confirmation.
-- `light-theme.css`: shared light visual system — warm cream surfaces, burgundy actions, champagne accents and compact mobile layouts across customer, admin, and rider pages.
+- `dark-theme.css`: approved shared dark design system — layered charcoal surfaces, burgundy primary actions, ivory text, gold utility controls, and subtle blue/green icon accents across customer, history, admin, and rider pages.
 - `admin.html`, `admin.js`: sign-in, incoming orders, menu/prices, offers, restaurant settings.
 - `admin-operations.js`: inventory, stock-movement history, suppliers, staff roster, expenses, cash shifts, and basic daily reporting.
 - `config.js`: Supabase project URL and public publishable key. Never put a service-role/secret key in browser code.
