@@ -780,3 +780,31 @@ body.rider-app .summary-icon,body.admin-app .summary-icon{background:#34271c!imp
 @media(prefers-reduced-motion:reduce){
   body.customer-home-page *,body.customer-history-page *,body.rider-app *,body.admin-app *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
+
+/* Admin uses admin-body; match its actual production markup. */
+body.admin-body{background:#111011!important;color:#f7f1ed!important}
+body.admin-body .admin-top{background:linear-gradient(120deg,#211418,#4a101d)!important;color:#fff7f0!important;border-color:#403137!important}
+body.admin-body .admin-top h1,body.admin-body .admin-top p,body.admin-body .dashboard-heading h1,body.admin-body .dashboard-heading h2{color:#fff7f0!important}
+body.admin-body .panel,body.admin-body .admin-home-card,body.admin-body .settings-hub-card,
+body.admin-body .stats,body.admin-body .admin-form,body.admin-body .admin-menu-list{
+  background:#1c191a!important;color:#f7f1ed!important;border:1px solid #403438!important;border-radius:19px!important;
+  box-shadow:0 10px 26px rgba(0,0,0,.18)!important;
+}
+body.admin-body .admin-home-card:hover,body.admin-body .settings-hub-card:hover{border-color:#b68c4e!important}
+body.admin-body .home-card-title,body.admin-body .settings-hub-title,
+body.admin-body .admin-home-card h2,body.admin-body .settings-hub-card h2{color:#fff7f0!important}
+body.admin-body .home-card-icon,body.admin-body .settings-hub-icon{background:#382027!important;color:#e0b96e!important}
+body.admin-body .admin-tabs button,body.admin-body .admin-actions button{
+  background:#262022!important;color:#f6ece8!important;border:1px solid #493a3e!important;border-radius:12px!important;
+}
+body.admin-body .admin-tabs button.active,body.admin-body .admin-actions button.primary,
+body.admin-body button.btn-primary,body.admin-body .admin-form button[type="submit"]{
+  background:linear-gradient(135deg,#a32236,#741824)!important;color:#fff8f0!important;border-color:#a83a49!important;
+}
+body.admin-body input,body.admin-body select,body.admin-body textarea{
+  background:#211c1e!important;color:#fff7f0!important;border-color:#47383c!important;border-radius:12px!important;
+}
+body.admin-body input::placeholder,body.admin-body textarea::placeholder{color:#a99da0!important}
+body.admin-body .muted,body.admin-body .home-card-bottom,body.admin-body .settings-hub-intro p{color:#b8aeb0!important}
+body.admin-body .status-success,body.admin-body .success{color:#e2bd78!important;background:#34271c!important;border-color:#72542d!important}
+body.admin-body .admin-home-card .home-card-status{background:#34271c!important;color:#e2bd78!important}
