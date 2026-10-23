@@ -77,6 +77,7 @@
         deliveryMapMarker.on("dragend", () => {
           if (!deliveryMapMarker) return;
           const position = deliveryMapMarker.getLatLng();
+          if (pendingDeliveryLocation) pendingDeliveryLocation = { ...pendingDeliveryLocation, address: "" };
           setPendingDeliveryLocation(position.lat, position.lng);
         });
       } else {
@@ -117,6 +118,7 @@
 
       deliveryMapInstance.on("click", event => {
         if (!event?.latlng) return;
+        if (pendingDeliveryLocation) pendingDeliveryLocation = { ...pendingDeliveryLocation, address: "" };
         setPendingDeliveryLocation(event.latlng.lat, event.latlng.lng);
       });
     } else {
@@ -1874,6 +1876,7 @@
       if (button) button.disabled = false;
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
+      if (pendingDeliveryLocation) pendingDeliveryLocation = { ...pendingDeliveryLocation, address: "" };
       setPendingDeliveryLocation(lat, lng);
       if (deliveryMapInstance) {
         deliveryMapInstance.flyTo([lat, lng], 17);
