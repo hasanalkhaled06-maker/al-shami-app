@@ -2,26 +2,28 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v58";
+const CACHE_NAME = CACHE_PREFIX + "v59";
 const SHELL_FILES = [
   "./",
   "./index.html",
   "./history.html",
   "./admin.html",
   "./style.css",
-  "./style.css?v=modern-ui-20261023a",
+  "./style.css?v=modern-ui-20261023b",
+  "./modern-ui.css",
+  "./modern-ui.css?v=modern-ui-20261023b",
   "./config.js",
   "./customer.js",
-  "./customer.js?v=live-rider-eta-20261023b",
+  "./customer.js?v=modern-ui-20261023b",
   "./admin.js",
-  "./admin.js?v=rider-dispatch-20261023a",
+  "./admin.js?v=modern-ui-20261023b",
   "./admin-operations.js",
-  "./admin-operations.js?v=rider-profile-link-20261023a",
+  "./admin-operations.js?v=modern-ui-20261023b",
   "./rider.html",
   "./rider.js",
-  "./rider.js?v=approval-gate-20261023c",
+  "./rider.js?v=modern-ui-20261023b",
   "./rider.css",
-  "./rider.css?v=modern-ui-20261023a",
+  "./rider.css?v=modern-ui-20261023b",
   "./rider.webmanifest",
   "./icons/al-shami-rider.svg",
   "./pwa.js",
