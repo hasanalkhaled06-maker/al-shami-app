@@ -14,6 +14,8 @@ const SHELL_FILES = [
   "./app-refresh.css?v=light-premium-20261023b",
   "./dark-theme.css?v=deep-accents-20261023i",
   "./style.css?v=radical-ui-20261023a",
+  "./dark-theme.css?v=shami-wordmark-cleanup-20261023q",
+  "./style.css?v=modern-ui-20261023a",
   "./config.js",
   "./customer.js",
   "./customer.js?v=isolated-auth-20261023a",
