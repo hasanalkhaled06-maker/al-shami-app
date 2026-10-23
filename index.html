@@ -19,6 +19,7 @@
   <link rel="icon" href="icons/al-shami.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -220,7 +221,14 @@
     .delivery-map-close{flex:0 0 42px;width:42px;height:42px;padding:0;font-size:25px}
     .delivery-map-help{margin:8px 0 14px;color:#675b5c;font-size:13px;line-height:1.6}
     .delivery-map-search-container{margin:0 0 10px}
-    .delivery-map-search-container gmp-place-autocomplete{display:block;width:100%;max-width:100%;--gmpx-color-surface:#fff;--gmpx-color-on-surface:#2b2021}
+    .delivery-map-search-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+    #delivery-map-search-input{box-sizing:border-box;width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid #d8c7c8;border-radius:10px;font:inherit;background:#fff;color:#211819}
+    .delivery-map-search-form .btn{margin:0;min-height:44px}
+    .delivery-map-search-results{display:grid;gap:5px;margin-top:8px;max-height:150px;overflow:auto;padding:7px;border:1px solid #ead8d4;border-radius:10px;background:#fff}
+    .delivery-map-search-results[hidden]{display:none!important}
+    .delivery-map-search-results-heading{margin:0;font-size:12px;color:#675b5c}
+    .delivery-map-search-result{padding:9px 10px;border:1px solid #eee1e2;background:#fff;text-align:left;border-radius:8px;color:#29191b;font:inherit;font-size:12px;line-height:1.4;cursor:pointer;overflow-wrap:anywhere}
+    .delivery-map-search-result:hover,.delivery-map-search-result:focus-visible{background:#fff5f2;border-color:#a62030}
     .delivery-map-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0;flex-wrap:wrap}
     .delivery-map-toolbar .btn{margin:0;min-height:42px}
     .delivery-map-selection{flex:1;min-width:130px;color:#17633d;font-size:12px;font-weight:700;line-height:1.4;text-align:right;overflow-wrap:anywhere}
@@ -230,7 +238,7 @@
     .delivery-map-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:15px;flex-wrap:wrap}
     .delivery-map-footer .btn{margin:0;min-height:44px}
     body.delivery-map-open{overflow:hidden}
-    @media(max-width:520px){.delivery-map-modal{padding:7px;padding-bottom:calc(7px + env(safe-area-inset-bottom))}.delivery-map-dialog{max-height:calc(100dvh - 14px - env(safe-area-inset-bottom));border-radius:17px;padding:14px}.delivery-map-canvas{height:42vh;min-height:250px}.delivery-map-selection{text-align:left}.delivery-map-toolbar{align-items:stretch}.delivery-map-toolbar .btn{width:100%}}
+    @media(max-width:520px){.delivery-map-modal{padding:7px;padding-bottom:calc(7px + env(safe-area-inset-bottom))}.delivery-map-dialog{max-height:calc(100dvh - 14px - env(safe-area-inset-bottom));border-radius:17px;padding:14px}.delivery-map-canvas{height:42vh;min-height:250px}.delivery-map-selection{text-align:left}.delivery-map-toolbar{align-items:stretch}.delivery-map-toolbar .btn{width:100%}.delivery-map-search-form{grid-template-columns:1fr}.delivery-map-search-form .btn{width:100%}}
 
   </style>
 </head>
@@ -478,7 +486,7 @@
             <label for="delivery-address-input"><span data-i18n="address">Delivery address / landmark</span></label>
             <input id="delivery-address-input" name="delivery_address" maxlength="250" autocomplete="street-address" aria-describedby="address-help" placeholder="House number, street, landmark">
             <div class="delivery-location-controls">
-              <button id="choose-delivery-location" class="btn btn-light" type="button" data-i18n="chooseLocation">Choose location on Google Maps</button>
+              <button id="choose-delivery-location" class="btn btn-light" type="button" data-i18n="chooseLocation">Choose location on OpenStreetMap</button>
               <button id="clear-delivery-location" class="btn btn-light" type="button" data-i18n="clearLocation" hidden>Clear location</button>
             </div>
             <input id="delivery-latitude" name="delivery_latitude" type="hidden">
@@ -512,12 +520,19 @@
           <button id="delivery-map-close" class="btn btn-light delivery-map-close" type="button" aria-label="Close map">×</button>
         </header>
         <p class="delivery-map-help" data-i18n="mapHelp">Search for a place or tap the map to position the pin. Keep your house number or landmark in the address field.</p>
-        <div id="delivery-map-search-container" class="delivery-map-search-container"></div>
+        <div id="delivery-map-search-container" class="delivery-map-search-container">
+          <form id="delivery-map-search-form" class="delivery-map-search-form" role="search">
+            <label for="delivery-map-search-input" class="visually-hidden" data-i18n="mapSearchPlaceholder">Search for a place or address</label>
+            <input id="delivery-map-search-input" type="search" maxlength="180" autocomplete="off" placeholder="Search for a place or address">
+            <button id="delivery-map-search-button" class="btn btn-primary" type="submit" data-i18n="mapSearchButton">Search</button>
+          </form>
+          <div id="delivery-map-search-results" class="delivery-map-search-results" role="list" aria-label="Search results" hidden></div>
+        </div>
         <div class="delivery-map-toolbar">
           <button id="delivery-map-use-current" class="btn btn-light" type="button" data-i18n="useCurrentLocation">Use my current location</button>
           <span id="delivery-map-selection" class="delivery-map-selection" role="status" aria-live="polite"></span>
         </div>
-        <div id="delivery-map-canvas" class="delivery-map-canvas" aria-label="Google map for selecting delivery location"></div>
+        <div id="delivery-map-canvas" class="delivery-map-canvas" aria-label="OpenStreetMap for selecting delivery location"></div>
         <p id="delivery-map-message" class="delivery-map-message" role="status" aria-live="polite" hidden></p>
         <footer class="delivery-map-footer">
           <button id="delivery-map-cancel" class="btn btn-light" type="button" data-i18n="cancel">Cancel</button>
@@ -699,8 +714,9 @@
       screen.addEventListener("click", dismiss, { once: true });
     })();
   </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
-  <script src="customer.js?v=delivery-map-picker-20261023c"></script>
+  <script src="customer.js?v=delivery-map-osm-20261023a"></script>
   <script src="pwa.js"></script>
 </body>
 </html>
