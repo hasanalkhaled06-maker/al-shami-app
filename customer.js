@@ -182,10 +182,6 @@
             deliveryMapInstance.setCenter({ lat, lng });
             deliveryMapInstance.setZoom(17);
           }
-          const addressInput = checkoutForm?.elements?.delivery_address;
-          if (addressInput && place.formattedAddress) {
-            addressInput.value = String(place.formattedAddress).slice(0, 250);
-          }
         } catch (error) {
           setMapMessage(tr("mapsLoadError"), true);
           console.warn("Delivery place search failed:", error);
