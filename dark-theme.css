@@ -1299,3 +1299,22 @@ html body.customer-history-page .customer-order-card .tracked-steps .done{
 }
 /* Preserve the existing cream-and-gold Refresh button and page background. */
 
+
+
+
+/* Subtle phosphor accent only: thin lime edge, preserving all existing fills,
+   button colors, text colors, layout, and the cream page background. */
+html body.customer-home-page :is(.customer-home-actions,.customer-home-card,.product-card,.checkout-section,.customer-orders-panel,.customer-order-card,.customer-rider-tracking,.customer-rider-eta,.receipt-code-note),
+html body.customer-history-page :is(.customer-home-actions,.customer-home-card,.product-card,.checkout-section,.customer-orders-panel,.customer-order-card,.customer-rider-tracking,.customer-rider-eta,.receipt-code-note),
+html body.admin-body #dashboard :is(.panel,.stat,.admin-home-card,.settings-hub-card,.settings-hub-intro,.order-card,.admin-form,.admin-menu-row,.ops-stat,.ops-tool-tile),
+html body.rider-app :is(.summary-card,.location-panel,.delivery-card,.login-panel,.approval-panel,.dashboard-message,.empty-state){
+  outline:1px solid rgba(173,255,47,.28)!important;
+  outline-offset:-2px!important;
+}
+html body.customer-home-page :is(.customer-home-card,.product-card,.customer-order-card):hover,
+html body.customer-history-page :is(.customer-home-card,.product-card,.customer-order-card):hover,
+html body.admin-body #dashboard :is(.admin-home-card,.settings-hub-card,.order-card):hover,
+html body.rider-app :is(.delivery-card,.location-panel):hover{
+  outline-color:rgba(173,255,47,.48)!important;
+}
+
