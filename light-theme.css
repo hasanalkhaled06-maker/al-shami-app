@@ -1434,3 +1434,57 @@ html body.customer-home-page .customer-home-card.customer-card-help .customer-ca
 html body.customer-home-page .customer-home-card .customer-card-icon svg{
   width:27px!important;height:27px!important;
 }
+
+
+/* Full customer action cards use the requested pastel palette, not just their icons. */
+html body.customer-home-page .customer-home-card.customer-card-order{
+  background:#E4EFF9!important;
+  color:#263746!important;
+  border-color:#CDDFEF!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-history{
+  background:#E2F0E7!important;
+  color:#263A30!important;
+  border-color:#C8E2D2!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-help{
+  background:#FFF2CB!important;
+  color:#493B1D!important;
+  border-color:#F0DE9B!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-order::before{
+  border-color:rgba(55,111,154,.12)!important;
+  box-shadow:0 0 0 22px rgba(55,111,154,.025),0 0 0 46px rgba(55,111,154,.02)!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-history::before{
+  border-color:rgba(54,118,91,.12)!important;
+  box-shadow:0 0 0 22px rgba(54,118,91,.025),0 0 0 46px rgba(54,118,91,.02)!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-help::before{
+  border-color:rgba(139,106,33,.12)!important;
+  box-shadow:0 0 0 22px rgba(139,106,33,.025),0 0 0 46px rgba(139,106,33,.02)!important;
+}
+html body.customer-home-page .customer-home-card .customer-card-title,
+html body.customer-home-page .customer-home-card .customer-card-bottom,
+html body.customer-home-page .customer-home-card .customer-card-badge{
+  color:inherit!important;
+}
+html body.customer-home-page .customer-home-card .customer-card-description{
+  color:#5E6266!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-order .customer-card-bottom{
+  border-top-color:rgba(55,111,154,.22)!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-history .customer-card-bottom{
+  border-top-color:rgba(54,118,91,.22)!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-help .customer-card-bottom{
+  border-top-color:rgba(139,106,33,.22)!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-order::after{background:#7CA8D1!important}
+html body.customer-home-page .customer-home-card.customer-card-history::after{background:#76B295!important}
+html body.customer-home-page .customer-home-card.customer-card-help::after{background:#D8B779!important}
+html body.customer-home-page .customer-home-card .customer-card-badge{
+  background:rgba(255,255,255,.55)!important;
+  border-color:rgba(60,60,60,.10)!important;
+}
