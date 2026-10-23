@@ -122,7 +122,7 @@
     .tracked-card-heading strong{color:#67101a;font-size:1.05rem}.tracked-date{margin:5px 0;color:#6a6060;font-size:.85rem}
     .tracked-status{display:inline-flex;padding:6px 10px;border-radius:999px;background:#f6f0f0;color:#67101a;font-size:.82rem;font-weight:800}
     .customer-order-group{margin-top:18px}.customer-order-group>h3{margin:0 0 10px;font-size:1.05rem}
-    .tracked-status.status-completed{background:#e7f7ec;color:#146c35}.tracked-status.status-rejected,.tracked-rejected{background:#fff0f0;color:#a31925}
+    .tracked-status.status-new{background:#fff0e1;color:#99500c}.tracked-status.status-accepted{background:#e7f7ec;color:#146c35}.tracked-status.status-preparing{background:#fdf3d8;color:#7a5200}.tracked-status.status-ready{background:#e7f0ff;color:#164f9a}.tracked-status.status-out_for_delivery{background:#eee8ff;color:#5832a8}.tracked-updated{font-size:.76rem;color:#8b7778}.tracked-status.status-completed{background:#e7f7ec;color:#146c35}.tracked-status.status-rejected,.tracked-rejected{background:#fff0f0;color:#a31925}
     .tracked-rejected{padding:10px;border-radius:8px;font-weight:800}
     .tracked-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;list-style:none;padding:0;margin:18px 0}
     .tracked-steps.is-delivery{grid-template-columns:repeat(6,minmax(0,1fr))}
@@ -199,7 +199,7 @@
 
 
     /* Customer landing page shows only the three action cards until a choice is made. */
-    body.customer-home-page #customer-orders-panel{display:none!important}
+    body.customer-home-page:not(.has-current-orders) #customer-orders-panel{display:none!important}
     body.customer-home-page:not(.customer-ordering-open) #customer-ordering-view{display:none!important}
     body.customer-home-page.customer-ordering-open .customer-home-actions{display:none!important}
     .customer-ordering-view{margin:10px 0 28px;scroll-margin-top:18px}
@@ -688,7 +688,7 @@
   </script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
-  <script src="customer.js?v=success-panel-20261023a"></script>
+  <script src="customer.js?v=customer-order-status-20261023a"></script>
   <script src="pwa.js"></script>
 </body>
 </html>
