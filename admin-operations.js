@@ -94,9 +94,47 @@
       .ops-form .wide {
         grid-column: 1/-1;
       }
-      .ops-note {
-        font-size: 12px;
-        color: #766d6c;
+      .ops-note { font-size: 12px; color: #766d6c; }
+      #ops-subtabs {
+        display: grid !important;
+        grid-template-columns: repeat(3,minmax(0,1fr));
+        gap: 12px; margin: 20px 0 24px;
+      }
+      #ops-subtabs .ops-tool-tile {
+        min-height: 132px; display: flex; flex-direction: column; align-items: flex-start;
+        justify-content: flex-start; gap: 7px; padding: 15px; border-radius: 15px;
+        border: 1px solid #e8e0d8; background: linear-gradient(145deg,#fff 0%,#fbf8f3 100%);
+        color: #302326; text-align: left; white-space: normal;
+        box-shadow: 0 5px 15px rgba(55,25,28,.045);
+        transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+      }
+      #ops-subtabs .ops-tool-tile:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(55,25,28,.09); border-color: #d4b878; }
+      #ops-subtabs .ops-tool-tile.active { background: linear-gradient(145deg,#5a0e18,#851927); color: #fff9f1; border-color: #851927; box-shadow: 0 8px 20px rgba(103,16,26,.2); }
+      .ops-tool-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: #f9e5e1; color: #8c1b26; font-size: 23px; font-weight: 800; line-height: 1; }
+      #ops-subtabs .ops-tool-tile:nth-child(3n+2) .ops-tool-icon { background: #e2eff4; color: #235d72; }
+      #ops-subtabs .ops-tool-tile:nth-child(3n) .ops-tool-icon { background: #f7edcf; color: #8b651c; }
+      #ops-subtabs .ops-tool-tile.active .ops-tool-icon { background: rgba(255,255,255,.16); color: #ffe4a3; }
+      .ops-tool-title { font-size: 15px; font-weight: 900; line-height: 1.25; }
+      .ops-tool-description { color: #827779; font-size: 11px; font-weight: 500; line-height: 1.45; }
+      #ops-subtabs .ops-tool-tile.active .ops-tool-description { color: rgba(255,249,241,.72); }
+      .ops-shortcuts { display: grid; grid-template-columns: minmax(180px,1.3fr) repeat(3,minmax(110px,.7fr)); align-items: center; gap: 10px; margin: 18px 0 20px; padding: 14px; border: 1px solid #e5d9ca; border-radius: 15px; background: linear-gradient(100deg,#fff8e9,#fff); }
+      .ops-shortcuts > div { display: grid; gap: 4px; }
+      .ops-shortcuts-kicker { color: #8a641b; font-size: 9px; font-weight: 900; letter-spacing: .15em; }
+      .ops-shortcuts strong { color: #3a2225; font-size: 14px; }
+      .ops-shortcuts-note { color: #817576; font-size: 11px; line-height: 1.4; }
+      .ops-shortcut-btn { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 44px; padding: 10px 12px; border: 1px solid #e2d4c7; border-radius: 10px; background: #fff; color: #5b111a; font-size: 12px; font-weight: 800; text-align: left; }
+      .ops-shortcut-btn:hover { background: #f9edd7; border-color: #caa95d; }
+      @media(max-width:760px) {
+        #ops-subtabs { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+        #ops-subtabs .ops-tool-tile { min-height: 124px; padding: 12px; }
+        .ops-tool-title { font-size: 13px; }
+        .ops-tool-description { font-size: 10px; }
+        .ops-shortcuts { grid-template-columns: repeat(2,minmax(0,1fr)); }
+        .ops-shortcuts > div { grid-column: 1/-1; }
+      }
+      @media(max-width:360px) {
+        #ops-subtabs .ops-tool-tile { min-height: 118px; padding: 10px; }
+        .ops-shortcut-btn { padding: 9px; font-size: 11px; }
       }
       @media(max-width:700px) {
         .ops-grid,
@@ -155,17 +193,28 @@
         </div>
       </div>
 
-      <div class="admin-tabs" id="ops-subtabs">
-        <button class="tab active" data-opstab="inventory" type="button">Inventory</button>
-        <button class="tab" data-opstab="suppliers" type="button">Suppliers</button>
-        <button class="tab" data-opstab="staff" type="button">Staff</button>
-        <button class="tab" data-opstab="expenses" type="button">Expenses</button>
-        <button class="tab" data-opstab="shifts" type="button">Cash shifts</button>
-        <button class="tab" data-opstab="purchases" type="button">Purchases</button>
-        <button class="tab" data-opstab="payouts" type="button">Cash payouts</button>
-        <button class="tab" data-opstab="attendance" type="button">Attendance</button>
-        <button class="tab" data-opstab="recipes" type="button">Recipes &amp; food cost</button>
-        <button class="tab" data-opstab="reports" type="button">Reports</button>
+      <div class="ops-shortcuts" id="ops-quick-links">
+        <div>
+          <span class="ops-shortcuts-kicker">RESTAURANT SETUP</span>
+          <strong>Menu and customer settings</strong>
+          <span class="ops-shortcuts-note">Prices, promotions, delivery fee and minimum order.</span>
+        </div>
+        <button class="ops-shortcut-btn" type="button" data-ops-main-panel="menu">Menu &amp; prices <span aria-hidden="true">↗</span></button>
+        <button class="ops-shortcut-btn" type="button" data-ops-main-panel="offers">Offers <span aria-hidden="true">↗</span></button>
+        <button class="ops-shortcut-btn" type="button" data-ops-main-panel="settings">Delivery settings <span aria-hidden="true">↗</span></button>
+      </div>
+
+      <div class="admin-tabs ops-tools-grid" id="ops-subtabs" aria-label="Restaurant management tools">
+        <button class="tab active ops-tool-tile" data-opstab="inventory" type="button"><span class="ops-tool-icon" aria-hidden="true">▦</span><span class="ops-tool-title">Inventory</span><span class="ops-tool-description">Stock levels and low-stock items</span></button>
+        <button class="tab ops-tool-tile" data-opstab="suppliers" type="button"><span class="ops-tool-icon" aria-hidden="true">⇄</span><span class="ops-tool-title">Suppliers</span><span class="ops-tool-description">Supplier contacts and details</span></button>
+        <button class="tab ops-tool-tile" data-opstab="staff" type="button"><span class="ops-tool-icon" aria-hidden="true">♙</span><span class="ops-tool-title">Staff</span><span class="ops-tool-description">Employee records and documents</span></button>
+        <button class="tab ops-tool-tile" data-opstab="shifts" type="button"><span class="ops-tool-icon" aria-hidden="true">＄</span><span class="ops-tool-title">Cash shifts</span><span class="ops-tool-description">Open, close and reconcile tills</span></button>
+        <button class="tab ops-tool-tile" data-opstab="purchases" type="button"><span class="ops-tool-icon" aria-hidden="true">＋</span><span class="ops-tool-title">Purchases</span><span class="ops-tool-description">Purchase orders and received stock</span></button>
+        <button class="tab ops-tool-tile" data-opstab="expenses" type="button"><span class="ops-tool-icon" aria-hidden="true">↘</span><span class="ops-tool-title">Expenses</span><span class="ops-tool-description">Rent, utilities and operating costs</span></button>
+        <button class="tab ops-tool-tile" data-opstab="payouts" type="button"><span class="ops-tool-icon" aria-hidden="true">↗</span><span class="ops-tool-title">Cash payouts</span><span class="ops-tool-description">Cash removed from the till</span></button>
+        <button class="tab ops-tool-tile" data-opstab="attendance" type="button"><span class="ops-tool-icon" aria-hidden="true">◷</span><span class="ops-tool-title">Attendance</span><span class="ops-tool-description">Clock-in, clock-out and hours</span></button>
+        <button class="tab ops-tool-tile" data-opstab="recipes" type="button"><span class="ops-tool-icon" aria-hidden="true">♨</span><span class="ops-tool-title">Recipes &amp; food cost</span><span class="ops-tool-description">Ingredient usage and portion cost</span></button>
+        <button class="tab ops-tool-tile" data-opstab="reports" type="button"><span class="ops-tool-icon" aria-hidden="true">▥</span><span class="ops-tool-title">Reports</span><span class="ops-tool-description">Sales, expenses and cost summaries</span></button>
       </div>
 
       <div id="ops-message" class="status-message" role="status"></div>
@@ -584,6 +633,14 @@
       });
     });
 
+    $("#ops-quick-links").addEventListener("click", event => {
+      const button = event.target.closest("[data-ops-main-panel]");
+      if (!button) return;
+      if (typeof window.__alShamiNavigateMainPanel === "function") {
+        window.__alShamiNavigateMainPanel(button.dataset.opsMainPanel);
+      }
+    });
+
     $("#ops-subtabs").addEventListener("click", event => {
       const btn = event.target.closest("[data-opstab]");
       if (!btn) return;
@@ -627,10 +684,16 @@
       tab.classList.toggle("active", tab.dataset.tab === name);
     });
 
-    ["orders", "menu", "offers", "settings", "operations"].forEach(key => {
+    $("#dashboard")?.classList.remove("hub-home");
+    $("#admin-home")?.classList.add("hidden");
+    $("#back-to-home")?.classList.remove("hidden");
+
+    ["orders", "history", "menu", "offers", "settings", "operations"].forEach(key => {
       const panel = $("#tab-" + key);
       if (panel) panel.classList.toggle("hidden", key !== name);
     });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
     if (name === "operations") {
       loadAll().catch(showError);
