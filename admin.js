@@ -764,7 +764,7 @@
       orders.filter(order => order.status === "new").length;
 
     const activeCount = orders.filter(order => !["completed", "rejected"].includes(order.status)).length;
-    const completedCount = orders.filter(order => order.status === "completed").length;
+    const completedCount = orders.filter(order => ["completed", "rejected"].includes(order.status)).length;
     if ($("#hub-active-count")) $("#hub-active-count").textContent = activeCount;
     if ($("#hub-history-count")) $("#hub-history-count").textContent = completedCount;
 
@@ -833,7 +833,10 @@
   }
 
   function renderOrders() {
-    const filteredOrders = visibleOrders().filter(order => order.status !== "completed");
+    const selectedOrderFilter = $("#order-filter")?.value || "all";
+    const filteredOrders = visibleOrders().filter(order =>
+      order.status !== "completed" && (order.status !== "rejected" || selectedOrderFilter === "rejected")
+    );
 
     $("#orders-list").innerHTML = filteredOrders.length
       ? filteredOrders.map(order => `
@@ -979,13 +982,13 @@ Status: ${order.status}`;
     if (!list) return;
     const query = String($("#history-search")?.value || "").trim().toLowerCase();
     const completed = orders.filter(order => {
-      if (order.status !== "completed") return false;
+      if (!["completed", "rejected"].includes(order.status)) return false;
       const searchable = [order.order_number, order.id, order.customer_name, order.customer_phone, order.delivery_address, order.order_type, ...(order.order_items || []).map(item => item.item_name || item.menu_items?.name || "")].join(" ").toLowerCase();
       return !query || searchable.includes(query);
     });
     list.innerHTML = completed.length ? completed.map(order => `
       <article class="order-card">
-        <div class="order-header"><div><h3>Order #${esc(order.order_number || order.id.slice(0, 8))}</h3><div class="order-meta">${new Date(order.created_at).toLocaleString()} · ${esc(order.customer_name)} · ${esc(order.customer_phone)}</div></div><span class="order-status">Completed</span></div>
+        <div class="order-header"><div><h3>Order #${esc(order.order_number || order.id.slice(0, 8))}</h3><div class="order-meta">${new Date(order.created_at).toLocaleString()} · ${esc(order.customer_name)} · ${esc(order.customer_phone)}</div></div><span class="order-status">${esc(order.status === "rejected" ? "Rejected" : "Completed")}</span></div>
         <p><strong>${order.order_type === "delivery" ? "Delivery" : "Pickup"}</strong>${order.delivery_address ? " · " + esc(order.delivery_address) : ""}${order.notes ? "<br>Notes: " + esc(order.notes) : ""}</p>
         <ul class="order-lines">${(order.order_items || []).map(item => `<li><span>${Number(item.quantity)} × ${esc(item.item_name || item.menu_items?.name || "Menu item")}</span><strong>${money(Number(item.unit_price) * Number(item.quantity))}</strong></li>`).join("")}</ul>
         <div class="order-footer"><div><strong>${money(order.total)}</strong><div class="order-meta">Subtotal ${money(order.subtotal)} · Delivery ${money(order.delivery_fee)}</div></div><div class="order-actions"><button class="btn btn-light" data-history-copy="${order.id}">Copy details</button><button class="btn delete-order-btn" data-delete-order="${order.id}" type="button">Delete order</button></div></div>
