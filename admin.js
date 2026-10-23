@@ -61,13 +61,15 @@
     }[char]));
 
   function deliveryMapLink(order) {
-    if (order?.delivery_latitude == null || order?.delivery_longitude == null) return "";
+    if (order?.order_type !== "delivery" || order?.delivery_latitude == null || order?.delivery_longitude == null) return "";
     const lat = Number(order.delivery_latitude);
     const lng = Number(order.delivery_longitude);
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return "";
-    const query = encodeURIComponent(lat + "," + lng);
-    const href = "https://www.openstreetmap.org/?mlat=" + lat + "&mlon=" + lng + "#map=17/" + lat + "/" + lng;
-    return '<a class="admin-delivery-map-link" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">↗ Open delivery location in OpenStreetMap</a>';
+    // Google Maps URLs are free to use and do not require a Maps Platform API key.
+    // Leave origin unspecified so Google Maps can use the driver's current location.
+    const destination = encodeURIComponent(lat + "," + lng);
+    const href = "https://www.google.com/maps/dir/?api=1&destination=" + destination + "&travelmode=driving&dir_action=navigate&utm_source=al_shami_restaurant&utm_campaign=delivery_navigation";
+    return '<a class="admin-delivery-map-link" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">↗ Start navigation in Google Maps</a>';
   }
 
   function toast(message) {
