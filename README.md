@@ -8,7 +8,7 @@ AL SHAMI is a mobile-friendly restaurant ordering website with a private staff d
 - Admin app: https://alshamiapp.xyz/admin.html
 - Delivery rider app: https://alshamiapp.xyz/rider.html
 
-The customer, admin, and rider entry points share the existing Supabase project but use distinct app pages and install settings. The admin page remains protected by Supabase authentication and the `admin_users` allow-list. The rider page is read-only for order work: it shows assigned deliveries and shares GPS location, but cannot accept/reject orders or change order status.
+The customer, admin, and rider entry points share the existing Supabase project but use distinct app pages and install settings. They use separate Supabase auth storage keys so signing in to one app does not overwrite another app's session; the customer landing page and order-history page intentionally share the customer session. The admin page remains protected by Supabase authentication and the `admin_users` allow-list. The rider page is read-only for order work: it shows assigned deliveries and shares GPS location, but cannot accept/reject orders or change order status.
 
 ## Visual design
 
@@ -38,6 +38,7 @@ This installs web apps on the iPhone Home Screen; these are not native apps publ
 - `supabase/migrations/20261023131500_delivery_rider_live_tracking_v1.sql`: additive rider role, automatic delivery assignment, and securely scoped location RPCs.
 - `DELIVERY_RIDER_APP_SETUP.md`: rollout sequence, rider-account linking instructions, and required acceptance/security tests.
 - `pwa.js`, `service-worker.js`: install/update registration and network-first static asset caching.
+- `tests/`: rider approval-gate regression tests plus static checks for page IDs, assets, manifests, cache references, and isolated app sessions.
 - `icons/`: separate AL SHAMI and admin home-screen icons.
 - `supabase-schema.sql`: base schema for a new Supabase environment.
 - `supabase-migration-v2.sql`: additive operations tables, access policies, stock/expense/cash-shift functions, indexes, and grants.

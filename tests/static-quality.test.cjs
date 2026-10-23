@@ -152,3 +152,42 @@ test("browser configuration does not contain a Supabase secret/service-role key"
   assert.match(config, /SUPABASE_URL\s*:\s*"https:\/\//);
   assert.match(config, /SUPABASE_ANON_KEY\s*:/);
 });
+
+
+test("customer, admin, and rider authentication sessions use distinct storage keys", () => {
+  const keyFrom = (file, label) => {
+    const match = source(file).match(/storageKey:\s*["']([^"']+)["']/);
+    assert.ok(match, label + " must explicitly configure its Supabase storageKey");
+    return match[1];
+  };
+  const keys = [
+    keyFrom("customer.js", "customer app"),
+    keyFrom("admin.js", "admin app"),
+    keyFrom("rider.js", "rider app")
+  ];
+  assert.deepEqual(keys, [
+    "al-shami-customer-auth-v1",
+    "al-shami-admin-auth-v1",
+    "al-shami-rider-auth-v1"
+  ]);
+  assert.equal(new Set(keys).size, 3, "each app must use a separate auth session key");
+});
+
+test("every versioned local JavaScript asset is included in the service-worker shell", () => {
+  const worker = source("service-worker.js");
+  const shellMatch = worker.match(/const SHELL_FILES\s*=\s*\[([\s\S]*?)\];/);
+  assert.ok(shellMatch, "service worker must declare SHELL_FILES");
+  const shell = new Set(
+    [...shellMatch[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1])
+  );
+
+  for (const page of PAGES) {
+    for (const tag of tags(source(page), "script")) {
+      const src = attribute(tag, "src");
+      if (!src || /^https?:/i.test(src) || src.startsWith("//") || !src.includes("?v=")) continue;
+      const normalized = "./" + src.replace(/^\.\//, "").replace(/^\//, "");
+      assert.ok(shell.has(normalized),
+        page + " script is missing from the service-worker cache shell: " + normalized);
+    }
+  }
+});

@@ -15,7 +15,16 @@
   const db = ready && window.supabase
     ? window.supabase.createClient(
         cfg.SUPABASE_URL,
-        cfg.SUPABASE_ANON_KEY
+        cfg.SUPABASE_ANON_KEY,
+        {
+          auth: {
+            // Customer and history share one session; admin and rider use separate keys.
+            storageKey: "al-shami-customer-auth-v1",
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+          }
+        }
       )
     : null;
 

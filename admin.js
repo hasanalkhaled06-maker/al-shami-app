@@ -13,6 +13,8 @@
         cfg.SUPABASE_ANON_KEY,
         {
           auth: {
+            // Keep management sessions isolated from customer and rider sessions.
+            storageKey: "al-shami-admin-auth-v1",
             persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true
