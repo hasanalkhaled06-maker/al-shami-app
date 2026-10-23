@@ -1195,6 +1195,7 @@
     const value = String(status || "").toLowerCase();
     if (value === "completed") {
       if (lang === "ar") return orderType === "delivery" ? "تم التوصيل" : "تم الاستلام";
+      if (lang === "tw") return orderType === "delivery" ? "Wɔde ama wo" : "Wɔafa";
       return orderType === "delivery" ? "Delivered" : "Collected";
     }
     const names = trackingStatusNames[lang] || trackingStatusNames.en;
