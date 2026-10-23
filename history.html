@@ -151,11 +151,20 @@
     }
     body.customer-auth-required #auth-close,
     body.customer-auth-required #auth-continue-guest{display:none!important}
-</style>
+
+    /* History is a dedicated order-history page, not a second ordering page. */
+    body.customer-history-page #active-offers,
+    body.customer-history-page .history-menu-heading,
+    body.customer-history-page #categories,
+    body.customer-history-page #menu,
+    body.customer-history-page .floating-cart-button,
+    body.customer-history-page .checkout-section{display:none!important}
+
+  </style>
 </head>
 
 
-<body class="history-page customer-auth-required">
+<body class="history-page customer-history-page customer-auth-required">
   <section id="welcome-screen" class="welcome-screen" aria-label="AL SHAMI splash screen">
     <div class="welcome-glow welcome-glow-one"></div>
     <div class="welcome-glow welcome-glow-two"></div>
@@ -272,7 +281,7 @@
     </section>
 
 
-    <div class="section-heading">
+    <div class="section-heading history-menu-heading">
       <div>
         <p class="eyebrow">OUR MENU</p>
         <h2 data-i18n="menu">Menu</h2>
