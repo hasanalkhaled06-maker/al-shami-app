@@ -808,3 +808,262 @@ body.admin-body input::placeholder,body.admin-body textarea::placeholder{color:#
 body.admin-body .muted,body.admin-body .home-card-bottom,body.admin-body .settings-hub-intro p{color:#b8aeb0!important}
 body.admin-body .status-success,body.admin-body .success{color:#e2bd78!important;background:#34271c!important;border-color:#72542d!important}
 body.admin-body .admin-home-card .home-card-status{background:#34271c!important;color:#e2bd78!important}
+
+
+/* FINAL GLOBAL CONTRAST FIX — applies to all 4 user-facing pages.
+   Keep surfaces dark and text readable; avoid green as a brand accent. */
+html:has(body.customer-home-page),html:has(body.customer-history-page),html:has(body.admin-body),html:has(body.rider-app){
+  color-scheme:dark;
+  background:#111011!important;
+}
+body.customer-home-page,body.customer-history-page,body.admin-body,body.rider-app{
+  background:#111011!important;color:#f7f1ed!important;
+}
+body.customer-home-page p,body.customer-history-page p,
+body.admin-body p,body.rider-app p{color:#c8bfc0}
+body.customer-home-page h1,body.customer-home-page h2,body.customer-home-page h3,
+body.customer-history-page h1,body.customer-history-page h2,body.customer-history-page h3,
+body.admin-body h1,body.admin-body h2,body.admin-body h3,
+body.rider-app h1,body.rider-app h2,body.rider-app h3{color:#fff8f3!important}
+body.customer-home-page .muted,body.customer-history-page .muted,
+body.admin-body .muted,body.rider-app .muted{color:#bdb2b4!important}
+body.customer-home-page .eyebrow,body.customer-history-page .eyebrow,
+body.admin-body .eyebrow,body.rider-app .eyebrow{color:#dfbd78!important}
+
+/* Customer: no pale text on white cards */
+html body.customer-home-page #main-content,
+html body.customer-history-page #main-content{color:#f7f1ed!important}
+html body.customer-home-page .customer-home-actions,
+html body.customer-home-page #customer-orders-panel,
+html body.customer-history-page .customer-orders-panel,
+html body.customer-home-page .customer-order-card,
+html body.customer-history-page .customer-order-card,
+html body.customer-home-page .tracked-order,
+html body.customer-history-page .tracked-order,
+html body.customer-home-page .customer-rider-tracking,
+html body.customer-history-page .customer-rider-tracking,
+html body.customer-home-page .checkout-section,
+html body.customer-history-page .checkout-section{
+  background:#1b1819!important;color:#f7f1ed!important;border-color:#403438!important;
+}
+html body.customer-home-page .customer-home-actions-intro h2,
+html body.customer-home-page #customer-orders-heading,
+html body.customer-home-page .tracked-order h3,
+html body.customer-history-page .tracked-order h3,
+html body.customer-home-page .tracked-card-heading strong,
+html body.customer-history-page .tracked-card-heading strong,
+html body.customer-home-page .tracked-items,
+html body.customer-history-page .tracked-items{
+  color:#fff8f3!important;
+}
+html body.customer-home-page .customer-home-card,
+html body.customer-history-page .customer-home-card{
+  background:linear-gradient(150deg,#2a2023,#191617)!important;color:#fff8f3!important;
+  border:1px solid #4a383e!important;
+}
+html body.customer-home-page .customer-home-card *,
+html body.customer-history-page .customer-home-card *{color:inherit}
+html body.customer-home-page .customer-card-description,
+html body.customer-history-page .customer-card-description{color:#c7babc!important}
+html body.customer-home-page .menu-grid .product-card,
+html body.customer-history-page .menu-grid .product-card,
+html body.customer-home-page .product-card,
+html body.customer-history-page .product-card{
+  background:#1f1b1c!important;color:#f7f1ed!important;border-color:#403638!important;
+}
+html body.customer-home-page .product-card h3,
+html body.customer-home-page .product-card h4,
+html body.customer-home-page .product-card .price,
+html body.customer-history-page .product-card h3,
+html body.customer-history-page .product-card h4,
+html body.customer-history-page .product-card .price{color:#fff8f3!important}
+html body.customer-home-page .product-card p,
+html body.customer-home-page .product-card .muted,
+html body.customer-history-page .product-card p,
+html body.customer-history-page .product-card .muted{color:#bdb2b4!important}
+html body.customer-home-page #categories button,
+html body.customer-home-page #categories .chip,
+html body.customer-history-page #categories button,
+html body.customer-history-page #categories .chip{
+  background:#262022!important;color:#efe5e3!important;border:1px solid #4a3a3f!important;
+}
+html body.customer-home-page #categories .active,
+html body.customer-home-page #categories button.active,
+html body.customer-history-page #categories .active,
+html body.customer-history-page #categories button.active{
+  background:#8d172b!important;color:#fff!important;border-color:#c04b5a!important;
+}
+html body.customer-home-page input,html body.customer-home-page select,html body.customer-home-page textarea,
+html body.customer-history-page input,html body.customer-history-page select,html body.customer-history-page textarea{
+  background:#211c1e!important;color:#fff8f3!important;border-color:#4b3b40!important;
+}
+html body.customer-home-page input::placeholder,
+html body.customer-history-page input::placeholder{color:#b0a4a6!important;opacity:1}
+html body.customer-home-page .btn-light,html body.customer-home-page button.btn-light,
+html body.customer-history-page .btn-light,html body.customer-history-page button.btn-light{
+  background:#292224!important;color:#fff5ef!important;border:1px solid #554147!important;
+}
+html body.customer-home-page .customer-rider-eta,
+html body.customer-history-page .customer-rider-eta{
+  background:#282022!important;color:#fff5ef!important;border-color:#6a4b3b!important;
+}
+html body.customer-home-page .customer-rider-eta-copy strong,
+html body.customer-history-page .customer-rider-eta-copy strong{color:#f0ce8b!important}
+html body.customer-home-page .customer-rider-eta-copy span,
+html body.customer-history-page .customer-rider-eta-copy span{color:#e2c17c!important}
+html body.customer-home-page .customer-rider-eta-copy small,
+html body.customer-history-page .customer-rider-eta-copy small{color:#cabfc0!important}
+html body.customer-home-page .customer-rider-google-maps,
+html body.customer-history-page .customer-rider-google-maps{
+  background:#211b1d!important;color:#f5e7de!important;border-color:#775b43!important;
+}
+html body.customer-home-page .receipt-code-note,
+html body.customer-history-page .receipt-code-note{background:#282022!important;color:#f7f1ed!important;border-color:#6b4b35!important}
+html body.customer-home-page .receipt-code-label,
+html body.customer-history-page .receipt-code-label{color:#e7d9d6!important}
+html body.customer-home-page .receipt-code-value,
+html body.customer-history-page .receipt-code-value{color:#f0cc83!important}
+html body.customer-home-page .receipt-code-copy,
+html body.customer-history-page .receipt-code-copy{background:#8d172b!important;color:#fff!important;border-color:#b84756!important}
+html body.customer-home-page #floating-cart-button{
+  background:linear-gradient(120deg,#a52338,#6e1424)!important;color:#fff!important;border-color:#b84452!important;
+}
+html body.customer-home-page footer,html body.customer-history-page footer{
+  background:#181315!important;color:#dfd1cc!important;border-color:#403137!important;
+}
+html body.customer-home-page footer a,html body.customer-history-page footer a{color:#edc77b!important}
+
+/* Admin: target its real body class and real page markup (admin-body). */
+html body.admin-body .admin-top{
+  background:linear-gradient(120deg,#211418,#4a101d)!important;color:#fff8f3!important;border-color:#403137!important;
+}
+html body.admin-body .admin-brand,html body.admin-body .admin-brand span{color:#fff8f3!important}
+html body.admin-body .dashboard-heading{
+  background:linear-gradient(120deg,#301017,#7c192b)!important;border-color:#6a2933!important;
+}
+html body.admin-body .dashboard-heading h1,html body.admin-body .dashboard-heading h2,
+html body.admin-body .dashboard-heading p{color:#fff8f3!important}
+html body.admin-body #dashboard .stat,
+html body.admin-body #dashboard .panel,
+html body.admin-body #dashboard .admin-home-card,
+html body.admin-body #dashboard .settings-hub-card,
+html body.admin-body #dashboard .settings-hub-intro,
+html body.admin-body #dashboard .order-card,
+html body.admin-body #dashboard .admin-form,
+html body.admin-body #dashboard .admin-menu-row,
+html body.admin-body #dashboard .ops-stat{
+  background:#1e1a1b!important;color:#f7f1ed!important;
+  border:1px solid #49383d!important;box-shadow:0 8px 22px rgba(0,0,0,.17)!important;
+}
+html body.admin-body #dashboard .stat span,
+html body.admin-body #dashboard .muted,
+html body.admin-body #dashboard .order-meta,
+html body.admin-body #dashboard .order-lines,
+html body.admin-body #dashboard .home-card-bottom{color:#c3b7b9!important}
+html body.admin-body #dashboard .stat strong,
+html body.admin-body #dashboard .order-header h3,
+html body.admin-body #dashboard .order-card h3,
+html body.admin-body #dashboard .panel h2,
+html body.admin-body #dashboard .panel h3,
+html body.admin-body #dashboard .home-card-title,
+html body.admin-body #dashboard .settings-hub-title,
+html body.admin-body #dashboard .ops-stat strong{color:#fff8f3!important}
+html body.admin-body #dashboard .home-card-icon,
+html body.admin-body #dashboard .settings-hub-icon{
+  background:#382027!important;color:#e2bd78!important;border-color:#674550!important;
+}
+html body.admin-body #dashboard .home-card-status{
+  background:#34271c!important;color:#f0ce8b!important;border-color:#6b5230!important;
+}
+html body.admin-body #dashboard .home-card-status .live-dot{background:#d9b46b!important;box-shadow:0 0 0 3px rgba(217,180,107,.17)!important}
+html body.admin-body .admin-tabs button,
+html body.admin-body .admin-actions button,
+html body.admin-body #dashboard .btn-light,
+html body.admin-body #dashboard .tab{
+  background:#292224!important;color:#f8eeeb!important;border-color:#574148!important;
+}
+html body.admin-body #dashboard .tab.active,
+html body.admin-body #dashboard button.btn-primary,
+html body.admin-body #dashboard .btn-primary,
+html body.admin-body #dashboard .admin-form button[type="submit"]{
+  background:linear-gradient(135deg,#a52338,#6f1424)!important;color:#fff8f3!important;border-color:#b84756!important;
+}
+html body.admin-body input,html body.admin-body select,html body.admin-body textarea{
+  background:#211c1e!important;color:#fff8f3!important;border:1px solid #514047!important;
+}
+html body.admin-body input::placeholder,html body.admin-body textarea::placeholder{color:#b4a8aa!important;opacity:1}
+html body.admin-body label,html body.admin-body #dashboard label{color:#e4d9d8!important}
+html body.admin-body #receipt-confirm-form,
+html body.admin-body #tab-orders .admin-form,
+html body.admin-body .ops-form{background:#262022!important;border-color:#49383d!important}
+html body.admin-body .order-status{background:#34271c!important;color:#f0ce8b!important;border-color:#6b5230!important}
+html body.admin-body .incoming-order-dialog{background:#1e1a1b!important;color:#fff8f3!important;border-color:#60434b!important}
+html body.admin-body .incoming-order-items li{border-color:#49383d!important;color:#f7f1ed!important}
+html body.admin-body .incoming-order-total{color:#f0ce8b!important}
+html body.admin-body .admin-home-card:after{background:#8d172b!important}
+html body.admin-body .home-card-settings:after{background:#d9b46b!important}
+
+/* Rider: keep the entire dispatch workspace readable in the same premium palette. */
+html body.rider-app .rider-header{
+  background:linear-gradient(120deg,#211418,#4a101d)!important;border-color:#403137!important;color:#fff8f3!important;
+}
+html body.rider-app .rider-header .brand strong,html body.rider-app .rider-header .brand small,
+html body.rider-app .rider-header .connection-pill{color:#fff8f3!important}
+html body.rider-app .welcome-row{
+  background:linear-gradient(120deg,#301017,#7c192b)!important;border-color:#6a2933!important;color:#fff8f3!important;
+}
+html body.rider-app .welcome-row h1,html body.rider-app .welcome-row p{color:#fff8f3!important}
+html body.rider-app .summary-card,
+html body.rider-app .location-panel,
+html body.rider-app .delivery-card,
+html body.rider-app .empty-state,
+html body.rider-app .login-panel,
+html body.rider-app .approval-panel{
+  background:#1e1a1b!important;color:#f7f1ed!important;border:1px solid #49383d!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.17)!important;
+}
+html body.rider-app .summary-card .summary-label,
+html body.rider-app .summary-card small,
+html body.rider-app .location-panel-copy p,
+html body.rider-app .privacy-note,
+html body.rider-app .order-time,
+html body.rider-app .delivery-notes,
+html body.rider-app .detail-label{color:#c3b7b9!important}
+html body.rider-app .summary-card strong,
+html body.rider-app .order-number,
+html body.rider-app .customer-name,
+html body.rider-app .delivery-address,
+html body.rider-app .empty-state strong{color:#fff8f3!important}
+html body.rider-app .summary-icon,
+html body.rider-app .location-icon,
+html body.rider-app .empty-icon{background:#382027!important;color:#e2bd78!important;border-color:#674550!important}
+html body.rider-app .location-panel{background:#211b1d!important;border-color:#6b5230!important}
+html body.rider-app .status-badge{
+  background:#34271c!important;color:#f0ce8b!important;border-color:#6b5230!important;
+}
+html body.rider-app .status-badge.status-out_for_delivery,
+html body.rider-app .status-badge.status-ready{
+  background:#34271c!important;color:#f0ce8b!important;
+}
+html body.rider-app .navigation-button{
+  background:#8d172b!important;color:#fff8f3!important;border-color:#b84756!important;
+}
+html body.rider-app .navigation-button.secondary{
+  background:#292224!important;color:#f8eeeb!important;border-color:#574148!important;
+}
+html body.rider-app .primary-button,
+html body.rider-app .secondary-button{
+  background:linear-gradient(135deg,#a52338,#6f1424)!important;color:#fff8f3!important;border-color:#b84756!important;
+}
+html body.rider-app input,html body.rider-app select,html body.rider-app textarea{
+  background:#211c1e!important;color:#fff8f3!important;border-color:#514047!important;
+}
+html body.rider-app .dashboard-message{background:#292224!important;color:#f7f1ed!important;border-color:#574148!important}
+html body.rider-app .dashboard-footer{color:#bdb2b4!important;border-color:#403438!important}
+
+/* Respect reduced-motion settings. */
+@media(prefers-reduced-motion:reduce){
+  html body.customer-home-page *,html body.customer-history-page *,html body.admin-body *,html body.rider-app *{
+    transition:none!important;animation:none!important;scroll-behavior:auto!important;
+  }
+}
