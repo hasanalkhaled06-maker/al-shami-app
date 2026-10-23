@@ -5,7 +5,6 @@ const config: CapacitorConfig = {
   appId: "xyz.alshamiapp.restaurant",
   appName: "AL SHAMI RESTAURANT",
   webDir: "web",
-  bundledWebRuntime: false,
   // Do not set server.url: the preview packages the customer pages locally.
   // Business data and order operations continue to use the existing HTTPS APIs.
 };
