@@ -6,11 +6,17 @@
   "start_url": "./admin.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
-  "background_color": "#fffaf5",
-  "theme_color": "#67101a",
-  "categories": ["business", "productivity"],
+  "background_color": "#f6f0e6",
+  "theme_color": "#761b2a",
+  "categories": [
+    "business",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "./icons/apple-touch-icon-admin.png",
