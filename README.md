@@ -8,7 +8,7 @@ AL SHAMI is a mobile-friendly restaurant ordering website with a private staff d
 - Admin app: https://alshamiapp.xyz/admin.html
 - Delivery rider app: https://alshamiapp.xyz/rider.html
 
-The customer, admin, and rider entry points share the existing Supabase project but use distinct app pages and install settings. They use separate Supabase auth storage keys so signing in to one app does not overwrite another app's session; the customer landing page and order-history page intentionally share the customer session. The admin page remains protected by Supabase authentication and the `admin_users` allow-list. The rider page is read-only for order work: it shows assigned deliveries and shares GPS location, but cannot accept/reject orders or change order status.
+The customer, admin, and rider entry points share the existing Supabase project but use distinct app pages and install settings. They use separate Supabase auth storage keys so signing in to one app does not overwrite another app's session; the customer landing page and order-history page intentionally share the customer session. Existing customer/admin users may need to sign in again once after this session-isolation change is first deployed. The admin page remains protected by Supabase authentication and the `admin_users` allow-list. The rider page is read-only for order work: it shows assigned deliveries and shares GPS location, but cannot accept/reject orders or change order status.
 
 ## Visual design
 
