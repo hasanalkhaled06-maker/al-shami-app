@@ -713,3 +713,135 @@ html body.rider-app :is(.primary-button,.navigation-button:not(.secondary),#loca
   box-shadow:inset 0 0 0 1px rgba(173,255,47,.14)!important;
 }
 
+
+
+
+/* AL SHAMI animated chef brand tile — customer home only. */
+html body.customer-home-page .al-shami-chef-widget{
+  position:fixed!important;
+  top:calc(env(safe-area-inset-top,0px) + 76px)!important;
+  right:9px!important;
+  z-index:180!important;
+  width:112px!important;
+  min-height:137px!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:0!important;
+  padding:5px 7px 9px!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+  border:1px solid rgba(216,183,121,.82)!important;
+  border-radius:17px!important;
+  background:linear-gradient(150deg,rgba(28,18,23,.97),rgba(64,13,29,.97))!important;
+  box-shadow:inset 0 0 0 1px rgba(173,255,47,.15),0 7px 24px rgba(12,7,10,.23),0 0 13px rgba(173,255,47,.08)!important;
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+}
+html body.customer-home-page .al-shami-chef-art{
+  position:relative!important;
+  width:100%!important;
+  height:91px!important;
+  display:flex!important;
+  justify-content:center!important;
+  align-items:flex-end!important;
+  flex:0 0 91px!important;
+  overflow:visible!important;
+}
+html body.customer-home-page .al-shami-chef-mascot{
+  display:block!important;
+  width:101px!important;
+  height:92px!important;
+  max-width:none!important;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  margin:0!important;
+  padding:0!important;
+  opacity:0!important;
+  transform-origin:50% 100%!important;
+  animation:alShamiChefEntrance .9s cubic-bezier(.2,.85,.25,1.2) .12s forwards,alShamiChefBounce 3.1s ease-in-out 1.1s infinite!important;
+  filter:drop-shadow(0 3px 2px rgba(0,0,0,.18))!important;
+}
+html body.customer-home-page .al-shami-chef-wordmark{
+  position:relative!important;
+  z-index:2!important;
+  margin-top:-1px!important;
+  color:#E5C477!important;
+  font-size:12px!important;
+  font-weight:950!important;
+  line-height:1.15!important;
+  letter-spacing:.1em!important;
+  white-space:nowrap!important;
+  text-align:center!important;
+  opacity:0!important;
+  animation:alShamiWordReveal .55s ease-out .72s forwards!important;
+  text-shadow:0 1px 0 #3a1c1d,0 0 9px rgba(216,183,121,.18)!important;
+}
+html body.customer-home-page .al-shami-chef-caption{
+  margin-top:3px!important;
+  color:#F7F1E7!important;
+  font-size:6px!important;
+  font-weight:800!important;
+  letter-spacing:.24em!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  opacity:0!important;
+  animation:alShamiWordReveal .45s ease-out .9s forwards!important;
+}
+html body.customer-home-page .al-shami-chef-spark{
+  position:absolute!important;
+  z-index:3!important;
+  pointer-events:none!important;
+  line-height:1!important;
+  color:#ADFF2F!important;
+  font-size:15px!important;
+  opacity:0!important;
+  text-shadow:0 0 8px rgba(173,255,47,.58)!important;
+  animation:alShamiChefSpark 2.8s ease-in-out 1.1s infinite!important;
+}
+html body.customer-home-page .al-shami-chef-spark-a{top:17px!important;left:8px!important}
+html body.customer-home-page .al-shami-chef-spark-b{top:30px!important;right:5px!important;animation-delay:1.6s!important}
+@keyframes alShamiChefEntrance{
+  0%{opacity:0;transform:translateY(27px) scale(.73) rotate(-7deg)}
+  72%{opacity:1;transform:translateY(-4px) scale(1.04) rotate(2deg)}
+  100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}
+}
+@keyframes alShamiChefBounce{
+  0%,100%{transform:translateY(0) rotate(0) scale(1)}
+  22%{transform:translateY(-3px) rotate(-2deg) scale(1.01)}
+  44%{transform:translateY(0) rotate(1.7deg) scale(1)}
+  63%{transform:translateY(-1px) rotate(0) scale(1)}
+}
+@keyframes alShamiWordReveal{
+  from{opacity:0;transform:translateY(7px);filter:blur(2px)}
+  to{opacity:1;transform:translateY(0);filter:blur(0)}
+}
+@keyframes alShamiChefSpark{
+  0%,100%{opacity:0;transform:scale(.55) rotate(-20deg)}
+  40%,65%{opacity:.92;transform:scale(1) rotate(12deg)}
+}
+@media(max-width:480px){
+  html body.customer-home-page .al-shami-chef-widget{
+    top:calc(env(safe-area-inset-top,0px) + 77px)!important;
+    right:7px!important;
+    width:99px!important;
+    min-height:123px!important;
+    padding:4px 5px 8px!important;
+    border-radius:15px!important;
+  }
+  html body.customer-home-page .al-shami-chef-art{height:80px!important;flex-basis:80px!important}
+  html body.customer-home-page .al-shami-chef-mascot{width:89px!important;height:81px!important}
+  html body.customer-home-page .al-shami-chef-wordmark{font-size:10px!important;letter-spacing:.095em!important}
+  html body.customer-home-page .al-shami-chef-caption{font-size:5.5px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html body.customer-home-page .al-shami-chef-mascot,
+  html body.customer-home-page .al-shami-chef-wordmark,
+  html body.customer-home-page .al-shami-chef-caption,
+  html body.customer-home-page .al-shami-chef-spark{
+    animation:none!important;opacity:1!important;filter:none!important;transform:none!important;
+  }
+}
+
