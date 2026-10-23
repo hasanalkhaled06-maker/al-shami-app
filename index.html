@@ -94,6 +94,13 @@
     #success-order-total{background:#fbf6eb;border-color:#eee0c3;color:#3e3030}
     .success-actions{display:flex;align-items:center;gap:9px}
     .success-whatsapp{display:inline-flex;align-items:center;justify-content:center;min-height:39px;flex:1;margin:0;padding:9px 12px;border:1px solid #1f7a43;border-radius:10px;background:#1f7a43;color:#fff;text-decoration:none;text-align:center;font-size:12px;font-weight:800}
+
+    .success-track{display:inline-flex;align-items:center;justify-content:center;min-height:39px;flex:1;margin:0;padding:9px 12px;border:1px solid #1f7a43;border-radius:10px;background:#1f7a43;color:#fff;font:inherit;font-size:12px;font-weight:850;cursor:pointer}
+    .success-track:hover{background:#176536}
+    .success-modal.status-accepted .success-icon{border-color:#b8e0c5;background:#eaf8ef;color:#187341}
+    .success-modal.status-accepted .success-progress span{width:100%;animation:none;background:#1f7a43}
+    .success-modal.status-rejected .success-icon{border-color:#e8b9b9;background:#fff0f0;color:#a31621}
+    @media(max-width:480px){.success-track{font-size:11px;min-height:37px;padding:8px 9px}}
     .success-card #success-close{min-height:39px;margin:0;padding:8px 15px;border:1px solid #e5d8d2;border-radius:10px;background:#f6eee8;color:#422628;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
     .success-card #success-close:hover{background:#eee0d8}
     @keyframes successPanelIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
@@ -585,7 +592,7 @@
       </div>
       <div class="success-actions">
         <a id="success-whatsapp" class="success-whatsapp" href="https://wa.me/233547489859" target="_blank" rel="noopener noreferrer">Chat with AL SHAMI on WhatsApp</a>
-        <button id="success-close" type="button" class="btn btn-light">Close</button>
+        <button id="success-track" type="button" class="success-track">Track your order</button><button id="success-close" type="button" class="btn btn-light">Close</button>
       </div>
     </div>
   </section>
@@ -604,56 +611,75 @@
 
       const panelText = {
         en: {
-          title: "Order sent — waiting for restaurant acceptance",
-          description: "Your order reached AL SHAMI RESTAURANT and is waiting to be accepted.",
-          number: "Order number:",
-          total: "Order total:",
-          close: "Close",
-          whatsapp: "Chat with AL SHAMI on WhatsApp",
-          status: "ORDER STATUS · WAITING FOR ACCEPTANCE"
+          waiting: ["Order sent — waiting for restaurant acceptance","Your order reached AL SHAMI RESTAURANT and is waiting to be accepted.","ORDER STATUS · WAITING FOR ACCEPTANCE","◷","Close","Track your order"],
+          accepted: ["Order accepted!","The restaurant accepted your order and will start preparing it.","ORDER STATUS · ACCEPTED ✓","✓","Close","Track your order"],
+          preparing: ["Your order is being prepared","The kitchen is preparing your order now.","ORDER STATUS · PREPARING","✓","Close","Track your order"],
+          ready: ["Your order is ready","Your order is ready for collection or dispatch.","ORDER STATUS · READY","✓","Close","Track your order"],
+          out_for_delivery: ["Your order is on the way!","Your order has been dispatched for delivery.","ORDER STATUS · OUT FOR DELIVERY","✓","Close","Track your order"],
+          completed: ["Order delivered — thank you!","Your order is marked as completed. Thank you for choosing AL SHAMI.","ORDER STATUS · COMPLETED","✓","Close","View order"],
+          rejected: ["Order could not be accepted","Please contact AL SHAMI RESTAURANT on WhatsApp for help.","ORDER STATUS · NOT ACCEPTED","!","Close","View order"]
         },
         ar: {
-          title: "تم إرسال طلبك وبانتظار قبول المطعم",
-          description: "وصل طلبك إلى مطعم الشامي، وهلأ بانتظار قبول المطعم.",
-          number: "رقم الطلب:",
-          total: "المجموع:",
-          close: "إغلاق",
-          whatsapp: "تواصل معنا عبر واتساب",
-          status: "حالة الطلب · بانتظار القبول"
+          waiting: ["تم إرسال طلبك وبانتظار قبول المطعم","وصل طلبك إلى مطعم الشامي، وهلأ بانتظار قبول المطعم.","حالة الطلب · بانتظار القبول","◷","إغلاق","تابع طلبك"],
+          accepted: ["✓ تم قبول طلبك","المطعم قبل طلبك، ورح يبلّش بتحضيره.","حالة الطلب · تم القبول ✓","✓","إغلاق","اضغط لمتابعة طلبك"],
+          preparing: ["عم نجهّز طلبك","المطبخ عم يحضّر طلبك هلق.","حالة الطلب · قيد التحضير","✓","إغلاق","اضغط لمتابعة طلبك"],
+          ready: ["طلبك صار جاهز","طلبك جاهز للاستلام أو للإرسال مع الموصّل.","حالة الطلب · جاهز","✓","إغلاق","اضغط لمتابعة طلبك"],
+          out_for_delivery: ["طلبك صار بالطريق إليك!","تم إرسال طلبك للتوصيل.","حالة الطلب · بالطريق للتوصيل","✓","إغلاق","اضغط لمتابعة طلبك"],
+          completed: ["تم تسليم طلبك، شكراً إلك!","تم تسجيل الطلب كمكتمل. شكراً لاختيارك مطعم الشامي.","حالة الطلب · مكتمل","✓","إغلاق","عرض الطلب"],
+          rejected: ["تعذّر قبول الطلب","تواصل معنا عبر واتساب لنساعدك.","حالة الطلب · لم يتم القبول","!","إغلاق","عرض الطلب"]
         },
         tw: {
-          title: "Order sent — waiting for restaurant acceptance",
-          description: "Your order reached AL SHAMI RESTAURANT and is waiting to be accepted.",
-          number: "Order number:",
-          total: "Order total:",
-          close: "Close",
-          whatsapp: "Chat with AL SHAMI on WhatsApp",
-          status: "ORDER STATUS · WAITING FOR ACCEPTANCE"
+          waiting: ["Order sent — waiting for restaurant acceptance","Your order reached AL SHAMI RESTAURANT and is waiting to be accepted.","ORDER STATUS · WAITING FOR ACCEPTANCE","◷","Close","Track your order"],
+          accepted: ["Order accepted!","The restaurant accepted your order and will start preparing it.","ORDER STATUS · ACCEPTED ✓","✓","Close","Track your order"],
+          preparing: ["Your order is being prepared","The kitchen is preparing your order now.","ORDER STATUS · PREPARING","✓","Close","Track your order"],
+          ready: ["Your order is ready","Your order is ready for collection or dispatch.","ORDER STATUS · READY","✓","Close","Track your order"],
+          out_for_delivery: ["Your order is on the way!","Your order has been dispatched for delivery.","ORDER STATUS · OUT FOR DELIVERY","✓","Close","Track your order"],
+          completed: ["Order delivered — thank you!","Your order is marked as completed. Thank you for choosing AL SHAMI.","ORDER STATUS · COMPLETED","✓","Close","View order"],
+          rejected: ["Order could not be accepted","Please contact AL SHAMI RESTAURANT on WhatsApp for help.","ORDER STATUS · NOT ACCEPTED","!","Close","View order"]
         }
+      };
+      let activeSuccessOrderNumber = null;
+      const applyStatus = statusValue => {
+        const status = String(statusValue || "new").toLowerCase();
+        const key = ["accepted","preparing","ready","out_for_delivery","completed","rejected"].includes(status) ? status : "waiting";
+        const lang = document.getElementById("language")?.value || "en";
+        const words = (panelText[lang] || panelText.en)[key] || panelText.en[key];
+        title.textContent = words[0];
+        description.textContent = words[1];
+        statusLabel.textContent = words[2];
+        const icon = panel.querySelector(".success-icon span");
+        if (icon) icon.textContent = words[3];
+        panel.classList.toggle("status-accepted", key === "accepted" || key === "preparing" || key === "ready" || key === "out_for_delivery" || key === "completed");
+        panel.classList.toggle("status-rejected", key === "rejected");
+        closeButton.textContent = words[4];
+        const trackButton = document.getElementById("success-track");
+        if (trackButton) trackButton.textContent = words[5];
       };
 
       window.AL_SHAMI_SHOW_SUCCESS = details => {
         const item = details && typeof details === "object" ? details : { orderNumber: details };
         const lang = document.getElementById("language")?.value || "en";
-        const words = panelText[lang] || panelText.en;
-
+        const words = (panelText[lang] || panelText.en).waiting;
         previouslyFocused = document.activeElement;
-        title.textContent = words.title;
-        description.textContent = words.description;
-        statusLabel.textContent = words.status;
-        closeButton.textContent = words.close;
-        closeButton.setAttribute("aria-label", words.close);
-        if (whatsapp) whatsapp.textContent = words.whatsapp;
-
+        activeSuccessOrderNumber = String(item.orderNumber ?? "");
+        applyStatus("new");
+        closeButton.setAttribute("aria-label", words[4]);
+        if (whatsapp) whatsapp.textContent = (panelText[lang] || panelText.en).waiting[5] === "Track your order"
+          ? "Chat with AL SHAMI on WhatsApp" : (lang === "ar" ? "تواصل معنا عبر واتساب" : "Chat with AL SHAMI on WhatsApp");
         const orderNumber = item.orderNumber;
-        number.textContent = orderNumber && orderNumber !== "received" ? `${words.number} ${orderNumber}` : "";
+        number.textContent = orderNumber && orderNumber !== "received" ? `${(panelText[lang] || panelText.en).waiting[0] && (lang === "ar" ? "رقم الطلب:" : "Order number:")} ${orderNumber}` : "";
         total.textContent = item.total !== undefined && item.total !== null && Number.isFinite(Number(item.total))
-          ? `${words.total} GH₵ ${Number(item.total).toFixed(2)}`
+          ? `${lang === "ar" ? "المجموع:" : "Order total:"} GH₵ ${Number(item.total).toFixed(2)}`
           : "";
-
         panel.hidden = false;
         panel.classList.remove("is-visible");
         requestAnimationFrame(() => panel.classList.add("is-visible"));
+      };
+
+      window.AL_SHAMI_UPDATE_SUCCESS_STATUS = details => {
+        if (!details || activeSuccessOrderNumber === null) return;
+        if (String(details.orderNumber ?? "") !== activeSuccessOrderNumber) return;
+        applyStatus(details.status);
       };
 
       function closePanel() {
@@ -664,6 +690,15 @@
         }
       }
 
+      document.getElementById("success-track")?.addEventListener("click", () => {
+        closePanel();
+        const orderCard = Array.from(document.querySelectorAll("#customer-order-history .customer-order-card"))
+          .find(card => card.textContent.includes("#" + activeSuccessOrderNumber));
+        const history = document.getElementById("customer-order-history");
+        (orderCard || history)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        orderCard?.classList.add("tracked-card-highlight");
+        if (orderCard) window.setTimeout(() => orderCard.classList.remove("tracked-card-highlight"), 1800);
+      });
       closeButton.addEventListener("click", closePanel);
       document.addEventListener("keydown", event => {
         if (!panel.hidden && event.key === "Escape") closePanel();
