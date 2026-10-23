@@ -12,7 +12,8 @@ The customer, admin, and rider entry points share the existing Supabase project 
 
 ## Visual design
 
-The approved shared visual palette is premium dark: charcoal backgrounds (#121013), layered graphite cards (#1B171A / #241D21), burgundy primary actions (#8D2438), ivory high-contrast text (#F8F2EE), champagne gold utility controls (#D8B779), deep-blue icon accents (#1F3042 with #8EC2F0 icons), and deep-green icon accents (#20382F with #92D3B0 icons). `dark-theme.css` must load after all legacy and experiment styles on customer, order-history, admin, and rider pages. Do not reintroduce conflicting pale-theme or low-contrast rules in `app-refresh.css` or `light-theme.css`. Keep all order details, headings, descriptions, statuses, inputs, and buttons readable. Keep interface copy concise while preserving operational, privacy, status, and checkout instructions users need.
+The active shared visual palette is **cream + soft blue**: warm cream page backgrounds, pale-blue surfaces and cards, deep-blue primary buttons and icons, navy text, light borders, and restrained champagne-gold utility accents. The shared `dark-theme.css` loads last on the customer, order-history, admin, and delivery-rider pages to override earlier legacy styling and keep all four interfaces visually consistent. Statuses retain clear, accessible semantic colors (green for accepted/completed, amber for pending/preparing, blue for ready/in-progress, and red for errors or rejected orders). Avoid restoring charcoal/black surface backgrounds or low-contrast text in later CSS changes.
+
 
 ## Install on iPhone
 
@@ -28,7 +29,7 @@ This installs web apps on the iPhone Home Screen; these are not native apps publ
 ## Main files
 
 - `index.html`, `customer.js`: customer menu, basket, cash-only checkout, order tracking and confirmation.
-- `dark-theme.css`: approved shared dark design system — layered charcoal surfaces, burgundy primary actions, ivory text, gold utility controls, and subtle blue/green icon accents across customer, history, admin, and rider pages.
+- `dark-theme.css`: approved shared cream-blue design system across customer, history, admin, and rider pages.
 - `admin.html`, `admin.js`: sign-in, incoming orders, menu/prices, offers, restaurant settings.
 - `admin-operations.js`: inventory, stock-movement history, suppliers, staff roster, expenses, cash shifts, and basic daily reporting.
 - `config.js`: Supabase project URL and public publishable key. Never put a service-role/secret key in browser code.
