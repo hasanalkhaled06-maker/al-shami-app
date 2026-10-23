@@ -294,7 +294,7 @@
 
       <section id="ops-staff" class="hidden">
         <h3>Employee management</h3>
-        <p class="ops-note">Private employee records. Photos, ID scans and contracts are stored in a private bucket and can only be accessed by authorised administrators. Staff records do not create login accounts or change account permissions.</p>
+        <p class="ops-note">Private employee records. Photos, ID scans and contracts are stored in a private bucket and can only be accessed by authorised administrators. Staff records do not create login accounts or change account permissions. To enable delivery tracking, create the rider login separately in Supabase Authentication, then paste its Auth user UUID into this profile and choose the Delivery Rider role. <a href="./rider.html" target="_blank" rel="noopener noreferrer">Open Rider App ↗</a></p>
         <form id="ops-staff-form" class="ops-form" enctype="multipart/form-data">
           <input name="id" type="hidden">
           <label>Full name *
@@ -309,6 +309,10 @@
           <label>Email
             <input name="email" type="email" maxlength="150" autocomplete="email">
           </label>
+          <label>Auth user UUID (rider login)
+            <input name="user_id" type="text" maxlength="36" placeholder="UUID from Supabase Authentication" autocomplete="off" spellcheck="false">
+          </label>
+          <p class="ops-note wide">Only link the rider's own login UUID here. Do not enter an email address or password.</p>
           <label>Date of birth
             <input name="date_of_birth" type="date">
           </label>
@@ -364,6 +368,7 @@
               <option value="manager">Manager</option>
               <option value="cashier">Cashier</option>
               <option value="kitchen">Kitchen</option>
+              <option value="delivery_rider">Delivery Rider</option>
               <option value="owner">Owner</option>
             </select>
           </label>
@@ -1091,6 +1096,7 @@
       full_name: String(data.get("full_name") || "").trim(),
       phone: staffText(data.get("phone")),
       email: staffText(data.get("email")),
+      user_id: staffText(data.get("user_id")),
       date_of_birth: staffDate(data.get("date_of_birth")),
       nationality: staffText(data.get("nationality")),
       address: staffText(data.get("address")),
@@ -1116,6 +1122,10 @@
 
     if (!payload.full_name) {
       message("Employee full name is required.", true);
+      return;
+    }
+    if (payload.user_id && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.user_id)) {
+      message("Auth user UUID must be a valid UUID from Supabase Authentication.", true);
       return;
     }
     if (payload.salary_amount !== null && (!Number.isFinite(payload.salary_amount) || payload.salary_amount < 0)) {
