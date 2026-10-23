@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v57";
+const CACHE_NAME = CACHE_PREFIX + "v58";
 const SHELL_FILES = [
   "./",
   "./index.html",
