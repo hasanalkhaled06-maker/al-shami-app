@@ -17,7 +17,13 @@ ALTER TABLE public.staff_profiles
 
 -- A delivery order is automatically dispatched when administration accepts it.
 ALTER TABLE public.orders
-  ADD COLUMN IF NOT EXISTS assigned_rider_user_id uuid;
+  ADD COLUMN IF NOT EXISTS assigned_rider_user_id uuid,
+  ADD COLUMN IF NOT EXISTS rider_tracking_started_at timestamptz;
+
+-- One Auth account must map to at most one employee profile.
+CREATE UNIQUE INDEX IF NOT EXISTS staff_profiles_user_id_uidx
+  ON public.staff_profiles (user_id)
+  WHERE user_id IS NOT NULL;
 
 DO $$
 BEGIN
@@ -77,6 +83,13 @@ AS $function$
 DECLARE
   v_rider_user_id uuid;
 BEGIN
+  IF TG_OP = 'UPDATE'
+     AND NEW.order_type = 'delivery'
+     AND NEW.status = 'out_for_delivery'
+     AND OLD.status IS DISTINCT FROM NEW.status THEN
+    NEW.rider_tracking_started_at := now();
+  END IF;
+
   IF NEW.order_type <> 'delivery'
      OR NEW.status NOT IN ('accepted', 'preparing', 'ready', 'out_for_delivery')
      OR NEW.assigned_rider_user_id IS NOT NULL THEN
@@ -270,6 +283,8 @@ BEGIN
   WHERE o.customer_tracking_token = p_tracking_token
     AND o.order_type = 'delivery'
     AND o.status = 'out_for_delivery'
+    AND o.rider_tracking_started_at IS NOT NULL
+    AND loc.updated_at >= o.rider_tracking_started_at
   LIMIT 1;
 
   RETURN v_result;
@@ -319,6 +334,8 @@ BEGIN
         LEFT JOIN public.staff_profiles AS sp
           ON sp.user_id = o.assigned_rider_user_id
         WHERE loc.rider_user_id = o.assigned_rider_user_id
+          AND o.rider_tracking_started_at IS NOT NULL
+          AND loc.updated_at >= o.rider_tracking_started_at
         LIMIT 1
       )
       ELSE NULL
