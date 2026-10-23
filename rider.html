@@ -14,11 +14,11 @@
   <link rel="manifest" href="./rider.webmanifest">
   <link rel="icon" href="./icons/al-shami-rider.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="./rider.css?v=modern-ui-20261023b">
+  <link rel="stylesheet" href="./rider.css?v=radical-ui-20261023a">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="modern-ui.css?v=modern-ui-20261023c">
+  <link rel="stylesheet" href="app-refresh.css?v=radical-ui-20261023a">
 </head>
-<body>
+<body class="rider-app">
   <header class="rider-header">
     <a class="brand" href="./rider.html" aria-label="AL SHAMI Rider home">
       <span class="brand-mark" aria-hidden="true">S</span>
@@ -38,7 +38,7 @@
         <div class="delivery-bag">S</div>
       </div>
       <div class="eyebrow">PRIVATE RIDER ACCESS</div>
-      <h1>Your deliveries,<br><span>clear and on track.</span></h1>
+      <h1>Deliver with confidence.</h1>
       <p class="muted">Sign in to view your assigned deliveries.</p>
       <div class="auth-mode-switch" role="group" aria-label="Account action">
         <button id="show-signin" class="auth-mode-button is-active" type="button" aria-pressed="true">Sign in</button>
@@ -54,7 +54,7 @@
         <button class="primary-button" type="submit" id="login-button">Sign in securely <span aria-hidden="true">→</span></button>
         <p id="login-message" class="form-message" role="status"></p>
       </form>
-      <p class="security-note"><span aria-hidden="true">🔒</span> Orders are assigned by restaurant management. You cannot accept, reject, or change order status in this app.</p>
+      <p class="security-note"><span aria-hidden="true">🔒</span> Your assigned orders only. Order status is managed by AL SHAMI.</p>
     </section>
 
     <section id="approval-panel" class="login-panel approval-panel" hidden aria-live="polite">
@@ -63,15 +63,15 @@
       <p id="approval-message" class="muted">Please wait while we verify your rider access with AL SHAMI management.</p>
       <div id="approval-status-chip" class="approval-status-chip"><span class="approval-status-dot"></span><span id="approval-status-label">Checking approval</span></div>
       <button id="approval-refresh-button" class="primary-button approval-refresh-button" type="button">Check approval again ↻</button>
-      <p class="security-note"><span aria-hidden="true">🔒</span> Orders and GPS features stay locked until management links your login to an active Delivery Rider employee profile.</p>
+      <p class="security-note"><span aria-hidden="true">🔒</span> Access is enabled by restaurant management.</p>
     </section>
 
     <section id="rider-dashboard" hidden>
       <div class="welcome-row">
         <div>
-          <p class="eyebrow">RIDER WORKSPACE</p>
+          <p class="eyebrow">DELIVERY PARTNER</p>
           <h1>Good day<span id="rider-name-suffix"></span></h1>
-          <p class="muted"></p>
+          
         </div>
         <div class="live-pill"><span class="pulse-dot"></span><span id="refresh-label">Syncing orders</span></div>
       </div>
@@ -97,7 +97,7 @@
       <p class="privacy-note">Customers see your GPS only while an order is <strong>Out for delivery</strong>. Keep this page open; iPhone may pause location updates in the background.</p>
 
       <div class="section-heading">
-        <div><p class="eyebrow">DISPATCH BOARD</p><h2>Assigned deliveries</h2></div>
+        <div><p class="eyebrow">YOUR WORK</p><h2>Assigned deliveries</h2></div>
         <button id="refresh-button" class="refresh-button" type="button" aria-label="Refresh assigned deliveries">↻ <span>Refresh</span></button>
       </div>
       <div id="dashboard-message" class="dashboard-message" role="status" hidden></div>
@@ -109,7 +109,7 @@
   </main>
 
   <script src="./config.js"></script>
-  <script src="./rider.js?v=modern-ui-20261023b"></script>
+  <script src="./rider.js?v=radical-ui-20261023a"></script>
   <script src="./pwa.js"></script>
 </body>
 </html>
