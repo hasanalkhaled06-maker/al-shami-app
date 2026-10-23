@@ -1235,6 +1235,13 @@
           return { entry, order:data };
         } catch (_) { return { entry, failed:true }; }
       }));
+      const missingTokens = results.filter(result => result.missing).map(result => result.entry.token);
+      if (missingTokens.length) {
+        const missingSet = new Set(missingTokens);
+        saveTrackedOrders(readTrackedOrders().filter(row => !missingSet.has(row.token)));
+      }
+      const validResults = results.filter(result => !result.missing);
+
       const renderResult = result => {
         const entry = result.entry;
         const token = escapeHTML(entry.token);
@@ -1274,11 +1281,11 @@
       // As soon as an order is ready, move it to History; delivery and completion
       // remain in History as well, so old ready orders do not clutter the active list.
       const activeStatuses = new Set(["new", "accepted", "preparing"]);
-      const activeResults = results.filter(result =>
-        result.failed || result.missing || activeStatuses.has(String(result.order?.status || "").toLowerCase())
+      const activeResults = validResults.filter(result =>
+        result.failed || activeStatuses.has(String(result.order?.status || "").toLowerCase())
       );
-      const historyResults = results.filter(result =>
-        !result.failed && !result.missing && !activeStatuses.has(String(result.order?.status || "").toLowerCase())
+      const historyResults = validResults.filter(result =>
+        !result.failed && !activeStatuses.has(String(result.order?.status || "").toLowerCase())
       );
       const visibleResults = isHistoryPage ? historyResults : activeResults;
       const visibleHtml = visibleResults.map(renderResult).join("");
