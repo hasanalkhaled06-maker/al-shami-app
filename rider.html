@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#741b28">
+  <meta name="description" content="Private AL SHAMI delivery rider app. View assigned deliveries and share live location securely.">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="color-scheme" content="light">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AL SHAMI Rider">
+  <title>AL SHAMI · Rider</title>
+  <link rel="manifest" href="./rider.webmanifest">
+  <link rel="icon" href="./icons/al-shami-rider.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon-admin.png">
+  <link rel="stylesheet" href="./rider.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="rider-header">
+    <a class="brand" href="./rider.html" aria-label="AL SHAMI Rider home">
+      <span class="brand-mark" aria-hidden="true">S</span>
+      <span><strong>AL SHAMI</strong><small>DELIVERY PARTNER</small></span>
+    </a>
+    <div class="header-right">
+      <span id="connection-pill" class="connection-pill"><span class="connection-dot"></span> Checking</span>
+      <button id="signout-button" class="icon-button" type="button" hidden>Sign out</button>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section id="login-panel" class="login-panel">
+      <div class="login-art" aria-hidden="true">
+        <div class="route-line"></div>
+        <span class="pin pin-one"></span><span class="pin pin-two"></span>
+        <div class="delivery-bag">S</div>
+      </div>
+      <div class="eyebrow">PRIVATE RIDER ACCESS</div>
+      <h1>Your deliveries,<br><span>clear and on track.</span></h1>
+      <p class="muted">Sign in with the rider account provided by AL SHAMI. This app is for viewing assigned delivery details and sharing GPS location only.</p>
+      <form id="login-form" class="login-form">
+        <label for="rider-email">Email address</label>
+        <input id="rider-email" name="email" type="email" autocomplete="username" required placeholder="rider@example.com">
+        <label for="rider-password">Password</label>
+        <input id="rider-password" name="password" type="password" autocomplete="current-password" required placeholder="Your password">
+        <button class="primary-button" type="submit" id="login-button">Sign in securely <span aria-hidden="true">→</span></button>
+        <p id="login-message" class="form-message" role="status"></p>
+      </form>
+      <p class="security-note"><span aria-hidden="true">🔒</span> Orders are assigned by restaurant management. You cannot accept, reject, or change order status in this app.</p>
+    </section>
+
+    <section id="rider-dashboard" hidden>
+      <div class="welcome-row">
+        <div>
+          <p class="eyebrow">RIDER WORKSPACE</p>
+          <h1>Good day<span id="rider-name-suffix"></span></h1>
+          <p class="muted">Your assigned orders update automatically from the restaurant.</p>
+        </div>
+        <div class="live-pill"><span class="pulse-dot"></span><span id="refresh-label">Syncing orders</span></div>
+      </div>
+
+      <section class="summary-grid" aria-label="Delivery summary">
+        <article class="summary-card">
+          <span class="summary-icon">▣</span><span class="summary-label">Active deliveries</span>
+          <strong id="active-count">0</strong><small>Assigned to your account</small>
+        </article>
+        <article class="summary-card location-summary">
+          <span class="summary-icon">⌖</span><span class="summary-label">Location sharing</span>
+          <strong id="location-summary-value">Off</strong><small id="location-summary-note">Start sharing while on delivery</small>
+        </article>
+      </section>
+
+      <section class="location-panel">
+        <div class="location-panel-copy">
+          <span class="location-icon">⌖</span>
+          <div><strong>Live location</strong><p id="location-status" role="status">Location sharing is off. Start it when you are ready to deliver.</p></div>
+        </div>
+        <button id="location-toggle" class="secondary-button" type="button" disabled>Start location sharing</button>
+      </section>
+      <p class="privacy-note">Your GPS location is shared with a customer only while their order is marked <strong>Out for delivery</strong> by the restaurant. Keep this page open during the trip; iPhone may pause GPS updates when a web app is in the background.</p>
+
+      <div class="section-heading">
+        <div><p class="eyebrow">DISPATCH BOARD</p><h2>Assigned deliveries</h2></div>
+        <button id="refresh-button" class="refresh-button" type="button" aria-label="Refresh assigned deliveries">↻ <span>Refresh</span></button>
+      </div>
+      <div id="dashboard-message" class="dashboard-message" role="status" hidden></div>
+      <div id="delivery-list" class="delivery-list">
+        <div class="loading-card"><span class="spinner"></span> Loading assigned deliveries…</div>
+      </div>
+      <footer class="dashboard-footer"><span>AL SHAMI RESTAURANT &amp; FAST FOOD</span><span>Private delivery workspace</span></footer>
+    </section>
+  </main>
+
+  <script src="./config.js"></script>
+  <script src="./rider.js"></script>
+  <script src="./pwa.js"></script>
+</body>
+</html>
