@@ -342,3 +342,15 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .history-page #main-content>.section-heading:not(:first-child){display:none!important}
 .history-page #customer-orders-panel{margin-top:22px}
 .history-page .customer-orders-help{display:none!important}
+
+
+/* AL SHAMI delivery tracking and rider dispatch labels */
+.customer-rider-tracking{margin:16px 0 12px;padding:14px;border:1px solid #eadcc3;border-radius:16px;background:linear-gradient(145deg,#fffdf8,#fff);box-shadow:0 5px 16px rgba(55,25,28,.05)}
+.customer-rider-map-heading strong{display:block;color:#741b28;font-size:15px;font-weight:900}
+.customer-rider-map-heading p{margin:5px 0 11px;color:#766e70;font-size:12px;line-height:1.5}
+.customer-rider-map{height:250px;min-height:210px;width:100%;overflow:hidden;border-radius:13px;border:1px solid #e8e0d8;background:#f0ece7;z-index:0}
+.customer-rider-map-status{margin:9px 2px 0;color:#766e70;font-size:11px;line-height:1.5}
+.order-rider-note{display:flex;flex-wrap:wrap;gap:5px 8px;align-items:baseline;margin:9px 0 0;padding:9px 11px;border:1px solid #dce8dc;border-radius:10px;background:#f5faf4;color:#2e6640;font-size:12px;line-height:1.45}
+.order-rider-note-label{font-weight:850}
+.order-rider-note.is-unassigned{border-color:#eeddb0;background:#fff8e7;color:#7b5b1e}
+@media(max-width:600px){.customer-rider-tracking{padding:10px}.customer-rider-map{height:225px}}
