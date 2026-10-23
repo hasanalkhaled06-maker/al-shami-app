@@ -1221,8 +1221,227 @@
     return { lat, lng };
   }
 
+  function customerPointDistanceMeters(a, b) {
+    if (!a || !b) return Infinity;
+    const radians = value => value * Math.PI / 180;
+    const dLat = radians(b.lat - a.lat);
+    const dLng = radians(b.lng - a.lng);
+    const lat1 = radians(a.lat);
+    const lat2 = radians(b.lat);
+    const value = Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+    return 6371000 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(Math.max(0, 1 - value)));
+  }
+
+  function riderBikeIcon(heading) {
+    const hasHeading = Number.isFinite(Number(heading)) && heading !== null && heading !== "";
+    const angle = hasHeading ? Number(heading) - 90 : 0;
+    return window.L.divIcon({
+      className: "customer-rider-bike-marker",
+      html: '<span class="customer-rider-bike-glyph" style="transform:rotate(' + angle + 'deg)" role="img" aria-label="Delivery motorcycle">🛵</span>',
+      iconSize: [46, 46],
+      iconAnchor: [23, 23],
+      popupAnchor: [0, -23]
+    });
+  }
+
+  function updateCustomerGoogleMapsLink(record, point) {
+    if (!record.googleMapsLink || !record.destinationPoint || !point) return;
+    const params = new URLSearchParams({
+      api: "1",
+      origin: point.lat + "," + point.lng,
+      destination: record.destinationPoint.lat + "," + record.destinationPoint.lng,
+      travelmode: "driving"
+    });
+    record.googleMapsLink.href = "https://www.google.com/maps/dir/?" + params.toString();
+    record.googleMapsLink.hidden = false;
+  }
+
+  function updateCustomerRiderEta(record) {
+    if (!record.etaValueNode) return;
+    if (!record.currentRiderPoint) {
+      record.etaValueNode.textContent = lang === "ar"
+        ? "بانتظار أول تحديث من السائق…"
+        : "Waiting for the rider's first GPS update…";
+      return;
+    }
+    if (record.isStale) {
+      record.etaValueNode.textContent = lang === "ar"
+        ? "إشارة GPS متأخرة — عم ننتظر تحديث الموقع"
+        : "GPS signal delayed — waiting for a fresh location";
+      return;
+    }
+    if (!Number.isFinite(record.etaDurationSeconds) || !record.etaCalculatedAt) {
+      record.etaValueNode.textContent = record.routeError
+        ? (lang === "ar" ? "وقت الوصول غير متاح حالياً، عم نعيد المحاولة" : "ETA temporarily unavailable — retrying")
+        : (lang === "ar" ? "عم نحسب الطريق ووقت الوصول…" : "Calculating road route and arrival time…");
+      if (record.distanceNode) record.distanceNode.textContent = "";
+      return;
+    }
+    const elapsed = Math.max(0, Math.floor((Date.now() - record.etaCalculatedAt) / 1000));
+    const remaining = Math.max(0, record.etaDurationSeconds - elapsed);
+    const minutes = Math.max(1, Math.ceil(remaining / 60));
+    record.etaValueNode.textContent = remaining <= 45
+      ? (lang === "ar" ? "السائق صار قريب — الوصول بأي لحظة" : "The rider should be arriving soon")
+      : (lang === "ar" ? "باقي تقريباً " + minutes + " دقيقة للوصول" : "About " + minutes + " min to arrival");
+    if (record.distanceNode) {
+      const km = Number.isFinite(record.routeDistanceMeters) ? record.routeDistanceMeters / 1000 : null;
+      record.distanceNode.textContent = km == null ? "" : (
+        lang === "ar"
+          ? "مسافة الطريق حوالي " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " كم · التقدير لا يحتسب زحمة المرور المباشرة"
+          : "Road distance " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " km · ETA does not include live traffic"
+      );
+    }
+  }
+
+  function updateCustomerRiderMotion(record) {
+    if (!record.motionNode) return;
+    if (record.isStale) {
+      record.motionNode.textContent = lang === "ar"
+        ? "آخر إشارة GPS قديمة — عم ننتظر السائق"
+        : "GPS update delayed — waiting for the rider";
+      return;
+    }
+    let speed = Number(record.latestSpeedMps);
+    if (!Number.isFinite(speed) || record.latestSpeedMps === null || record.latestSpeedMps === "") {
+      speed = record.derivedSpeedMps;
+    } else if (Number.isFinite(record.derivedSpeedMps) && record.derivedSpeedMps > 1.2) {
+      speed = Math.max(speed, record.derivedSpeedMps);
+    }
+    if (Number.isFinite(speed) && speed >= 1.15) {
+      const kmh = Math.round(speed * 3.6);
+      record.motionNode.textContent = lang === "ar"
+        ? "السائق عم يتحرّك" + (kmh > 0 ? " · " + kmh + " كم/س تقريباً" : "")
+        : "Rider moving" + (kmh > 0 ? " · about " + kmh + " km/h" : "");
+    } else if (Number.isFinite(speed) && speed <= 0.55) {
+      record.motionNode.textContent = lang === "ar"
+        ? "السائق متوقّف حالياً أو عند إشارة"
+        : "Rider appears stopped or waiting";
+    } else {
+      record.motionNode.textContent = lang === "ar"
+        ? "موقع السائق مباشر · عم نحدّث الحركة"
+        : "Live location · updating movement";
+    }
+  }
+
+  function animateCustomerRiderMarker(record, point) {
+    if (!record.riderMarker) return;
+    if (record.animationFrame && typeof window.cancelAnimationFrame === "function") {
+      window.cancelAnimationFrame(record.animationFrame);
+      record.animationFrame = null;
+    }
+    const fromLatLng = record.riderMarker.getLatLng();
+    const from = { lat: fromLatLng.lat, lng: fromLatLng.lng };
+    const moved = customerPointDistanceMeters(from, point);
+    if (!Number.isFinite(moved) || moved < 3 || typeof window.requestAnimationFrame !== "function") {
+      record.riderMarker.setLatLng([point.lat, point.lng]);
+      return;
+    }
+    const startedAt = window.performance?.now ? window.performance.now() : Date.now();
+    const duration = Math.min(1100, Math.max(450, moved * 2.5));
+    const frame = nowValue => {
+      if (!customerRiderMapInstances.has(record.token) || !record.riderMarker) return;
+      const now = Number.isFinite(nowValue) ? nowValue : Date.now();
+      const ratio = Math.max(0, Math.min(1, (now - startedAt) / duration));
+      const eased = ratio * ratio * (3 - 2 * ratio);
+      record.riderMarker.setLatLng([
+        from.lat + (point.lat - from.lat) * eased,
+        from.lng + (point.lng - from.lng) * eased
+      ]);
+      if (ratio < 1) record.animationFrame = window.requestAnimationFrame(frame);
+      else record.animationFrame = null;
+    };
+    record.animationFrame = window.requestAnimationFrame(frame);
+  }
+
+  let lastCustomerRouteRequestAt = 0;
+  let customerRouteQueue = Promise.resolve();
+
+  function refreshCustomerRoadRoute(record, point) {
+    if (!record.destinationPoint || !point || record.routeRequestPending) return;
+    const now = Date.now();
+    const movedSinceRoute = record.lastRoutePoint
+      ? customerPointDistanceMeters(record.lastRoutePoint, point)
+      : Infinity;
+    const sinceLastAttempt = record.lastRouteRequestedAt ? now - record.lastRouteRequestedAt : Infinity;
+    const routeNeeded = !record.lastRouteRequestedAt ||
+      (movedSinceRoute >= 90 && sinceLastAttempt >= 20000) ||
+      sinceLastAttempt >= 75000;
+    if (!routeNeeded) return;
+
+    const requestId = ++record.routeRequestId;
+    const routeOrigin = { lat: point.lat, lng: point.lng };
+    record.routeRequestPending = true;
+    const run = customerRouteQueue.then(async () => {
+      const wait = Math.max(0, 1100 - (Date.now() - lastCustomerRouteRequestAt));
+      if (wait > 0) await new Promise(resolve => window.setTimeout(resolve, wait));
+      if (!customerRiderMapInstances.has(record.token) || requestId !== record.routeRequestId) {
+        record.routeRequestPending = false;
+        return;
+      }
+      lastCustomerRouteRequestAt = Date.now();
+      record.lastRouteRequestedAt = lastCustomerRouteRequestAt;
+      const base = String(cfg.ROUTING_URL || "https://router.project-osrm.org/route/v1/driving").replace(/\/+$/, "");
+      const url = base + "/" + routeOrigin.lng + "," + routeOrigin.lat + ";" +
+        record.destinationPoint.lng + "," + record.destinationPoint.lat +
+        "?overview=full&geometries=geojson&steps=false";
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          headers: { "Accept": "application/json" },
+          credentials: "omit"
+        });
+        if (!response.ok) throw new Error("Routing service returned HTTP " + response.status);
+        const result = await response.json();
+        const route = Array.isArray(result.routes) ? result.routes[0] : null;
+        if (result.code !== "Ok" || !route || !route.geometry ||
+            !Array.isArray(route.geometry.coordinates) || !route.geometry.coordinates.length ||
+            !Number.isFinite(Number(route.duration)) || !Number.isFinite(Number(route.distance))) {
+          throw new Error("No road route is available for this rider location.");
+        }
+        if (!customerRiderMapInstances.has(record.token) || requestId !== record.routeRequestId) return;
+        const latLngs = route.geometry.coordinates
+          .map(coords => [Number(coords[1]), Number(coords[0])])
+          .filter(coords => Number.isFinite(coords[0]) && Number.isFinite(coords[1]));
+        if (latLngs.length < 2) throw new Error("The road route did not contain enough points.");
+        if (!record.routeLayer) {
+          record.routeLayer = window.L.polyline(latLngs, {
+            color: "#8d1723",
+            weight: 5,
+            opacity: 0.86,
+            lineCap: "round",
+            lineJoin: "round"
+          }).addTo(record.map);
+        } else {
+          record.routeLayer.setLatLngs(latLngs);
+        }
+        record.routeLayer.bringToBack();
+        record.lastRoutePoint = routeOrigin;
+        record.routeDistanceMeters = Number(route.distance);
+        record.etaDurationSeconds = Number(route.duration);
+        record.etaCalculatedAt = Date.now();
+        record.routeError = false;
+        updateCustomerRiderEta(record);
+      } catch (error) {
+        console.warn("Customer rider road route failed:", error);
+        if (customerRiderMapInstances.has(record.token) && requestId === record.routeRequestId) {
+          record.routeError = true;
+          updateCustomerRiderEta(record);
+        }
+      } finally {
+        record.routeRequestPending = false;
+      }
+    });
+    customerRouteQueue = run.catch(() => {});
+    return run;
+  }
+
   function clearCustomerRiderMaps() {
     for (const record of customerRiderMapInstances.values()) {
+      record.routeRequestId += 1;
+      if (record.animationFrame && typeof window.cancelAnimationFrame === "function") {
+        window.cancelAnimationFrame(record.animationFrame);
+      }
       try { record.map.remove(); } catch (_) {}
     }
     customerRiderMapInstances.clear();
@@ -1266,9 +1485,12 @@
         destinationMarker.bindPopup(lang === "ar" ? "عنوان التوصيل" : "Delivery destination");
       }
 
+      const initialHeading = host.dataset.riderHeading || null;
       let riderMarker = null;
       if (initialRider) {
-        riderMarker = window.L.marker([initialRider.lat, initialRider.lng]).addTo(map);
+        riderMarker = window.L.marker([initialRider.lat, initialRider.lng], {
+          icon: riderBikeIcon(initialHeading)
+        }).addTo(map);
         riderMarker.bindPopup(host.dataset.riderName || (lang === "ar" ? "السائق" : "Delivery rider"));
       }
 
@@ -1280,22 +1502,54 @@
       }
 
       const record = {
+        token,
         map,
         riderMarker,
         destinationMarker,
+        destinationPoint: destination,
+        routeLayer: null,
         statusNode: host.parentElement?.querySelector(".customer-rider-map-status") || null,
+        etaValueNode: host.parentElement?.querySelector("[data-rider-eta-value]") || null,
+        distanceNode: host.parentElement?.querySelector("[data-rider-distance]") || null,
+        motionNode: host.parentElement?.querySelector("[data-rider-motion]") || null,
+        googleMapsLink: host.parentElement?.querySelector("[data-open-google-maps]") || null,
         riderName: host.dataset.riderName || "",
         lastUpdatedAt: host.dataset.riderUpdatedAt || "",
-        stale: host.dataset.riderStale === "true"
+        lastGpsUpdatedAt: host.dataset.riderUpdatedAt || "",
+        currentRiderPoint: initialRider,
+        lastMovementPoint: initialRider,
+        lastMovementAt: host.dataset.riderUpdatedAt ? Date.parse(host.dataset.riderUpdatedAt) : 0,
+        derivedSpeedMps: null,
+        latestSpeedMps: host.dataset.riderSpeed || null,
+        headingDeg: initialHeading,
+        isStale: host.dataset.riderStale === "true",
+        lastRoutePoint: null,
+        lastRouteRequestedAt: 0,
+        routeRequestPending: false,
+        routeRequestId: 0,
+        routeDistanceMeters: null,
+        etaDurationSeconds: null,
+        etaCalculatedAt: 0,
+        routeError: false,
+        animationFrame: null
       };
       customerRiderMapInstances.set(token, record);
+      if (initialRider) {
+        updateCustomerGoogleMapsLink(record, initialRider);
+        updateCustomerRiderMotion(record);
+        updateCustomerRiderEta(record);
+      } else if (record.etaValueNode) {
+        record.etaValueNode.textContent = lang === "ar"
+          ? "بانتظار أول تحديث من السائق…"
+          : "Waiting for the rider's first GPS update…";
+      }
 
       if (record.statusNode && initialRider) {
         const updated = record.lastUpdatedAt ? trackingDate(record.lastUpdatedAt) : "";
         record.statusNode.textContent = (lang === "ar"
           ? "آخر موقع مستلم" + (updated ? " · " + updated : "")
           : "Latest rider location" + (updated ? " · " + updated : "")) +
-          (record.stale ? (lang === "ar" ? " · الموقع قديم، بانتظار تحديث" : " · Location may be stale; waiting for an update") : "");
+          (record.isStale ? (lang === "ar" ? " · الموقع قديم، بانتظار تحديث" : " · Location may be stale; waiting for an update") : "");
       } else if (record.statusNode) {
         record.statusNode.textContent = lang === "ar"
           ? "عم نتحقق من موقع السائق…"
@@ -1320,6 +1574,9 @@
         if (error) throw error;
         if (!customerRiderMapInstances.has(token)) return;
         if (!data) {
+          record.isStale = true;
+          updateCustomerRiderEta(record);
+          updateCustomerRiderMotion(record);
           if (record.statusNode) record.statusNode.textContent = lang === "ar"
             ? "عم ننتظر أول تحديث لموقع السائق. رح يظهر موقعه أثناء التوصيل."
             : "Waiting for the rider's first GPS update. Their location appears during delivery.";
@@ -1332,8 +1589,30 @@
             : "The rider location data is invalid.";
           return;
         }
+
+        const updatedAt = String(data.updated_at || "");
+        const sampleChanged = Boolean(updatedAt && updatedAt !== record.lastGpsUpdatedAt);
+        const previousPoint = record.currentRiderPoint;
+        if (sampleChanged && previousPoint && record.lastMovementAt) {
+          const sampleTime = Date.parse(updatedAt);
+          const elapsedSeconds = (sampleTime - record.lastMovementAt) / 1000;
+          const movedMeters = customerPointDistanceMeters(record.lastMovementPoint || previousPoint, point);
+          if (elapsedSeconds > 0 && elapsedSeconds <= 120 && Number.isFinite(movedMeters)) {
+            record.derivedSpeedMps = movedMeters / elapsedSeconds;
+          } else {
+            record.derivedSpeedMps = null;
+          }
+          record.lastMovementPoint = point;
+          record.lastMovementAt = sampleTime;
+        } else if (sampleChanged && !record.lastMovementAt) {
+          record.lastMovementPoint = point;
+          record.lastMovementAt = Date.parse(updatedAt) || Date.now();
+        }
+
         if (!record.riderMarker) {
-          record.riderMarker = window.L.marker([point.lat, point.lng]).addTo(record.map);
+          record.riderMarker = window.L.marker([point.lat, point.lng], {
+            icon: riderBikeIcon(data.heading_deg)
+          }).addTo(record.map);
           record.riderMarker.bindPopup(data.rider_name || (lang === "ar" ? "السائق" : "Delivery rider"));
           if (record.destinationMarker) {
             const dest = record.destinationMarker.getLatLng();
@@ -1344,20 +1623,36 @@
             record.map.setView([point.lat, point.lng], 15);
           }
         } else {
-          record.riderMarker.setLatLng([point.lat, point.lng]);
+          if (!previousPoint || customerPointDistanceMeters(previousPoint, point) > 2) {
+            animateCustomerRiderMarker(record, point);
+          }
+          if (data.heading_deg !== null && data.heading_deg !== undefined && data.heading_deg !== "") {
+            record.riderMarker.setIcon(riderBikeIcon(data.heading_deg));
+          }
         }
+
         if (data.rider_name) {
           record.riderName = String(data.rider_name);
           record.riderMarker.setPopupContent(record.riderName);
         }
-        record.lastUpdatedAt = data.updated_at || "";
-        record.stale = Boolean(data.is_stale);
+        record.currentRiderPoint = point;
+        record.latestSpeedMps = data.speed_mps;
+        record.headingDeg = data.heading_deg;
+        record.isStale = Boolean(data.is_stale);
+        record.lastUpdatedAt = updatedAt;
+        if (sampleChanged) record.lastGpsUpdatedAt = updatedAt;
+
+        updateCustomerGoogleMapsLink(record, point);
+        updateCustomerRiderMotion(record);
+        updateCustomerRiderEta(record);
+        void refreshCustomerRoadRoute(record, point);
+
         if (record.statusNode) {
           const updated = record.lastUpdatedAt ? trackingDate(record.lastUpdatedAt) : "";
           record.statusNode.textContent = (lang === "ar"
             ? "السائق: " + record.riderName + (updated ? " · آخر تحديث: " + updated : "")
             : "Rider: " + record.riderName + (updated ? " · Updated: " + updated : "")) +
-            (record.stale ? (lang === "ar" ? " · آخر موقع قديم، عم ننتظر تحديثاً" : " · Location is stale; waiting for a fresh update") : "");
+            (record.isStale ? (lang === "ar" ? " · آخر موقع قديم، عم ننتظر تحديثاً" : " · Location is stale; waiting for a fresh update") : "");
         }
       } catch (error) {
         console.warn("Customer rider location refresh failed:", error);
@@ -1366,6 +1661,10 @@
           : "Could not refresh the rider location. We will retry automatically.";
       }
     }));
+  }
+
+  function updateCustomerRiderEtaCountdowns() {
+    for (const record of customerRiderMapInstances.values()) updateCustomerRiderEta(record);
   }
 
   async function refreshCustomerOrderHistory() {
@@ -1456,14 +1755,21 @@
         const riderMapMarkup = riderTrackingVisible
           ? '<section class="customer-rider-tracking"><div class="customer-rider-map-heading"><strong>' +
             escapeHTML(lang === "ar" ? "تتبّع السائق مباشرة" : "Track your delivery rider") +
-            '</strong><p>' + escapeHTML(lang === "ar" ? "تتحدّث الخريطة تلقائياً أثناء التوصيل." : "The map refreshes automatically while your order is on the way.") + '</p></div>' +
+            '</strong><p>' + escapeHTML(lang === "ar" ? "شوف حركة السائق والطريق ووقت الوصول التقريبي. الموقع يتحدّث تلقائياً أثناء التوصيل." : "Follow the rider, road route and estimated arrival time. Location updates automatically during delivery.") + '</p></div>' +
             '<div class="customer-rider-map" data-customer-rider-map data-tracking-token="' + escapeHTML(entry.token) + '"' +
             (destinationPoint ? ' data-destination-lat="' + destinationPoint.lat + '" data-destination-lng="' + destinationPoint.lng + '"' : "") +
             (currentRiderPoint ? ' data-rider-lat="' + currentRiderPoint.lat + '" data-rider-lng="' + currentRiderPoint.lng + '"' : "") +
+            (order.rider_location?.heading_deg != null ? ' data-rider-heading="' + escapeHTML(order.rider_location.heading_deg) + '"' : "") +
+            (order.rider_location?.speed_mps != null ? ' data-rider-speed="' + escapeHTML(order.rider_location.speed_mps) + '"' : "") +
             (order.rider_location?.updated_at ? ' data-rider-updated-at="' + escapeHTML(order.rider_location.updated_at) + '"' : "") +
             (order.rider_location?.rider_name ? ' data-rider-name="' + escapeHTML(order.rider_location.rider_name) + '"' : "") +
             (order.rider_location?.is_stale ? ' data-rider-stale="true"' : "") +
-            ' role="application" aria-label="' + escapeHTML(lang === "ar" ? "خريطة موقع السائق والوجهة" : "Map showing the delivery destination and rider") + '"></div>' +
+            ' role="application" aria-label="' + escapeHTML(lang === "ar" ? "خريطة موقع السائق والوجهة" : "Map showing the live rider and delivery destination") + '"></div>' +
+            '<div class="customer-rider-eta" data-customer-rider-eta><div class="customer-rider-eta-main"><span class="customer-rider-eta-icon" aria-hidden="true">🛵</span><div class="customer-rider-eta-copy"><strong data-rider-eta-value>' +
+            escapeHTML(currentRiderPoint ? (lang === "ar" ? "عم نحسب وقت الوصول…" : "Calculating arrival time…") : (lang === "ar" ? "بانتظار أول تحديث من السائق…" : "Waiting for the rider’s first GPS update…")) +
+            '</strong><span data-rider-motion>' + escapeHTML(lang === "ar" ? "عم نتحقق من حركة السائق…" : "Checking rider movement…") + '</span><small data-rider-distance></small></div></div>' +
+            '<a class="customer-rider-google-maps" data-open-google-maps href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" hidden>' +
+            escapeHTML(lang === "ar" ? "افتح المسار في Google Maps ↗" : "Open route in Google Maps ↗") + '</a></div>' +
             '<p class="customer-rider-map-status" role="status">' +
             escapeHTML(currentRiderPoint
               ? (lang === "ar" ? "عم نحدّث موقع السائق…" : "Updating the rider location…")
@@ -1548,6 +1854,9 @@
   window.setInterval(() => {
     if (document.visibilityState === "visible") void refreshCustomerRiderLocations();
   }, 6000);
+  window.setInterval(() => {
+    if (document.visibilityState === "visible") updateCustomerRiderEtaCountdowns();
+  }, 10000);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       void refreshCustomerOrderHistory();
