@@ -1951,10 +1951,22 @@
       }
       const orderType = String(formData.get("order_type") || "delivery");
       const address = String(formData.get("delivery_address") || "").trim();
+      const deliveryLatitudeRaw = orderType === "delivery" ? String(formData.get("delivery_latitude") || "").trim() : "";
+      const deliveryLongitudeRaw = orderType === "delivery" ? String(formData.get("delivery_longitude") || "").trim() : "";
+      const deliveryLatitude = deliveryLatitudeRaw ? Number(deliveryLatitudeRaw) : null;
+      const deliveryLongitude = deliveryLongitudeRaw ? Number(deliveryLongitudeRaw) : null;
 
       if (orderType === "delivery" && !address) {
         showCheckoutMessage(tr("addressError"), true);
         formElement.elements.delivery_address.focus();
+        return;
+      }
+
+      if (orderType === "delivery" &&
+          ((deliveryLatitude === null) !== (deliveryLongitude === null) ||
+           (deliveryLatitude !== null && (!Number.isFinite(deliveryLatitude) || deliveryLatitude < -90 || deliveryLatitude > 90 ||
+            !Number.isFinite(deliveryLongitude) || deliveryLongitude < -180 || deliveryLongitude > 180)))) {
+        showCheckoutMessage(lang === "ar" ? "موقع الخريطة غير صالح. اختار الموقع من جديد أو امسحه." : "The selected map location is invalid. Choose the location again or clear it.", true);
         return;
       }
 
@@ -1992,13 +2004,15 @@
       showCheckoutMessage("");
 
       try {
-        const { data, error } = await db.rpc("place_order", {
+        const { data, error } = await db.rpc("place_order_with_location", {
           p_customer_name: String(formData.get("customer_name") || "").trim(),
           p_customer_phone: normalizedPhone,
           p_order_type: orderType,
           p_delivery_address: orderType === "delivery" ? address : null,
           p_notes: String(formData.get("notes") || "").trim() || null,
-          p_items: submittedItems
+          p_items: submittedItems,
+          p_delivery_latitude: deliveryLatitude,
+          p_delivery_longitude: deliveryLongitude
         });
 
         if (error) throw error;
@@ -2036,6 +2050,7 @@
         try {
           formElement.reset();
           restoreCustomerDetails();
+          clearDeliveryLocationSelection();
 
           const typeSelect = $("#order-type");
           if (typeSelect) typeSelect.value = "delivery";
