@@ -474,9 +474,9 @@
             </select>
           </label>
 
-          <label id="address-field">
-            <span data-i18n="address">Delivery address / landmark</span>
-            <input name="delivery_address" maxlength="250" autocomplete="street-address" aria-describedby="address-help" placeholder="House number, street, landmark">
+          <div id="address-field" class="delivery-address-field">
+            <label for="delivery-address-input"><span data-i18n="address">Delivery address / landmark</span></label>
+            <input id="delivery-address-input" name="delivery_address" maxlength="250" autocomplete="street-address" aria-describedby="address-help" placeholder="House number, street, landmark">
             <div class="delivery-location-controls">
               <button id="choose-delivery-location" class="btn btn-light" type="button" data-i18n="chooseLocation">Choose location on Google Maps</button>
               <button id="clear-delivery-location" class="btn btn-light" type="button" data-i18n="clearLocation" hidden>Clear location</button>
@@ -485,7 +485,7 @@
             <input id="delivery-longitude" name="delivery_longitude" type="hidden">
             <p id="delivery-location-status" class="delivery-location-status" role="status" aria-live="polite" data-i18n="locationNotSelected">No map location selected yet. You can still enter your address manually.</p>
             <small id="address-help" class="field-help" data-i18n="addressHint">Include your house or building number, street, neighbourhood, and a nearby landmark (for example, a shop or station).</small>
-          </label>
+          </div>
 
           <label class="full">
             <span data-i18n="notes">Notes (optional)</span>
@@ -700,7 +700,7 @@
     })();
   </script>
   <script src="config.js"></script>
-  <script src="customer.js?v=delivery-map-picker-20261023b"></script>
+  <script src="customer.js?v=delivery-map-picker-20261023c"></script>
   <script src="pwa.js"></script>
 </body>
 </html>
