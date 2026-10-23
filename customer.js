@@ -606,6 +606,7 @@
       orderNote2: "Your order goes directly to our restaurant ordering system.",
       customerActionsTitle: "How can we help you today?",
       customerActionsDesc: "Order your favourites, review past orders, or chat with our team.",
+      backToHome: "← Back to home",
       placeOrderCard: "Place an order",
       placeOrderCardDesc: "Explore our menu, choose your favourites and order for delivery or pickup.",
       placeOrderCardCta: "Browse the menu",
@@ -689,6 +690,7 @@
       orderNote2: "طلبك بيوصل مباشرة لنظام المطعم.",
       customerActionsTitle: "كيف فينا نساعدك اليوم؟",
       customerActionsDesc: "اطلب أكلاتك المفضلة، راجع طلباتك السابقة، أو احكي مع فريقنا.",
+      backToHome: "← رجوع للرئيسية",
       placeOrderCard: "اطلب الآن",
       placeOrderCardDesc: "تصفّح المنيو واختار وجباتك للتوصيل أو الاستلام من المطعم.",
       placeOrderCardCta: "تصفّح المنيو",
@@ -772,6 +774,7 @@
       orderNote2: "Wo nhyehyɛe no kɔ tẽẽ ma adidibea no.",
       customerActionsTitle: "Yɛbɛboa wo sɛn nnɛ?",
       customerActionsDesc: "Hyɛ aduan ho nhyehyɛe, hwɛ wo kan nhyehyɛe, anaa kasa kyerɛ yɛn.",
+      backToHome: "← San kɔ fie" ,
       placeOrderCard: "Hyɛ aduan ho nhyehyɛe",
       placeOrderCardDesc: "Hwɛ yɛn aduan din no na paw nea wopɛ ama wɔde abrɛ wo anaa woba abɛfa.",
       placeOrderCardCta: "Hwɛ aduan din",
@@ -1526,6 +1529,33 @@
       announce(lang === "ar" ? "تعذّر النسخ تلقائياً. تم تحديد العنوان؛ انسخه يدوياً." : "Automatic copy was blocked. The address is selected so you can copy it manually.");
     }
   });
+
+  // On the customer landing page, the ordering and checkout UI opens only
+  // after the customer selects "Place an order"; Home cards stay uncluttered.
+  function openCustomerOrdering() {
+    const view = $("#customer-ordering-view");
+    if (!view) return;
+    document.body.classList.add("customer-ordering-open");
+    view.hidden = false;
+    const target = $("#menu-section") || view;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function closeCustomerOrdering() {
+    const view = $("#customer-ordering-view");
+    if (!view) return;
+    document.body.classList.remove("customer-ordering-open");
+    view.hidden = true;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  if (document.body.classList.contains("customer-home-page")) {
+    $(".customer-card-order")?.addEventListener("click", event => {
+      event.preventDefault();
+      openCustomerOrdering();
+    });
+    $("#customer-order-back")?.addEventListener("click", closeCustomerOrdering);
+  }
 
   $("#language")?.addEventListener("change", event => {
     lang = event.target.value;
