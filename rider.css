@@ -143,3 +143,9 @@ a{color:inherit}
   .dashboard-footer{font-size:8px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+
+.auth-mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;margin:20px 0 8px;border:1px solid var(--line);border-radius:14px;background:#f8f5f1}
+.auth-mode-button{min-height:42px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-weight:800;font-size:13px}
+.auth-mode-button.is-active{background:#fff;color:var(--wine);box-shadow:0 2px 8px rgba(55,25,28,.09)}
+.auth-mode-button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
