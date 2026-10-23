@@ -108,9 +108,9 @@
   @media(max-width:760px){.admin-home-grid{grid-template-columns:1fr;gap:13px}.admin-home-card{min-height:190px;padding:20px;border-radius:18px}.home-card-top{margin-bottom:0}.home-card-icon{width:52px;height:52px;border-radius:15px}.home-card-icon svg{width:31px;height:31px}.home-card-title{font-size:26px;margin:20px 0 7px}.home-card-description{min-height:0;font-size:13px;max-width:100%}.home-card-bottom{margin-top:17px;padding-top:12px}.admin-home-foot{margin-top:22px;letter-spacing:.07em}.dashboard-heading-actions{max-width:132px}.dashboard-heading-actions .btn{font-size:12px;padding:9px 10px}}
   @media(max-width:390px){.home-card-status{font-size:9px;padding:7px 8px}.admin-home-foot{font-size:8px}}
 
-  .delete-orders-btn{background:#8d1723!important;color:#fff!important;border:1px solid #70111b!important}
-  .delete-orders-btn:disabled{opacity:.6;cursor:wait}
-  #delete-orders-message{overflow-wrap:anywhere}
+  .delete-order-btn{background:#8d1723!important;color:#fff!important;border:1px solid #70111b!important}
+  .delete-order-btn:hover{background:#b62a36!important}
+  .delete-order-btn:disabled{opacity:.6;cursor:wait}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -410,13 +410,7 @@
         Database permissions must be configured before accepting real orders.
       </p>
 
-      <hr>
-      <h3>Danger zone</h3>
-      <p class="muted">Permanently delete every order and its line items from the database. This cannot be undone. Menu items, prices, staff, and restaurant settings will not be deleted.</p>
-      <div class="form-actions">
-        <button id="delete-all-orders" class="btn delete-orders-btn" type="button">Permanently delete all orders</button>
-      </div>
-      <p id="delete-orders-message" class="status-message full" role="status" aria-live="polite"></p>
+
     </section>
 
   </section>
@@ -444,7 +438,7 @@
 <div id="toast" class="toast hidden" role="status"></div>
 
 <script src="config.js"></script>
-<script src="admin.js?v=delete-orders-settings-20261023a"></script>
+<script src="admin.js?v=individual-order-delete-20261023a"></script>
 <script src="admin-operations.js?v=admin-hub-20261023d"></script>
 <script src="pwa.js"></script>
 
