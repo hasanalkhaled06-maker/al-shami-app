@@ -1067,3 +1067,47 @@ html body.rider-app .dashboard-footer{color:#bdb2b4!important;border-color:#4034
     transition:none!important;animation:none!important;scroll-behavior:auto!important;
   }
 }
+
+
+/* Final touch: replace residual green/blue accents and keep admin order text legible. */
+html body.admin-body #dashboard .stat:before,
+html body.admin-body #dashboard .stat:nth-child(1):before,
+html body.admin-body #dashboard .stat:nth-child(2):before,
+html body.admin-body #dashboard .stat:nth-child(3):before{background:#d9b46b!important}
+html body.admin-body #dashboard .settings-link-operations .settings-hub-icon,
+html body.admin-body #dashboard .ops-tool-icon,
+html body.rider-app .summary-icon,
+html body.customer-home-page .customer-card-icon,
+html body.customer-history-page .customer-card-icon{
+  background:#382027!important;color:#e2bd78!important;border-color:#674550!important;
+}
+html body.admin-body #dashboard .order-rider-note{
+  display:flex;flex-wrap:wrap;gap:5px 8px;align-items:baseline;margin:9px 0 0;padding:10px 11px;
+  border:1px solid #6b5230!important;border-radius:11px!important;background:#34271c!important;
+  color:#f0ce8b!important;font-size:11px;line-height:1.45;
+}
+html body.admin-body #dashboard .order-rider-note-label{color:#d9b46b!important;font-weight:850}
+html body.admin-body #dashboard .order-rider-note strong{color:#fff2d8!important}
+html body.admin-body #dashboard .order-rider-note.is-unassigned{
+  border-color:#574148!important;background:#292224!important;color:#e3d5d6!important;
+}
+html body.admin-body #dashboard .order-rider-note.is-unassigned strong{color:#e3d5d6!important}
+html body.admin-body #dashboard .order-header,
+html body.admin-body #dashboard .order-footer,
+html body.admin-body #dashboard .order-details,
+html body.admin-body #dashboard .order-customer,
+html body.admin-body #dashboard .order-address,
+html body.admin-body #dashboard .order-phone{color:#f3e9e6!important}
+html body.admin-body #dashboard .order-card a{color:#f0c879!important}
+html body.admin-body #dashboard .order-lines,
+html body.admin-body #dashboard .order-lines span,
+html body.admin-body #dashboard .order-lines strong,
+html body.admin-body #dashboard .order-total,
+html body.admin-body #dashboard .order-footer span{color:#e7dadd!important}
+html body.admin-body #dashboard .order-actions select{
+  background:#211c1e!important;color:#fff8f3!important;border:1px solid #514047!important;
+}
+html body.customer-home-page .customer-rider-eta-copy span,
+html body.customer-history-page .customer-rider-eta-copy span{color:#e2c17c!important}
+html body.rider-app .live-pill .pulse-dot,
+html body.rider-app .summary-card .pulse-dot{background:#d9b46b!important;box-shadow:0 0 0 4px rgba(217,180,107,.14)!important}
