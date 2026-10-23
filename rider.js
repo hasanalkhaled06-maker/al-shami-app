@@ -193,8 +193,8 @@
     if (locationButton) locationButton.disabled = activeOrders.length === 0 || !db;
 
     if (!activeOrders.length) {
-      renderEmptyState("No active deliveries assigned",
-        "When restaurant management accepts and dispatches a delivery order, it will appear here automatically.");
+      renderEmptyState("No deliveries yet",
+        "New assigned deliveries will appear here.");
       return;
     }
 
@@ -213,8 +213,7 @@
       const navLabel = mapAvailable ? "Open directions in Google Maps" : "Find address in Google Maps";
       return '<article class="delivery-card" data-delivery-order="' + escapeHtml(order.id) + '">' +
         '<div class="delivery-card-head">' +
-          '<div><div class="order-kicker">AL SHAMI · DELIVERY ORDER</div>' +
-          '<h3 class="order-number">Order #' + escapeHtml(orderNumber) + '</h3>' +
+          '<div><h3 class="order-number">Order #' + escapeHtml(orderNumber) + '</h3>' +
           '<div class="order-time">Placed ' + escapeHtml(dateLabel(order.created_at)) + '</div></div>' +
           '<span class="status-badge status-' + escapeHtml(String(order.status || "").replace(/[^a-z_]/g, "")) + '">' +
             escapeHtml(getOrderStatusLabel(order.status)) + '</span>' +
@@ -227,22 +226,17 @@
           '</section>' +
           '<section class="detail-section"><p class="detail-label">Delivery destination</p>' +
             '<p class="delivery-address">' + escapeHtml(address || "No address entered") + '</p>' +
-            (mapAvailable ? '<p class="delivery-notes">Map pin saved by the customer at checkout.</p>' : '<p class="delivery-notes">No map pin saved. Use the address and landmark below.</p>') +
+            (mapAvailable ? '' : '<p class="delivery-notes">No map pin — use the address and landmark.</p>') +
             (order.notes ? '<p class="delivery-notes"><strong>Order notes:</strong> ' + escapeHtml(order.notes) + '</p>' : '') +
           '</section>' +
           '<section class="detail-section"><p class="detail-label">Items in this order</p>' +
             (lines ? '<ul class="order-items">' + lines + '</ul>' : '<p class="delivery-notes">Items are not available in this summary.</p>') +
             '<div class="total-row"><span>Order total · cash</span><strong>' + money(order.total) + '</strong></div>' +
           '</section>' +
-          '<section class="detail-section"><p class="detail-label">Delivery status</p>' +
-            '<p class="delivery-address">' + escapeHtml(getOrderStatusLabel(order.status)) + '</p>' +
-            '<p class="delivery-notes">Status is controlled by restaurant management and updates automatically here.</p>' +
-          '</section>' +
           '<div class="delivery-actions"><a class="navigation-button" target="_blank" rel="noopener noreferrer" href="' + escapeHtml(destinationLink(order)) + '">' +
             '<span aria-hidden="true">↗</span> ' + escapeHtml(navLabel) + '</a>' +
             (order.customer_phone ? '<a class="navigation-button secondary" href="tel:' + escapeHtml(order.customer_phone) + '"><span aria-hidden="true">☎</span> Call customer</a>' : '') +
           '</div>' +
-          '<p class="card-footer-note">This card is read-only. Only the restaurant team can accept, reject, or change an order’s status.</p>' +
         '</div>' +
       '</article>';
     }).join("");
@@ -374,7 +368,7 @@
       return;
     }
     if (!orders.length) {
-      setLocationStatus("Location sharing becomes available when a delivery is assigned to you.", true);
+      setLocationStatus("No delivery assigned yet.", true);
       return;
     }
     if (sharingLocation) return;
