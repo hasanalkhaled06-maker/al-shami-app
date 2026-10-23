@@ -6,8 +6,9 @@ AL SHAMI is a mobile-friendly restaurant ordering website with a private staff d
 
 - Customer app: https://hasanalkhaled06-maker.github.io/al-shami-app/
 - Admin app: https://hasanalkhaled06-maker.github.io/al-shami-app/admin.html
+- Delivery rider app (after this feature branch is reviewed and merged): https://hasanalkhaled06-maker.github.io/al-shami-app/rider.html
 
-The two entry points share the same application and database, but use separate manifests and home-screen icons. The admin page remains protected by Supabase authentication and the `admin_users` allow-list.
+The customer, admin, and rider entry points share the existing Supabase project but use distinct app pages and install settings. The admin page remains protected by Supabase authentication and the `admin_users` allow-list. The rider page is read-only for order work: it shows assigned deliveries and shares GPS location, but cannot accept/reject orders or change order status.
 
 ## Install on iPhone
 
@@ -26,7 +27,10 @@ This installs web apps on the iPhone Home Screen; these are not native apps publ
 - `admin.html`, `admin.js`: sign-in, incoming orders, menu/prices, offers, restaurant settings.
 - `admin-operations.js`: inventory, stock-movement history, suppliers, staff roster, expenses, cash shifts, and basic daily reporting.
 - `config.js`: Supabase project URL and public publishable key. Never put a service-role/secret key in browser code.
-- `manifest.webmanifest`, `admin.webmanifest`: separate install settings for customers and administrators.
+- `manifest.webmanifest`, `admin.webmanifest`, `rider.webmanifest`: separate install settings for customers, administrators, and delivery riders.
+- `rider.html`, `rider.js`, `rider.css`: private rider workspace with assigned deliveries, map navigation, and GPS sharing.
+- `supabase/migrations/20261023131500_delivery_rider_live_tracking_v1.sql`: additive rider role, automatic delivery assignment, and securely scoped location RPCs.
+- `DELIVERY_RIDER_APP_SETUP.md`: rollout sequence, rider-account linking instructions, and required acceptance/security tests.
 - `pwa.js`, `service-worker.js`: install/update registration and network-first static asset caching.
 - `icons/`: separate AL SHAMI and admin home-screen icons.
 - `supabase-schema.sql`: base schema for a new Supabase environment.
