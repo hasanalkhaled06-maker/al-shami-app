@@ -862,9 +862,9 @@
       placeOrderCard: "Place an order",
       placeOrderCardDesc: "Explore our menu, choose your favourites and order for delivery or pickup.",
       placeOrderCardCta: "Browse the menu",
-      historyCard: "History",
-      historyCardDesc: "View your previous orders and check their latest status.",
-      historyCardCta: "View order history",
+      historyCard: "Your orders",
+      historyCardDesc: "Track orders in progress and review previous orders.",
+      historyCardCta: "Track your orders",
       helpCard: "Help",
       helpCardDesc: "Need help with an order, delivery or menu? Message our team on WhatsApp.",
       helpCardCta: "Chat on WhatsApp",
@@ -923,14 +923,17 @@
       loadingMenu: "Loading menu…",
       retry: "Retry",
       trackHistory: "Track your order / Order history",
-      activeOrdersHeading: "Active orders",
-      historyHeading: "History",
+      activeOrdersHeading: "Current orders",
+      historyHeading: "Your orders",
+      currentOrdersGroup: "In progress",
+      pastOrdersGroup: "Previous orders",
+      updatedAtLabel: "Updated",
       noCompletedOrders: "No completed orders yet.",
       trackHistoryHelp: "Your orders stay saved on this device. Keep the private tracking code to check an order on another device.",
       trackingCode: "Private tracking code",
       trackOrder: "Track order",
       refreshOrders: "Refresh",
-      noTrackedOrders: "No saved orders yet. Place an order or enter your private tracking code above.",
+      noTrackedOrders: "No saved orders yet. Place an order and it will appear here automatically.",
       loadingTrackedOrders: "Loading your saved orders…",
       trackCodeHelp: "Enter the private tracking code from your order confirmation.",
       invalidTrackingCode: "Enter a valid tracking code.",
@@ -961,9 +964,9 @@
       placeOrderCard: "اطلب الآن",
       placeOrderCardDesc: "تصفّح المنيو واختار وجباتك للتوصيل أو الاستلام من المطعم.",
       placeOrderCardCta: "تصفّح المنيو",
-      historyCard: "سجل الطلبات",
-      historyCardDesc: "شوف طلباتك السابقة وتابع حالتها.",
-      historyCardCta: "عرض السجل",
+      historyCard: "طلباتك",
+      historyCardDesc: "تابع طلباتك الجارية وراجع الطلبات السابقة.",
+      historyCardCta: "تابع طلباتك",
       helpCard: "المساعدة",
       helpCardDesc: "عندك سؤال عن الطلب أو التوصيل أو المنيو؟ راسلنا على واتساب.",
       helpCardCta: "تواصل عبر واتساب",
@@ -1023,13 +1026,16 @@
       retry: "إعادة المحاولة",
       trackHistory: "تتبّع الطلبات / سجل الطلبات",
       activeOrdersHeading: "الطلبات الحالية",
-      historyHeading: "السجل",
+      historyHeading: "طلباتك",
+      currentOrdersGroup: "الطلبات الجارية",
+      pastOrdersGroup: "الطلبات السابقة",
+      updatedAtLabel: "آخر تحديث",
       noCompletedOrders: "ما في طلبات مكتملة لسه.",
       trackHistoryHelp: "طلباتك المحفوظة بتظهر على هالجهاز. احتفظ برمز التتبّع الخاص إذا بدك تفتح الطلب من جهاز تاني.",
       trackingCode: "رمز التتبّع الخاص",
       trackOrder: "تتبّع الطلب",
       refreshOrders: "تحديث",
-      noTrackedOrders: "ما في طلبات محفوظة لسه. اطلب أو أدخل رمز التتبّع الخاص فوق.",
+      noTrackedOrders: "ما في طلبات محفوظة حالياً. لما تبعت طلب جديد رح يظهر هون تلقائياً.",
       loadingTrackedOrders: "عم نحمّل طلباتك…",
       trackCodeHelp: "أدخل رمز التتبّع الموجود بتأكيد الطلب.",
       invalidTrackingCode: "أدخل رمز تتبّع صحيح.",
@@ -1060,9 +1066,9 @@
       placeOrderCard: "Hyɛ aduan ho nhyehyɛe",
       placeOrderCardDesc: "Hwɛ yɛn aduan din no na paw nea wopɛ ama wɔde abrɛ wo anaa woba abɛfa.",
       placeOrderCardCta: "Hwɛ aduan din",
-      historyCard: "Kan nhyehyɛe",
-      historyCardDesc: "Hwɛ nhyehyɛe a woadi kan ayɛ ne sɛnea ɛrekɔ so.",
-      historyCardCta: "Hwɛ nhyehyɛe",
+      historyCard: "Wo nhyehyɛe",
+      historyCardDesc: "Hwɛ nhyehyɛe a ɛrekɔ so ne nea woayɛ dada.",
+      historyCardCta: "Hwɛ wo nhyehyɛe",
       helpCard: "Mmoa",
       helpCardDesc: "Wowɔ nsɛmmisa wɔ nhyehyɛe, delivery anaa aduan din no ho? Soma yɛn WhatsApp.",
       helpCardCta: "Kasa kyerɛ yɛn WhatsApp",
@@ -1121,14 +1127,17 @@
       loadingMenu: "Aduan din no reba…",
       retry: "San sɔ hwɛ",
       trackHistory: "Track your order / Order history",
-      activeOrdersHeading: "Active orders",
-      historyHeading: "History",
+      activeOrdersHeading: "Wo nhyehyɛe a ɛrekɔ so",
+      historyHeading: "Wo nhyehyɛe",
+      currentOrdersGroup: "Ɛrekɔ so",
+      pastOrdersGroup: "Nea atwam",
+      updatedAtLabel: "Wɔsesaa no",
       noCompletedOrders: "No completed orders yet.",
       trackHistoryHelp: "Your orders stay saved on this device. Keep the private tracking code to check an order on another device.",
       trackingCode: "Private tracking code",
       trackOrder: "Track order",
       refreshOrders: "Refresh",
-      noTrackedOrders: "No saved orders yet. Place an order or enter your private tracking code above.",
+      noTrackedOrders: "Wonni nhyehyɛe biara a wɔakora so. Sɛ wode bi to hɔ a, ɛbɛda ha.",
       loadingTrackedOrders: "Loading your saved orders…",
       trackCodeHelp: "Enter the private tracking code from your order confirmation.",
       invalidTrackingCode: "Enter a valid tracking code.",
@@ -1138,13 +1147,13 @@
       copyTrackingCode: "Copy code",
       removeFromHistory: "Remove from history",
       orderLabel: "Order",
-      orderedAt: "Placed",
-      step_received: "Received",
-      step_accepted: "Accepted",
-      step_preparing: "Preparing",
-      step_ready: "Ready",
-      step_out_for_delivery: "Out for delivery",
-      step_completed: "Completed",
+      orderedAt: "Bere a wɔde too hɔ",
+      step_received: "Wɔagye",
+      step_accepted: "Wɔagye atom",
+      step_preparing: "Woresiesie",
+      step_ready: "Ayɛ krado",
+      step_out_for_delivery: "Wɔde aba wo nkyɛn",
+      step_completed: "Wɔawie",
       codeCopied: "Tracking code copied.",
       codeCopyFailed: "Copy failed. You can select and copy the code manually.",
       unavailable: "Ɛnni hɔ seesei"
@@ -1166,7 +1175,8 @@
 
   const trackingStatusNames = {
     en: { new:"Sent — waiting for restaurant acceptance", accepted:"Accepted by restaurant", preparing:"Preparing", ready:"Ready", out_for_delivery:"Out for delivery", completed:"Completed", rejected:"Rejected" },
-    ar: { new:"تم إرسال الطلب وبانتظار قبول المطعم", accepted:"تم قبول الطلب", preparing:"قيد التحضير", ready:"جاهز", out_for_delivery:"خرج للتوصيل", completed:"مكتمل", rejected:"مرفوض" }
+    ar: { new:"تم إرسال الطلب وبانتظار قبول المطعم", accepted:"تم قبول الطلب", preparing:"قيد التحضير", ready:"جاهز", out_for_delivery:"خرج للتوصيل", completed:"مكتمل", rejected:"مرفوض" },
+    tw: { new:"Wɔde nhyehyɛe no asoma — yɛretwɛn adidibea no", accepted:"Adidibea no agye atom", preparing:"Woresiesie aduan no", ready:"Aduan no ayɛ krado", out_for_delivery:"Aduan no wɔ kwan so rebrɛ wo", completed:"Wɔde ama wo", rejected:"Wɔapo nhyehyɛe no" }
   };
 
   function readTrackedOrders() {
@@ -1203,10 +1213,15 @@
     return date.toLocaleString(lang === "ar" ? "ar" : "en-GH", { dateStyle:"medium", timeStyle:"short" });
   }
 
+  function setHomeCurrentOrdersVisible(visible) {
+    if (!isHistoryPage) document.body.classList.toggle("has-current-orders", Boolean(visible));
+  }
+
   async function refreshCustomerOrderHistory() {
     const list = $("#customer-order-history");
     if (!list) return;
     if (!authSession?.user || (authSession.user.user_metadata?.phone_e164 && customerPhoneValidatedUserId !== authSession.user.id)) {
+      setHomeCurrentOrdersVisible(false);
       list.replaceChildren();
       return;
     }
@@ -1217,10 +1232,12 @@
     }
     const entries = readTrackedOrders();
     if (!entries.length) {
+      setHomeCurrentOrdersVisible(false);
       list.innerHTML = '<p class="muted tracked-empty">' + escapeHTML(tr("noTrackedOrders")) + "</p>";
       return;
     }
     if (!db) {
+      setHomeCurrentOrdersVisible(entries.length > 0);
       list.innerHTML = '<p class="app-message error">' + escapeHTML(tr("couldNotLoadTrackedOrder")) + "</p>";
       return;
     }
@@ -1246,14 +1263,17 @@
         const entry = result.entry;
         const token = escapeHTML(entry.token);
         const remove = '<button type="button" class="btn btn-light tracked-remove" data-remove-tracked="' + token + '">' + escapeHTML(tr("removeFromHistory")) + "</button>";
-        const codeDetails = '<details class="tracked-code"><summary>' + escapeHTML(tr("showTrackingCode")) + "</summary><code>" + token + '</code><button type="button" class="btn btn-light" data-copy-tracked="' + token + '">' + escapeHTML(tr("copyTrackingCode")) + "</button></details>";
         if (result.failed || result.missing) {
           const message = result.failed ? tr("couldNotLoadTrackedOrder") : tr("orderNotFound");
-          return '<article class="customer-order-card"><div class="tracked-card-heading"><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(entry.orderNumber || "—") + "</strong>" + remove + "</div><p class=\"muted\">" + escapeHTML(message) + "</p>" + codeDetails + "</article>";
+          return '<article class="customer-order-card"><div class="tracked-card-heading"><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(entry.orderNumber || "—") + "</strong>" + remove + "</div><p class=\"muted\">" + escapeHTML(message) + "</p>" + "</article>";
         }
         const order = result.order;
         const status = String(order.status || "").toLowerCase();
         const number = order.order_number ?? entry.orderNumber ?? "—";
+        const updatedAt = order.updated_at ? trackingDate(order.updated_at) : "";
+        const updatedAtHtml = updatedAt
+          ? '<p class="tracked-date tracked-updated">' + escapeHTML(tr("updatedAtLabel")) + ": " + escapeHTML(updatedAt) + "</p>"
+          : "";
         const isDelivery = order.order_type === "delivery";
         const steps = [
           "step_received", "step_accepted", "step_preparing", "step_ready",
@@ -1270,27 +1290,38 @@
         const items = Array.isArray(order.items) ? order.items : [];
         const itemHtml = items.map(item => '<li><span>' + escapeHTML(item.quantity) + " × " + escapeHTML(item.name || "Item") + '</span><strong>' + money(item.line_total ?? (Number(item.unit_price || 0) * Number(item.quantity || 0))) + "</strong></li>").join("");
         return '<article class="customer-order-card">' +
-          '<div class="tracked-card-heading"><div><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(number) + '</strong><p class="tracked-date">' + escapeHTML(tr("orderedAt")) + ": " + escapeHTML(trackingDate(order.created_at)) + '</p></div><span class="tracked-status status-' + escapeHTML(status.replace(/[^a-z_]/g,"")) + '">' + escapeHTML(trackingStatusText(status, order.order_type)) + "</span></div>" +
+          '<div class="tracked-card-heading"><div><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(number) + '</strong><p class="tracked-date">' + escapeHTML(tr("orderedAt")) + ": " + escapeHTML(trackingDate(order.created_at)) + '</p>' + updatedAtHtml + '</div><span class="tracked-status status-' + escapeHTML(status.replace(/[^a-z_]/g,"")) + '">' + escapeHTML(trackingStatusText(status, order.order_type)) + "</span></div>" +
           timeline + '<div class="tracked-order-meta"><span>' + escapeHTML(order.order_type === "pickup" ? tr("pickup") : tr("delivery")) + '</span><strong>' + money(order.total) + "</strong></div>" +
           (itemHtml ? '<ul class="tracked-items">' + itemHtml + "</ul>" : "") +
           (status !== "completed" && status !== "rejected" && order.receipt_code
             ? '<p class="receipt-code-note">' + escapeHTML(lang === "ar" ? "رمز تأكيد الاستلام (أعطه للكاشير عند التسليم): " : "Customer receipt code (give this to the cashier when you receive the order): ") + '<strong>' + escapeHTML(order.receipt_code) + '</strong></p>'
-            : "") + codeDetails + remove + "</article>";
+            : "") + remove + "</article>";
       };
-      // Keep only orders still being worked on in Active Orders.
-      // As soon as an order is ready, move it to History; delivery and completion
-      // remain in History as well, so old ready orders do not clutter the active list.
-      const activeStatuses = new Set(["new", "accepted", "preparing"]);
-      const activeResults = validResults.filter(result =>
-        result.failed || activeStatuses.has(String(result.order?.status || "").toLowerCase())
+      // A customer must continue seeing an order after it is accepted.
+      // "Ready" and "Out for delivery" remain current until the handoff is completed.
+      const currentStatuses = new Set(["new", "accepted", "preparing", "ready", "out_for_delivery"]);
+      const currentResults = validResults.filter(result =>
+        result.failed || currentStatuses.has(String(result.order?.status || "").toLowerCase())
       );
-      const historyResults = validResults.filter(result =>
-        !result.failed && !activeStatuses.has(String(result.order?.status || "").toLowerCase())
+      const pastResults = validResults.filter(result =>
+        !result.failed && !currentStatuses.has(String(result.order?.status || "").toLowerCase())
       );
-      const visibleResults = isHistoryPage ? historyResults : activeResults;
-      const visibleHtml = visibleResults.map(renderResult).join("");
-      const emptyMessage = isHistoryPage ? tr("noCompletedOrders") : tr("noTrackedOrders");
-      list.innerHTML = visibleHtml || '<p class="muted tracked-empty">' + escapeHTML(emptyMessage) + '</p>';
+      setHomeCurrentOrdersVisible(currentResults.length > 0);
+
+      let visibleHtml = "";
+      if (isHistoryPage) {
+        const sections = [
+          { title: tr("currentOrdersGroup"), results: currentResults },
+          { title: tr("pastOrdersGroup"), results: pastResults }
+        ].filter(section => section.results.length > 0);
+        visibleHtml = sections.map(section =>
+          '<section class="customer-order-group"><h3>' + escapeHTML(section.title) + '</h3>' +
+          section.results.map(renderResult).join("") + '</section>'
+        ).join("");
+      } else {
+        visibleHtml = currentResults.map(renderResult).join("");
+      }
+      list.innerHTML = visibleHtml || '<p class="muted tracked-empty">' + escapeHTML(tr("noTrackedOrders")) + '</p>';
       const heading = $("#customer-orders-heading");
       if (heading) heading.textContent = isHistoryPage ? tr("historyHeading") : tr("activeOrdersHeading");
       const nav = $("#customer-orders-nav");
@@ -1310,66 +1341,20 @@
     }
   }
 
-  async function lookupTrackingCode(raw) {
-    const token = String(raw || "").trim().toLowerCase();
-    if (!TRACKING_TOKEN_RE.test(token)) throw new Error("invalid-code");
-    if (!db) throw new Error("lookup-failed");
-    const { data, error } = await db.rpc("get_customer_order_tracking", { p_tracking_token: token });
-    if (error) throw new Error("lookup-failed");
-    if (!data) throw new Error("not-found");
-    rememberOrderTrackingToken(token, data.order_number);
-    return data;
-  }
-
-  $("#track-order-form")?.addEventListener("submit", async event => {
-    event.preventDefault();
-    if (!authSession?.user || (authSession.user.user_metadata?.phone_e164 && customerPhoneValidatedUserId !== authSession.user.id)) {
-      lockCustomerApp("Please sign in before tracking orders.");
-      return;
-    }
-    const input = $("#tracking-code-input");
-    const button = $("#track-order-submit");
-    const message = $("#customer-orders-message");
-    if (button) button.disabled = true;
-    if (message) { message.textContent = ""; message.className = "status-message"; }
-    try {
-      const order = await lookupTrackingCode(input?.value);
-      if (message) { message.textContent = trackingStatusText(order.status, order.order_type); message.className = "status-message success"; }
-      if (input) input.value = "";
-      await refreshCustomerOrderHistory();
-    } catch (error) {
-      const key = error?.message === "invalid-code" ? "invalidTrackingCode" : error?.message === "not-found" ? "orderNotFound" : "couldNotLoadTrackedOrder";
-      if (message) { message.textContent = tr(key); message.className = "status-message error"; }
-    } finally { if (button) button.disabled = false; }
-  });
-
   $("#refresh-customer-orders")?.addEventListener("click", () => { void refreshCustomerOrderHistory(); });
 
-  $("#customer-order-history")?.addEventListener("click", async event => {
+  $("#customer-order-history")?.addEventListener("click", event => {
     const target = event.target instanceof Element ? event.target : null;
     const remove = target?.closest("[data-remove-tracked]");
-    if (remove) {
-      const token = remove.getAttribute("data-remove-tracked");
-      saveTrackedOrders(readTrackedOrders().filter(row => row.token !== token));
-      void refreshCustomerOrderHistory();
-      return;
-    }
-    const copy = target?.closest("[data-copy-tracked]");
-    if (copy) {
-      const message = $("#customer-orders-message");
-      try {
-        if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
-        await navigator.clipboard.writeText(copy.getAttribute("data-copy-tracked") || "");
-        if (message) { message.textContent = tr("codeCopied"); message.className = "status-message success"; }
-      } catch (_) {
-        if (message) { message.textContent = tr("codeCopyFailed"); message.className = "status-message error"; }
-      }
-    }
+    if (!remove) return;
+    const token = remove.getAttribute("data-remove-tracked");
+    saveTrackedOrders(readTrackedOrders().filter(row => row.token !== token));
+    void refreshCustomerOrderHistory();
   });
 
   window.setInterval(() => {
     if (document.visibilityState === "visible") void refreshCustomerOrderHistory();
-  }, 45000);
+  }, 30000);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") void refreshCustomerOrderHistory();
   });
