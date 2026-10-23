@@ -1557,3 +1557,89 @@ html body.customer-home-page #customer-sign-out{grid-row:3!important;width:100%!
     width:126px!important;height:112px!important;
   }
 }
+
+/* FINAL POLISH: compact account mascot tile with real CSS perspective motion. */
+html body.customer-home-page .customer-account .al-shami-chef-widget{
+  display:grid!important;
+  grid-template-columns:clamp(112px,34%,150px) minmax(0,1fr)!important;
+  grid-template-rows:auto auto!important;
+  align-items:center!important;
+  justify-items:center!important;
+  column-gap:12px!important;
+  row-gap:3px!important;
+  width:100%!important;
+  min-height:0!important;
+  padding:10px 16px!important;
+  border-radius:16px!important;
+  background:linear-gradient(115deg,#28151D 0%,#421722 62%,#501B2A 100%)!important;
+  border:1px solid rgba(216,183,121,.82)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 5px 16px rgba(25,15,17,.12)!important;
+  overflow:hidden!important;
+}
+html body.customer-home-page .customer-account .al-shami-chef-art{
+  grid-column:1!important;grid-row:1 / span 2!important;
+  width:100%!important;height:130px!important;min-height:130px!important;flex:none!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  perspective:520px!important;transform-style:preserve-3d!important;
+}
+html body.customer-home-page .customer-account svg.al-shami-chef-mascot{
+  width:140px!important;height:130px!important;max-width:100%!important;
+  transform-origin:50% 65%!important;transform-style:preserve-3d!important;
+  animation:shamiChef3DTurn 5.2s ease-in-out infinite!important;
+  filter:drop-shadow(0 7px 4px rgba(0,0,0,.28))!important;
+  will-change:transform,filter!important;
+}
+html body.customer-home-page .customer-account .al-shami-chef-wordmark{
+  grid-column:2!important;grid-row:1!important;align-self:end!important;
+  width:100%!important;text-align:left!important;font-size:clamp(15px,4vw,21px)!important;
+  letter-spacing:.11em!important;line-height:1.2!important;
+}
+html body.customer-home-page .customer-account .al-shami-chef-caption{
+  grid-column:2!important;grid-row:2!important;align-self:start!important;
+  width:100%!important;text-align:left!important;font-size:8px!important;
+  letter-spacing:.24em!important;margin-top:2px!important;
+}
+html body.customer-home-page .customer-account .al-shami-chef-spark{
+  color:#E5C477!important;text-shadow:0 0 8px rgba(229,196,119,.42)!important;
+  animation:shamiChefSpark3D 3.2s ease-in-out infinite!important;
+}
+html body.customer-home-page .customer-account .al-shami-chef-spark-a{
+  top:20px!important;left:4px!important;
+}
+html body.customer-home-page .customer-account .al-shami-chef-spark-b{
+  top:28px!important;right:4px!important;animation-delay:1.2s!important;
+}
+@keyframes shamiChef3DTurn{
+  0%,100%{transform:perspective(520px) rotateY(-11deg) rotateX(3deg) translateZ(0) translateY(0) scale(1)}
+  25%{transform:perspective(520px) rotateY(0deg) rotateX(-2deg) translateZ(12px) translateY(-3px) scale(1.025)}
+  50%{transform:perspective(520px) rotateY(11deg) rotateX(3deg) translateZ(2px) translateY(0) scale(1)}
+  75%{transform:perspective(520px) rotateY(0deg) rotateX(-1deg) translateZ(9px) translateY(-2px) scale(1.015)}
+}
+@keyframes shamiChefSpark3D{
+  0%,100%{opacity:.45;transform:translateZ(0) scale(.8) rotate(-12deg)}
+  50%{opacity:1;transform:translateZ(14px) scale(1.12) rotate(12deg)}
+}
+@media(max-width:480px){
+  html body.customer-home-page .customer-account .al-shami-chef-widget{
+    grid-template-columns:112px minmax(0,1fr)!important;
+    column-gap:8px!important;padding:8px 10px!important;
+  }
+  html body.customer-home-page .customer-account .al-shami-chef-art{
+    height:116px!important;min-height:116px!important;
+  }
+  html body.customer-home-page .customer-account svg.al-shami-chef-mascot{
+    width:124px!important;height:116px!important;
+  }
+  html body.customer-home-page .customer-account .al-shami-chef-wordmark{
+    font-size:16px!important;letter-spacing:.08em!important;
+  }
+  html body.customer-home-page .customer-account .al-shami-chef-caption{
+    font-size:7px!important;letter-spacing:.16em!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  html body.customer-home-page .customer-account svg.al-shami-chef-mascot,
+  html body.customer-home-page .customer-account .al-shami-chef-spark{
+    animation:none!important;transform:none!important;
+  }
+}
