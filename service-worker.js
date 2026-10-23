@@ -2,14 +2,14 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v56";
+const CACHE_NAME = CACHE_PREFIX + "v57";
 const SHELL_FILES = [
   "./",
   "./index.html",
   "./history.html",
   "./admin.html",
   "./style.css",
-  "./style.css?v=live-rider-eta-20261023b",
+  "./style.css?v=modern-ui-20261023a",
   "./config.js",
   "./customer.js",
   "./customer.js?v=live-rider-eta-20261023b",
@@ -21,7 +21,7 @@ const SHELL_FILES = [
   "./rider.js",
   "./rider.js?v=approval-gate-20261023c",
   "./rider.css",
-  "./rider.css?v=approval-gate-20261023c",
+  "./rider.css?v=modern-ui-20261023a",
   "./rider.webmanifest",
   "./icons/al-shami-rider.svg",
   "./pwa.js",
