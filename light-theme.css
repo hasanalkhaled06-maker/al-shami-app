@@ -921,3 +921,444 @@ html body.rider-app .secondary-button.is-sharing{
 }
 html body.rider-app .refresh-button{background:#fffdf9!important;color:var(--shami-wine)!important;border:1px solid #ddcabb!important}
 html body.rider-app #signout-button{background:rgba(255,255,255,.12)!important;color:#fffaf5!important;border:1px solid rgba(255,255,255,.27)!important}
+
+
+/* ─────────────────────────────────────────────────────────────
+   AL SHAMI FINAL LIGHT PALETTE — requested by owner:
+   cream surfaces, readable charcoal text, soft green/blue icons,
+   champagne gold reserved for compact utility buttons.
+   Loaded last; replaces obsolete darker experimental rules.
+───────────────────────────────────────────────────────────── */
+:root{
+  --shami-cream:#F7F1E7;
+  --shami-cream-deep:#EFE3D4;
+  --shami-paper:#FFFCF7;
+  --shami-white:#FFFFFF;
+  --shami-wine:#761B2A;
+  --shami-wine-deep:#53111C;
+  --shami-wine-soft:#F4E6E7;
+  --shami-gold:#D8B779;
+  --shami-gold-soft:#F8F0DF;
+  --shami-ink:#2A2224;
+  --shami-muted:#6F6365;
+  --shami-line:#E5D8CE;
+  --shami-icon-green:#36765B;
+  --shami-icon-green-bg:#E2F0E7;
+  --shami-icon-blue:#376F9A;
+  --shami-icon-blue-bg:#E4EFF9;
+  --shami-shadow:0 8px 24px rgba(67,35,35,.065);
+}
+html:has(body.customer-home-page),html:has(body.customer-history-page),
+html:has(body.admin-body),html:has(body.rider-app){
+  color-scheme:light!important;background:var(--shami-cream)!important;
+}
+html body.customer-home-page,html body.customer-history-page,
+html body.admin-body,html body.rider-app{
+  color-scheme:light!important;background:var(--shami-cream)!important;color:var(--shami-ink)!important;
+}
+html body.customer-home-page :is(h1,h2,h3,h4,p,label,small,strong,span),
+html body.customer-history-page :is(h1,h2,h3,h4,p,label,small,strong,span),
+html body.admin-body :is(h1,h2,h3,h4,p,label,small,strong,span),
+html body.rider-app :is(h1,h2,h3,h4,p,label,small,strong,span){
+  text-shadow:none;
+}
+html body.customer-home-page p,html body.customer-history-page p,
+html body.admin-body p,html body.rider-app p{color:var(--shami-muted)}
+html body.customer-home-page h1,html body.customer-home-page h2,html body.customer-home-page h3,
+html body.customer-history-page h1,html body.customer-history-page h2,html body.customer-history-page h3,
+html body.admin-body h1,html body.admin-body h2,html body.admin-body h3,
+html body.rider-app h1,html body.rider-app h2,html body.rider-app h3{color:var(--shami-ink)!important}
+html body.customer-home-page :is(input,select,textarea),
+html body.customer-history-page :is(input,select,textarea),
+html body.admin-body :is(input,select,textarea),
+html body.rider-app :is(input,select,textarea){
+  background:#FFFFFF!important;color:var(--shami-ink)!important;border:1px solid #DCCFC3!important;
+}
+html body.customer-home-page :is(input,select,textarea)::placeholder,
+html body.customer-history-page :is(input,select,textarea)::placeholder,
+html body.admin-body :is(input,select,textarea)::placeholder,
+html body.rider-app :is(input,select,textarea)::placeholder{color:#75696B!important;opacity:1}
+
+/* Customer home navigation: all three cards stay light; no dark panels. */
+html body.customer-home-page .customer-home-actions,
+html body.customer-home-page #customer-orders-panel,
+html body.customer-home-page .customer-orders-panel{
+  background:linear-gradient(145deg,#FFFCF7,#F5EDE2)!important;
+  color:var(--shami-ink)!important;border:1px solid #E4D5C6!important;
+  box-shadow:var(--shami-shadow)!important;border-radius:20px!important;
+}
+html body.customer-home-page .customer-home-actions-intro h2,
+html body.customer-home-page .customer-home-actions-intro p,
+html body.customer-home-page #customer-orders-panel h2,
+html body.customer-home-page .customer-orders-panel h2,
+html body.customer-history-page #customer-orders-panel h2,
+html body.customer-history-page .customer-orders-panel h2{
+  color:var(--shami-ink)!important;
+}
+html body.customer-home-page .customer-home-card,
+html body.customer-home-page .customer-home-card.customer-card-order,
+html body.customer-home-page .customer-home-card.customer-card-history,
+html body.customer-home-page .customer-home-card.customer-card-help{
+  background:#FFFCF7!important;color:var(--shami-ink)!important;
+  border:1px solid #E3D6CA!important;border-radius:17px!important;
+  box-shadow:0 5px 16px rgba(67,35,35,.045)!important;
+}
+html body.customer-home-page .customer-home-card *,
+html body.customer-home-page .customer-home-card.customer-card-order *,
+html body.customer-home-page .customer-home-card.customer-card-history *,
+html body.customer-home-page .customer-home-card.customer-card-help *{
+  color:var(--shami-ink)!important;text-shadow:none!important;
+}
+html body.customer-home-page .customer-home-card:before{
+  border-color:rgba(118,27,42,.055)!important;
+  box-shadow:0 0 0 22px rgba(118,27,42,.012),0 0 0 46px rgba(118,27,42,.009)!important;
+}
+html body.customer-home-page .customer-home-card:after{
+  height:3px!important;background:var(--shami-wine)!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-history:after{background:var(--shami-icon-blue)!important}
+html body.customer-home-page .customer-home-card.customer-card-help:after{background:var(--shami-icon-green)!important}
+html body.customer-home-page .customer-card-title,
+html body.customer-home-page .customer-home-card.customer-card-order .customer-card-title,
+html body.customer-home-page .customer-home-card.customer-card-history .customer-card-title,
+html body.customer-home-page .customer-home-card.customer-card-help .customer-card-title{
+  color:var(--shami-ink)!important;font-weight:900!important;
+}
+html body.customer-home-page .customer-card-description,
+html body.customer-home-page .customer-home-card .customer-card-bottom,
+html body.customer-home-page .customer-home-card .customer-card-bottom strong{
+  color:var(--shami-muted)!important;
+}
+html body.customer-home-page .customer-card-icon,
+html body.customer-home-page .customer-card-order .customer-card-icon,
+html body.customer-home-page .customer-card-help .customer-card-icon{
+  background:var(--shami-icon-green-bg)!important;color:var(--shami-icon-green)!important;
+  border:1px solid #C8E2D2!important;border-radius:13px!important;
+}
+html body.customer-home-page .customer-card-history .customer-card-icon{
+  background:var(--shami-icon-blue-bg)!important;color:var(--shami-icon-blue)!important;
+  border:1px solid #CDDFEF!important;
+}
+html body.customer-home-page .customer-card-badge{
+  background:#F4ECE1!important;color:#655052!important;border:1px solid #E5D7C9!important;
+}
+html body.customer-home-page .customer-card-arrow{
+  background:#F8F0DF!important;color:#5A4320!important;border:1px solid #E6D2A5!important;
+}
+
+/* Current order and tracking surfaces must also remain cream/white and readable. */
+html body.customer-home-page #customer-orders-panel,
+html body.customer-history-page #customer-orders-panel,
+html body.customer-home-page .customer-orders-panel,
+html body.customer-history-page .customer-orders-panel,
+html body.customer-home-page .customer-order-card,
+html body.customer-history-page .customer-order-card,
+html body.customer-home-page .tracked-order,
+html body.customer-history-page .tracked-order{
+  background:#FFFCF7!important;color:var(--shami-ink)!important;
+  border:1px solid #E4D8CD!important;border-radius:16px!important;box-shadow:0 5px 16px rgba(67,35,35,.04)!important;
+}
+html body.customer-home-page .customer-order-card *,
+html body.customer-history-page .customer-order-card *,
+html body.customer-home-page .tracked-order *,
+html body.customer-history-page .tracked-order *{text-shadow:none!important}
+html body.customer-home-page .tracked-card-heading strong,
+html body.customer-history-page .tracked-card-heading strong,
+html body.customer-home-page .tracked-date,
+html body.customer-history-page .tracked-date,
+html body.customer-home-page .customer-order-card p,
+html body.customer-history-page .customer-order-card p{
+  color:var(--shami-ink)!important;
+}
+html body.customer-home-page .tracked-status,
+html body.customer-history-page .tracked-status{
+  background:#F4E6E7!important;color:var(--shami-wine)!important;border:1px solid #E4C9CE!important;
+}
+html body.customer-home-page .tracked-steps,
+html body.customer-history-page .tracked-steps,
+html body.customer-home-page .tracked-steps li,
+html body.customer-history-page .tracked-steps li{color:#5D5153!important}
+html body.customer-home-page .customer-rider-tracking,
+html body.customer-history-page .customer-rider-tracking{
+  background:#F9F2E7!important;color:var(--shami-ink)!important;border:1px solid #E4D5C0!important;
+}
+html body.customer-home-page .customer-rider-tracking *,
+html body.customer-history-page .customer-rider-tracking *{text-shadow:none!important}
+html body.customer-home-page .customer-rider-eta,
+html body.customer-history-page .customer-rider-eta{
+  background:#FFFCF7!important;color:var(--shami-ink)!important;border:1px solid #E4D5C0!important;
+}
+html body.customer-home-page .customer-rider-eta-copy strong,
+html body.customer-history-page .customer-rider-eta-copy strong{color:var(--shami-wine)!important}
+html body.customer-home-page .customer-rider-eta-copy span,
+html body.customer-history-page .customer-rider-eta-copy span{color:#72562B!important}
+html body.customer-home-page .customer-rider-eta-copy small,
+html body.customer-history-page .customer-rider-eta-copy small,
+html body.customer-home-page .customer-rider-map-status,
+html body.customer-history-page .customer-rider-map-status{color:#6F6365!important}
+html body.customer-home-page .receipt-code-note,
+html body.customer-history-page .receipt-code-note{background:#F8F0DF!important;border-color:#E3D0A7!important;color:var(--shami-ink)!important}
+html body.customer-home-page .receipt-code-label,
+html body.customer-history-page .receipt-code-label{color:#514447!important}
+html body.customer-home-page .receipt-code-value,
+html body.customer-history-page .receipt-code-value{color:var(--shami-wine)!important}
+
+/* Menu cards: cream product surface, dark readable titles, green/blue icon accents. */
+html body.customer-home-page .product-card,
+html body.customer-history-page .product-card{
+  background:#FFFCF7!important;color:var(--shami-ink)!important;border:1px solid #E4D8CD!important;
+  box-shadow:0 5px 16px rgba(67,35,35,.045)!important;border-radius:16px!important;
+}
+html body.customer-home-page .product-card h3,
+html body.customer-home-page .product-card h4,
+html body.customer-home-page .product-card .price,
+html body.customer-history-page .product-card h3,
+html body.customer-history-page .product-card h4,
+html body.customer-history-page .product-card .price{color:var(--shami-ink)!important}
+html body.customer-home-page .product-card p,
+html body.customer-home-page .product-card .muted,
+html body.customer-history-page .product-card p,
+html body.customer-history-page .product-card .muted{color:#6F6365!important}
+html body.customer-home-page .product-image,
+html body.customer-history-page .product-image{background:#F0E5D8!important}
+html body.customer-home-page .chips .chip,
+html body.customer-home-page .chips button,
+html body.customer-history-page .chips .chip,
+html body.customer-history-page .chips button{
+  background:#FFFCF7!important;color:#57484A!important;border:1px solid #E2D5C9!important;
+}
+html body.customer-home-page .chips .chip.active,
+html body.customer-home-page .chips button.active,
+html body.customer-history-page .chips .chip.active,
+html body.customer-history-page .chips button.active{
+  background:var(--shami-wine)!important;color:#FFFFFF!important;border-color:var(--shami-wine)!important;
+}
+html body.customer-home-page #search,
+html body.customer-history-page #search{background:#FFFFFF!important;color:var(--shami-ink)!important}
+html body.customer-home-page #search::placeholder,
+html body.customer-history-page #search::placeholder{color:#75696B!important;opacity:1}
+
+/* Admin: replace pale text on white cards with dark readable text everywhere. */
+html body.admin-body,
+html body.admin-body #dashboard{background:var(--shami-cream)!important;color:var(--shami-ink)!important}
+html body.admin-body #dashboard .panel,
+html body.admin-body #dashboard .stat,
+html body.admin-body #dashboard .admin-home-card,
+html body.admin-body #dashboard .settings-hub-card,
+html body.admin-body #dashboard .settings-hub-intro,
+html body.admin-body #dashboard .order-card,
+html body.admin-body #dashboard .admin-form,
+html body.admin-body #dashboard .admin-menu-row,
+html body.admin-body #dashboard .ops-stat{
+  background:#FFFCF7!important;color:var(--shami-ink)!important;
+  border-color:#E4D8CD!important;box-shadow:0 5px 16px rgba(67,35,35,.04)!important;
+}
+html body.admin-body #dashboard .dashboard-heading{
+  background:linear-gradient(120deg,#F9F2E8,#EFE1D2)!important;
+  border:1px solid #E2D0BE!important;color:var(--shami-ink)!important;
+}
+html body.admin-body #dashboard .dashboard-heading h1,
+html body.admin-body #dashboard .dashboard-heading h2{color:var(--shami-wine)!important}
+html body.admin-body #dashboard .dashboard-heading .muted,
+html body.admin-body #dashboard .muted,
+html body.admin-body #dashboard .home-card-bottom,
+html body.admin-body #dashboard .order-meta,
+html body.admin-body #dashboard .order-lines,
+html body.admin-body #dashboard .ops-note{color:#6F6365!important}
+html body.admin-body #dashboard .stat span{color:#6F6365!important}
+html body.admin-body #dashboard .stat strong{color:var(--shami-wine)!important}
+html body.admin-body #dashboard .order-header h3,
+html body.admin-body #dashboard .order-card h3,
+html body.admin-body #dashboard .panel h2,
+html body.admin-body #dashboard .panel h3,
+html body.admin-body #dashboard .home-card-title,
+html body.admin-body #dashboard .settings-hub-title,
+html body.admin-body #dashboard .order-lines span,
+html body.admin-body #dashboard .order-lines strong,
+html body.admin-body #dashboard .order-footer,
+html body.admin-body #dashboard .order-footer span,
+html body.admin-body #dashboard .order-customer,
+html body.admin-body #dashboard .order-address,
+html body.admin-body #dashboard .order-phone,
+html body.admin-body #dashboard .order-total{color:var(--shami-ink)!important}
+html body.admin-body #dashboard .order-card a{color:var(--shami-wine)!important}
+html body.admin-body #dashboard .home-card-icon,
+html body.admin-body #dashboard .settings-link-menu .settings-hub-icon,
+html body.admin-body #dashboard .settings-link-history .settings-hub-icon,
+html body.admin-body #dashboard .settings-link-settings .settings-hub-icon{
+  background:var(--shami-icon-blue-bg)!important;color:var(--shami-icon-blue)!important;border-color:#CDDFEF!important;
+}
+html body.admin-body #dashboard .home-card-orders .home-card-icon,
+html body.admin-body #dashboard .settings-link-offers .settings-hub-icon,
+html body.admin-body #dashboard .settings-link-operations .settings-hub-icon{
+  background:var(--shami-icon-green-bg)!important;color:var(--shami-icon-green)!important;border-color:#C8E2D2!important;
+}
+html body.admin-body #dashboard .home-card-status,
+html body.admin-body #dashboard .order-status{
+  background:#F4E6E7!important;color:var(--shami-wine)!important;border-color:#E4C9CE!important;
+}
+html body.admin-body #dashboard .order-rider-note{
+  background:#F8F0DF!important;color:#5D4A2B!important;border:1px solid #E6D5AF!important;
+}
+html body.admin-body #dashboard .order-rider-note strong,
+html body.admin-body #dashboard .order-rider-note-label{color:#5D4A2B!important}
+html body.admin-body #dashboard .admin-form,
+html body.admin-body #receipt-confirm-form,
+html body.admin-body #tab-operations .ops-form{background:#F8F2E9!important;color:var(--shami-ink)!important}
+html body.admin-body #dashboard label{color:#514447!important}
+html body.admin-body #dashboard :is(input,select,textarea){
+  background:#FFFFFF!important;color:var(--shami-ink)!important;border:1px solid #DCCFC3!important;
+}
+html body.admin-body #dashboard :is(input,select,textarea)::placeholder{color:#75696B!important;opacity:1}
+html body.admin-body #dashboard .order-actions select{background:#FFFFFF!important;color:var(--shami-ink)!important}
+
+/* Rider app: clean cream workspace and high-contrast delivery details. */
+html body.rider-app .page-shell{background:transparent!important;color:var(--shami-ink)!important}
+html body.rider-app .rider-header{
+  background:linear-gradient(120deg,#651522,#842533)!important;color:#FFFCF7!important;
+}
+html body.rider-app .welcome-row{
+  background:linear-gradient(130deg,#FFFCF7,#F1E4D6)!important;color:var(--shami-ink)!important;
+  border:1px solid #E4D3C1!important;border-top:3px solid var(--shami-wine)!important;
+}
+html body.rider-app .welcome-row h1{color:var(--shami-wine)!important}
+html body.rider-app .welcome-row p{color:#6F6365!important}
+html body.rider-app .summary-card,
+html body.rider-app .location-panel,
+html body.rider-app .delivery-card,
+html body.rider-app .empty-state,
+html body.rider-app .loading-card,
+html body.rider-app .login-panel,
+html body.rider-app .approval-panel{
+  background:#FFFCF7!important;color:var(--shami-ink)!important;border:1px solid #E4D8CD!important;
+  box-shadow:0 5px 16px rgba(67,35,35,.045)!important;
+}
+html body.rider-app .summary-label,
+html body.rider-app .summary-card small,
+html body.rider-app .location-panel-copy p,
+html body.rider-app .privacy-note,
+html body.rider-app .order-time,
+html body.rider-app .delivery-notes{color:#6F6365!important}
+html body.rider-app .summary-card strong,
+html body.rider-app .order-number,
+html body.rider-app .customer-name,
+html body.rider-app .delivery-address,
+html body.rider-app .empty-state strong{color:var(--shami-ink)!important}
+html body.rider-app .summary-grid .summary-card:nth-child(1) .summary-icon{
+  background:var(--shami-icon-green-bg)!important;color:var(--shami-icon-green)!important;border-color:#C8E2D2!important;
+}
+html body.rider-app .summary-grid .summary-card:nth-child(2) .summary-icon{
+  background:var(--shami-icon-blue-bg)!important;color:var(--shami-icon-blue)!important;border-color:#CDDFEF!important;
+}
+html body.rider-app .location-icon,
+html body.rider-app .empty-icon{
+  background:var(--shami-icon-blue-bg)!important;color:var(--shami-icon-blue)!important;border-color:#CDDFEF!important;
+}
+html body.rider-app .location-panel{background:#F9F2E7!important;border-color:#E4D5C0!important}
+html body.rider-app .detail-label{color:#89642D!important}
+html body.rider-app .status-badge,
+html body.rider-app .status-badge.status-out_for_delivery,
+html body.rider-app .status-badge.status-ready{
+  background:#F4E6E7!important;color:var(--shami-wine)!important;border:1px solid #E4C9CE!important;
+}
+
+/* Button hierarchy: wine for primary actions, champagne only for compact controls. */
+html body.customer-home-page .btn-primary,html body.customer-home-page button.btn-primary,
+html body.customer-history-page .btn-primary,html body.customer-history-page button.btn-primary,
+html body.admin-body .btn-primary,html body.admin-body button.btn-primary,
+html body.rider-app .primary-button,html body.rider-app .navigation-button:not(.secondary){
+  background:var(--shami-wine)!important;color:#FFFFFF!important;border:1px solid var(--shami-wine)!important;
+  border-radius:11px!important;font-weight:850!important;box-shadow:0 4px 10px rgba(118,27,42,.12)!important;
+}
+html body.customer-home-page .btn-light,html body.customer-history-page .btn-light,
+html body.admin-body #dashboard .btn-light,html body.rider-app .navigation-button.secondary{
+  background:#FFFCF7!important;color:var(--shami-wine)!important;border:1px solid #DDCABB!important;
+  border-radius:11px!important;font-weight:800!important;
+}
+html body.customer-home-page .customer-card-arrow,
+html body.customer-home-page #refresh-customer-orders,
+html body.customer-home-page #copy-address,
+html body.customer-home-page .receipt-code-copy,
+html body.customer-history-page #refresh-customer-orders,
+html body.customer-history-page .receipt-code-copy,
+html body.admin-body #refresh,
+html body.admin-body #export-orders,
+html body.admin-body #cancel-product,
+html body.admin-body #cancel-offer,
+html body.rider-app .refresh-button{
+  background:var(--shami-gold)!important;color:#382B1D!important;border:1px solid #C6A35A!important;
+  border-radius:10px!important;font-weight:850!important;box-shadow:none!important;
+}
+html body.customer-home-page .receipt-code-copy.is-copied,
+html body.customer-history-page .receipt-code-copy.is-copied{
+  background:#EFE0B9!important;color:#4B3A1C!important;border-color:#C6A35A!important;
+}
+html body.customer-home-page .customer-card-arrow{width:34px!important;height:34px!important}
+html body.customer-home-page .success-actions .success-whatsapp,
+html body.customer-home-page .success-actions .success-track{
+  background:var(--shami-wine)!important;color:#FFFFFF!important;border:1px solid var(--shami-wine)!important;
+}
+html body.customer-home-page .success-actions #success-close{
+  background:#FFFCF7!important;color:var(--shami-wine)!important;border:1px solid #DDCABB!important;
+}
+html body.rider-app #location-toggle:not(.is-sharing){
+  background:var(--shami-wine)!important;color:#FFFFFF!important;border-color:var(--shami-wine)!important;
+}
+html body.rider-app #location-toggle.is-sharing{
+  background:var(--shami-gold)!important;color:#382B1D!important;border-color:#C6A35A!important;
+}
+
+/* Responsive action sizes and keep small labels readable on iPhone. */
+html body.customer-home-page :is(button,a.btn),
+html body.customer-history-page :is(button,a.btn),
+html body.admin-body :is(button,a.btn),
+html body.rider-app :is(button,a.btn){text-shadow:none!important}
+html body.customer-home-page .btn,html body.customer-history-page .btn,
+html body.admin-body #dashboard .btn,html body.rider-app button{
+  font-size:12px!important;line-height:1.25!important;
+}
+html body.customer-home-page .customer-home-card .customer-card-title,
+html body.customer-home-page .customer-home-card .customer-card-bottom,
+html body.customer-home-page .customer-home-card .customer-card-bottom strong{opacity:1!important}
+html body.customer-home-page footer,html body.customer-history-page footer{
+  background:#EFE3D4!important;color:#514346!important;border-top:1px solid #E1D1C1!important;
+}
+html body.customer-home-page footer a,html body.customer-history-page footer a{color:var(--shami-wine)!important}
+@media(max-width:760px){
+  html body.customer-home-page .customer-home-actions{padding:13px!important}
+  html body.customer-home-page .customer-home-card,
+  html body.customer-home-page .customer-home-card.customer-card-order,
+  html body.customer-home-page .customer-home-card.customer-card-history,
+  html body.customer-home-page .customer-home-card.customer-card-help{
+    min-height:128px!important;padding:13px!important;
+  }
+  html body.customer-home-page .customer-home-card.customer-card-order{grid-column:1/-1}
+  html body.customer-home-page .customer-home-card .customer-card-title{font-size:18px!important;margin:12px 0 5px!important}
+  html body.customer-home-page .customer-card-icon{width:42px!important;height:42px!important;flex-basis:42px!important}
+  html body.customer-home-page .customer-card-bottom{font-size:11px!important}
+  html body.customer-home-page .customer-home-grid{gap:9px!important}
+  html body.customer-home-page .menu-grid,html body.customer-history-page .menu-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+  html body.customer-home-page .product-card,html body.customer-history-page .product-card{border-radius:14px!important}
+  html body.customer-home-page .product-info,html body.customer-history-page .product-info{padding:10px!important}
+  html body.customer-home-page .product-bottom .btn,html body.customer-history-page .product-bottom .btn{min-height:36px!important;padding:7px 9px!important}
+  html body.customer-home-page .customer-orders-panel,html body.customer-history-page .customer-orders-panel{padding:12px!important}
+  html body.customer-home-page .customer-order-card,html body.customer-history-page .customer-order-card{padding:12px!important}
+  html body.customer-home-page .customer-rider-map,html body.customer-history-page .customer-rider-map{height:235px!important}
+  html body.admin-body #dashboard .order-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  html body.admin-body #dashboard .order-footer{grid-template-columns:1fr!important}
+  html body.admin-body #dashboard .order-actions .btn{min-height:36px!important;font-size:10px!important}
+  html body.rider-app .delivery-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  html body.rider-app .delivery-actions .navigation-button{min-height:41px!important}
+  html body.rider-app .summary-card{padding:10px!important}
+}
+@media(max-width:390px){
+  html body.customer-home-page .customer-card-badge{display:none!important}
+  html body.customer-home-page .customer-home-card{border-radius:14px!important}
+  html body.admin-body #dashboard .order-actions .btn{font-size:9px!important;padding:7px 5px!important}
+  html body.rider-app .delivery-actions{grid-template-columns:1fr!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html body.customer-home-page *,html body.customer-history-page *,html body.admin-body *,html body.rider-app *{
+    animation:none!important;transition:none!important;scroll-behavior:auto!important;
+  }
+}
