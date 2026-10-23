@@ -60,6 +60,16 @@
       "'": "&#39;"
     }[char]));
 
+  function deliveryMapLink(order) {
+    if (order?.delivery_latitude == null || order?.delivery_longitude == null) return "";
+    const lat = Number(order.delivery_latitude);
+    const lng = Number(order.delivery_longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return "";
+    const query = encodeURIComponent(lat + "," + lng);
+    const href = "https://www.google.com/maps/search/?api=1&query=" + query;
+    return '<a class="admin-delivery-map-link" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">↗ Open delivery location in Google Maps</a>';
+  }
+
   function toast(message) {
     const element = $("#toast");
     if (!element) return;
@@ -854,6 +864,7 @@
             ${order.notes
               ? "<br>Notes: " + esc(order.notes)
               : ""}
+            ${deliveryMapLink(order) ? "<br>" + deliveryMapLink(order) : ""}
           </p>
 
           <ul class="order-lines">
@@ -1098,7 +1109,8 @@ Status: ${order.status}`;
       field("Order type", order.order_type === "delivery" ? "Delivery" : "Pickup") +
       field("Time received", new Date(order.created_at).toLocaleString()) +
       (order.delivery_address ? field("Delivery address", order.delivery_address) : "") +
-      '</div><ul class="incoming-order-items">' + (items || "<li>No item details loaded yet.</li>") + "</ul>" +
+      '</div>' + (deliveryMapLink(order) ? '<p class="incoming-order-note">' + deliveryMapLink(order) + '</p>' : '') +
+      '<ul class="incoming-order-items">' + (items || "<li>No item details loaded yet.</li>") + "</ul>" +
       (order.notes ? '<p class="incoming-order-note"><strong>Customer notes:</strong> ' + esc(order.notes) + "</p>" : "") +
       '<div class="incoming-order-total"><span>ORDER TOTAL</span><strong>' + money(order.total) + "</strong></div>";
     const accept = $("#incoming-order-accept");
