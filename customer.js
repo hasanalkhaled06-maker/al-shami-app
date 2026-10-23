@@ -1088,7 +1088,7 @@
       confirmLocation: "Fa beae yi di dwuma",
       cancel: "Twa mu",
       mapsNotConfigured: "Map no nnya mmra. Kyerɛw wo address wɔ ase ha seesei.",
-      mapsLoadError: "Google Maps antumi amma. Hwɛ API key ne APIs a wɔasɔ ano, anaa kyerɛw wo address.",
+      mapsLoadError: "Map no antumi amma. Hwɛ internet anaa kyerɛw wo address wɔ ase ha.",
       copyAddress: "Kɔpi address",
       notes: "Nsɛm foforo (wopɛ a)",
       add: "Fa ka wo nneɛma ho",
