@@ -88,56 +88,114 @@
   }
 
   const ADMIN_PANEL_NAMES = ["orders", "history", "menu", "offers", "settings", "operations"];
+  let currentAdminView = "home";
+
+  function setAdminView(view, backLabel) {
+    currentAdminView = view;
+    const dashboard = $("#dashboard");
+    if (dashboard) dashboard.dataset.adminView = view;
+    const backButton = $("#back-to-home");
+    if (backButton) {
+      backButton.textContent = backLabel || "← Home";
+      backButton.classList.toggle("hidden", view === "home");
+    }
+  }
+
+  function hideAdminSections() {
+    ADMIN_PANEL_NAMES.forEach(name => {
+      $("#tab-" + name)?.classList.add("hidden");
+    });
+    $("#admin-home")?.classList.add("hidden");
+    $("#settings-hub")?.classList.add("hidden");
+  }
 
   function showAdminHome() {
     const dashboard = $("#dashboard");
     if (!dashboard) return;
+    hideAdminSections();
     dashboard.classList.add("hub-home");
     $("#admin-home")?.classList.remove("hidden");
-    ADMIN_PANEL_NAMES.forEach(name => {
-      $("#tab-" + name)?.classList.add("hidden");
-    });
     document.querySelectorAll(".legacy-main-tabs [data-tab]").forEach(tab => {
       tab.classList.remove("active");
     });
-    $("#back-to-home")?.classList.add("hidden");
+    setAdminView("home", "← Home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function showSettingsHub() {
+    const dashboard = $("#dashboard");
+    if (!dashboard) return;
+    hideAdminSections();
+    dashboard.classList.remove("hub-home");
+    $("#settings-hub")?.classList.remove("hidden");
+    document.querySelectorAll(".legacy-main-tabs [data-tab]").forEach(tab => {
+      tab.classList.remove("active");
+    });
+    setAdminView("settings-hub", "← Home");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function showAdminMainPanel(name) {
+    if (name === "settings-hub") {
+      showSettingsHub();
+      return;
+    }
     if (!["orders", "history", "menu", "offers", "settings"].includes(name)) return;
     const dashboard = $("#dashboard");
     if (!dashboard) return;
+    hideAdminSections();
     dashboard.classList.remove("hub-home");
-    $("#admin-home")?.classList.add("hidden");
-    ADMIN_PANEL_NAMES.forEach(key => {
-      const panel = $("#tab-" + key);
-      if (panel) panel.classList.toggle("hidden", key !== name);
-    });
+    const panel = $("#tab-" + name);
+    if (panel) panel.classList.remove("hidden");
     document.querySelectorAll(".legacy-main-tabs [data-tab]").forEach(tab => {
       tab.classList.toggle("active", tab.dataset.tab === name);
     });
-    $("#back-to-home")?.classList.remove("hidden");
+    setAdminView(name === "orders" ? "active-orders" : "settings-child",
+      name === "orders" ? "← Home" : "← Settings");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   window.__alShamiNavigateMainPanel = showAdminMainPanel;
   window.__alShamiNavigateHome = showAdminHome;
+  window.__alShamiNavigateSettings = showSettingsHub;
+  window.__alShamiMarkSettingsChild = () => {
+    hideAdminSections();
+    $("#tab-operations")?.classList.remove("hidden");
+    $("#dashboard")?.classList.remove("hub-home");
+    setAdminView("settings-child", "← Settings");
+  };
 
   document.querySelectorAll("[data-home-nav]").forEach(card => {
     card.addEventListener("click", () => {
       const destination = card.dataset.homeNav;
-      if (destination === "operations") {
-        const operationsTab = document.querySelector('.legacy-main-tabs [data-tab="operations"]');
-        if (operationsTab) operationsTab.click();
-        else toast("Operations tools are loading. Please open this page again in a moment.");
+      if (destination === "settings-hub") {
+        showSettingsHub();
         return;
       }
       showAdminMainPanel(destination);
     });
   });
 
-  $("#back-to-home")?.addEventListener("click", showAdminHome);
+  document.querySelectorAll("[data-settings-nav]").forEach(card => {
+    card.addEventListener("click", () => {
+      const destination = card.dataset.settingsNav;
+      if (destination === "operations") {
+        const operationsTab = document.querySelector('.legacy-main-tabs [data-tab="operations"]');
+        if (operationsTab) operationsTab.click();
+        else toast("Operations tools are loading. Please open Settings again in a moment.");
+        return;
+      }
+      showAdminMainPanel(destination);
+    });
+  });
+
+  $("#back-to-home")?.addEventListener("click", () => {
+    if (currentAdminView === "settings-child") {
+      showSettingsHub();
+    } else {
+      showAdminHome();
+    }
+  });
 
   async function isAdmin() {
     if (!currentUser || !db) return false;
@@ -1050,14 +1108,7 @@ Status: ${order.status}`;
   }
 
   function openOrdersTab() {
-    document.querySelectorAll(".tab").forEach(tab => {
-      const active = tab.dataset.tab === "orders";
-      tab.classList.toggle("active", active);
-    });
-    ["orders", "history", "menu", "offers", "settings"].forEach(name => {
-      const section = $("#tab-" + name);
-      if (section) section.classList.toggle("hidden", name !== "orders");
-    });
+    showAdminMainPanel("orders");
     $("#tab-orders")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
