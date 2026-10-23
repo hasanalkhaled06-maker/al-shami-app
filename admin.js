@@ -66,8 +66,8 @@
     const lng = Number(order.delivery_longitude);
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return "";
     const query = encodeURIComponent(lat + "," + lng);
-    const href = "https://www.google.com/maps/search/?api=1&query=" + query;
-    return '<a class="admin-delivery-map-link" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">↗ Open delivery location in Google Maps</a>';
+    const href = "https://www.openstreetmap.org/?mlat=" + lat + "&mlon=" + lng + "#map=17/" + lat + "/" + lng;
+    return '<a class="admin-delivery-map-link" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">↗ Open delivery location in OpenStreetMap</a>';
   }
 
   function toast(message) {
