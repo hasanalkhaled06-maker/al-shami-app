@@ -486,12 +486,12 @@
             <label for="delivery-address-input"><span data-i18n="address">Delivery address / landmark</span></label>
             <input id="delivery-address-input" name="delivery_address" maxlength="250" autocomplete="street-address" aria-describedby="address-help" placeholder="House number, street, landmark">
             <div class="delivery-location-controls">
-              <button id="choose-delivery-location" class="btn btn-light" type="button" data-i18n="chooseLocation">Choose location on OpenStreetMap</button>
+              <button id="choose-delivery-location" class="btn btn-light" type="button" data-i18n="chooseLocation">Required: choose delivery location on map</button>
               <button id="clear-delivery-location" class="btn btn-light" type="button" data-i18n="clearLocation" hidden>Clear location</button>
             </div>
             <input id="delivery-latitude" name="delivery_latitude" type="hidden">
             <input id="delivery-longitude" name="delivery_longitude" type="hidden">
-            <p id="delivery-location-status" class="delivery-location-status" role="status" aria-live="polite" data-i18n="locationNotSelected">No map location selected yet. You can still enter your address manually.</p>
+            <p id="delivery-location-status" class="delivery-location-status" role="status" aria-live="polite" data-i18n="locationNotSelected">Required for delivery: select and confirm a pin on the map. Address text alone is not enough.</p>
             <small id="address-help" class="field-help" data-i18n="addressHint">Include your house or building number, street, neighbourhood, and a nearby landmark (for example, a shop or station).</small>
           </div>
 
@@ -716,7 +716,7 @@
   </script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
-  <script src="customer.js?v=delivery-map-osm-20261023b"></script>
+  <script src="customer.js?v=delivery-location-required-20261023a"></script>
   <script src="pwa.js"></script>
 </body>
 </html>
