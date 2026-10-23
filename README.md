@@ -32,6 +32,7 @@ This installs web apps on the iPhone Home Screen; these are not native apps publ
 - `supabase-schema.sql`: base schema for a new Supabase environment.
 - `supabase-migration-v2.sql`: additive operations tables, access policies, stock/expense/cash-shift functions, indexes, and grants.
 - `supabase-migration-v3.sql`: additive purchase orders, cash payouts, staff attendance, menu recipes, automatic recipe-stock deductions on completion, order completion timestamps, and updated cash-shift reconciliation.
+- `supabase-migration-staff-management-v1.sql`: detailed employee profiles, employment and salary fields, and a private Storage bucket for employee photos, ID scans, and contracts. The production migration has been applied; employee documents are restricted to authorised admins.
 
 ## Database setup and safety
 
