@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v54";
+const CACHE_NAME = CACHE_PREFIX + "v55";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -18,7 +18,9 @@ const SHELL_FILES = [
   "./admin-operations.js?v=rider-profile-link-20261023a",
   "./rider.html",
   "./rider.js",
+  "./rider.js?v=approval-gate-20261023c",
   "./rider.css",
+  "./rider.css?v=approval-gate-20261023c",
   "./rider.webmanifest",
   "./icons/al-shami-rider.svg",
   "./pwa.js",
