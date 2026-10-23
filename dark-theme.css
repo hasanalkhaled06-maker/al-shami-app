@@ -1212,3 +1212,56 @@ html body.customer-history-page .customer-rider-bike-glyph{
   background:#315F7E!important;color:#FFFFFF!important;border-color:#FFFFFF!important;
 }
 
+
+
+/* HOTFIX: high-specificity contrast correction for live customer order tracking.
+   Explicitly clear inherited dark backgrounds on the order and rider-tracking
+   containers and set readable colors on every nested text node. */
+html body.customer-home-page .customer-orders-panel,
+html body.customer-history-page .customer-orders-panel,
+html body.customer-home-page #customer-orders-panel,
+html body.customer-history-page #customer-orders-panel,
+html body.customer-home-page .customer-order-card,
+html body.customer-history-page .customer-order-card,
+html body.customer-home-page .tracked-order,
+html body.customer-history-page .tracked-order,
+html body.customer-home-page .tracked-order .customer-rider-tracking,
+html body.customer-history-page .tracked-order .customer-rider-tracking,
+html body.customer-home-page .tracked-order .customer-rider-eta,
+html body.customer-history-page .tracked-order .customer-rider-eta,
+html body.customer-home-page .tracked-order .receipt-code-note,
+html body.customer-history-page .tracked-order .receipt-code-note{
+  background:#FFFDF8!important;
+  background-image:none!important;
+  color:#203748!important;
+  border-color:#CADCE7!important;
+}
+html body.customer-home-page .tracked-order *,
+html body.customer-history-page .tracked-order *,
+html body.customer-home-page .customer-order-card *,
+html body.customer-history-page .customer-order-card *{
+  text-shadow:none!important;
+}
+html body.customer-home-page .tracked-order :is(h1,h2,h3,h4,p,span,small,strong,label,div,li),
+html body.customer-history-page .tracked-order :is(h1,h2,h3,h4,p,span,small,strong,label,div,li),
+html body.customer-home-page .customer-order-card :is(h1,h2,h3,h4,p,span,small,strong,label,div,li),
+html body.customer-history-page .customer-order-card :is(h1,h2,h3,h4,p,span,small,strong,label,div,li){
+  color:#203748!important;
+}
+html body.customer-home-page .tracked-order .customer-rider-eta-copy strong,
+html body.customer-history-page .tracked-order .customer-rider-eta-copy strong{color:#315F7E!important}
+html body.customer-home-page .tracked-order .customer-rider-eta-copy span,
+html body.customer-history-page .tracked-order .customer-rider-eta-copy span{color:#26734B!important}
+html body.customer-home-page .tracked-order .tracked-status,
+html body.customer-history-page .tracked-order .tracked-status{color:#31536B!important}
+html body.customer-home-page .tracked-order .tracked-status.status-accepted,
+html body.customer-home-page .tracked-order .tracked-status.status-completed,
+html body.customer-history-page .tracked-order .tracked-status.status-accepted,
+html body.customer-history-page .tracked-order .tracked-status.status-completed{color:#226B45!important}
+html body.customer-home-page .tracked-order .tracked-status.status-rejected,
+html body.customer-history-page .tracked-order .tracked-status.status-rejected{color:#A52D3A!important}
+html body.customer-home-page .tracked-order .customer-rider-google-maps,
+html body.customer-history-page .tracked-order .customer-rider-google-maps{
+  background:#EAF2F7!important;background-image:none!important;color:#203748!important;border-color:#CADCE7!important;
+}
+
