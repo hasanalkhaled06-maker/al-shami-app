@@ -622,3 +622,490 @@ html body.rider-app{
   background:#F7F1E7!important;
   background-color:#F7F1E7!important;
 }
+
+
+
+/* ──────────────────────────────────────────────────────────────
+   AL SHAMI Cream + Blue theme — 2026-10-23
+   Final shared overrides for customer, history, admin and rider apps.
+   Keeps all workflow markup/JavaScript unchanged.
+   ────────────────────────────────────────────────────────────── */
+:root{
+  color-scheme:light!important;
+  --shami-bg:#F6F1E7;
+  --shami-surface:#FFFDF8;
+  --shami-surface-2:#EAF2F7;
+  --shami-surface-3:#DCEAF3;
+  --shami-line:#CADCE7;
+  --shami-line-soft:#DEE8ED;
+  --shami-text:#203748;
+  --shami-muted:#5F7482;
+  --shami-subtle:#738894;
+  --shami-wine:#315F7E;
+  --shami-wine-strong:#2D6386;
+  --shami-wine-dark:#24465F;
+  --shami-gold:#D8B779;
+  --shami-gold-text:#2D3E4A;
+  --shami-blue:#2F6E98;
+  --shami-blue-bg:#E2EFF7;
+  --shami-green:#26734B;
+  --shami-green-bg:#E5F3E9;
+  --shami-yellow:#825F18;
+  --shami-yellow-bg:#FFF3D8;
+  --shami-danger:#A52D3A;
+  --shami-danger-bg:#FCEBED;
+  --shami-shadow:0 10px 28px rgba(35,71,95,.09);
+}
+html:has(body.customer-home-page),
+html:has(body.customer-history-page),
+html:has(body.admin-body),
+html:has(body.rider-app){
+  color-scheme:light!important;background:#F6F1E7!important;background-color:#F6F1E7!important;
+}
+html body.customer-home-page,
+html body.customer-history-page,
+html body.admin-body,
+html body.rider-app{
+  color-scheme:light!important;
+  background:linear-gradient(145deg,#FBF8F0 0%,#EAF2F7 100%)!important;
+  background-color:#F6F1E7!important;color:#203748!important;
+}
+html body.customer-home-page *,
+html body.customer-history-page *,
+html body.admin-body *,
+html body.rider-app *{text-shadow:none}
+html body.customer-home-page :is(h1,h2,h3,h4,h5,h6,strong,label),
+html body.customer-history-page :is(h1,h2,h3,h4,h5,h6,strong,label),
+html body.admin-body :is(h1,h2,h3,h4,h5,h6,strong,label),
+html body.rider-app :is(h1,h2,h3,h4,h5,h6,strong,label){color:#203748!important}
+html body.customer-home-page p,
+html body.customer-history-page p,
+html body.admin-body p,
+html body.rider-app p{color:#5F7482}
+html body.customer-home-page .muted,
+html body.customer-history-page .muted,
+html body.admin-body .muted,
+html body.rider-app .muted{color:#5F7482!important}
+
+/* Universal controls: soft-blue utilities, blue primary actions, clear focus. */
+html body.customer-home-page :focus-visible,
+html body.customer-history-page :focus-visible,
+html body.admin-body :focus-visible,
+html body.rider-app :focus-visible{outline:3px solid #7DAAC7!important;outline-offset:3px}
+html body.customer-home-page :is(input,select,textarea),
+html body.customer-history-page :is(input,select,textarea),
+html body.admin-body :is(input,select,textarea),
+html body.rider-app :is(input,select,textarea){
+  color-scheme:light!important;background:#FFFFFF!important;color:#203748!important;
+  border:1px solid #C5D9E5!important;border-radius:11px!important;box-shadow:none!important;
+}
+html body.customer-home-page :is(input,select,textarea)::placeholder,
+html body.customer-history-page :is(input,select,textarea)::placeholder,
+html body.admin-body :is(input,select,textarea)::placeholder,
+html body.rider-app :is(input,select,textarea)::placeholder{color:#718694!important;opacity:1!important}
+html body.customer-home-page :is(.btn-primary,button.btn-primary),
+html body.customer-history-page :is(.btn-primary,button.btn-primary),
+html body.admin-body :is(.btn-primary,button.btn-primary),
+html body.rider-app :is(.primary-button,button.primary-button),
+html body.rider-app .navigation-button:not(.secondary){
+  background:linear-gradient(135deg,#3A759B,#2B5878)!important;color:#FFFFFF!important;
+  border:1px solid #2C5878!important;box-shadow:0 5px 14px rgba(45,99,134,.16)!important;
+}
+html body.customer-home-page :is(.btn-primary,button.btn-primary):hover,
+html body.customer-history-page :is(.btn-primary,button.btn-primary):hover,
+html body.admin-body :is(.btn-primary,button.btn-primary):hover,
+html body.rider-app :is(.primary-button,button.primary-button):hover{background:#285776!important}
+html body.customer-home-page :is(.btn-light,button.btn-light),
+html body.customer-history-page :is(.btn-light,button.btn-light),
+html body.admin-body :is(.btn-light,button.btn-light),
+html body.rider-app .navigation-button.secondary{
+  background:#E5EFF5!important;color:#254B63!important;border:1px solid #C9DCE7!important;box-shadow:none!important;
+}
+html body.customer-home-page :is(button,.btn):not(.btn-primary):not(.customer-card-arrow):not(.receipt-code-copy):not(.success-track):not(.success-whatsapp),
+html body.customer-history-page :is(button,.btn):not(.btn-primary):not(.receipt-code-copy):not(.success-track):not(.success-whatsapp),
+html body.admin-body #dashboard :is(button,.btn):not(.btn-primary):not(.incoming-accept):not(.incoming-reject):not(.danger):not(.delete-order-btn),
+html body.rider-app :is(button,.secondary-button,.refresh-button):not(.primary-button):not(.navigation-button:not(.secondary)){
+  background:#E7F0F6!important;color:#294F67!important;border-color:#C7D9E4!important;
+}
+html body.customer-home-page :is(button,input,select,textarea):disabled,
+html body.customer-history-page :is(button,input,select,textarea):disabled,
+html body.admin-body :is(button,input,select,textarea):disabled,
+html body.rider-app :is(button,input,select,textarea):disabled{opacity:.58!important;cursor:not-allowed!important}
+
+/* Customer header, page canvas and home shortcuts. */
+html body.customer-home-page .hero,
+html body.customer-history-page .hero{
+  background:radial-gradient(circle at 92% 0%,rgba(216,183,121,.18),transparent 35%),
+    linear-gradient(125deg,#DDEBF4 0%,#C8DFEC 58%,#B8D3E4 100%)!important;
+  color:#203748!important;border:1px solid #BED4E2!important;
+  box-shadow:0 10px 26px rgba(35,71,95,.08)!important;
+}
+html body.customer-home-page .hero :is(h1,h2,h3,p,.eyebrow),
+html body.customer-history-page .hero :is(h1,h2,h3,p,.eyebrow){color:#203748!important}
+html body.customer-home-page .hero .eyebrow,
+html body.customer-history-page .hero .eyebrow{color:#315F7E!important}
+html body.customer-home-page .hero select,
+html body.customer-history-page .hero select,
+html body.customer-home-page .hero select option,
+html body.customer-history-page .hero select option{background:#FFFFFF!important;color:#203748!important;border-color:#C5D9E5!important}
+html body.customer-home-page .customer-account,
+html body.customer-history-page .customer-account,
+html body.customer-home-page .customer-account-toolbar .customer-account{
+  background:#FFFDF8!important;color:#203748!important;border:1px solid #D7E2E7!important;
+}
+html body.customer-home-page .customer-account-toolbar>#customer-auth-open,
+html body.customer-history-page .customer-account-toolbar>#customer-auth-open,
+html body.customer-home-page .customer-account-toolbar .btn,
+html body.customer-history-page .customer-account-toolbar .btn{
+  background:#D8B779!important;color:#2D3E4A!important;border:1px solid #C5A565!important;
+}
+html body.customer-home-page .customer-home-actions{
+  background:linear-gradient(145deg,#FFFDF8 0%,#F0F6F9 100%)!important;color:#203748!important;
+  border:1px solid #CDDFE9!important;box-shadow:0 12px 30px rgba(35,71,95,.07)!important;
+}
+html body.customer-home-page .customer-home-actions-intro :is(h2,p){color:#203748!important}
+html body.customer-home-page .customer-home-actions-intro>p:last-child{color:#5F7482!important}
+html body.customer-home-page .customer-home-card,
+html body.customer-history-page .customer-home-card{
+  color:#203748!important;border:1px solid #C8DCE7!important;
+  box-shadow:0 9px 24px rgba(35,71,95,.09)!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-order,
+html body.customer-history-page .customer-home-card.customer-card-order{
+  background:radial-gradient(circle at 90% 0%,rgba(255,255,255,.8),transparent 36%),linear-gradient(145deg,#DCEBF4,#C6DDEA)!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-history,
+html body.customer-history-page .customer-home-card.customer-card-history{
+  background:radial-gradient(circle at 90% 0%,rgba(255,255,255,.85),transparent 36%),linear-gradient(145deg,#EEF5F8,#DCEAF2)!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-help,
+html body.customer-history-page .customer-home-card.customer-card-help{
+  background:radial-gradient(circle at 90% 0%,rgba(255,255,255,.75),transparent 36%),linear-gradient(145deg,#FFF8EA,#F1E4C9)!important;
+  border-color:#E3D3AF!important;
+}
+html body.customer-home-page .customer-home-card :is(.customer-card-title,.customer-card-bottom,.customer-card-bottom strong,.customer-card-badge,.customer-card-description),
+html body.customer-history-page .customer-home-card :is(.customer-card-title,.customer-card-bottom,.customer-card-bottom strong,.customer-card-badge,.customer-card-description){
+  color:#203748!important;
+}
+html body.customer-home-page .customer-home-card .customer-card-description,
+html body.customer-history-page .customer-home-card .customer-card-description{color:#526D7E!important}
+html body.customer-home-page .customer-home-card .customer-card-badge,
+html body.customer-history-page .customer-home-card .customer-card-badge{
+  background:rgba(255,255,255,.72)!important;border-color:#C8DCE7!important;color:#31536B!important;
+}
+html body.customer-home-page .customer-home-card .customer-card-icon,
+html body.customer-history-page .customer-home-card .customer-card-icon{
+  background:#E7F1F7!important;border:1px solid #C5DCE9!important;color:#315F7E!important;
+}
+html body.customer-home-page .customer-home-card.customer-card-help .customer-card-icon,
+html body.customer-history-page .customer-home-card.customer-card-help .customer-card-icon{
+  background:#FBF0D8!important;border-color:#E4D0A5!important;color:#795B25!important;
+}
+html body.customer-home-page .customer-home-card .customer-card-icon svg,
+html body.customer-home-page .customer-home-card .customer-card-icon svg *,
+html body.customer-history-page .customer-home-card .customer-card-icon svg,
+html body.customer-history-page .customer-home-card .customer-card-icon svg *{color:inherit!important;stroke:currentColor!important}
+html body.customer-home-page .customer-home-card .customer-card-bottom,
+html body.customer-history-page .customer-home-card .customer-card-bottom{border-top-color:rgba(49,95,126,.18)!important}
+html body.customer-home-page .customer-home-card .customer-card-arrow,
+html body.customer-history-page .customer-home-card .customer-card-arrow{
+  background:#D8B779!important;color:#2D3E4A!important;border:1px solid #C5A565!important;
+}
+html body.customer-home-page .customer-home-card:after,
+html body.customer-home-page .customer-home-card.customer-card-order:after,
+html body.customer-history-page .customer-home-card:after{background:#6F9EBB!important}
+html body.customer-home-page .customer-home-card.customer-card-help:after,
+html body.customer-history-page .customer-home-card.customer-card-help:after{background:#D8B779!important}
+
+/* Menu, cart, checkout and saved/current order cards. */
+html body.customer-home-page .section-heading h2,
+html body.customer-history-page .section-heading h2{color:#203748!important}
+html body.customer-home-page .section-heading .eyebrow,
+html body.customer-history-page .section-heading .eyebrow{color:#315F7E!important}
+html body.customer-home-page .chips .chip,
+html body.customer-home-page .chips button,
+html body.customer-history-page .chips .chip,
+html body.customer-history-page .chips button{
+  background:#E7F0F6!important;color:#31536B!important;border:1px solid #C8DCE7!important;
+}
+html body.customer-home-page .chips .chip.active,
+html body.customer-home-page .chips button.active,
+html body.customer-history-page .chips .chip.active,
+html body.customer-history-page .chips button.active{
+  background:#315F7E!important;color:#FFFFFF!important;border-color:#315F7E!important;
+}
+html body.customer-home-page .menu-tools #search,
+html body.customer-history-page .menu-tools #search,
+html body.customer-home-page .sort-label select,
+html body.customer-history-page .sort-label select{background:#FFFFFF!important;color:#203748!important;border:1px solid #C5D9E5!important}
+html body.customer-home-page .sort-label,
+html body.customer-history-page .sort-label{color:#5F7482!important}
+html body.customer-home-page .product-card,
+html body.customer-history-page .product-card{
+  background:linear-gradient(160deg,#FFFDF8,#F0F6F9)!important;color:#203748!important;
+  border:1px solid #D0E0E8!important;box-shadow:0 8px 20px rgba(35,71,95,.07)!important;
+}
+html body.customer-home-page .product-card :is(h3,h4,.price,p,.muted),
+html body.customer-history-page .product-card :is(h3,h4,.price,p,.muted){color:#203748!important}
+html body.customer-home-page .product-card p,
+html body.customer-home-page .product-card .muted,
+html body.customer-history-page .product-card p,
+html body.customer-history-page .product-card .muted{color:#5F7482!important}
+html body.customer-home-page .product-image,
+html body.customer-history-page .product-image{background:#E5EFF5!important}
+html body.customer-home-page .product-bottom .price,
+html body.customer-history-page .product-bottom .price{color:#315F7E!important}
+html body.customer-home-page .product-bottom .btn,
+html body.customer-history-page .product-bottom .btn{
+  background:#315F7E!important;color:#FFFFFF!important;border:1px solid #315F7E!important;
+}
+html body.customer-home-page .checkout-section,
+html body.customer-history-page .checkout-section,
+html body.customer-home-page #cart,
+html body.customer-history-page #cart,
+html body.customer-home-page .cart-panel,
+html body.customer-history-page .cart-panel{
+  background:#FFFDF8!important;color:#203748!important;border:1px solid #D0E0E8!important;
+}
+html body.customer-home-page .checkout-section :is(h2,h3),
+html body.customer-history-page .checkout-section :is(h2,h3){color:#203748!important}
+html body.customer-home-page .customer-orders-panel,
+html body.customer-history-page .customer-orders-panel,
+html body.customer-home-page #customer-orders-panel,
+html body.customer-history-page #customer-orders-panel,
+html body.customer-home-page .customer-order-card,
+html body.customer-history-page .customer-order-card,
+html body.customer-home-page .tracked-order,
+html body.customer-history-page .tracked-order,
+html body.customer-home-page .customer-order-group,
+html body.customer-history-page .customer-order-group{
+  background:linear-gradient(160deg,#FFFDF8,#F0F6F9)!important;color:#203748!important;
+  border:1px solid #D0E0E8!important;box-shadow:0 8px 22px rgba(35,71,95,.06)!important;
+}
+html body.customer-home-page .customer-order-card :is(h1,h2,h3,h4,strong,p,small),
+html body.customer-history-page .customer-order-card :is(h1,h2,h3,h4,strong,p,small),
+html body.customer-home-page .tracked-order :is(h1,h2,h3,h4,strong,p,small),
+html body.customer-history-page .tracked-order :is(h1,h2,h3,h4,strong,p,small){color:#203748!important}
+html body.customer-home-page .tracked-status,
+html body.customer-history-page .tracked-status{background:#E7F0F6!important;color:#31536B!important;border:1px solid #C8DCE7!important}
+html body.customer-home-page .tracked-status.status-new,
+html body.customer-history-page .tracked-status.status-new{background:#FFF1D9!important;color:#80551B!important}
+html body.customer-home-page .tracked-status.status-accepted,
+html body.customer-home-page .tracked-status.status-completed,
+html body.customer-history-page .tracked-status.status-accepted,
+html body.customer-history-page .tracked-status.status-completed{background:#E5F3E9!important;color:#226B45!important}
+html body.customer-home-page .tracked-status.status-preparing,
+html body.customer-history-page .tracked-status.status-preparing{background:#FFF3D8!important;color:#825F18!important}
+html body.customer-home-page .tracked-status.status-ready,
+html body.customer-history-page .tracked-status.status-ready{background:#E1EEF7!important;color:#285878!important}
+html body.customer-home-page .tracked-status.status-out_for_delivery,
+html body.customer-history-page .tracked-status.status-out_for_delivery{background:#E6EAF8!important;color:#465D93!important}
+html body.customer-home-page .tracked-status.status-rejected,
+html body.customer-history-page .tracked-status.status-rejected,
+html body.customer-home-page .tracked-rejected,
+html body.customer-history-page .tracked-rejected{background:#FCEBED!important;color:#A52D3A!important}
+html body.customer-home-page .tracked-steps li,
+html body.customer-history-page .tracked-steps li{color:#637985!important}
+html body.customer-home-page .tracked-steps li:before,
+html body.customer-history-page .tracked-steps li:before{background:#FFFFFF!important;border-color:#BFCFDB!important}
+html body.customer-home-page .tracked-steps li:not(:last-child):after,
+html body.customer-history-page .tracked-steps li:not(:last-child):after{background:#D1DFE7!important}
+html body.customer-home-page .tracked-steps li.is-complete:before,
+html body.customer-home-page .tracked-steps li.is-current:before,
+html body.customer-history-page .tracked-steps li.is-complete:before,
+html body.customer-history-page .tracked-steps li.is-current:before{background:#315F7E!important;border-color:#315F7E!important}
+html body.customer-home-page .tracked-steps li.is-complete:after,
+html body.customer-history-page .tracked-steps li.is-complete:after{background:#6F9EBB!important}
+html body.customer-home-page .tracked-steps li.is-complete,
+html body.customer-home-page .tracked-steps li.is-current,
+html body.customer-history-page .tracked-steps li.is-complete,
+html body.customer-history-page .tracked-steps li.is-current{color:#315F7E!important}
+html body.customer-home-page .tracked-order-meta,
+html body.customer-history-page .tracked-order-meta{border-color:#D5E3EA!important}
+html body.customer-home-page .tracked-items li,
+html body.customer-history-page .tracked-items li{border-color:#E0E9ED!important}
+html body.customer-home-page .customer-rider-tracking,
+html body.customer-history-page .customer-rider-tracking{background:#EAF2F7!important;color:#203748!important;border:1px solid #C7DCE8!important}
+html body.customer-home-page .customer-rider-eta,
+html body.customer-history-page .customer-rider-eta{background:#FFFDF8!important;color:#203748!important;border:1px solid #C7DCE8!important}
+html body.customer-home-page .customer-rider-eta-copy strong,
+html body.customer-history-page .customer-rider-eta-copy strong{color:#315F7E!important}
+html body.customer-home-page .customer-rider-eta-copy span,
+html body.customer-history-page .customer-rider-eta-copy span{color:#26734B!important}
+html body.customer-home-page .customer-rider-eta-copy small,
+html body.customer-history-page .customer-rider-eta-copy small,
+html body.customer-home-page .customer-rider-map-status,
+html body.customer-history-page .customer-rider-map-status{color:#5F7482!important}
+html body.customer-home-page .customer-rider-map,
+html body.customer-history-page .customer-rider-map{background:#DCEAF3!important;border-color:#C7DCE8!important}
+
+/* Authentication and order-success overlays become cream, not charcoal. */
+html body.customer-home-page .customer-auth,
+html body.customer-history-page .customer-auth{background:rgba(31,58,77,.28)!important}
+html body.customer-home-page .customer-auth-card,
+html body.customer-history-page .customer-auth-card{
+  background:#FFFDF8!important;color:#203748!important;border:1px solid #C8DCE7!important;
+  box-shadow:0 20px 70px rgba(31,58,77,.18)!important;
+}
+html body.customer-home-page .customer-auth-card :is(h1,h2,h3,label,p,.eyebrow),
+html body.customer-history-page .customer-auth-card :is(h1,h2,h3,label,p,.eyebrow){color:#203748!important}
+html body.customer-home-page .customer-auth-card input,
+html body.customer-history-page .customer-auth-card input,
+html body.customer-home-page .customer-auth #auth-recovery-panel input,
+html body.customer-history-page .customer-auth #auth-recovery-panel input{background:#FFFFFF!important;color:#203748!important;border-color:#C5D9E5!important}
+html body.customer-home-page .customer-auth .auth-mode button.active,
+html body.customer-history-page .customer-auth .auth-mode button.active{background:#315F7E!important;color:#FFFFFF!important;border-color:#315F7E!important}
+html body.customer-home-page .success-card,
+html body.customer-history-page .success-card{background:rgba(255,253,248,.99)!important;color:#203748!important;border-color:#C8DCE7!important;box-shadow:0 14px 44px rgba(35,71,95,.17)!important}
+html body.customer-home-page .success-card :is(h2,p),
+html body.customer-history-page .success-card :is(h2,p){color:#203748!important}
+html body.customer-home-page .success-card .success-subtitle,
+html body.customer-history-page .success-card .success-subtitle{color:#5F7482!important}
+html body.customer-home-page .success-icon,
+html body.customer-history-page .success-icon{background:#E5F0F6!important;color:#315F7E!important;border-color:#C8DCE7!important}
+html body.customer-home-page .success-progress,
+html body.customer-history-page .success-progress{background:#DFEAF0!important}
+html body.customer-home-page .success-progress span,
+html body.customer-history-page .success-progress span{background:linear-gradient(90deg,#315F7E,#D8B779,#315F7E)!important}
+html body.customer-home-page #success-order-number,
+html body.customer-history-page #success-order-number{background:#EAF2F7!important;border-color:#D0E0E8!important;color:#31536B!important}
+html body.customer-home-page #success-order-total,
+html body.customer-history-page #success-order-total{background:#FBF3E1!important;border-color:#E5D4AB!important;color:#3E4E59!important}
+html body.customer-home-page .success-card #success-close,
+html body.customer-history-page .success-card #success-close{background:#E7F0F6!important;color:#294F67!important;border-color:#C7D9E4!important}
+
+/* Administration dashboard: panels, orders, tabs, menus and alerts. */
+html body.admin-body .admin-top{
+  background:rgba(255,253,248,.94)!important;color:#203748!important;
+  border-bottom:1px solid #D3E1E9!important;box-shadow:0 5px 18px rgba(35,71,95,.06)!important;
+}
+html body.admin-body .admin-brand,
+html body.admin-body .admin-brand span{color:#203748!important}
+html body.admin-body .admin-brand:before{background:#E4EEF5!important;border-color:#C2D7E4!important;color:#315F7E!important}
+html body.admin-body .admin-actions .connection{background:#E7F0F6!important;border-color:#C7D9E4!important;color:#31536B!important}
+html body.admin-body #signout{background:#E7F0F6!important;color:#31536B!important;border:1px solid #C7D9E4!important}
+html body.admin-body #dashboard .dashboard-heading{
+  background:linear-gradient(135deg,#DCEAF3 0%,#FFF9EE 100%)!important;
+  border:1px solid #C9DCE7!important;box-shadow:0 8px 22px rgba(35,71,95,.07)!important;
+}
+html body.admin-body #dashboard .dashboard-heading :is(h1,h2,p,.muted){color:#203748!important}
+html body.admin-body #dashboard .dashboard-heading .eyebrow{color:#315F7E!important}
+html body.admin-body #dashboard .dashboard-heading .btn{background:#315F7E!important;color:#FFFFFF!important;border-color:#315F7E!important}
+html body.admin-body #dashboard :is(.panel,.stat,.admin-home-card,.settings-hub-card,.settings-hub-intro,.order-card,.admin-form,.admin-menu-row,.ops-stat,.ops-tool-tile,.settings-hub-grid>*,.admin-home-grid>*,.stats>*),
+html body.admin-body #orders-list .order-card,
+html body.admin-body #history-list .order-card{
+  background:#FFFDF8!important;color:#203748!important;border:1px solid #D0E0E8!important;
+  box-shadow:0 8px 22px rgba(35,71,95,.065)!important;
+}
+html body.admin-body #dashboard :is(.panel,.stat,.admin-home-card,.settings-hub-card,.settings-hub-intro,.order-card,.admin-form,.admin-menu-row,.ops-stat,.ops-tool-tile) :is(h1,h2,h3,h4,strong,label,.home-card-title,.settings-hub-title),
+html body.admin-body #orders-list .order-card :is(h1,h2,h3,h4,strong,label),
+html body.admin-body #history-list .order-card :is(h1,h2,h3,h4,strong,label){color:#203748!important}
+html body.admin-body #dashboard :is(.panel,.stat,.admin-home-card,.settings-hub-card,.settings-hub-intro,.order-card,.admin-form,.admin-menu-row,.ops-stat,.ops-tool-tile) :is(p,small,.muted,.order-meta,.order-lines,.ops-note,.home-card-bottom,.order-footer span),
+html body.admin-body #orders-list .order-card :is(p,small,.muted,.order-meta,.order-lines),
+html body.admin-body #history-list .order-card :is(p,small,.muted,.order-meta,.order-lines){color:#5F7482!important}
+html body.admin-body #dashboard .stat:before,
+html body.admin-body #dashboard .stat:nth-child(n):before{background:#6F9EBB!important}
+html body.admin-body #dashboard :is(.home-card-icon,.settings-hub-icon,#ops-subtabs .ops-tool-icon){
+  background:#E5EFF6!important;color:#315F7E!important;border-color:#C9DCE7!important;
+}
+html body.admin-body #dashboard :is(.home-card-status,.order-status){background:#EAF2F7!important;color:#31536B!important;border-color:#C9DCE7!important}
+html body.admin-body #dashboard .home-card-bottom{border-top-color:#D7E4EB!important}
+html body.admin-body #dashboard :is(.admin-tabs .tab,.tab){
+  background:#EAF2F7!important;color:#31536B!important;border:1px solid #C9DCE7!important;
+}
+html body.admin-body #dashboard :is(.admin-tabs .tab.active,.tab.active){background:#315F7E!important;color:#FFFFFF!important;border-color:#315F7E!important}
+html body.admin-body #dashboard input,
+html body.admin-body #dashboard select,
+html body.admin-body #dashboard textarea{background:#FFFFFF!important;color:#203748!important;border-color:#C5D9E5!important}
+html body.admin-body #dashboard input::placeholder,
+html body.admin-body #dashboard textarea::placeholder{color:#718694!important}
+html body.admin-body #dashboard label,
+html body.admin-body #receipt-confirm-form label{color:#31536B!important}
+html body.admin-body #receipt-confirm-form,
+html body.admin-body #dashboard .admin-form,
+html body.admin-body #dashboard #tab-operations .ops-form{background:#F7FAFC!important;color:#203748!important;border-color:#D0E0E8!important}
+html body.admin-body #orders-list .order-card a,
+html body.admin-body #history-list .order-card a,
+html body.admin-body #dashboard :is(.admin-home-card,.settings-hub-card,.panel,.stat,.order-card,.admin-form,.admin-menu-row,.ops-stat,.ops-tool-tile) :is(a:not(.btn),.link){color:#315F7E!important}
+html body.admin-body #dashboard .order-rider-note{background:#EAF4EE!important;color:#286747!important;border-color:#C9E2D0!important}
+html body.admin-body #dashboard .order-rider-note strong,
+html body.admin-body #dashboard .order-rider-note-label{color:#286747!important}
+html body.admin-body #dashboard .order-actions select{background:#FFFFFF!important;color:#203748!important;border-color:#C5D9E5!important}
+html body.admin-body #dashboard .order-actions [data-copy],
+html body.admin-body :is(#refresh,#export-orders,#cancel-product,#cancel-offer){background:#D8B779!important;color:#2D3E4A!important;border:1px solid #C5A565!important}
+html body.admin-body #dashboard .delete-order-btn,
+html body.admin-body #dashboard [data-delete-order]{background:#FCEBED!important;color:#A52D3A!important;border:1px solid #EBC4C9!important}
+html body.admin-body .incoming-order-dialog{background:#FFFDF8!important;color:#203748!important;border:1px solid #C7DCE8!important;box-shadow:0 18px 50px rgba(35,71,95,.2)!important}
+html body.admin-body .incoming-order-banner{background:linear-gradient(120deg,#DCEAF3,#EAF2F7)!important;color:#203748!important}
+html body.admin-body .incoming-order-dialog :is(h2,p){color:#203748!important}
+html body.admin-body .incoming-order-actions .incoming-reject,
+html body.admin-body .incoming-order-actions #incoming-order-reject{background:#FCEBED!important;color:#A52D3A!important;border:1px solid #EBC4C9!important}
+html body.admin-body .incoming-order-actions .incoming-accept,
+html body.admin-body .incoming-order-actions #incoming-order-accept{background:#26734B!important;color:#FFFFFF!important;border:1px solid #26734B!important}
+html body.admin-body .toast{background:#FFFDF8!important;color:#203748!important;border:1px solid #C7DCE8!important;box-shadow:0 8px 24px rgba(35,71,95,.12)!important}
+
+/* Rider dashboard and rider login. */
+html body.rider-app .rider-header{
+  background:rgba(255,253,248,.94)!important;border-bottom:1px solid #D3E1E9!important;
+  box-shadow:0 5px 18px rgba(35,71,95,.05)!important;
+}
+html body.rider-app .rider-header .brand :is(strong,small){color:#203748!important}
+html body.rider-app .rider-header .brand-mark{background:#E2EEF5!important;border-color:#D8B779!important;color:#315F7E!important}
+html body.rider-app .connection-pill,
+html body.rider-app .live-pill{background:#EAF2F7!important;color:#31536B!important;border-color:#C7DCE8!important}
+html body.rider-app .welcome-row{
+  background:linear-gradient(135deg,#DCEAF3 0%,#FFF9EE 100%)!important;
+  border:1px solid #C7DCE8!important;box-shadow:0 8px 22px rgba(35,71,95,.06)!important;
+}
+html body.rider-app .welcome-row :is(h1,p,.eyebrow){color:#203748!important}
+html body.rider-app .welcome-row .eyebrow{color:#315F7E!important}
+html body.rider-app :is(.summary-card,.location-panel,.delivery-card,.empty-state,.loading-card,.login-panel,.approval-panel){
+  background:#FFFDF8!important;color:#203748!important;border:1px solid #D0E0E8!important;
+  box-shadow:0 8px 22px rgba(35,71,95,.07)!important;
+}
+html body.rider-app .summary-card :is(.summary-label,small),
+html body.rider-app :is(.location-panel-copy p,.privacy-note,.order-time,.delivery-notes,.detail-label,.form-message){color:#5F7482!important}
+html body.rider-app :is(.summary-card strong,.order-number,.customer-name,.delivery-address,.empty-state strong,.delivery-card h3){color:#203748!important}
+html body.rider-app .summary-grid .summary-card .summary-icon,
+html body.rider-app .location-icon,
+html body.rider-app .empty-icon{background:#E5EFF6!important;color:#315F7E!important;border-color:#C7DCE8!important}
+html body.rider-app .location-panel{background:linear-gradient(130deg,#FFFDF8,#EAF2F7)!important;border-color:#C7DCE8!important}
+html body.rider-app .status-badge{background:#FFF3D8!important;color:#805F1B!important;border:1px solid #EAD9AE!important}
+html body.rider-app .status-badge.status-out_for_delivery{background:#E6EAF8!important;color:#465D93!important;border-color:#CBD4F0!important}
+html body.rider-app .status-badge.status-ready{background:#E1EEF7!important;color:#285878!important;border-color:#C9DCE8!important}
+html body.rider-app .delivery-card-head{background:linear-gradient(105deg,#EAF2F7,#FFFDF8)!important;border-bottom-color:#D7E4EB!important}
+html body.rider-app .delivery-card-body .detail-section{border-bottom-color:#DDE7EC!important}
+html body.rider-app .total-row{border-color:#D0E0E8!important;color:#5F7482!important}
+html body.rider-app .total-row strong{color:#203748!important}
+html body.rider-app .navigation-button.secondary,
+html body.rider-app .secondary-button:not(.is-sharing),
+html body.rider-app .refresh-button{background:#E5EFF5!important;color:#31536B!important;border:1px solid #C7D9E4!important;box-shadow:none!important}
+html body.rider-app #location-toggle.is-sharing{background:#315F7E!important;color:#FFFFFF!important;border-color:#315F7E!important}
+html body.rider-app #signout-button{background:#E7F0F6!important;color:#31536B!important;border:1px solid #C7D9E4!important}
+html body.rider-app .login-form label{color:#31536B!important}
+html body.rider-app .login-form input{background:#FFFFFF!important;color:#203748!important;border-color:#C5D9E5!important}
+html body.rider-app .auth-mode-switch{background:#EAF2F7!important;border-color:#C7DCE8!important}
+html body.rider-app .auth-mode-button{color:#526D7E!important}
+html body.rider-app .auth-mode-button.is-active{background:#315F7E!important;color:#FFFFFF!important}
+html body.rider-app .security-note{background:#FBF3E1!important;color:#6D5626!important;border-color:#E7D5AA!important}
+html body.rider-app .dashboard-message{background:#EAF2F7!important;color:#31536B!important;border-color:#C7DCE8!important}
+html body.rider-app .dashboard-footer{color:#718694!important;border-color:#D0E0E8!important}
+
+/* Shared small utilities and status colors. */
+html body.customer-home-page .success-track,
+html body.customer-history-page .success-track{background:#26734B!important;color:#FFFFFF!important;border-color:#26734B!important}
+html body.customer-home-page .success-whatsapp,
+html body.customer-history-page .success-whatsapp{background:#26734B!important;color:#FFFFFF!important;border-color:#26734B!important}
+html body.customer-home-page .app-message.info,
+html body.customer-history-page .app-message.info{background:#EAF2F7!important;color:#31536B!important;border-color:#C7DCE8!important}
+html body.customer-home-page .app-message.error,
+html body.customer-history-page .app-message.error{background:#FCEBED!important;color:#A52D3A!important;border-color:#EBC4C9!important}
+html body.customer-home-page .floating-cart-button,
+html body.customer-history-page .floating-cart-button{background:#315F7E!important;color:#FFFFFF!important;border-color:#C7DCE8!important;box-shadow:0 8px 26px rgba(35,71,95,.18)!important}
+html body.customer-home-page .floating-cart-count,
+html body.customer-history-page .floating-cart-count{background:#D8B779!important;color:#2D3E4A!important}
+html body.customer-home-page .unavailable-badge,
+html body.customer-history-page .unavailable-badge{background:#EAF2F7!important;color:#5F7482!important;border-color:#C7DCE8!important}
+html body.customer-home-page .skip-link,
+html body.customer-history-page .skip-link{background:#FFFDF8!important;color:#315F7E!important}
+
