@@ -161,30 +161,3 @@ a{color:inherit}
 .approval-panel.is-error .approval-status-dot{background:#bd3434}
 .approval-refresh-button{width:100%;margin:4px 0 8px}
 .approval-refresh-button:disabled{opacity:.7}
-
-
-/* AL SHAMI Rider — compact, contemporary delivery workspace */
-:root{--wine:#741b28;--wine-dark:#4c101a;--gold:#c99b42;--paper:#f7f6f3;--line:#e8e2de;--radius:18px;--shadow:0 10px 30px rgba(35,18,20,.055)}
-body{background:var(--paper);letter-spacing:-.012em}
-.rider-header{background:rgba(255,255,255,.9);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--line);box-shadow:0 4px 18px rgba(35,18,20,.035)}
-.page-shell{width:min(100% - 28px,1080px);padding-top:clamp(18px,3vw,30px);padding-bottom:36px}
-.brand-mark{border-radius:13px;box-shadow:0 7px 20px rgba(74,16,26,.12)}
-h1,h2,h3{letter-spacing:-.045em;line-height:1.12}
-h1{font-size:clamp(1.8rem,5vw,2.8rem)}
-p{line-height:1.55}
-.card,.login-panel,.dashboard-card,.delivery-card,.location-card,.approval-panel{border-radius:var(--radius);border-color:var(--line);box-shadow:var(--shadow)}
-button,input{border-radius:12px}
-button{font-weight:750;transition:transform .15s ease,box-shadow .15s ease}
-button:active{transform:translateY(1px)}
-input{min-height:46px}
-.eyebrow{letter-spacing:.16em}
-.connection-pill{font-size:.88rem}
-.dashboard-footer{border-top:1px solid var(--line);color:var(--muted);gap:8px;flex-wrap:wrap}
-@media(max-width:600px){
- .rider-header{padding:10px 14px}
- .page-shell{width:min(100% - 22px,1080px)}
- .rider-header .brand strong{font-size:.95rem}
- .rider-header .brand small{font-size:.68rem;letter-spacing:.12em}
- h1{font-size:clamp(1.7rem,7vw,2.3rem)}
-}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
