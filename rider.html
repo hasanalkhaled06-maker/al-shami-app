@@ -14,8 +14,9 @@
   <link rel="manifest" href="./rider.webmanifest">
   <link rel="icon" href="./icons/al-shami-rider.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="./rider.css?v=modern-ui-20261023a">
+  <link rel="stylesheet" href="./rider.css?v=modern-ui-20261023b">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="modern-ui.css?v=modern-ui-20261023b">
 </head>
 <body>
   <header class="rider-header">
@@ -70,7 +71,7 @@
         <div>
           <p class="eyebrow">RIDER WORKSPACE</p>
           <h1>Good day<span id="rider-name-suffix"></span></h1>
-          <p class="muted">Your assigned orders update automatically from the restaurant.</p>
+          <p class="muted"></p>
         </div>
         <div class="live-pill"><span class="pulse-dot"></span><span id="refresh-label">Syncing orders</span></div>
       </div>
@@ -93,7 +94,7 @@
         </div>
         <button id="location-toggle" class="secondary-button" type="button" disabled>Start location sharing</button>
       </section>
-      <p class="privacy-note">Your GPS location is shared with a customer only while their order is marked <strong>Out for delivery</strong> by the restaurant. Keep this page open during the trip; iPhone may pause GPS updates when a web app is in the background.</p>
+      <p class="privacy-note">Customers see your GPS only while an order is <strong>Out for delivery</strong>. Keep this page open; iPhone may pause location updates in the background.</p>
 
       <div class="section-heading">
         <div><p class="eyebrow">DISPATCH BOARD</p><h2>Assigned deliveries</h2></div>
@@ -108,7 +109,7 @@
   </main>
 
   <script src="./config.js"></script>
-  <script src="./rider.js?v=approval-gate-20261023c"></script>
+  <script src="./rider.js?v=modern-ui-20261023b"></script>
   <script src="./pwa.js"></script>
 </body>
 </html>
