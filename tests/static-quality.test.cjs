@@ -195,7 +195,7 @@ test("every versioned local JavaScript asset is included in the service-worker s
 
 test("all currently referenced stylesheet versions remain in the service-worker shell", () => {
   const worker = source("service-worker.js");
-  const shellMatch = worker.match(/const SHELL_FILES\\s*=\\s*\\[([\\s\\S]*?)\\];/);
+  const shellMatch = worker.match(/const SHELL_FILES\s*=\s*\[([\s\S]*?)\];/);
   assert.ok(shellMatch, "service worker must declare SHELL_FILES");
   const shell = new Set(
     [...shellMatch[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1])
@@ -209,4 +209,4 @@ test("all currently referenced stylesheet versions remain in the service-worker 
   for (const stylesheet of requiredStylesheets) {
     assert.ok(shell.has(stylesheet), "currently referenced stylesheet is missing from cache shell: " + stylesheet);
   }
-});;
+});;;
