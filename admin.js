@@ -992,7 +992,7 @@ Status: ${order.status}`;
         <p><strong>${order.order_type === "delivery" ? "Delivery" : "Pickup"}</strong>${order.delivery_address ? " · " + esc(order.delivery_address) : ""}${order.notes ? "<br>Notes: " + esc(order.notes) : ""}</p>
         <ul class="order-lines">${(order.order_items || []).map(item => `<li><span>${Number(item.quantity)} × ${esc(item.item_name || item.menu_items?.name || "Menu item")}</span><strong>${money(Number(item.unit_price) * Number(item.quantity))}</strong></li>`).join("")}</ul>
         <div class="order-footer"><div><strong>${money(order.total)}</strong><div class="order-meta">Subtotal ${money(order.subtotal)} · Delivery ${money(order.delivery_fee)}</div></div><div class="order-actions"><button class="btn btn-light" data-history-copy="${order.id}">Copy details</button><button class="btn delete-order-btn" data-delete-order="${order.id}" type="button">Delete order</button></div></div>
-      </article>`).join("") : '<p class="muted">No completed orders in history yet.</p>';
+      </article>`).join("") : '<p class="muted">No completed or rejected orders in history yet.</p>';
     list.querySelectorAll("[data-history-copy]").forEach(button => {
       button.onclick = async () => {
         const order = orders.find(item => item.id === button.dataset.historyCopy);
