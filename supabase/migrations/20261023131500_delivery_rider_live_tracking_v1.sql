@@ -20,10 +20,8 @@ ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS assigned_rider_user_id uuid,
   ADD COLUMN IF NOT EXISTS rider_tracking_started_at timestamptz;
 
--- One Auth account must map to at most one employee profile.
-CREATE UNIQUE INDEX IF NOT EXISTS staff_profiles_user_id_uidx
-  ON public.staff_profiles (user_id)
-  WHERE user_id IS NOT NULL;
+-- staff_profiles.user_id already has a UNIQUE constraint in the staff-management schema,
+-- so it already prevents assigning one Auth account to multiple staff profiles.
 
 DO $$
 BEGIN
