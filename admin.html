@@ -38,6 +38,48 @@
   .incoming-order-sound-hint{margin:0 0 14px;padding:10px;border-radius:8px;background:#fff7e5;color:#6a4a00;font-weight:700}
   body.incoming-order-open{overflow:hidden}
   @media(max-width:560px){.incoming-order-grid{grid-template-columns:1fr}.incoming-order-dialog{border-radius:14px}.incoming-order-actions button{min-height:58px}}
+
+  /* AL SHAMI administration hub — mobile-first, large workspace cards */
+  .dashboard-heading-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+  #dashboard.hub-home .dashboard-heading{align-items:center;margin-bottom:clamp(18px,3vw,30px)}
+  #dashboard.hub-home .stats{display:none!important}
+  #dashboard .legacy-main-tabs{display:none!important}
+  .admin-home{padding:clamp(8px,1.5vw,18px) 0 12px}
+  .admin-home-intro{max-width:780px;margin:0 0 clamp(18px,3vw,30px)}
+  .admin-home-intro h2{margin:0 0 8px;font-size:clamp(24px,3.3vw,36px);letter-spacing:-.035em;color:#29191b}
+  .admin-home-intro p:last-child{margin:0;color:#75696a;font-size:clamp(14px,1.5vw,16px);line-height:1.65}
+  .admin-home-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,1.8vw,20px);align-items:stretch}
+  .admin-home-card{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:stretch;text-align:left;gap:0;min-width:0;min-height:clamp(245px,30vw,365px);padding:clamp(18px,2.5vw,30px);border:1px solid rgba(255,255,255,.2);border-radius:22px;color:#fffaf1;box-shadow:0 14px 36px rgba(43,16,19,.13);transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+  .admin-home-card::before{content:"";position:absolute;z-index:-1;width:260px;height:260px;right:-105px;top:-110px;border-radius:50%;border:1px solid rgba(255,255,255,.15);box-shadow:0 0 0 24px rgba(255,255,255,.025),0 0 0 50px rgba(255,255,255,.02)}
+  .admin-home-card::after{content:"";position:absolute;z-index:-1;inset:auto 0 0;height:4px;background:rgba(255,255,255,.36)}
+  .admin-home-card:hover{transform:translateY(-3px);box-shadow:0 20px 44px rgba(43,16,19,.2);filter:saturate(1.04)}
+  .admin-home-card:focus-visible{outline:3px solid #d8a842;outline-offset:4px}
+  .home-card-orders{background:radial-gradient(circle at 85% 15%,rgba(255,255,255,.12),transparent 31%),linear-gradient(145deg,#4a0b13 0%,#731420 55%,#a62030 100%)}
+  .home-card-settings{background:radial-gradient(circle at 90% 12%,rgba(228,190,110,.18),transparent 32%),linear-gradient(145deg,#142c42 0%,#194d64 56%,#237d83 100%)}
+  .home-card-history{background:radial-gradient(circle at 90% 10%,rgba(255,255,255,.25),transparent 31%),linear-gradient(145deg,#f6e4bd 0%,#e6bd68 58%,#cd9b3e 100%);color:#3a2020;border-color:#e2c27c}
+  .home-card-history::before{border-color:rgba(91,50,17,.15);box-shadow:0 0 0 24px rgba(91,50,17,.025),0 0 0 50px rgba(91,50,17,.02)}
+  .home-card-history::after{background:#9e7127}
+  .home-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:auto}
+  .home-card-icon{display:grid;place-items:center;width:64px;height:64px;border-radius:19px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);color:#fff4d8;backdrop-filter:blur(4px)}
+  .home-card-icon svg{width:38px;height:38px}
+  .home-card-history .home-card-icon{background:rgba(255,255,255,.34);border-color:rgba(100,67,19,.18);color:#5e3519}
+  .home-card-status{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-size:10px;font-weight:900;letter-spacing:.13em;padding:8px 10px;border-radius:99px;background:rgba(0,0,0,.15);border:1px solid rgba(255,255,255,.16)}
+  .home-card-history .home-card-status{background:rgba(255,255,255,.35);border-color:rgba(100,67,19,.14)}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:#6ee6ad;box-shadow:0 0 0 4px rgba(110,230,173,.14)}
+  .home-card-title{display:block;margin:clamp(28px,4vw,44px) 0 10px;font-size:clamp(25px,2.5vw,34px);font-weight:900;line-height:1.12;letter-spacing:-.04em}
+  .home-card-description{display:block;max-width:340px;font-size:clamp(13px,1.3vw,15px);line-height:1.7;color:rgba(255,250,241,.8);min-height:76px}
+  .home-card-history .home-card-description{color:rgba(58,32,32,.82)}
+  .home-card-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:24px;padding-top:15px;border-top:1px solid rgba(255,255,255,.2);font-size:12px}
+  .home-card-bottom strong{font-weight:800}
+  .home-card-arrow{display:grid;place-items:center;width:36px;height:36px;flex:0 0 36px;border-radius:50%;font-size:22px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2)}
+  .home-card-history .home-card-bottom{border-top-color:rgba(91,50,17,.2)}
+  .home-card-history .home-card-arrow{background:rgba(255,255,255,.4);border-color:rgba(91,50,17,.17)}
+  .admin-home-foot{display:flex;align-items:center;gap:10px;margin-top:clamp(25px,4vw,42px);color:#837778;font-size:10px;font-weight:800;letter-spacing:.12em}
+  .admin-home-foot-mark{display:grid;place-items:center;width:31px;height:31px;border:1px solid #d2b36d;border-radius:9px;color:#7a1822;font-family:Georgia,serif;font-size:12px;letter-spacing:0}
+  .admin-home-foot-line{height:1px;flex:1;background:linear-gradient(90deg,#dacbaf,transparent)}
+  #dashboard:not(.hub-home) .admin-home{display:none!important}
+  @media(max-width:760px){.admin-home-grid{grid-template-columns:1fr;gap:13px}.admin-home-card{min-height:190px;padding:20px;border-radius:18px}.home-card-top{margin-bottom:0}.home-card-icon{width:52px;height:52px;border-radius:15px}.home-card-icon svg{width:31px;height:31px}.home-card-title{font-size:26px;margin:20px 0 7px}.home-card-description{min-height:0;font-size:13px;max-width:100%}.home-card-bottom{margin-top:17px;padding-top:12px}.admin-home-foot{margin-top:22px;letter-spacing:.07em}.dashboard-heading-actions{max-width:132px}.dashboard-heading-actions .btn{font-size:12px;padding:9px 10px}}
+  @media(max-width:390px){.home-card-status{font-size:9px;padding:7px 8px}.admin-home-foot{font-size:8px}}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -84,16 +126,65 @@
     </form>
   </section>
 
-  <section id="dashboard" class="hidden">
+  <section id="dashboard" class="hidden hub-home">
 
     <div class="dashboard-heading">
       <div>
-        <p class="eyebrow">LIVE RESTAURANT CONTROL</p>
-        <h1>Orders &amp; menu</h1>
-        <p class="muted">Keep this page open to receive order alerts.</p>
+        <p class="eyebrow">AL SHAMI · PRIVATE ADMIN</p>
+        <h1>Management Center</h1>
+        <p class="muted">Choose a workspace to manage your restaurant.</p>
       </div>
-      <button id="refresh" class="btn btn-light" type="button">Refresh</button>
+      <div class="dashboard-heading-actions">
+        <button id="back-to-home" class="btn btn-light hidden" type="button">← Home</button>
+        <button id="refresh" class="btn btn-light" type="button">Refresh</button>
+      </div>
     </div>
+
+    <section id="admin-home" class="admin-home" aria-labelledby="admin-home-title">
+      <div class="admin-home-intro">
+        <p class="eyebrow">YOUR WORKSPACE</p>
+        <h2 id="admin-home-title">What would you like to manage?</h2>
+        <p>Three clear areas. Your existing orders, history and restaurant tools stay connected.</p>
+      </div>
+      <div class="admin-home-grid">
+        <button class="admin-home-card home-card-orders" type="button" data-home-nav="orders">
+          <span class="home-card-top">
+            <span class="home-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none"><path d="M8 15.5 24 7l16 8.5v18L24 42 8 33.5v-18Z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="m8.8 15.8 15.2 8.4 15.2-8.4M24 24.2V41M16 11.2l16 8.7" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="home-card-status"><span class="live-dot"></span> LIVE QUEUE</span>
+          </span>
+          <span class="home-card-title">Active Orders</span>
+          <span class="home-card-description">Review incoming orders, update preparation status and confirm customer pickup.</span>
+          <span class="home-card-bottom"><strong><span id="hub-active-count">0</span> active orders</strong><span class="home-card-arrow" aria-hidden="true">↗</span></span>
+        </button>
+
+        <button class="admin-home-card home-card-settings" type="button" data-home-nav="operations">
+          <span class="home-card-top">
+            <span class="home-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none"><path d="M19.5 6h9l1.4 5.2a14 14 0 0 1 3.2 1.8l5.1-1.5 4.5 7.8-3.8 3.7c.2 1.2.2 2.5 0 3.8l3.8 3.7-4.5 7.8-5.1-1.5a14 14 0 0 1-3.2 1.8L28.5 42h-9l-1.4-5.2a14 14 0 0 1-3.2-1.8l-5.1 1.5-4.5-7.8 3.8-3.7a17 17 0 0 1 0-3.8l-3.8-3.7 4.5-7.8 5.1 1.5a14 14 0 0 1 3.2-1.8L19.5 6Z" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/><circle cx="24" cy="24" r="6" stroke="currentColor" stroke-width="2.5"/></svg>
+            </span>
+            <span class="home-card-status">OPERATIONS</span>
+          </span>
+          <span class="home-card-title">Settings &amp; Operations</span>
+          <span class="home-card-description">Manage inventory, suppliers, employees, attendance, shifts, expenses, recipes and reports.</span>
+          <span class="home-card-bottom"><strong>10 management tools</strong><span class="home-card-arrow" aria-hidden="true">↗</span></span>
+        </button>
+
+        <button class="admin-home-card home-card-history" type="button" data-home-nav="history">
+          <span class="home-card-top">
+            <span class="home-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none"><path d="M8.5 16A17 17 0 1 1 7 27" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M8 7v10h10M24 14v11l8 4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="home-card-status">ORDER ARCHIVE</span>
+          </span>
+          <span class="home-card-title">History</span>
+          <span class="home-card-description">Find previous and completed orders, review customer details and check past activity.</span>
+          <span class="home-card-bottom"><strong><span id="hub-history-count">0</span> completed orders</strong><span class="home-card-arrow" aria-hidden="true">↗</span></span>
+        </button>
+      </div>
+      <div class="admin-home-foot"><span class="admin-home-foot-mark">SH</span><span>AL SHAMI RESTAURANT &amp; FAST FOOD</span><span class="admin-home-foot-line"></span><span>ADMINISTRATION</span></div>
+    </section>
 
     <div class="stats">
       <div class="stat"><span>New orders</span><strong id="stat-new">0</strong></div>
@@ -109,7 +200,7 @@
       <button class="tab" data-tab="settings" type="button">Settings</button>
     </div>
 
-    <section id="tab-orders" class="panel">
+    <section id="tab-orders" class="panel hidden">
       <div class="section-heading">
         <div>
           <h2>Incoming orders</h2>
