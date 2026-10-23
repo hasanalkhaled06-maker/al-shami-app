@@ -4,9 +4,9 @@ AL SHAMI is a mobile-friendly restaurant ordering website with a private staff d
 
 ## Live apps
 
-- Customer app: https://hasanalkhaled06-maker.github.io/al-shami-app/
-- Admin app: https://hasanalkhaled06-maker.github.io/al-shami-app/admin.html
-- Delivery rider app: https://hasanalkhaled06-maker.github.io/al-shami-app/rider.html
+- Customer app: https://alshamiapp.xyz/
+- Admin app: https://alshamiapp.xyz/admin.html
+- Delivery rider app: https://alshamiapp.xyz/rider.html
 
 The customer, admin, and rider entry points share the existing Supabase project but use distinct app pages and install settings. The admin page remains protected by Supabase authentication and the `admin_users` allow-list. The rider page is read-only for order work: it shows assigned deliveries and shares GPS location, but cannot accept/reject orders or change order status.
 
@@ -48,7 +48,7 @@ This installs web apps on the iPhone Home Screen; these are not native apps publ
 
 The connected production Supabase project already contains the base ordering schema and operations tables. Before applying future SQL changes, back up the database and review the exact migration. Do not run arbitrary SQL, drop production tables, or overwrite the service-role key in browser files.
 
-For a new environment, apply `supabase-schema.sql` first, configure the public Supabase URL/key in root `config.js`, create an Auth user, and add that user’s UUID to `public.admin_users`. Then review and apply `supabase-migration-v2.sql`, followed by `supabase-migration-v3.sql`. The v3 file is additive and is provided for reproducible setup; its features are already installed in this production project.
+For a new environment, apply `supabase-schema.sql` first, configure the public Supabase URL/key in root `config.js`, create an Auth user, and add that user’s UUID to `public.admin_users`. The root `supabase-migration-v2.sql` and `supabase-migration-v3.sql` files are legacy consolidated scripts, not a complete one-to-one export of the current production migration ledger. Before reproducing production, reconcile repository files with the live migration history and schema in a separate test project; never re-apply a change only because its filename timestamp differs.
 
 ## Operations features and known limits
 

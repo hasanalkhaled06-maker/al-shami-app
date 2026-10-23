@@ -38,8 +38,8 @@ Shared PWA files:
 
 For each app separately, open its URL in Safari, tap Share, choose **Add to Home Screen**, enable **Open as Web App** if shown, then tap Add.
 
-- Customer: `https://hasanalkhaled06-maker.github.io/al-shami-app/`
-- Admin: `https://hasanalkhaled06-maker.github.io/al-shami-app/admin.html`
+- Customer: `https://alshamiapp.xyz/`
+- Admin: `https://alshamiapp.xyz/admin.html`
 
 The admin still requires an authorised login. Home-screen installation does not publish the apps to the App Store. After a new website version is published, the installed web apps check for updates when opened or returned to the foreground; a native App Store release is not part of this PWA workflow.
 

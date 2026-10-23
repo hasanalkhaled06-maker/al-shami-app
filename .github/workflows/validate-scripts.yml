@@ -25,4 +25,4 @@ jobs:
           node --check pwa.js
           node --check rider.js
           node --check service-worker.js
-          node --test tests/rider-approval-gate.test.cjs
+          node --test tests/*.test.cjs
