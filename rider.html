@@ -14,7 +14,7 @@
   <link rel="manifest" href="./rider.webmanifest">
   <link rel="icon" href="./icons/al-shami-rider.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="./rider.css">
+  <link rel="stylesheet" href="./rider.css?v=approval-gate-20261023c">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -54,6 +54,15 @@
         <p id="login-message" class="form-message" role="status"></p>
       </form>
       <p class="security-note"><span aria-hidden="true">🔒</span> Orders are assigned by restaurant management. You cannot accept, reject, or change order status in this app.</p>
+    </section>
+
+    <section id="approval-panel" class="login-panel approval-panel" hidden aria-live="polite">
+      <div class="eyebrow">RIDER ACCOUNT REVIEW</div>
+      <h1 id="approval-title">Checking your access…</h1>
+      <p id="approval-message" class="muted">Please wait while we verify your rider access with AL SHAMI management.</p>
+      <div id="approval-status-chip" class="approval-status-chip"><span class="approval-status-dot"></span><span id="approval-status-label">Checking approval</span></div>
+      <button id="approval-refresh-button" class="primary-button approval-refresh-button" type="button">Check approval again ↻</button>
+      <p class="security-note"><span aria-hidden="true">🔒</span> Orders and GPS features stay locked until management links your login to an active Delivery Rider employee profile.</p>
     </section>
 
     <section id="rider-dashboard" hidden>
@@ -99,7 +108,7 @@
   </main>
 
   <script src="./config.js"></script>
-  <script src="./rider.js"></script>
+  <script src="./rider.js?v=approval-gate-20261023c"></script>
   <script src="./pwa.js"></script>
 </body>
 </html>
