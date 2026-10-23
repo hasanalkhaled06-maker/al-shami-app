@@ -191,3 +191,12 @@ test("every versioned local JavaScript asset is included in the service-worker s
     }
   }
 });
+
+
+test("service-worker shell excludes confirmed stale stylesheet versions", () => {
+  const worker = source("service-worker.js");
+  assert.doesNotMatch(worker, /dark-theme\.css\?v=shami-wordmark-cleanup-20261023q/);
+  assert.doesNotMatch(worker, /style\.css\?v=modern-ui-20261023a/);
+  assert.match(worker, /dark-theme\.css\?v=deep-accents-20261023i/);
+  assert.match(worker, /style\.css\?v=radical-ui-20261023a/);
+});
