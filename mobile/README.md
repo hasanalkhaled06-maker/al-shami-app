@@ -5,6 +5,7 @@ This is an isolated, customer-only native build scaffold. It does not replace th
 ## Current approach
 
 - Capacitor 8.5.2, with exact top-level dependency versions.
+- Native launcher icons and splash screens are generated from `mobile/assets/icon.svg` (the restaurant's burgundy-and-gold brand mark), not Capacitor's default blue placeholder. The same source asset is used for Android and iOS.
 - A build script copies a controlled allow-list of customer-facing web files into the generated `mobile/web/` directory.
 - The generated native copy removes website manifest/service-worker bootstrap tags and removes the footer link to the staff portal. Root website source remains unchanged.
 - Customer ordering and history continue using the existing HTTPS Supabase services. Internet is required for live menu, authentication, order submission, and tracking.
@@ -23,9 +24,11 @@ From this directory:
 npm install --no-audit --no-fund
 npm run prepare:web
 npx cap add android
+npx @capawesome/capacitor-assets generate --android --iconBackgroundColor '#67101a' --iconBackgroundColorDark '#67101a' --splashBackgroundColor '#67101a' --splashBackgroundColorDark '#67101a'
 npx cap sync android
 # On macOS, for the iOS platform:
 npx cap add ios
+npx @capawesome/capacitor-assets generate --ios --iconBackgroundColor '#67101a' --iconBackgroundColorDark '#67101a' --splashBackgroundColor '#67101a' --splashBackgroundColorDark '#67101a'
 npx cap sync ios
 ```
 
