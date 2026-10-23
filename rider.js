@@ -28,6 +28,11 @@
   const loginForm = $("#login-form");
   const loginButton = $("#login-button");
   const loginMessage = $("#login-message");
+  const approvalPanel = $("#approval-panel");
+  const approvalTitle = $("#approval-title");
+  const approvalMessage = $("#approval-message");
+  const approvalStatusLabel = $("#approval-status-label");
+  const approvalRefreshButton = $("#approval-refresh-button");
   const ordersNode = $("#delivery-list");
   const statusLabels = {
     accepted: "Accepted by restaurant",
@@ -47,6 +52,9 @@
   let lastSentPoint = null;
   let lastKnownPoint = null;
   let pollTimer = null;
+  let accessCheckPromise = null;
+  let accessCheckUserId = null;
+  let accessCheckGeneration = 0;
 
   function escapeHtml(value) {
     return String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -116,10 +124,47 @@
       ? "Create your account request. Restaurant management must approve and link it before you can see deliveries."
       : "");
   }
-  function setSignedInView(signedIn) {
-    if (loginPanel) loginPanel.hidden = signedIn;
-    if (dashboard) dashboard.hidden = !signedIn;
+  function setSignedInView(state) {
+    const view = typeof state === "boolean" ? (state ? "dashboard" : "login") : state;
+    const signedIn = view !== "login";
+    if (loginPanel) loginPanel.hidden = view !== "login";
+    if (approvalPanel) approvalPanel.hidden = !["checking", "pending", "error"].includes(view);
+    if (dashboard) dashboard.hidden = view !== "dashboard";
     if ($("#signout-button")) $("#signout-button").hidden = !signedIn;
+  }
+
+  function setApprovalScreen(state, customMessage = "") {
+    const details = {
+      checking: {
+        title: "Checking your rider access…",
+        message: "Please wait while we verify your account with AL SHAMI management.",
+        label: "Checking approval"
+      },
+      pending: {
+        title: "Your account is awaiting approval",
+        message: "Your account is registered, but delivery access is still locked. AL SHAMI management must link this login to an active Delivery Rider employee profile. Once they approve it, tap Check approval again.",
+        label: "Pending management approval"
+      },
+      error: {
+        title: "We couldn't verify your access",
+        message: "Your delivery details remain hidden until your rider access can be verified. Check your internet connection, then try again.",
+        label: "Verification unavailable"
+      }
+    };
+    const detail = details[state] || details.error;
+    if (approvalTitle) approvalTitle.textContent = detail.title;
+    if (approvalMessage) approvalMessage.textContent = customMessage || detail.message;
+    if (approvalStatusLabel) approvalStatusLabel.textContent = detail.label;
+    if (approvalPanel) {
+      approvalPanel.classList.toggle("is-error", state === "error");
+      approvalPanel.classList.toggle("is-approved", state === "approved");
+    }
+    if (approvalRefreshButton) {
+      approvalRefreshButton.disabled = state === "checking";
+      approvalRefreshButton.textContent = state === "checking" ? "Checking approval…" :
+        (state === "error" ? "Retry access check ↻" : "Check approval again ↻");
+    }
+    setSignedInView(state);
   }
   function getOrderStatusLabel(status) {
     return statusLabels[String(status || "").toLowerCase()] || String(status || "Status unavailable").replace(/_/g, " ");
@@ -204,10 +249,12 @@
   }
 
   async function refreshOrders(options = {}) {
-    if (!db || !currentSession?.user || !navigator.onLine || refreshInProgress) {
-      if (!navigator.onLine) setConnectionState(false, "Offline");
-      return;
+    if (!db || !currentSession?.user) return "error";
+    if (!navigator.onLine) {
+      setConnectionState(false, "Offline");
+      return "offline";
     }
+    if (refreshInProgress) return "busy";
     refreshInProgress = true;
     try {
       const { data, error } = await db.rpc("get_my_delivery_orders");
@@ -229,16 +276,31 @@
       if (sharingLocation && !orders.length) stopLocationSharing("No active deliveries are assigned. Location sharing has stopped.");
       if (sharingLocation && orders.length) setLocationStatus("Sharing GPS location securely for your active deliveries.", false);
       if (options.quiet !== true && !nextOrders.length) showMessage("", "info");
+      return "approved";
     } catch (error) {
       console.error("Could not load rider deliveries:", error);
+      const errorText = String(error?.message || "");
+      const approvalRequired = /this account is not an active al shami delivery rider/i.test(errorText);
+      if (approvalRequired) {
+        orders = [];
+        initialOrderLoadDone = false;
+        if (sharingLocation) stopLocationSharing("Rider approval is no longer active. GPS sharing has stopped.", true);
+        if (pollTimer !== null) window.clearInterval(pollTimer);
+        pollTimer = null;
+        setConnectionState(navigator.onLine, navigator.onLine ? "Connected" : "Offline");
+        // If access is revoked during a session, hide the dashboard immediately.
+        if (dashboard && !dashboard.hidden) setApprovalScreen("pending");
+        return "pending";
+      }
       setConnectionState(navigator.onLine, navigator.onLine ? "Sync issue" : "Offline");
       if (!orders.length) {
-        const detail = /active AL SHAMI delivery rider|delivery rider/i.test(String(error?.message || ""))
-          ? "Ask restaurant management to link your login to an active Delivery Rider staff profile."
+        const detail = !navigator.onLine
+          ? "Reconnect to the internet, then try again."
           : "Check your connection, then refresh. If the problem continues, contact the restaurant administrator.";
         renderEmptyState("Could not load assigned deliveries", detail);
       }
-      showMessage(error?.message || "Could not refresh assigned deliveries.", "error");
+      showMessage(errorText || "Could not refresh assigned deliveries.", "error");
+      return navigator.onLine ? "error" : "offline";
     } finally {
       refreshInProgress = false;
     }
@@ -369,24 +431,63 @@
     setLocationStatus(message, isError);
   }
 
+  function verifyRiderAccess() {
+    const userId = currentSession?.user?.id;
+    if (!userId) return Promise.resolve("signed_out");
+    if (accessCheckPromise && accessCheckUserId === userId) return accessCheckPromise;
+
+    const generation = ++accessCheckGeneration;
+    accessCheckUserId = userId;
+    let trackedPromise;
+    trackedPromise = (async () => {
+      setApprovalScreen("checking");
+      const result = await refreshOrders({ quiet: true });
+      // Ignore late replies for an account that has already signed out or changed.
+      if (generation !== accessCheckGeneration || currentSession?.user?.id !== userId) return "stale";
+
+      if (result === "approved") {
+        setSignedInView("dashboard");
+        if (pollTimer === null) {
+          pollTimer = window.setInterval(() => {
+            if (document.visibilityState === "visible" && currentSession?.user) void refreshOrders({ quiet: true });
+          }, 8000);
+        }
+        return "approved";
+      }
+      if (result === "pending") {
+        setApprovalScreen("pending");
+        return "pending";
+      }
+      setApprovalScreen("error", result === "offline"
+        ? "Your phone is offline. Reconnect to the internet and tap Retry access check. Your orders will remain hidden until we verify approval."
+        : "We couldn't verify your account with the restaurant system. Your orders remain hidden. Check your connection and tap Retry access check.");
+      return result;
+    })().finally(() => {
+      if (accessCheckPromise === trackedPromise) {
+        accessCheckPromise = null;
+        accessCheckUserId = null;
+      }
+    });
+    accessCheckPromise = trackedPromise;
+    return trackedPromise;
+  }
+
   async function handleSession(session) {
     currentSession = session || null;
-    const signedIn = Boolean(currentSession?.user);
-    setSignedInView(signedIn);
-    if (!signedIn) {
+    if (!currentSession?.user) {
+      accessCheckGeneration++;
+      accessCheckPromise = null;
+      accessCheckUserId = null;
+      setSignedInView("login");
       stopLocationSharing();
       orders = [];
       initialOrderLoadDone = false;
-      return;
+      if (ordersNode) ordersNode.replaceChildren();
+      return "signed_out";
     }
     const email = currentSession.user.email || "";
     $("#rider-name-suffix").textContent = email ? ", " + email.split("@")[0] : "";
-    await refreshOrders({ quiet: true });
-    if (pollTimer === null) {
-      pollTimer = window.setInterval(() => {
-        if (document.visibilityState === "visible") void refreshOrders({ quiet: true });
-      }, 8000);
-    }
+    return verifyRiderAccess();
   }
 
   if (!db) {
@@ -445,11 +546,6 @@
         if (error) throw error;
         setLoginMessage("Signed in. Checking rider approval…");
         await handleSession(data.session);
-        if (orders.length === 0) {
-          setLoginMessage("You are signed in, but no active deliveries are assigned yet. If management has not approved and linked your rider profile, ask them to do that first.");
-        } else {
-          setLoginMessage("");
-        }
       } catch (error) {
         setLoginMessage(error?.message || (authMode === "signup"
           ? "Could not submit account request. Check the details and try again."
@@ -472,6 +568,7 @@
       else startLocationSharing();
     });
     $("#refresh-button")?.addEventListener("click", () => { void refreshOrders(); });
+    approvalRefreshButton?.addEventListener("click", () => { void verifyRiderAccess(); });
     db.auth.onAuthStateChange((event, session) => {
       currentSession = session || null;
       window.setTimeout(() => { void handleSession(currentSession); }, 0);
@@ -487,11 +584,17 @@
 
   window.addEventListener("online", () => {
     setConnectionState(true, "Connected");
-    if (currentSession?.user) void refreshOrders({ quiet: true });
+    if (currentSession?.user) {
+      if (dashboard && !dashboard.hidden) void refreshOrders({ quiet: true });
+      else void verifyRiderAccess();
+    }
   });
   window.addEventListener("offline", () => setConnectionState(false, "Offline"));
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && currentSession?.user) void refreshOrders({ quiet: true });
+    if (document.visibilityState === "visible" && currentSession?.user) {
+      if (dashboard && !dashboard.hidden) void refreshOrders({ quiet: true });
+      else void verifyRiderAccess();
+    }
   });
   setConnectionState(navigator.onLine, navigator.onLine ? "Ready" : "Offline");
 })();
