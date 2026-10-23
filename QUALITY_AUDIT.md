@@ -24,11 +24,13 @@ Good foundations already exist: server-calculated prices, menu availability chec
 | **P1** | Public `get_public_menu_popularity()` exposes exact order counts by menu item. | Decide whether public popularity sorting is worth revealing exact aggregate sales. Prefer a coarse rank/band or safe ordering. |
 | **P1** | History exposes hard deletion through `delete_order_for_admin`. | Prefer archive/void with a reason and immutable audit history. Do not delete historical orders or change DB grants until an additive migration and recovery plan are reviewed. |
 | **P1** | Customer checkout requires sign-in. | Test account-required vs guest checkout with real customers; treat it as a business decision. Keep phone checks and server-side totals either way. |
+| **P1** | Order status values are validated, but transitions are not enforced server-side. | The admin status selector can jump from a new order straight to out-for-delivery or move statuses backward; rider assignment/tracking can activate prematurely. Add a database trigger or admin-authorized status RPC for valid transitions; keep completion behind the receipt-code path. Test existing statuses and concurrency before applying a migration. |
 | **P1** | No full browser end-to-end order-flow test exists. | Test submit → admin acceptance → preparation → delivery/pickup handoff code → history using test accounts, never live customer orders. |
 | **P1** | Rider GPS is foreground-only on iOS. | Show location freshness; test real iPhone behavior. Native/background location is a separate phase. |
 | **P2** | CSS files are large and the cascade relies heavily on `!important`. | Consolidate components gradually with screenshot checks at 320 px, 390 px, tablet and desktop widths. |
 | **P2** | CDN assets can change; Supabase JS loads from major tag `@2`. | Pin an exact tested version and add SRI where appropriate; review third-party map/geocoding policies. |
 | **P2** | Service-worker caching is network-first and orders require internet. | Keep offline errors explicit and show success only after the server confirms the order. Never cache Supabase API responses. |
+| **P2** | Direct table privileges appear broadly granted to anon/authenticated, while RLS currently restricts rows. | Broad grants are not proof of current exposure, but increase the impact of an accidentally loosened policy. Inventory direct grants and reduce privileges on private operations tables only after verifying required customer/admin workflows. |
 | **P2** | Menu and offers have multiple permissive read policies. | Consolidate only after confirming intended anon/customer/admin access. |
 | **P2** | 21 database indexes were reported unused. | Do not delete based on this signal alone; observe a representative workload and inspect query plans first. |
 | **P2** | Phone recovery UI mentions SMS although the setup guide says no SMS provider is configured. | Configure/test a provider or make the working email reset route primary. |
@@ -47,7 +49,7 @@ Good foundations already exist: server-calculated prices, menu availability chec
 1. Sign-up, sign-in, sign-out, password recovery and isolated sessions for each app.
 2. Delivery and pickup checkout; invalid phone/address/map; unavailable product; minimum order; server-calculated price/fee; network timeout.
 3. Rapid double taps produce at most one order; failed submission retains the form/cart; success appears only after confirmed save.
-4. Admin accept/reject/preparing/ready/out-for-delivery flow; receipt code; completed history.
+4. Admin accept/reject/preparing/ready/out-for-delivery flow; receipt code; completed history. Confirm invalid/skipped state transitions are rejected by the database, not merely hidden in the UI.
 5. Customer status stays visible through the correct transition and moves to history only after the intended handoff.
 6. Approved rider only sees assigned delivery; cannot update status; GPS is valid/fresh; another customer cannot view that order's location.
 7. Unauthorized RPC, table and Storage requests fail for anon, customer, unapproved rider, unrelated rider and non-admin.
