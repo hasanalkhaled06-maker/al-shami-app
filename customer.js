@@ -36,6 +36,238 @@
   const floatingCartTotal = $("#floating-cart-total");
 
 
+  let googleMapsLoadPromise = null;
+  let deliveryMapInstance = null;
+  let deliveryMapMarker = null;
+  let deliveryPlaceAutocomplete = null;
+  let pendingDeliveryLocation = null;
+
+  function currentDeliveryCoordinates() {
+    const latitudeValue = $("#delivery-latitude")?.value;
+    const longitudeValue = $("#delivery-longitude")?.value;
+    if (latitudeValue === "" || latitudeValue == null || longitudeValue === "" || longitudeValue == null) return null;
+    const lat = Number(latitudeValue);
+    const lng = Number(longitudeValue);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    return { lat, lng };
+  }
+
+  function setMapMessage(message, isError = false) {
+    const node = $("#delivery-map-message");
+    if (!node) return;
+    node.textContent = message || "";
+    node.classList.toggle("error", Boolean(isError));
+    node.hidden = !message;
+  }
+
+  function locationLabel(lat, lng, address = "") {
+    const coordinates = Number(lat).toFixed(6) + ", " + Number(lng).toFixed(6);
+    const node = $("#delivery-map-selection");
+    if (node) node.textContent = address ? address + " · " + coordinates : coordinates;
+  }
+
+  function setPendingDeliveryLocation(lat, lng, address = "") {
+    lat = Number(lat);
+    lng = Number(lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
+    const previousAddress = pendingDeliveryLocation?.address || "";
+    pendingDeliveryLocation = { lat, lng, address: address || previousAddress };
+    if (deliveryMapMarker) deliveryMapMarker.setPosition({ lat, lng });
+    if (deliveryMapInstance) deliveryMapInstance.panTo({ lat, lng });
+    locationLabel(lat, lng, pendingDeliveryLocation.address);
+    const confirm = $("#delivery-map-confirm");
+    if (confirm) confirm.disabled = false;
+    setMapMessage("");
+  }
+
+  function loadGoogleMapsApi() {
+    if (window.google?.maps?.importLibrary) return Promise.resolve();
+    if (googleMapsLoadPromise) return googleMapsLoadPromise;
+    const apiKey = String(cfg.GOOGLE_MAPS_API_KEY || "").trim();
+    if (!apiKey) return Promise.reject(new Error(tr("mapsNotConfigured")));
+
+    googleMapsLoadPromise = new Promise((resolve, reject) => {
+      const callbackName = "__alShamiGoogleMapsReady";
+      let timeoutId;
+      const cleanup = () => {
+        if (timeoutId) window.clearTimeout(timeoutId);
+        try { delete window[callbackName]; } catch (_) { window[callbackName] = undefined; }
+      };
+      window[callbackName] = () => {
+        cleanup();
+        resolve();
+      };
+      const script = document.createElement("script");
+      script.src = "https://maps.googleapis.com/maps/api/js?key=" +
+        encodeURIComponent(apiKey) + "&v=weekly&loading=async&libraries=places&callback=" + callbackName;
+      script.async = true;
+      script.defer = true;
+      script.onerror = () => {
+        cleanup();
+        googleMapsLoadPromise = null;
+        reject(new Error(tr("mapsLoadError")));
+      };
+      timeoutId = window.setTimeout(() => {
+        cleanup();
+        googleMapsLoadPromise = null;
+        reject(new Error(tr("mapsLoadError")));
+      }, 18000);
+      document.head.appendChild(script);
+    }).then(async () => {
+      await Promise.all([
+        window.google.maps.importLibrary("maps"),
+        window.google.maps.importLibrary("places")
+      ]);
+    }).catch(error => {
+      googleMapsLoadPromise = null;
+      throw error;
+    });
+    return googleMapsLoadPromise;
+  }
+
+  async function initializeDeliveryMap() {
+    const canvas = $("#delivery-map-canvas");
+    if (!canvas || !window.google?.maps) throw new Error(tr("mapsLoadError"));
+    const saved = currentDeliveryCoordinates();
+    const center = saved || { lat: 5.6037, lng: -0.1870 }; // Accra, Ghana
+    if (!deliveryMapInstance) {
+      deliveryMapInstance = new google.maps.Map(canvas, {
+        center,
+        zoom: saved ? 16 : 12,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        clickableIcons: false
+      });
+      deliveryMapMarker = new google.maps.Marker({
+        map: deliveryMapInstance,
+        position: saved || null,
+        draggable: true,
+        title: tr("chooseLocation")
+      });
+      deliveryMapInstance.addListener("click", event => {
+        if (!event?.latLng) return;
+        setPendingDeliveryLocation(event.latLng.lat(), event.latLng.lng());
+      });
+      deliveryMapMarker.addListener("dragend", event => {
+        if (!event?.latLng) return;
+        setPendingDeliveryLocation(event.latLng.lat(), event.latLng.lng());
+      });
+    } else {
+      deliveryMapInstance.setCenter(center);
+      deliveryMapInstance.setZoom(saved ? 16 : 12);
+      deliveryMapMarker.setPosition(saved || null);
+      google.maps.event.trigger(deliveryMapInstance, "resize");
+    }
+
+    if (!deliveryPlaceAutocomplete) {
+      const { PlaceAutocompleteElement } = await google.maps.importLibrary("places");
+      deliveryPlaceAutocomplete = new PlaceAutocompleteElement();
+      deliveryPlaceAutocomplete.setAttribute("placeholder", tr("mapSearchPlaceholder"));
+      deliveryPlaceAutocomplete.includedRegionCodes = ["gh"];
+      const slot = $("#delivery-map-search-container");
+      slot.replaceChildren(deliveryPlaceAutocomplete);
+      deliveryPlaceAutocomplete.addEventListener("gmp-select", async event => {
+        try {
+          const prediction = event.placePrediction;
+          if (!prediction) return;
+          const place = prediction.toPlace();
+          await place.fetchFields({ fields: ["displayName", "formattedAddress", "location", "viewport"] });
+          if (!place.location) return;
+          const lat = typeof place.location.lat === "function" ? place.location.lat() : place.location.lat;
+          const lng = typeof place.location.lng === "function" ? place.location.lng() : place.location.lng;
+          setPendingDeliveryLocation(lat, lng, place.formattedAddress || place.displayName || "");
+          if (place.viewport) deliveryMapInstance.fitBounds(place.viewport);
+          else {
+            deliveryMapInstance.setCenter({ lat, lng });
+            deliveryMapInstance.setZoom(17);
+          }
+          const addressInput = checkoutForm?.elements?.delivery_address;
+          if (addressInput && place.formattedAddress) {
+            addressInput.value = String(place.formattedAddress).slice(0, 250);
+          }
+        } catch (error) {
+          setMapMessage(tr("mapsLoadError"), true);
+          console.warn("Delivery place search failed:", error);
+        }
+      });
+    }
+
+    if (saved) {
+      pendingDeliveryLocation = { ...saved, address: pendingDeliveryLocation?.address || "" };
+      setPendingDeliveryLocation(saved.lat, saved.lng, pendingDeliveryLocation.address);
+    } else if (!pendingDeliveryLocation) {
+      const confirm = $("#delivery-map-confirm");
+      if (confirm) confirm.disabled = true;
+      const selection = $("#delivery-map-selection");
+      if (selection) selection.textContent = "";
+    }
+  }
+
+  async function openDeliveryMapPicker() {
+    const modal = $("#delivery-map-modal");
+    if (!modal) return;
+    const saved = currentDeliveryCoordinates();
+    pendingDeliveryLocation = saved ? { ...saved, address: checkoutForm?.elements?.delivery_address?.value || "" } : null;
+    modal.hidden = false;
+    document.body.classList.add("delivery-map-open");
+    setMapMessage("");
+    const confirm = $("#delivery-map-confirm");
+    if (confirm) confirm.disabled = !pendingDeliveryLocation;
+    try {
+      await loadGoogleMapsApi();
+      await initializeDeliveryMap();
+      window.setTimeout(() => {
+        if (deliveryMapInstance && window.google?.maps) google.maps.event.trigger(deliveryMapInstance, "resize");
+      }, 80);
+    } catch (error) {
+      setMapMessage(error?.message || tr("mapsLoadError"), true);
+      const canvas = $("#delivery-map-canvas");
+      if (canvas) canvas.innerHTML = "";
+      console.warn("Google Maps delivery picker is not ready:", error);
+    }
+  }
+
+  function closeDeliveryMapPicker() {
+    const modal = $("#delivery-map-modal");
+    if (modal) modal.hidden = true;
+    document.body.classList.remove("delivery-map-open");
+  }
+
+  function clearDeliveryLocationSelection() {
+    if ($("#delivery-latitude")) $("#delivery-latitude").value = "";
+    if ($("#delivery-longitude")) $("#delivery-longitude").value = "";
+    pendingDeliveryLocation = null;
+    const status = $("#delivery-location-status");
+    if (status) {
+      status.textContent = tr("locationNotSelected");
+      status.classList.remove("has-location");
+    }
+    const clearButton = $("#clear-delivery-location");
+    if (clearButton) clearButton.hidden = true;
+    const confirm = $("#delivery-map-confirm");
+    if (confirm) confirm.disabled = true;
+  }
+
+  function confirmDeliveryLocation() {
+    if (!pendingDeliveryLocation) return;
+    const lat = Number(pendingDeliveryLocation.lat);
+    const lng = Number(pendingDeliveryLocation.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    if ($("#delivery-latitude")) $("#delivery-latitude").value = String(lat);
+    if ($("#delivery-longitude")) $("#delivery-longitude").value = String(lng);
+    const status = $("#delivery-location-status");
+    if (status) {
+      status.textContent = tr("locationSelected") + ": " + lat.toFixed(6) + ", " + lng.toFixed(6);
+      status.classList.add("has-location");
+    }
+    const clearButton = $("#clear-delivery-location");
+    if (clearButton) clearButton.hidden = false;
+    closeDeliveryMapPicker();
+  }
+
+
+
   let authSession = null;
   let authMethod = "email";
   let authRecoveryMode = null;
