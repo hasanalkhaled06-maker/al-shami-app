@@ -41,6 +41,7 @@
   let initialOrderLoadDone = false;
   let refreshInProgress = false;
   let locationWatchId = null;
+  let locationHeartbeatTimer = null;
   let sharingLocation = false;
   let lastLocationSentAt = 0;
   let lastSentPoint = null;
@@ -298,6 +299,22 @@
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
     );
+
+    // A fresh location request also runs while the rider is stationary. The
+    // database timestamp therefore reflects recent GPS readings, not just movement.
+    if (locationHeartbeatTimer !== null) window.clearInterval(locationHeartbeatTimer);
+    locationHeartbeatTimer = window.setInterval(() => {
+      if (!sharingLocation || !orders.length || document.visibilityState !== "visible") return;
+      navigator.geolocation.getCurrentPosition(
+        position => { void sendLocation(position, true); },
+        error => {
+          if (error?.code === 1) stopLocationSharing("Location permission was denied. Allow location access to continue sharing.", true);
+          else setLocationStatus("Waiting for a fresh GPS reading. Keep the app open and check your signal.", true);
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 12000 }
+      );
+    }, 20000);
+
     const button = $("#location-toggle");
     if (button) {
       button.textContent = "Stop location sharing";
@@ -307,13 +324,15 @@
     if ($("#location-summary-note")) $("#location-summary-note").textContent = "Waiting for GPS fix";
   }
 
-  function stopLocationSharing(message = "Location sharing is off.") {
+  function stopLocationSharing(message = "Location sharing is off.", isError = false) {
     sharingLocation = false;
     if (locationWatchId !== null && navigator.geolocation) navigator.geolocation.clearWatch(locationWatchId);
     locationWatchId = null;
+    if (locationHeartbeatTimer !== null) window.clearInterval(locationHeartbeatTimer);
+    locationHeartbeatTimer = null;
     lastSentPoint = null;
     lastLocationSentAt = 0;
-    setLocationStatus(message, false);
+    setLocationStatus(message, isError);
   }
 
   async function handleSession(session) {
