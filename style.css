@@ -354,3 +354,19 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .order-rider-note-label{font-weight:850}
 .order-rider-note.is-unassigned{border-color:#eeddb0;background:#fff8e7;color:#7b5b1e}
 @media(max-width:600px){.customer-rider-tracking{padding:10px}.customer-rider-map{height:225px}}
+
+
+/* Live customer rider vehicle, route ETA and Google Maps hand-off. */
+.customer-rider-bike-marker{background:transparent!important;border:0!important}
+.customer-rider-bike-glyph{display:grid;place-items:center;width:46px;height:46px;box-sizing:border-box;border:3px solid #fff;border-radius:50%;background:#8d1723;color:#fff;font-size:25px;line-height:1;box-shadow:0 4px 12px rgba(40,10,15,.34);will-change:transform}
+.customer-rider-eta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0 0;padding:12px;border:1px solid #eadcc3;border-radius:13px;background:#fffaf0}
+.customer-rider-eta-main{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 220px}
+.customer-rider-eta-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border:1px solid #ead8b2;border-radius:12px;background:#fff0ce;font-size:23px}
+.customer-rider-eta-copy{display:grid;gap:3px;min-width:0}
+.customer-rider-eta-copy strong{display:block;color:#751926;font-size:15px;font-weight:900;line-height:1.4}
+.customer-rider-eta-copy span{color:#3d7549;font-size:12px;font-weight:800;line-height:1.4}
+.customer-rider-eta-copy small{color:#786f6e;font-size:10px;line-height:1.45}
+.customer-rider-google-maps{display:inline-flex;align-items:center;justify-content:center;min-height:39px;padding:8px 11px;border:1px solid #d8c7a7;border-radius:10px;background:#fff;color:#681b25;text-decoration:none;font-size:12px;font-weight:850}
+.customer-rider-google-maps:hover{background:#f7edda}
+.customer-rider-google-maps[hidden]{display:none!important}
+@media(max-width:600px){.customer-rider-eta{align-items:stretch;padding:10px}.customer-rider-eta-main{flex-basis:100%}.customer-rider-google-maps{width:100%;box-sizing:border-box}}
