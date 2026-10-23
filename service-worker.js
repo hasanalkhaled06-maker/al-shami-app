@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v69";
+const CACHE_NAME = CACHE_PREFIX + "v70";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -12,7 +12,7 @@ const SHELL_FILES = [
   "./app-refresh.css",
   "./light-theme.css",
   "./app-refresh.css?v=light-premium-20261023a",
-  "./light-theme.css?v=light-premium-20261023c",
+  "./light-theme.css?v=light-premium-20261023d",
   "./style.css?v=radical-ui-20261023a",
   "./config.js",
   "./customer.js",
