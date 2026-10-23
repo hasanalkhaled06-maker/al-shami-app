@@ -6,11 +6,17 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
-  "background_color": "#fffaf5",
-  "theme_color": "#8d1723",
-  "categories": ["food", "shopping"],
+  "background_color": "#f6f0e6",
+  "theme_color": "#761b2a",
+  "categories": [
+    "food",
+    "shopping"
+  ],
   "icons": [
     {
       "src": "./icons/apple-touch-icon.png",
