@@ -605,3 +605,20 @@ html body.admin-body :is(#refresh,#export-orders,#cancel-product,#cancel-offer),
 html body.rider-app :is(.refresh-button,.secondary-button){
   background:#D8B779!important;color:#332717!important;border:1px solid #F0D7A1!important;
 }
+
+
+/* Outer page canvas only — keep all existing card, icon and button colors unchanged. */
+html:has(body.customer-home-page),
+html:has(body.customer-history-page),
+html:has(body.admin-body),
+html:has(body.rider-app){
+  background:#F7F1E7!important;
+  background-color:#F7F1E7!important;
+}
+html body.customer-home-page,
+html body.customer-history-page,
+html body.admin-body,
+html body.rider-app{
+  background:#F7F1E7!important;
+  background-color:#F7F1E7!important;
+}
