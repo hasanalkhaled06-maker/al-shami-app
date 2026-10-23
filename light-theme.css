@@ -600,3 +600,53 @@ html body.customer-home-page .success-subtitle,html body.customer-home-page .suc
 
 /* Keep summary cards compact on small screens; the state/action already says what matters. */
 html body.rider-app .summary-card small{display:none!important}
+
+
+/* Replace remaining legacy green/blue semantic accents with wine, cream and champagne. */
+html body.customer-home-page .success-whatsapp,
+html body.customer-home-page .success-track,
+html body.customer-history-page .success-whatsapp{
+  background:var(--shami-wine)!important;color:#fffaf5!important;border-color:var(--shami-wine)!important;
+  border-radius:11px!important;box-shadow:none!important;
+}
+html body.customer-home-page .success-modal.status-accepted .success-icon{
+  background:#f7ebd7!important;color:var(--shami-wine)!important;border-color:#e5d2ad!important;
+}
+html body.customer-home-page .success-modal.status-accepted .success-progress span{background:var(--shami-gold)!important}
+html body.customer-home-page .tracked-status.status-new,
+html body.customer-history-page .tracked-status.status-new{background:#f8eee0!important;color:#76502f!important;border-color:#e7d5bd!important}
+html body.customer-home-page .tracked-status.status-accepted,
+html body.customer-history-page .tracked-status.status-accepted{background:#f4e5e6!important;color:var(--shami-wine)!important;border-color:#e4c5c9!important}
+html body.customer-home-page .tracked-status.status-preparing,
+html body.customer-history-page .tracked-status.status-preparing{background:#f8f0df!important;color:#775328!important;border-color:#eadbb6!important}
+html body.customer-home-page .tracked-status.status-ready,
+html body.customer-history-page .tracked-status.status-ready{background:#f5ebd9!important;color:#79552d!important;border-color:#e6d4b7!important}
+html body.customer-home-page .tracked-status.status-out_for_delivery,
+html body.customer-history-page .tracked-status.status-out_for_delivery{background:#f1e7ec!important;color:#6e3046!important;border-color:#e0c8d1!important}
+html body.customer-home-page .tracked-status.status-completed,
+html body.customer-history-page .tracked-status.status-completed{background:#f5ead7!important;color:var(--shami-wine)!important;border-color:#e6d4b6!important}
+html body.customer-home-page .customer-live-dot{background:var(--shami-gold)!important;box-shadow:0 0 0 4px rgba(198,160,90,.16)!important}
+html body.customer-home-page .delivery-location-status.has-location,
+html body.customer-home-page .delivery-map-selection{color:var(--shami-wine)!important}
+html body.admin-body .home-card-settings{background:linear-gradient(145deg,#fffdf8,#f7eddc)!important}
+html body.admin-body .live-dot{background:var(--shami-gold)!important;box-shadow:0 0 0 3px rgba(198,160,90,.17)!important}
+html body.admin-body .incoming-accept,
+html body.admin-body #incoming-order-accept{
+  background:var(--shami-wine)!important;color:#fffaf5!important;border-color:var(--shami-wine)!important;
+}
+html body.admin-body .incoming-reject,
+html body.admin-body #incoming-order-reject{
+  background:#fffaf3!important;color:var(--shami-wine)!important;border-color:#dfcabe!important;
+}
+html body.rider-app .connection-pill.is-online,
+html body.rider-app .connection-pill.is-offline{
+  background:rgba(255,250,243,.12)!important;color:#fffaf5!important;border-color:rgba(255,255,255,.28)!important;
+}
+html body.rider-app .connection-dot,html body.rider-app .pulse-dot{background:var(--shami-gold)!important;box-shadow:0 0 0 3px rgba(198,160,90,.16)!important}
+html body.rider-app .secondary-button.is-sharing{
+  background:var(--shami-wine)!important;color:#fffaf5!important;border-color:var(--shami-wine)!important;
+}
+html body.rider-app .form-message.success,
+html body.rider-app .dashboard-message.success{background:#f8f0df!important;color:#704d26!important;border-color:#e8d7b1!important}
+html body.admin-body .status-success,
+html body.admin-body .success{background:#f8f0df!important;color:#704d26!important;border-color:#e8d7b1!important}
