@@ -645,3 +645,14 @@ body.rider-app{min-height:100vh;background:#f2f1ee!important;color:var(--shami-i
 .rider-app .summary-card small{display:none!important}
 .rider-app .summary-label{align-self:end}
 .rider-app .summary-card strong{align-self:start}
+
+
+/* Receipt handoff code: clear, compact and one-tap copyable. */
+.receipt-code-note{display:grid;gap:10px;margin:18px 0 12px;padding:14px 16px;border:1px solid #ead9bd;border-radius:16px;background:#fffaf1}
+.receipt-code-label{font-size:14px;line-height:1.45;color:#6e5960;font-weight:600}
+.receipt-code-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.receipt-code-value{font-size:clamp(23px,5vw,30px);letter-spacing:.12em;font-variant-numeric:tabular-nums;color:#721b2b}
+.receipt-code-copy{min-height:44px;padding:10px 16px;border:1px solid #e4cda6;border-radius:12px;background:#741824;color:#fff8ed;font:inherit;font-size:14px;font-weight:750;cursor:pointer;transition:background .15s ease,transform .15s ease}
+.receipt-code-copy:active{transform:scale(.98)}
+.receipt-code-copy.is-copied{background:#286747;border-color:#286747}
+@media(max-width:420px){.receipt-code-row{align-items:stretch}.receipt-code-copy{width:100%}}
