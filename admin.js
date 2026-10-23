@@ -1581,5 +1581,53 @@ Status: ${order.status}`;
     status("Settings saved.", "#settings-message");
   };
 
+  $("#delete-all-orders")?.addEventListener("click", async event => {
+    const button = event.currentTarget;
+    const message = $("#delete-orders-message");
+    if (!db || !currentUser) {
+      status("Please sign in as an administrator first.", "#delete-orders-message", true);
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "PERMANENTLY DELETE ALL ORDERS?\n\nThis deletes every order and its items from the customer and admin order lists. It cannot be undone."
+    );
+    if (!confirmed) return;
+
+    const phrase = window.prompt('Type DELETE to permanently remove all orders:');
+    if (phrase !== "DELETE") {
+      status("Deletion cancelled. The confirmation text did not match.", "#delete-orders-message", true);
+      return;
+    }
+
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = "Deleting orders…";
+    status("Deleting all orders…", "#delete-orders-message");
+
+    try {
+      const { data, error } = await db.rpc("delete_all_orders_for_admin");
+      if (error) throw error;
+
+      const count = Number(data || 0);
+      orders = [];
+      knownOrderIds = new Set();
+      incomingOrderQueue.length = 0;
+      activeIncomingOrderId = null;
+      renderOrders();
+      renderHistory();
+      await refreshAll();
+
+      status(`Done. Permanently deleted ${count} order(s) and their items.`, "#delete-orders-message");
+      toast(`Deleted ${count} order(s).`);
+    } catch (error) {
+      console.error("Permanent order deletion failed:", error);
+      status("Could not delete orders: " + (error.message || "Unknown error"), "#delete-orders-message", true);
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  });
+
   start();
 })();
