@@ -113,7 +113,7 @@
   .delete-order-btn:disabled{opacity:.6;cursor:wait}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="modern-ui.css?v=modern-ui-20261023c">
+  <link rel="stylesheet" href="app-refresh.css?v=radical-ui-20261023a">
 </head>
 
 <body class="admin-body">
@@ -128,10 +128,7 @@
   </div>
 </header>
 
-<div class="admin-install-note" id="admin-install-note">
-  <strong>Install AL SHAMI Admin on your home screen</strong>
-  <span>For quick access, add this page to your home screen.</span>
-</div>
+
 
 <main class="admin-container">
 
@@ -163,8 +160,8 @@
     <div class="dashboard-heading">
       <div>
         <p class="eyebrow">AL SHAMI · PRIVATE ADMIN</p>
-        <h1>Management Center</h1>
-        <p class="muted">Choose a workspace to manage your restaurant.</p>
+        <h1>Restaurant overview</h1>
+        <p class="muted">Live orders, menu and restaurant operations.</p>
       </div>
       <div class="dashboard-heading-actions">
         <button id="back-to-home" class="btn btn-light hidden" type="button">← Home</button>
@@ -173,11 +170,7 @@
     </div>
 
     <section id="admin-home" class="admin-home" aria-labelledby="admin-home-title">
-      <div class="admin-home-intro">
-        <p class="eyebrow">YOUR WORKSPACE</p>
-        <h2 id="admin-home-title">What would you like to manage?</h2>
-        <p>Manage live customer orders or open Settings to access the restaurant tools.</p>
-      </div>
+      
       <div class="admin-home-grid">
         <button class="admin-home-card home-card-orders" type="button" data-home-nav="orders">
           <span class="home-card-top">
@@ -205,14 +198,14 @@
 
 
       </div>
-      <div class="admin-home-foot"><span class="admin-home-foot-mark">SH</span><span>AL SHAMI RESTAURANT &amp; FAST FOOD</span><span class="admin-home-foot-line"></span><span>ADMINISTRATION</span></div>
+      
     </section>
 
     <section id="settings-hub" class="settings-hub hidden" aria-labelledby="settings-hub-title">
       <div class="settings-hub-intro">
         <p class="eyebrow">RESTAURANT CONFIGURATION</p>
         <h2 id="settings-hub-title">Settings</h2>
-        <p>All management pages are grouped here. They no longer appear inside Active Orders or History.</p>
+        <p></p>
       </div>
       <div class="settings-hub-grid">
         <button class="settings-hub-card settings-link-history" type="button" data-settings-nav="history">
@@ -266,7 +259,7 @@
       <div class="section-heading">
         <div>
           <h2>Incoming orders</h2>
-          <p class="muted">Orders appear here when database access is configured.</p>
+          
         </div>
 
         <select id="order-filter">
@@ -298,13 +291,13 @@
     </section>
 
     <section id="tab-history" class="panel hidden">
-      <div class="section-heading"><div><h2>Order history</h2><p class="muted">Completed and rejected orders appear here, separate from orders still in progress.</p></div><input id="history-search" type="search" placeholder="Search completed orders…" aria-label="Search order history" autocomplete="off"></div>
+      <div class="section-heading"><div><h2>Order history</h2></div><input id="history-search" type="search" placeholder="Search completed orders…" aria-label="Search order history" autocomplete="off"></div>
       <div id="history-list" class="orders-list"><p class="muted">Sign in to load order history.</p></div>
     </section>
 
     <section id="tab-menu" class="panel hidden">
       <h2>Menu &amp; prices</h2>
-      <p class="muted">Add menu items and manage availability.</p>
+      
 
       <form id="product-form" class="form-grid admin-form">
         <input type="hidden" name="id">
