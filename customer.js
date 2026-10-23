@@ -922,25 +922,16 @@
       noSearchResults: "No menu items match your search. Clear the search or choose another category.",
       loadingMenu: "Loading menu…",
       retry: "Retry",
-      trackHistory: "Track your order / Order history",
       activeOrdersHeading: "Current orders",
       historyHeading: "Your orders",
       currentOrdersGroup: "In progress",
       pastOrdersGroup: "Previous orders",
       updatedAtLabel: "Updated",
       noCompletedOrders: "No completed orders yet.",
-      trackHistoryHelp: "Your orders stay saved on this device. Keep the private tracking code to check an order on another device.",
-      trackingCode: "Private tracking code",
-      trackOrder: "Track order",
       refreshOrders: "Refresh",
       noTrackedOrders: "No saved orders yet. Place an order and it will appear here automatically.",
       loadingTrackedOrders: "Loading your saved orders…",
-      trackCodeHelp: "Enter the private tracking code from your order confirmation.",
-      invalidTrackingCode: "Enter a valid tracking code.",
       couldNotLoadTrackedOrder: "Could not check this order right now. Check your connection and try again.",
-      orderNotFound: "No order was found for that code. Check it and try again.",
-      showTrackingCode: "Show private tracking code",
-      copyTrackingCode: "Copy code",
       removeFromHistory: "Remove from history",
       orderLabel: "Order",
       orderedAt: "Placed",
@@ -950,8 +941,6 @@
       step_ready: "Ready",
       step_out_for_delivery: "Out for delivery",
       step_completed: "Completed",
-      codeCopied: "Tracking code copied.",
-      codeCopyFailed: "Copy failed. You can select and copy the code manually.",
       unavailable: "Currently unavailable"
     },
     ar: {
@@ -1024,25 +1013,16 @@
       noSearchResults: "ما لقينا أصناف تطابق البحث. امسح البحث أو اختار فئة تانية.",
       loadingMenu: "عم نحمّل المنيو…",
       retry: "إعادة المحاولة",
-      trackHistory: "تتبّع الطلبات / سجل الطلبات",
       activeOrdersHeading: "الطلبات الحالية",
       historyHeading: "طلباتك",
       currentOrdersGroup: "الطلبات الجارية",
       pastOrdersGroup: "الطلبات السابقة",
       updatedAtLabel: "آخر تحديث",
       noCompletedOrders: "ما في طلبات مكتملة لسه.",
-      trackHistoryHelp: "طلباتك المحفوظة بتظهر على هالجهاز. احتفظ برمز التتبّع الخاص إذا بدك تفتح الطلب من جهاز تاني.",
-      trackingCode: "رمز التتبّع الخاص",
-      trackOrder: "تتبّع الطلب",
       refreshOrders: "تحديث",
       noTrackedOrders: "ما في طلبات محفوظة حالياً. لما تبعت طلب جديد رح يظهر هون تلقائياً.",
       loadingTrackedOrders: "عم نحمّل طلباتك…",
-      trackCodeHelp: "أدخل رمز التتبّع الموجود بتأكيد الطلب.",
-      invalidTrackingCode: "أدخل رمز تتبّع صحيح.",
       couldNotLoadTrackedOrder: "ما قدرنا نتحقق من الطلب هلأ. تأكد من الإنترنت وحاول مرة تانية.",
-      orderNotFound: "ما لقينا طلب بهالرمز. تأكد منه وحاول مرة تانية.",
-      showTrackingCode: "إظهار رمز التتبّع الخاص",
-      copyTrackingCode: "نسخ الرمز",
       removeFromHistory: "حذف من السجل",
       orderLabel: "الطلب",
       orderedAt: "تاريخ الطلب",
@@ -1052,8 +1032,6 @@
       step_ready: "جاهز",
       step_out_for_delivery: "خرج للتوصيل",
       step_completed: "مكتمل",
-      codeCopied: "تم نسخ رمز التتبّع.",
-      codeCopyFailed: "تعذّر النسخ. فيك تحدد الرمز وتنسخه يدوياً.",
       unavailable: "غير متوفر حالياً"
     },
     tw: {
@@ -1126,25 +1104,16 @@
       noSearchResults: "Yɛannya aduan a ɛne wo hwehwɛde hyia. Pepa hwehwɛde no anaa paw kuw foforo.",
       loadingMenu: "Aduan din no reba…",
       retry: "San sɔ hwɛ",
-      trackHistory: "Track your order / Order history",
       activeOrdersHeading: "Wo nhyehyɛe a ɛrekɔ so",
       historyHeading: "Wo nhyehyɛe",
       currentOrdersGroup: "Ɛrekɔ so",
       pastOrdersGroup: "Nea atwam",
       updatedAtLabel: "Wɔsesaa no",
       noCompletedOrders: "No completed orders yet.",
-      trackHistoryHelp: "Your orders stay saved on this device. Keep the private tracking code to check an order on another device.",
-      trackingCode: "Private tracking code",
-      trackOrder: "Track order",
       refreshOrders: "Refresh",
       noTrackedOrders: "Wonni nhyehyɛe biara a wɔakora so. Sɛ wode bi to hɔ a, ɛbɛda ha.",
       loadingTrackedOrders: "Loading your saved orders…",
-      trackCodeHelp: "Enter the private tracking code from your order confirmation.",
-      invalidTrackingCode: "Enter a valid tracking code.",
       couldNotLoadTrackedOrder: "Could not check this order right now. Check your connection and try again.",
-      orderNotFound: "No order was found for that code. Check it and try again.",
-      showTrackingCode: "Show private tracking code",
-      copyTrackingCode: "Copy code",
       removeFromHistory: "Remove from history",
       orderLabel: "Order",
       orderedAt: "Bere a wɔde too hɔ",
@@ -1154,8 +1123,6 @@
       step_ready: "Ayɛ krado",
       step_out_for_delivery: "Wɔde aba wo nkyɛn",
       step_completed: "Wɔawie",
-      codeCopied: "Tracking code copied.",
-      codeCopyFailed: "Copy failed. You can select and copy the code manually.",
       unavailable: "Ɛnni hɔ seesei"
     }
   };
@@ -1179,14 +1146,37 @@
     tw: { new:"Wɔde nhyehyɛe no asoma — yɛretwɛn adidibea no", accepted:"Adidibea no agye atom", preparing:"Woresiesie aduan no", ready:"Aduan no ayɛ krado", out_for_delivery:"Aduan no wɔ kwan so rebrɛ wo", completed:"Wɔde ama wo", rejected:"Wɔapo nhyehyɛe no" }
   };
 
+  function orderHistoryStorageKey() {
+    return authSession?.user?.id ? ORDER_HISTORY_KEY + ":" + authSession.user.id : ORDER_HISTORY_KEY;
+  }
+
   function readTrackedOrders() {
     try {
-      const rows = JSON.parse(storageGet(ORDER_HISTORY_KEY) || "[]");
-      return Array.isArray(rows) ? rows.filter(row => row && typeof row.token === "string" && TRACKING_TOKEN_RE.test(row.token)).slice(0,25) : [];
+      const key = orderHistoryStorageKey();
+      let raw = storageGet(key);
+      if (raw === null && authSession?.user?.id) {
+        // One-time migration from the older shared key. Move it into the currently signed-in account.
+        const legacy = storageGet(ORDER_HISTORY_KEY);
+        if (legacy !== null) {
+          try {
+            localStorage.setItem(key, legacy);
+            localStorage.removeItem(ORDER_HISTORY_KEY);
+            raw = legacy;
+          } catch (_) {
+            raw = legacy;
+          }
+        }
+      }
+      const rows = JSON.parse(raw || "[]");
+      return Array.isArray(rows)
+        ? rows.filter(row => row && typeof row.token === "string" && TRACKING_TOKEN_RE.test(row.token)).slice(0,25)
+        : [];
     } catch (_) { return []; }
   }
 
-  function saveTrackedOrders(rows) { storageSet(ORDER_HISTORY_KEY, JSON.stringify(rows.slice(0,25))); }
+  function saveTrackedOrders(rows) {
+    storageSet(orderHistoryStorageKey(), JSON.stringify(rows.slice(0,25)));
+  }
 
   function rememberOrderTrackingToken(token, orderNumber) {
     token = String(token || "").trim().toLowerCase();
