@@ -1267,6 +1267,9 @@
         const order = result.order;
         const status = String(order.status || "").toLowerCase();
         const number = order.order_number ?? entry.orderNumber ?? "—";
+        if (typeof window.AL_SHAMI_UPDATE_SUCCESS_STATUS === "function") {
+          window.AL_SHAMI_UPDATE_SUCCESS_STATUS({ orderNumber: number, status, orderType: order.order_type });
+        }
         const updatedAt = order.updated_at ? trackingDate(order.updated_at) : "";
         const updatedAtHtml = updatedAt
           ? '<p class="tracked-date tracked-updated">' + escapeHTML(tr("updatedAtLabel")) + ": " + escapeHTML(updatedAt) + "</p>"
