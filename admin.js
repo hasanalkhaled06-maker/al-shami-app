@@ -26,6 +26,8 @@
   let currentUser = null;
   let orders = [];
   let products = [];
+  let deliveryRiderDirectory = [];
+  let lastRiderDirectoryFetchAt = 0;
   // Order alerts stay enabled; browsers may require a user gesture to unlock audio.
   let soundOn = true;
   let notificationsOn = "Notification" in window && Notification.permission === "granted";
@@ -70,6 +72,31 @@
     const destination = encodeURIComponent(lat + "," + lng);
     const href = "https://www.google.com/maps/dir/?api=1&destination=" + destination + "&travelmode=driving&dir_action=navigate&utm_source=al_shami_restaurant&utm_campaign=delivery_navigation";
     return '<a class="admin-delivery-map-link" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">↗ Start navigation in Google Maps</a>';
+  }
+
+  async function loadDeliveryRiderDirectory(force = false) {
+    if (!db || (!force && Date.now() - lastRiderDirectoryFetchAt < 60000)) return;
+    const { data, error } = await db
+      .from("staff_profiles")
+      .select("user_id,full_name,role")
+      .eq("role", "delivery_rider");
+    if (error) throw error;
+    deliveryRiderDirectory = data || [];
+    lastRiderDirectoryFetchAt = Date.now();
+  }
+
+  function deliveryRiderAssignmentMarkup(order) {
+    if (order?.order_type !== "delivery" || order.status === "rejected") return "";
+    const rider = deliveryRiderDirectory.find(person => person.user_id && person.user_id === order.assigned_rider_user_id);
+    let label = rider?.full_name || (order.assigned_rider_user_id ? "Assigned rider account" : "");
+    let noteClass = "order-rider-note";
+    if (!order.assigned_rider_user_id) {
+      label = order.status === "new"
+        ? "Waiting for acceptance — rider assignment happens automatically after acceptance."
+        : "No rider linked yet. Set an active Delivery Rider profile in Operations → Employee management.";
+      noteClass += " is-unassigned";
+    }
+    return '<div class="' + noteClass + '"><span class="order-rider-note-label">Delivery rider</span><strong>' + esc(label) + '</strong></div>';
   }
 
   function toast(message) {
@@ -727,6 +754,13 @@
     if (error) throw error;
 
     orders = data || [];
+    try {
+      await loadDeliveryRiderDirectory();
+    } catch (riderDirectoryError) {
+      // Rider names are supplementary; never block the core order dashboard on this lookup.
+      console.warn("Could not load rider directory:", riderDirectoryError);
+      deliveryRiderDirectory = [];
+    }
 
     if (firstOrderLoad) {
       // Baseline existing orders, but still alert on orders created during the initial page load.
@@ -871,6 +905,7 @@
               : ""}
             ${deliveryMapLink(order) ? "<br>" + deliveryMapLink(order) : ""}
           </p>
+          ${deliveryRiderAssignmentMarkup(order)}
 
           <ul class="order-lines">
             ${(order.order_items || []).map(item => `

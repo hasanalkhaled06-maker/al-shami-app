@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v53";
+const CACHE_NAME = CACHE_PREFIX + "v54";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -11,11 +11,16 @@ const SHELL_FILES = [
   "./style.css",
   "./config.js",
   "./customer.js",
-  "./customer.js?v=live-customer-status-20261023b",
+  "./customer.js?v=live-rider-map-20261023a",
   "./admin.js",
-  "./admin.js?v=order-history-cleanup-20261023a",
+  "./admin.js?v=rider-dispatch-20261023a",
   "./admin-operations.js",
-  "./admin-operations.js?v=admin-hub-20261023d",
+  "./admin-operations.js?v=rider-profile-link-20261023a",
+  "./rider.html",
+  "./rider.js",
+  "./rider.css",
+  "./rider.webmanifest",
+  "./icons/al-shami-rider.svg",
   "./pwa.js",
   "./manifest.webmanifest",
   "./admin.webmanifest",
@@ -78,7 +83,7 @@ self.addEventListener("fetch", event => {
       const cached = await cache.match(request);
       if (cached) return cached;
       if (request.mode === "navigate") {
-        const path = url.pathname.endsWith("/admin.html") ? "./admin.html" : "./index.html";
+        const path = url.pathname.endsWith("/admin.html") ? "./admin.html" : (url.pathname.endsWith("/rider.html") ? "./rider.html" : (url.pathname.endsWith("/history.html") ? "./history.html" : "./index.html"));
         return (await cache.match(path)) || Response.error();
       }
       return Response.error();

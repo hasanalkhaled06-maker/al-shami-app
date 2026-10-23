@@ -1,0 +1,25 @@
+{
+  "id": "./rider.html",
+  "name": "AL SHAMI Delivery Rider",
+  "short_name": "AL SHAMI Rider",
+  "description": "Private AL SHAMI rider delivery workspace",
+  "start_url": "./rider.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f5f1",
+  "theme_color": "#741b28",
+  "icons": [
+    {
+      "src": "./icons/al-shami-rider.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
