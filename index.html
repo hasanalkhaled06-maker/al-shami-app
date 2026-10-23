@@ -253,25 +253,12 @@
     @media(max-width:520px){.delivery-map-modal{padding:7px;padding-bottom:calc(7px + env(safe-area-inset-bottom))}.delivery-map-dialog{max-height:calc(100dvh - 14px - env(safe-area-inset-bottom));border-radius:17px;padding:14px}.delivery-map-canvas{height:42vh;min-height:250px}.delivery-map-selection{text-align:left}.delivery-map-toolbar{align-items:stretch}.delivery-map-toolbar .btn{width:100%}.delivery-map-search-form{grid-template-columns:1fr}.delivery-map-search-form .btn{width:100%}}
 
   </style>
-  <link rel="stylesheet" href="modern-ui.css?v=modern-ui-20261023b">
+  <link rel="stylesheet" href="modern-ui.css?v=modern-ui-20261023c">
 </head>
 
 
 <body class="customer-home-page customer-auth-required">
-  <section id="welcome-screen" class="welcome-screen" aria-label="AL SHAMI splash screen">
-    <div class="welcome-glow welcome-glow-one"></div>
-    <div class="welcome-glow welcome-glow-two"></div>
-    <div class="welcome-content">
-      <div class="welcome-emblem" aria-hidden="true"><span>AL</span><span>SHAMI</span><i>✦</i></div>
-      <p class="welcome-kicker">RESTAURANT &amp; FAST FOOD · ACCRA</p>
-      <div class="welcome-divider"><span></span> ✦ <span></span></div>
-      <h1>Welcome to AL SHAMI Restaurant</h1>
-      <p class="welcome-tagline">The Right Choice</p>
-      <p class="welcome-description">Great flavours, quality you’ll love, and hospitality from the heart.</p>
-      <div class="welcome-loading" aria-label="Loading"><span></span><span></span><span></span></div>
-      <div class="welcome-foot"><span>Fresh · Delicious · Made with Love</span></div>
-    </div>
-  </section>
+
   <a class="skip-link" href="#main-content">Skip to menu and ordering</a>
   <header class="hero">
     <div class="hero-inner">
@@ -702,19 +689,7 @@
     })();
   </script>
 
-  <script>
-    (() => {
-      const screen = document.getElementById("welcome-screen");
-      if (!screen) return;
-      const dismiss = () => {
-        if (!screen.isConnected || screen.classList.contains("welcome-leaving")) return;
-        screen.classList.add("welcome-leaving");
-        window.setTimeout(() => screen.remove(), 450);
-      };
-      window.setTimeout(dismiss, 2100);
-      screen.addEventListener("click", dismiss, { once: true });
-    })();
-  </script>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
   <script src="customer.js?v=modern-ui-20261023b"></script>
