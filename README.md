@@ -12,7 +12,7 @@ The customer, admin, and rider entry points share the existing Supabase project 
 
 ## Visual design
 
-The shared app palette is warm cream (#f6f0e6), burgundy (#761b2a), soft champagne (#c6a05a), and charcoal text (#2a2224). `light-theme.css` is loaded after older page styles so all app entry points keep a consistent light theme. Interface copy should stay concise; preserve operational, privacy, status, and checkout instructions that users need to finish a task.
+The shared visual palette is warm cream (#F7F1E7) and off-white surfaces (#FFFCF7), burgundy for primary actions (#761B2A), charcoal text (#2A2224), soft green icon accents (#E2F0E7 / #36765B), light blue icon accents (#E4EFF9 / #376F9A), and champagne gold (#D8B779) for compact utility buttons only. `light-theme.css` must load last so it overrides legacy/experimental styles; obsolete dark-theme overrides must not be reintroduced in `app-refresh.css`. Keep all headings, descriptions, status steps, and order details readable against their surfaces. Interface copy should stay concise; preserve operational, privacy, status, and checkout instructions needed to finish a task.
 
 ## Install on iPhone
 
