@@ -596,3 +596,7 @@ html body.customer-home-page .success-details{background:#fffdf8!important;color
 html body.customer-home-page .success-title,html body.customer-home-page .success-heading,
 html body.customer-home-page .success-order-number,html body.customer-home-page .success-order-total{color:var(--shami-wine)!important}
 html body.customer-home-page .success-subtitle,html body.customer-home-page .success-eyebrow{color:var(--shami-muted)!important}
+
+
+/* Keep summary cards compact on small screens; the state/action already says what matters. */
+html body.rider-app .summary-card small{display:none!important}
