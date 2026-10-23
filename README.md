@@ -6,9 +6,13 @@ AL SHAMI is a mobile-friendly restaurant ordering website with a private staff d
 
 - Customer app: https://hasanalkhaled06-maker.github.io/al-shami-app/
 - Admin app: https://hasanalkhaled06-maker.github.io/al-shami-app/admin.html
-- Delivery rider app (after this feature branch is reviewed and merged): https://hasanalkhaled06-maker.github.io/al-shami-app/rider.html
+- Delivery rider app: https://hasanalkhaled06-maker.github.io/al-shami-app/rider.html
 
 The customer, admin, and rider entry points share the existing Supabase project but use distinct app pages and install settings. The admin page remains protected by Supabase authentication and the `admin_users` allow-list. The rider page is read-only for order work: it shows assigned deliveries and shares GPS location, but cannot accept/reject orders or change order status.
+
+## Visual design
+
+The shared app palette is warm cream (#f6f0e6), burgundy (#761b2a), soft champagne (#c6a05a), and charcoal text (#2a2224). `light-theme.css` is loaded after older page styles so all app entry points keep a consistent light theme. Interface copy should stay concise; preserve operational, privacy, status, and checkout instructions that users need to finish a task.
 
 ## Install on iPhone
 
@@ -23,7 +27,8 @@ This installs web apps on the iPhone Home Screen; these are not native apps publ
 
 ## Main files
 
-- `index.html`, `customer.js`: public menu, basket, cash-only checkout, order confirmation.
+- `index.html`, `customer.js`: customer menu, basket, cash-only checkout, order tracking and confirmation.
+- `light-theme.css`: shared light visual system — warm cream surfaces, burgundy actions, champagne accents and compact mobile layouts across customer, admin, and rider pages.
 - `admin.html`, `admin.js`: sign-in, incoming orders, menu/prices, offers, restaurant settings.
 - `admin-operations.js`: inventory, stock-movement history, suppliers, staff roster, expenses, cash shifts, and basic daily reporting.
 - `config.js`: Supabase project URL and public publishable key. Never put a service-role/secret key in browser code.
