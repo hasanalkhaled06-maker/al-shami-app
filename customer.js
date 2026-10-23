@@ -802,6 +802,7 @@
   const TRACKING_TOKEN_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   let trackedOrdersLoading = false;
   let trackedOrdersRefreshQueued = false;
+  let trackedOrderRemovalTokens = new Map();
   function storageGet(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
   function storageSet(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
   function persistCart() { storageSet(CART_KEY, JSON.stringify(cart)); }
@@ -933,7 +934,7 @@
       noTrackedOrders: "No saved orders yet. Place an order and it will appear here automatically.",
       loadingTrackedOrders: "Loading your saved orders…",
       couldNotLoadTrackedOrder: "Could not check this order right now. Check your connection and try again.",
-      removeFromHistory: "Remove from history",
+      removeFromHistory: "Hide from this device",
       orderLabel: "Order",
       orderedAt: "Placed",
       step_received: "Received",
@@ -1025,7 +1026,7 @@
       noTrackedOrders: "ما في طلبات محفوظة حالياً. لما تبعت طلب جديد رح يظهر هون تلقائياً.",
       loadingTrackedOrders: "عم نحمّل طلباتك…",
       couldNotLoadTrackedOrder: "ما قدرنا نتحقق من الطلب هلأ. تأكد من الإنترنت وحاول مرة تانية.",
-      removeFromHistory: "حذف من السجل",
+      removeFromHistory: "إخفاء من هالجهاز",
       orderLabel: "الطلب",
       orderedAt: "تاريخ الطلب",
       step_received: "تم الاستلام",
@@ -1252,12 +1253,14 @@
       }
       const validResults = results.filter(result => !result.missing);
 
+      trackedOrderRemovalTokens = new Map();
       const renderResult = result => {
         const entry = result.entry;
-        const token = escapeHTML(entry.token);
-        const remove = '<button type="button" class="btn btn-light tracked-remove" data-remove-tracked="' + token + '">' + escapeHTML(tr("removeFromHistory")) + "</button>";
-        if (result.failed || result.missing) {
-          const message = result.failed ? tr("couldNotLoadTrackedOrder") : tr("orderNotFound");
+        const removeId = String(trackedOrderRemovalTokens.size + 1);
+        trackedOrderRemovalTokens.set(removeId, entry.token);
+        const remove = '<button type="button" class="btn btn-light tracked-remove" data-remove-tracked="' + removeId + '">' + escapeHTML(tr("removeFromHistory")) + "</button>";
+        if (result.failed) {
+          const message = tr("couldNotLoadTrackedOrder");
           return '<article class="customer-order-card"><div class="tracked-card-heading"><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(entry.orderNumber || "—") + "</strong>" + remove + "</div><p class=\"muted\">" + escapeHTML(message) + "</p>" + "</article>";
         }
         const order = result.order;
@@ -1340,7 +1343,10 @@
     const target = event.target instanceof Element ? event.target : null;
     const remove = target?.closest("[data-remove-tracked]");
     if (!remove) return;
-    const token = remove.getAttribute("data-remove-tracked");
+    const removeId = remove.getAttribute("data-remove-tracked");
+    const token = trackedOrderRemovalTokens.get(removeId);
+    if (!token) return;
+    trackedOrderRemovalTokens.delete(removeId);
     saveTrackedOrders(readTrackedOrders().filter(row => row.token !== token));
     void refreshCustomerOrderHistory();
   });
