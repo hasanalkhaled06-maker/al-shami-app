@@ -40,6 +40,7 @@
   let deliveryMapMarker = null;
   let pendingDeliveryLocation = null;
   let lastGeocodingRequestAt = 0;
+  const customerRiderMapInstances = new Map();
 
   function currentDeliveryCoordinates() {
     const latitudeValue = $("#delivery-latitude")?.value;
@@ -1212,10 +1213,166 @@
     if (!isHistoryPage) document.body.classList.toggle("has-current-orders", Boolean(visible));
   }
 
+  function validRiderPoint(latitude, longitude) {
+    if (latitude == null || longitude == null || latitude === "" || longitude === "") return null;
+    const lat = Number(latitude);
+    const lng = Number(longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    return { lat, lng };
+  }
+
+  function clearCustomerRiderMaps() {
+    for (const record of customerRiderMapInstances.values()) {
+      try { record.map.remove(); } catch (_) {}
+    }
+    customerRiderMapInstances.clear();
+  }
+
+  function initializeCustomerRiderMaps() {
+    const list = $("#customer-order-history");
+    if (!list) return;
+    const hosts = list.querySelectorAll("[data-customer-rider-map]");
+    if (!hosts.length) return;
+    if (!window.L || typeof window.L.map !== "function") {
+      hosts.forEach(host => {
+        const statusNode = host.parentElement?.querySelector(".customer-rider-map-status");
+        if (statusNode) statusNode.textContent = lang === "ar"
+          ? "تعذّر تحميل الخريطة. حدّث الصفحة للتحقق من موقع السائق."
+          : "The map could not load. Refresh the page to check the rider location.";
+      });
+      return;
+    }
+
+    hosts.forEach(host => {
+      const token = String(host.dataset.trackingToken || "");
+      if (!token || customerRiderMapInstances.has(token)) return;
+      const destination = validRiderPoint(host.dataset.destinationLat, host.dataset.destinationLng);
+      const initialRider = validRiderPoint(host.dataset.riderLat, host.dataset.riderLng);
+      const initialCenter = initialRider || destination || { lat: 5.6037, lng: -0.1870 };
+      const map = window.L.map(host, {
+        zoomControl: true,
+        scrollWheelZoom: false,
+        attributionControl: true
+      }).setView([initialCenter.lat, initialCenter.lng], (initialRider || destination) ? 15 : 12);
+      const tileUrl = String(cfg.MAP_TILE_URL || "https://tile.openstreetmap.org/{z}/{x}/{y}.png");
+      window.L.tileLayer(tileUrl, {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>'
+      }).addTo(map);
+
+      let destinationMarker = null;
+      if (destination) {
+        destinationMarker = window.L.marker([destination.lat, destination.lng]).addTo(map);
+        destinationMarker.bindPopup(lang === "ar" ? "عنوان التوصيل" : "Delivery destination");
+      }
+
+      let riderMarker = null;
+      if (initialRider) {
+        riderMarker = window.L.marker([initialRider.lat, initialRider.lng]).addTo(map);
+        riderMarker.bindPopup(host.dataset.riderName || (lang === "ar" ? "السائق" : "Delivery rider"));
+      }
+
+      if (destination && initialRider) {
+        map.fitBounds(window.L.latLngBounds(
+          [destination.lat, destination.lng],
+          [initialRider.lat, initialRider.lng]
+        ).pad(0.18), { maxZoom: 15 });
+      }
+
+      const record = {
+        map,
+        riderMarker,
+        destinationMarker,
+        statusNode: host.parentElement?.querySelector(".customer-rider-map-status") || null,
+        riderName: host.dataset.riderName || "",
+        lastUpdatedAt: host.dataset.riderUpdatedAt || "",
+        stale: host.dataset.riderStale === "true"
+      };
+      customerRiderMapInstances.set(token, record);
+
+      if (record.statusNode && initialRider) {
+        const updated = record.lastUpdatedAt ? trackingDate(record.lastUpdatedAt) : "";
+        record.statusNode.textContent = (lang === "ar"
+          ? "آخر موقع مستلم" + (updated ? " · " + updated : "")
+          : "Latest rider location" + (updated ? " · " + updated : "")) +
+          (record.stale ? (lang === "ar" ? " · الموقع قديم، بانتظار تحديث" : " · Location may be stale; waiting for an update") : "");
+      } else if (record.statusNode) {
+        record.statusNode.textContent = lang === "ar"
+          ? "عم نتحقق من موقع السائق…"
+          : "Checking for the rider's latest location…";
+      }
+      window.setTimeout(() => {
+        try { map.invalidateSize({ pan: false }); } catch (_) {}
+      }, 80);
+    });
+
+    void refreshCustomerRiderLocations();
+  }
+
+  async function refreshCustomerRiderLocations() {
+    if (!db || !authSession?.user || !customerRiderMapInstances.size || document.visibilityState !== "visible") return;
+    const updates = Array.from(customerRiderMapInstances.entries());
+    await Promise.all(updates.map(async ([token, record]) => {
+      try {
+        const { data, error } = await db.rpc("get_customer_rider_location", {
+          p_tracking_token: token
+        });
+        if (error) throw error;
+        if (!customerRiderMapInstances.has(token)) return;
+        if (!data) {
+          if (record.statusNode) record.statusNode.textContent = lang === "ar"
+            ? "عم ننتظر أول تحديث لموقع السائق. رح يظهر موقعه أثناء التوصيل."
+            : "Waiting for the rider's first GPS update. Their location appears during delivery.";
+          return;
+        }
+        const point = validRiderPoint(data.latitude, data.longitude);
+        if (!point) {
+          if (record.statusNode) record.statusNode.textContent = lang === "ar"
+            ? "بيانات موقع السائق غير صالحة."
+            : "The rider location data is invalid.";
+          return;
+        }
+        if (!record.riderMarker) {
+          record.riderMarker = window.L.marker([point.lat, point.lng]).addTo(record.map);
+          record.riderMarker.bindPopup(data.rider_name || (lang === "ar" ? "السائق" : "Delivery rider"));
+          if (record.destinationMarker) {
+            const dest = record.destinationMarker.getLatLng();
+            record.map.fitBounds(window.L.latLngBounds(
+              [dest.lat, dest.lng], [point.lat, point.lng]
+            ).pad(0.18), { maxZoom: 15 });
+          } else {
+            record.map.setView([point.lat, point.lng], 15);
+          }
+        } else {
+          record.riderMarker.setLatLng([point.lat, point.lng]);
+        }
+        if (data.rider_name) {
+          record.riderName = String(data.rider_name);
+          record.riderMarker.setPopupContent(record.riderName);
+        }
+        record.lastUpdatedAt = data.updated_at || "";
+        record.stale = Boolean(data.is_stale);
+        if (record.statusNode) {
+          const updated = record.lastUpdatedAt ? trackingDate(record.lastUpdatedAt) : "";
+          record.statusNode.textContent = (lang === "ar"
+            ? "السائق: " + record.riderName + (updated ? " · آخر تحديث: " + updated : "")
+            : "Rider: " + record.riderName + (updated ? " · Updated: " + updated : "")) +
+            (record.stale ? (lang === "ar" ? " · آخر موقع قديم، عم ننتظر تحديثاً" : " · Location is stale; waiting for a fresh update") : "");
+        }
+      } catch (error) {
+        console.warn("Customer rider location refresh failed:", error);
+        if (record.statusNode) record.statusNode.textContent = lang === "ar"
+          ? "تعذّر تحديث موقع السائق حالياً. رح نعيد المحاولة تلقائياً."
+          : "Could not refresh the rider location. We will retry automatically.";
+      }
+    }));
+  }
+
   async function refreshCustomerOrderHistory() {
     const list = $("#customer-order-history");
     if (!list) return;
     if (!authSession?.user || (authSession.user.user_metadata?.phone_e164 && customerPhoneValidatedUserId !== authSession.user.id)) {
+      clearCustomerRiderMaps();
       setHomeCurrentOrdersVisible(false);
       list.replaceChildren();
       return;
@@ -1227,6 +1384,7 @@
     }
     const entries = readTrackedOrders();
     if (!entries.length) {
+      clearCustomerRiderMaps();
       setHomeCurrentOrdersVisible(false);
       list.innerHTML = '<p class="muted tracked-empty">' + escapeHTML(tr("noTrackedOrders")) + "</p>";
       return;
@@ -1237,6 +1395,7 @@
       return;
     }
     trackedOrdersLoading = true;
+    clearCustomerRiderMaps();
     list.innerHTML = '<p class="muted">' + escapeHTML(tr("loadingTrackedOrders")) + "</p>";
     try {
       const results = await Promise.all(entries.map(async entry => {
@@ -1289,10 +1448,33 @@
             ).join("") + "</ol>";
         const items = Array.isArray(order.items) ? order.items : [];
         const itemHtml = items.map(item => '<li><span>' + escapeHTML(item.quantity) + " × " + escapeHTML(item.name || "Item") + '</span><strong>' + money(item.line_total ?? (Number(item.unit_price || 0) * Number(item.quantity || 0))) + "</strong></li>").join("");
+        const riderTrackingVisible = isDelivery && status === "out_for_delivery";
+        const destinationPoint = validRiderPoint(order.delivery_latitude, order.delivery_longitude);
+        const currentRiderPoint = order.rider_location
+          ? validRiderPoint(order.rider_location.latitude, order.rider_location.longitude)
+          : null;
+        const riderMapMarkup = riderTrackingVisible
+          ? '<section class="customer-rider-tracking"><div class="customer-rider-map-heading"><strong>' +
+            escapeHTML(lang === "ar" ? "تتبّع السائق مباشرة" : "Track your delivery rider") +
+            '</strong><p>' + escapeHTML(lang === "ar" ? "تتحدّث الخريطة تلقائياً أثناء التوصيل." : "The map refreshes automatically while your order is on the way.") + '</p></div>' +
+            '<div class="customer-rider-map" data-customer-rider-map data-tracking-token="' + escapeHTML(entry.token) + '"' +
+            (destinationPoint ? ' data-destination-lat="' + destinationPoint.lat + '" data-destination-lng="' + destinationPoint.lng + '"' : "") +
+            (currentRiderPoint ? ' data-rider-lat="' + currentRiderPoint.lat + '" data-rider-lng="' + currentRiderPoint.lng + '"' : "") +
+            (order.rider_location?.updated_at ? ' data-rider-updated-at="' + escapeHTML(order.rider_location.updated_at) + '"' : "") +
+            (order.rider_location?.rider_name ? ' data-rider-name="' + escapeHTML(order.rider_location.rider_name) + '"' : "") +
+            (order.rider_location?.is_stale ? ' data-rider-stale="true"' : "") +
+            ' role="application" aria-label="' + escapeHTML(lang === "ar" ? "خريطة موقع السائق والوجهة" : "Map showing the delivery destination and rider") + '"></div>' +
+            '<p class="customer-rider-map-status" role="status">' +
+            escapeHTML(currentRiderPoint
+              ? (lang === "ar" ? "عم نحدّث موقع السائق…" : "Updating the rider location…")
+              : (lang === "ar" ? "عم نتحقق من موقع السائق…" : "Checking the rider location…")) +
+            '</p></section>'
+          : "";
         return '<article class="customer-order-card">' +
           '<div class="tracked-card-heading"><div><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(number) + '</strong><p class="tracked-date">' + escapeHTML(tr("orderedAt")) + ": " + escapeHTML(trackingDate(order.created_at)) + '</p>' + updatedAtHtml + '</div><span class="tracked-status status-' + escapeHTML(status.replace(/[^a-z_]/g,"")) + '">' + escapeHTML(trackingStatusText(status, order.order_type)) + "</span></div>" +
           timeline + '<div class="tracked-order-meta"><span>' + escapeHTML(order.order_type === "pickup" ? tr("pickup") : tr("delivery")) + '</span><strong>' + money(order.total) + "</strong></div>" +
           (itemHtml ? '<ul class="tracked-items">' + itemHtml + "</ul>" : "") +
+          riderMapMarkup +
           (status !== "completed" && status !== "rejected" && order.receipt_code
             ? '<p class="receipt-code-note">' + escapeHTML(lang === "ar" ? "رمز تأكيد الاستلام (أعطه للكاشير عند التسليم): " : "Customer receipt code (give this to the cashier when you receive the order): ") + '<strong>' + escapeHTML(order.receipt_code) + '</strong></p>'
             : "") + remove + "</article>";
@@ -1321,7 +1503,9 @@
       } else {
         visibleHtml = currentResults.map(renderResult).join("");
       }
+      clearCustomerRiderMaps();
       list.innerHTML = visibleHtml || '<p class="muted tracked-empty">' + escapeHTML(tr("noTrackedOrders")) + '</p>';
+      initializeCustomerRiderMaps();
       const heading = $("#customer-orders-heading");
       if (heading) heading.textContent = isHistoryPage ? tr("historyHeading") : tr("activeOrdersHeading");
       const nav = $("#customer-orders-nav");
@@ -1356,10 +1540,19 @@
   });
 
   window.setInterval(() => {
-    if (document.visibilityState === "visible") void refreshCustomerOrderHistory();
+    if (document.visibilityState === "visible") {
+      void refreshCustomerOrderHistory();
+      void refreshCustomerRiderLocations();
+    }
   }, 30000);
+  window.setInterval(() => {
+    if (document.visibilityState === "visible") void refreshCustomerRiderLocations();
+  }, 6000);
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") void refreshCustomerOrderHistory();
+    if (document.visibilityState === "visible") {
+      void refreshCustomerOrderHistory();
+      void refreshCustomerRiderLocations();
+    }
   });
 
 
