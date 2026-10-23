@@ -1498,3 +1498,62 @@ html body.customer-home-page #customer-sign-out{grid-row:3!important;width:100%!
  html body.customer-home-page .customer-account .al-shami-chef-spark{animation:none!important}
 }
 
+/* FINAL FIX: render the existing 3D chef reliably inside the account panel.
+   Keep the original burgundy/gold styling; do not use the legacy fixed overlay. */
+html body.customer-home-page .customer-account .al-shami-chef-widget{
+  position:relative!important;
+  inset:auto!important;
+  display:flex!important;
+  width:100%!important;
+  min-height:0!important;
+  height:auto!important;
+  opacity:1!important;
+  visibility:visible!important;
+  transform:none!important;
+  margin:0!important;
+  overflow:visible!important;
+}
+html body.customer-home-page .customer-account .al-shami-chef-art{
+  display:flex!important;
+  width:100%!important;
+  height:124px!important;
+  min-height:124px!important;
+  flex:0 0 124px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:visible!important;
+}
+html body.customer-home-page .customer-account svg.al-shami-chef-mascot{
+  display:block!important;
+  width:140px!important;
+  height:124px!important;
+  max-width:100%!important;
+  opacity:1!important;
+  visibility:visible!important;
+  animation:none!important;
+  transform:none!important;
+  filter:drop-shadow(0 4px 3px rgba(0,0,0,.24))!important;
+}
+html body.customer-home-page .customer-account .al-shami-chef-wordmark,
+html body.customer-home-page .customer-account .al-shami-chef-caption{
+  display:block!important;
+  opacity:1!important;
+  visibility:visible!important;
+  animation:none!important;
+  transform:none!important;
+  filter:none!important;
+}
+html body.customer-home-page .customer-account .al-shami-chef-spark{
+  opacity:.9!important;
+  visibility:visible!important;
+  animation:none!important;
+}
+html body.customer-home-page #customer-sign-out{grid-row:3!important;width:100%!important}
+@media(max-width:480px){
+  html body.customer-home-page .customer-account .al-shami-chef-art{
+    height:112px!important;min-height:112px!important;flex-basis:112px!important;
+  }
+  html body.customer-home-page .customer-account svg.al-shami-chef-mascot{
+    width:126px!important;height:112px!important;
+  }
+}
