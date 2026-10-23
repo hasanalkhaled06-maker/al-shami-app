@@ -87,6 +87,58 @@
     if (element) element.textContent = message;
   }
 
+  const ADMIN_PANEL_NAMES = ["orders", "history", "menu", "offers", "settings", "operations"];
+
+  function showAdminHome() {
+    const dashboard = $("#dashboard");
+    if (!dashboard) return;
+    dashboard.classList.add("hub-home");
+    $("#admin-home")?.classList.remove("hidden");
+    ADMIN_PANEL_NAMES.forEach(name => {
+      $("#tab-" + name)?.classList.add("hidden");
+    });
+    document.querySelectorAll(".legacy-main-tabs [data-tab]").forEach(tab => {
+      tab.classList.remove("active");
+    });
+    $("#back-to-home")?.classList.add("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function showAdminMainPanel(name) {
+    if (!["orders", "history", "menu", "offers", "settings"].includes(name)) return;
+    const dashboard = $("#dashboard");
+    if (!dashboard) return;
+    dashboard.classList.remove("hub-home");
+    $("#admin-home")?.classList.add("hidden");
+    ADMIN_PANEL_NAMES.forEach(key => {
+      const panel = $("#tab-" + key);
+      if (panel) panel.classList.toggle("hidden", key !== name);
+    });
+    document.querySelectorAll(".legacy-main-tabs [data-tab]").forEach(tab => {
+      tab.classList.toggle("active", tab.dataset.tab === name);
+    });
+    $("#back-to-home")?.classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  window.__alShamiNavigateMainPanel = showAdminMainPanel;
+  window.__alShamiNavigateHome = showAdminHome;
+
+  document.querySelectorAll("[data-home-nav]").forEach(card => {
+    card.addEventListener("click", () => {
+      const destination = card.dataset.homeNav;
+      if (destination === "operations") {
+        const operationsTab = document.querySelector('.legacy-main-tabs [data-tab="operations"]');
+        if (operationsTab) operationsTab.click();
+        else toast("Operations tools are loading. Please open this page again in a moment.");
+        return;
+      }
+      showAdminMainPanel(destination);
+    });
+  });
+
+  $("#back-to-home")?.addEventListener("click", showAdminHome);
+
   async function isAdmin() {
     if (!currentUser || !db) return false;
 
@@ -643,6 +695,11 @@
 
     $("#new-count").textContent =
       orders.filter(order => order.status === "new").length;
+
+    const activeCount = orders.filter(order => !["completed", "rejected"].includes(order.status)).length;
+    const completedCount = orders.filter(order => order.status === "completed").length;
+    if ($("#hub-active-count")) $("#hub-active-count").textContent = activeCount;
+    if ($("#hub-history-count")) $("#hub-history-count").textContent = completedCount;
 
     renderOrders();
     renderHistory();
