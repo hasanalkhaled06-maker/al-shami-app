@@ -923,6 +923,9 @@
               <button class="btn btn-light" data-copy="${order.id}">
                 Copy details
               </button>
+              <button class="btn delete-order-btn" data-delete-order="${order.id}" type="button">
+                Delete order
+              </button>
             </div>
           </div>
         </article>
@@ -985,7 +988,7 @@ Status: ${order.status}`;
         <div class="order-header"><div><h3>Order #${esc(order.order_number || order.id.slice(0, 8))}</h3><div class="order-meta">${new Date(order.created_at).toLocaleString()} · ${esc(order.customer_name)} · ${esc(order.customer_phone)}</div></div><span class="order-status">Completed</span></div>
         <p><strong>${order.order_type === "delivery" ? "Delivery" : "Pickup"}</strong>${order.delivery_address ? " · " + esc(order.delivery_address) : ""}${order.notes ? "<br>Notes: " + esc(order.notes) : ""}</p>
         <ul class="order-lines">${(order.order_items || []).map(item => `<li><span>${Number(item.quantity)} × ${esc(item.item_name || item.menu_items?.name || "Menu item")}</span><strong>${money(Number(item.unit_price) * Number(item.quantity))}</strong></li>`).join("")}</ul>
-        <div class="order-footer"><div><strong>${money(order.total)}</strong><div class="order-meta">Subtotal ${money(order.subtotal)} · Delivery ${money(order.delivery_fee)}</div></div><div class="order-actions"><button class="btn btn-light" data-history-copy="${order.id}">Copy details</button></div></div>
+        <div class="order-footer"><div><strong>${money(order.total)}</strong><div class="order-meta">Subtotal ${money(order.subtotal)} · Delivery ${money(order.delivery_fee)}</div></div><div class="order-actions"><button class="btn btn-light" data-history-copy="${order.id}">Copy details</button><button class="btn delete-order-btn" data-delete-order="${order.id}" type="button">Delete order</button></div></div>
       </article>`).join("") : '<p class="muted">No completed orders in history yet.</p>';
     list.querySelectorAll("[data-history-copy]").forEach(button => {
       button.onclick = async () => {
@@ -1581,52 +1584,73 @@ Status: ${order.status}`;
     status("Settings saved.", "#settings-message");
   };
 
-  $("#delete-all-orders")?.addEventListener("click", async event => {
-    const button = event.currentTarget;
-    const message = $("#delete-orders-message");
+  async function deleteSingleOrder(orderId, button) {
+    const order = orders.find(item => item.id === orderId);
+    if (!order) {
+      toast("This order is no longer in the list. Refresh the dashboard.");
+      return;
+    }
     if (!db || !currentUser) {
-      status("Please sign in as an administrator first.", "#delete-orders-message", true);
+      toast("Please sign in as an administrator first.");
       return;
     }
 
+    const orderNumber = order.order_number || order.id.slice(0, 8);
     const confirmed = window.confirm(
-      "PERMANENTLY DELETE ALL ORDERS?\n\nThis deletes every order and its items from the customer and admin order lists. It cannot be undone."
+      "Permanently delete order #" + orderNumber + "?\n\n" +
+      "Customer: " + (order.customer_name || "Unknown") + "\n\n" +
+      "Only this order and its items will be deleted. This cannot be undone."
     );
     if (!confirmed) return;
 
-    const phrase = window.prompt('Type DELETE to permanently remove all orders:');
-    if (phrase !== "DELETE") {
-      status("Deletion cancelled. The confirmation text did not match.", "#delete-orders-message", true);
-      return;
-    }
-
     const originalText = button.textContent;
     button.disabled = true;
-    button.textContent = "Deleting orders…";
-    status("Deleting all orders…", "#delete-orders-message");
+    button.textContent = "Deleting…";
+    let deletionSucceeded = false;
 
     try {
-      const { data, error } = await db.rpc("delete_all_orders_for_admin");
+      const { data, error } = await db.rpc("delete_order_for_admin", {
+        p_order_id: orderId
+      });
       if (error) throw error;
+      deletionSucceeded = true;
 
-      const count = Number(data || 0);
-      orders = [];
-      knownOrderIds = new Set();
-      incomingOrderQueue.length = 0;
-      activeIncomingOrderId = null;
+      incomingOrderQueue.splice(
+        0,
+        incomingOrderQueue.length,
+        ...incomingOrderQueue.filter(id => id !== orderId)
+      );
+      pendingOrderNotifications.delete(orderId);
+      if (activeIncomingOrderId === orderId) closeIncomingOrderDialog();
+
+      orders = orders.filter(item => item.id !== orderId);
       renderOrders();
       renderHistory();
-      await refreshAll();
 
-      status(`Done. Permanently deleted ${count} order(s) and their items.`, "#delete-orders-message");
-      toast(`Deleted ${count} order(s).`);
+      try {
+        await loadOrders();
+        toast("Order #" + (data || orderNumber) + " deleted permanently.");
+      } catch (refreshError) {
+        console.error("Order was deleted, but the list refresh failed:", refreshError);
+        toast("Order #" + orderNumber + " was deleted. Refresh the dashboard to reload the list.");
+      }
     } catch (error) {
-      console.error("Permanent order deletion failed:", error);
-      status("Could not delete orders: " + (error.message || "Unknown error"), "#delete-orders-message", true);
+      console.error("Single order deletion failed:", error);
+      toast("Could not delete order #" + orderNumber + ": " + (error.message || "Unknown error"));
     } finally {
-      button.disabled = false;
-      button.textContent = originalText;
+      if (!deletionSucceeded && button.isConnected) {
+        button.disabled = false;
+        button.textContent = originalText;
+      }
     }
+  }
+
+  // A delete control is rendered inside each order card, so every click is scoped to one UUID.
+  document.addEventListener("click", event => {
+    const target = event.target instanceof Element ? event.target : null;
+    const button = target?.closest("[data-delete-order]");
+    if (!button || button.disabled) return;
+    void deleteSingleOrder(button.dataset.deleteOrder, button);
   });
 
   start();
