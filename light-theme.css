@@ -650,3 +650,257 @@ html body.rider-app .form-message.success,
 html body.rider-app .dashboard-message.success{background:#f8f0df!important;color:#704d26!important;border-color:#e8d7b1!important}
 html body.admin-body .status-success,
 html body.admin-body .success{background:#f8f0df!important;color:#704d26!important;border-color:#e8d7b1!important}
+
+
+/* ───────── FINAL BUTTON SYSTEM & LIGHT PREMIUM FINISH ───────── */
+:root{
+  --shami-cream:#f7f1e7;
+  --shami-cream-deep:#efe3d4;
+  --shami-paper:#fffdf8;
+  --shami-white:#ffffff;
+  --shami-wine:#7b1f30;
+  --shami-wine-deep:#5d1423;
+  --shami-wine-soft:#f5e7e7;
+  --shami-gold:#c6a05a;
+  --shami-gold-soft:#f8f0df;
+  --shami-ink:#2e2427;
+  --shami-muted:#75696b;
+  --shami-line:#e6d9ce;
+  --shami-shadow:0 8px 24px rgba(67,35,35,.065);
+}
+html:has(body.customer-home-page),html:has(body.customer-history-page),
+html:has(body.admin-body),html:has(body.rider-app){color-scheme:light!important;background:var(--shami-cream)!important}
+body.customer-home-page,body.customer-history-page,body.admin-body,body.rider-app{
+  color:var(--shami-ink)!important;background:var(--shami-cream)!important;
+}
+body.customer-home-page button,body.customer-history-page button,body.admin-body button,body.rider-app button,
+body.customer-home-page a.btn,body.customer-history-page a.btn,body.admin-body a.btn,body.rider-app a.btn{
+  font-family:inherit!important;font-weight:750!important;letter-spacing:-.01em;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+body.customer-home-page button:active,body.customer-history-page button:active,
+body.admin-body button:active,body.rider-app button:active{transform:translateY(1px)}
+body.customer-home-page :is(.btn,button.btn),body.customer-history-page :is(.btn,button.btn),
+body.admin-body :is(.btn,button.btn),body.rider-app :is(.btn,button.btn){
+  min-height:42px!important;padding:9px 14px!important;border-radius:11px!important;
+  font-size:12px!important;line-height:1.2!important;box-shadow:none!important;
+}
+body.customer-home-page .btn-primary,body.customer-home-page button.btn-primary,
+body.customer-history-page .btn-primary,body.customer-history-page button.btn-primary,
+body.admin-body .btn-primary,body.admin-body button.btn-primary,
+body.rider-app .primary-button,body.rider-app button.primary-button,
+body.rider-app .navigation-button:not(.secondary){
+  min-height:43px!important;background:var(--shami-wine)!important;color:#fffaf5!important;
+  border:1px solid var(--shami-wine)!important;border-radius:11px!important;font-weight:850!important;
+  box-shadow:0 4px 10px rgba(123,31,48,.12)!important;
+}
+body.customer-home-page .btn-primary:hover,body.customer-history-page .btn-primary:hover,
+body.admin-body .btn-primary:hover,body.rider-app .primary-button:hover,
+body.rider-app .navigation-button:not(.secondary):hover{background:var(--shami-wine-deep)!important}
+body.customer-home-page .btn-light,body.customer-home-page button.btn-light,
+body.customer-history-page .btn-light,body.customer-history-page button.btn-light,
+body.admin-body .btn-light,body.admin-body button.btn-light,
+body.rider-app .secondary-button,body.rider-app .navigation-button.secondary{
+  min-height:41px!important;background:#fffdf9!important;color:var(--shami-wine)!important;
+  border:1px solid #ddcabb!important;border-radius:11px!important;font-weight:800!important;
+}
+body.customer-home-page .btn-light:hover,body.customer-history-page .btn-light:hover,
+body.admin-body .btn-light:hover,body.rider-app .secondary-button:hover,
+body.rider-app .navigation-button.secondary:hover{background:#f8efdf!important;border-color:#cdb083!important}
+body.customer-home-page button:disabled,body.customer-history-page button:disabled,
+body.admin-body button:disabled,body.rider-app button:disabled{
+  opacity:.48!important;cursor:not-allowed!important;box-shadow:none!important;transform:none!important;
+}
+body.customer-home-page :is(input,select,textarea),body.customer-history-page :is(input,select,textarea),
+body.admin-body :is(input,select,textarea),body.rider-app :is(input,select,textarea){
+  min-height:43px!important;padding:10px 12px!important;border-radius:11px!important;
+  border:1px solid #ddcfc3!important;background:#fff!important;color:var(--shami-ink)!important;
+  box-shadow:none!important;font-size:13px!important;
+}
+body.customer-home-page textarea,body.customer-history-page textarea,
+body.admin-body textarea,body.rider-app textarea{min-height:80px!important}
+body.customer-home-page :is(input,select,textarea)::placeholder,
+body.customer-history-page :is(input,select,textarea)::placeholder,
+body.admin-body :is(input,select,textarea)::placeholder,
+body.rider-app :is(input,select,textarea)::placeholder{color:#897c7b!important;opacity:1}
+
+/* Customer ordering: consistent product, basket and checkout controls */
+body.customer-home-page .product-bottom{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important}
+body.customer-home-page .product-bottom .price{font-size:13px!important;font-weight:900!important;color:var(--shami-wine)!important}
+body.customer-home-page .product-bottom .btn,
+body.customer-history-page .product-bottom .btn{
+  min-height:36px!important;min-width:76px;padding:7px 11px!important;border-radius:10px!important;font-size:11px!important;
+}
+body.customer-home-page #clear-cart,body.customer-history-page #clear-cart{min-height:37px!important;padding:7px 11px!important}
+body.customer-home-page #cart-items [data-dec],body.customer-home-page #cart-items [data-inc],
+body.customer-history-page #cart-items [data-dec],body.customer-history-page #cart-items [data-inc]{
+  display:inline-grid;place-items:center;min-width:34px!important;min-height:34px!important;padding:0!important;
+  border:1px solid #ddcabb!important;border-radius:10px!important;background:#fffaf2!important;
+  color:var(--shami-wine)!important;font-size:17px!important;font-weight:900!important;
+}
+body.customer-home-page #cart-items [data-remove],body.customer-history-page #cart-items [data-remove]{
+  min-height:32px!important;padding:5px 9px!important;border:1px solid #ead4d2!important;border-radius:9px!important;
+  background:#fff4f1!important;color:#8b2935!important;font-size:10px!important;
+}
+body.customer-home-page .delivery-location-controls,
+body.customer-home-page .delivery-map-toolbar,
+body.customer-home-page .delivery-map-footer,
+body.customer-home-page .success-actions,
+body.customer-home-page .site-contact-links,
+body.customer-home-page .quick-contact,
+body.customer-history-page .delivery-location-controls,
+body.customer-history-page .delivery-map-toolbar,
+body.customer-history-page .delivery-map-footer{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+body.customer-home-page .delivery-location-controls .btn,
+body.customer-home-page .delivery-map-toolbar .btn,
+body.customer-home-page .delivery-map-footer .btn,
+body.customer-history-page .delivery-location-controls .btn,
+body.customer-history-page .delivery-map-toolbar .btn,
+body.customer-history-page .delivery-map-footer .btn{flex:0 1 auto;min-height:40px!important}
+body.customer-home-page .delivery-map-footer,
+body.customer-history-page .delivery-map-footer{justify-content:flex-end;padding-top:12px;border-top:1px solid #eee2d7}
+body.customer-home-page .delivery-map-footer #delivery-map-confirm,
+body.customer-history-page .delivery-map-footer #delivery-map-confirm{min-width:155px}
+body.customer-home-page .copy-address-button{
+  min-height:39px!important;padding:8px 12px!important;border:1px solid #ddcabb!important;border-radius:10px!important;
+  background:#fffdf9!important;color:var(--shami-wine)!important;font-weight:800!important;
+}
+body.customer-home-page .quick-contact{gap:8px!important}
+body.customer-home-page .quick-contact a{
+  display:inline-flex;align-items:center;justify-content:center;min-height:40px!important;padding:9px 13px!important;
+  border-radius:999px!important;background:var(--shami-wine)!important;color:#fffaf5!important;
+  border:1px solid var(--shami-wine)!important;font-size:11px!important;font-weight:850!important;text-decoration:none!important;
+}
+body.customer-home-page .quick-contact a.quick-contact-call{background:#fffdf9!important;color:var(--shami-wine)!important;border-color:#ddcabb!important}
+body.customer-home-page .success-actions{gap:8px!important}
+body.customer-home-page .success-actions>*{min-height:42px!important;display:inline-flex;align-items:center;justify-content:center;padding:9px 13px!important;border-radius:11px!important;font-size:12px!important;text-decoration:none!important}
+body.customer-home-page .success-whatsapp,body.customer-home-page .success-track{background:var(--shami-wine)!important;color:#fffaf5!important;border:1px solid var(--shami-wine)!important}
+body.customer-home-page #success-close{background:#fffdf9!important;color:var(--shami-wine)!important;border:1px solid #ddcabb!important}
+body.customer-home-page .receipt-code-row{align-items:center!important;gap:10px!important}
+body.customer-home-page .receipt-code-copy,body.customer-history-page .receipt-code-copy{
+  flex:0 0 auto;min-height:40px!important;padding:8px 13px!important;border-radius:10px!important;font-size:11px!important;
+}
+
+/* Admin: action rows are grouped by purpose; status selector first, actions below it. */
+html body.admin-body #dashboard .order-footer{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)!important;
+  align-items:start!important;gap:12px!important;
+}
+html body.admin-body #dashboard .order-footer>div:first-child{min-width:0}
+html body.admin-body #dashboard .order-actions{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:stretch!important;gap:7px!important;min-width:0;width:100%;
+}
+html body.admin-body #dashboard .order-actions select{
+  grid-column:1/-1!important;width:100%!important;min-width:0!important;min-height:40px!important;
+  padding:8px 10px!important;background:#fff!important;color:var(--shami-ink)!important;
+  border:1px solid #ddcfc3!important;border-radius:10px!important;font-size:11px!important;
+}
+html body.admin-body #dashboard .order-actions .btn,
+html body.admin-body #dashboard .order-actions button{
+  width:100%!important;min-width:0!important;min-height:37px!important;padding:7px 8px!important;
+  border-radius:10px!important;white-space:normal!important;font-size:10px!important;line-height:1.2!important;
+}
+html body.admin-body #dashboard .order-actions .delete-order-btn,
+html body.admin-body #dashboard .delete-order-btn{
+  background:#fff1ee!important;color:#8b2935!important;border:1px solid #e7c3bf!important;
+}
+html body.admin-body #dashboard .order-actions .delete-order-btn:hover,
+html body.admin-body #dashboard .delete-order-btn:hover{background:#fbe2df!important;border-color:#dba8a4!important}
+html body.admin-body #receipt-confirm-form{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto!important;
+  align-items:end!important;gap:9px!important;padding:13px!important;border:1px solid #e7d9cc!important;
+  border-radius:14px!important;background:#faf3e9!important;
+}
+html body.admin-body #receipt-confirm-form label{display:grid;gap:6px;min-width:0;color:#514346!important;font-size:10px!important;font-weight:850!important}
+html body.admin-body #receipt-confirm-form input{width:100%;min-width:0}
+html body.admin-body #receipt-confirm-form button{min-height:43px!important;white-space:nowrap}
+html body.admin-body #receipt-confirm-message{grid-column:1/-1;margin:0}
+html body.admin-body #dashboard .admin-form .form-actions,
+html body.admin-body #dashboard .form-actions{
+  display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:9px!important;
+  flex-wrap:wrap!important;margin-top:6px!important;
+}
+html body.admin-body #dashboard .form-actions .btn{min-width:112px!important}
+html body.admin-body #dashboard .admin-tabs{display:flex;gap:7px!important;flex-wrap:wrap}
+html body.admin-body #dashboard .admin-tabs .tab{
+  min-height:38px!important;padding:8px 12px!important;border-radius:10px!important;font-size:11px!important;
+}
+html body.admin-body #dashboard .section-heading{gap:10px!important;align-items:center!important}
+html body.admin-body #dashboard .section-heading .btn,
+html body.admin-body #dashboard .section-heading button{flex:0 0 auto}
+html body.admin-body #dashboard #orders-list .order-card,
+html body.admin-body #dashboard #history-list .order-card{min-width:0}
+html body.admin-body #dashboard #ops-subtabs .ops-tool-tile:nth-child(n) .ops-tool-icon{
+  background:#f7e9e7!important;color:var(--shami-wine)!important;
+}
+html body.admin-body #dashboard #ops-subtabs .ops-tool-tile.active .ops-tool-icon{
+  background:#f5e4bd!important;color:var(--shami-wine)!important;
+}
+html body.admin-body .incoming-order-actions{display:flex!important;gap:9px!important;flex-wrap:wrap!important}
+html body.admin-body .incoming-order-actions button{min-height:44px!important;flex:1 1 130px!important;border-radius:11px!important;font-weight:850!important}
+html body.admin-body .incoming-order-actions .incoming-reject,
+html body.admin-body .incoming-order-actions #incoming-order-reject{
+  background:#fffaf4!important;color:var(--shami-wine)!important;border:1px solid #ddcabb!important;
+}
+html body.admin-body .incoming-order-actions .incoming-accept,
+html body.admin-body .incoming-order-actions #incoming-order-accept{
+  background:var(--shami-wine)!important;color:#fffaf5!important;border:1px solid var(--shami-wine)!important;
+}
+
+/* Rider: two clear actions per delivery; one primary (maps), one secondary (call). */
+html body.rider-app .header-right{display:flex;align-items:center;gap:8px}
+html body.rider-app #signout-button{min-height:36px!important;padding:7px 10px!important;border-radius:10px!important}
+html body.rider-app #location-toggle{min-width:190px}
+html body.rider-app .section-heading .refresh-button{
+  display:inline-flex!important;align-items:center;justify-content:center;gap:7px;
+  min-height:39px!important;padding:7px 12px!important;border-radius:11px!important;
+}
+html body.rider-app .delivery-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+html body.rider-app .delivery-actions .navigation-button{
+  display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;
+  width:100%!important;min-width:0!important;min-height:43px!important;padding:9px 10px!important;
+  border-radius:11px!important;font-size:11px!important;text-align:center!important;line-height:1.2!important;
+}
+html body.rider-app .delivery-actions .navigation-button.secondary{
+  background:#fffdf9!important;color:var(--shami-wine)!important;border:1px solid #ddcabb!important;
+}
+html body.rider-app .privacy-note{font-size:10px!important;line-height:1.4!important;margin:6px 2px 15px!important}
+html body.rider-app .dashboard-footer span:last-child{display:none!important}
+
+/* Keep every page readable on narrow screens, with full-width primary checkout controls. */
+@media(max-width:760px){
+  body.customer-home-page .delivery-location-controls{display:grid!important;grid-template-columns:1fr!important;gap:7px!important}
+  body.customer-home-page .delivery-location-controls .btn{width:100%!important}
+  body.customer-home-page .delivery-map-toolbar{align-items:stretch!important;flex-direction:column!important}
+  body.customer-home-page .delivery-map-footer{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr)!important;gap:8px!important}
+  body.customer-home-page .delivery-map-footer .btn{width:100%!important;min-width:0!important}
+  body.customer-home-page .success-actions{display:grid!important;grid-template-columns:1fr 1fr!important}
+  body.customer-home-page .success-actions>*{width:100%!important;min-width:0!important}
+  body.customer-home-page .success-actions .success-whatsapp{grid-column:1/-1}
+  body.customer-home-page .quick-contact{left:10px!important;right:10px!important;bottom:calc(10px + env(safe-area-inset-bottom,0px))!important}
+  body.customer-home-page .quick-contact a{flex:1 1 auto!important}
+  html body.admin-body #dashboard .order-footer{grid-template-columns:1fr!important;gap:10px!important}
+  html body.admin-body #dashboard .order-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  html body.admin-body #receipt-confirm-form{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  html body.admin-body #receipt-confirm-form button{grid-column:1/-1!important;width:100%!important}
+  html body.admin-body #dashboard .form-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  html body.admin-body #dashboard .form-actions .btn{width:100%!important;min-width:0!important}
+  html body.admin-body #dashboard #orders-list .order-actions .btn{font-size:10px!important}
+  html body.rider-app #location-toggle{width:100%!important;min-width:0!important}
+  html body.rider-app .delivery-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  html body.rider-app .delivery-actions .navigation-button{font-size:10px!important;padding:8px 6px!important}
+}
+@media(max-width:390px){
+  body.customer-home-page .success-actions{grid-template-columns:1fr!important}
+  body.customer-home-page .success-actions .success-whatsapp{grid-column:auto}
+  html body.admin-body #dashboard .order-actions{grid-template-columns:1fr 1fr!important;gap:6px!important}
+  html body.admin-body #dashboard .order-actions .btn{font-size:9px!important;padding:7px 5px!important}
+  html body.rider-app .delivery-actions{grid-template-columns:1fr!important}
+}
+@media(prefers-reduced-motion:reduce){
+  body.customer-home-page *,body.customer-history-page *,body.admin-body *,body.rider-app *{
+    transition:none!important;animation:none!important;scroll-behavior:auto!important;
+  }
+}
