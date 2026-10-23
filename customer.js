@@ -1808,7 +1808,7 @@
           (itemHtml ? '<ul class="tracked-items">' + itemHtml + "</ul>" : "") +
           riderMapMarkup +
           (status !== "completed" && status !== "rejected" && order.receipt_code
-            ? '<p class="receipt-code-note">' + escapeHTML(lang === "ar" ? "رمز تأكيد الاستلام (أعطه للكاشير عند التسليم): " : "Customer receipt code (give this to the cashier when you receive the order): ") + '<strong>' + escapeHTML(order.receipt_code) + '</strong></p>'
+            ? '<div class="receipt-code-note"><span class="receipt-code-label">' + escapeHTML(lang === "ar" ? "رمز تأكيد الاستلام — أعطه للكاشير عند الاستلام" : "Receipt code — show it to the cashier") + '</span><div class="receipt-code-row"><strong class="receipt-code-value">' + escapeHTML(order.receipt_code) + '</strong><button type="button" class="receipt-code-copy" data-receipt-code="' + escapeHTML(order.receipt_code) + '">' + escapeHTML(lang === "ar" ? "نسخ الرمز" : "Copy code") + '</button></div></div>'
             : "") + remove + "</article>";
       };
       // A customer must continue seeing an order after it is accepted.
@@ -2307,6 +2307,51 @@
       if (retryButton) retryButton.disabled = false;
     }
   }
+
+  // Let customers copy the pickup confirmation code with one tap.
+  document.addEventListener("click", async event => {
+    const button = event.target?.closest?.(".receipt-code-copy");
+    if (!button) return;
+    event.preventDefault();
+    const code = button.getAttribute("data-receipt-code") || "";
+    if (!code) return;
+    const originalLabel = button.textContent;
+    const announceCopied = () => {
+      button.textContent = lang === "ar" ? "تم النسخ ✓" : "Copied ✓";
+      button.classList.add("is-copied");
+      window.setTimeout(() => {
+        button.textContent = originalLabel;
+        button.classList.remove("is-copied");
+      }, 1800);
+    };
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(code);
+      } else {
+        const fallback = document.createElement("textarea");
+        fallback.value = code;
+        fallback.setAttribute("readonly", "");
+        fallback.style.position = "fixed";
+        fallback.style.opacity = "0";
+        document.body.appendChild(fallback);
+        fallback.select();
+        const copied = document.execCommand("copy");
+        fallback.remove();
+        if (!copied) throw new Error("Clipboard command did not succeed");
+      }
+      announceCopied();
+    } catch (_) {
+      const selection = window.getSelection?.();
+      if (selection) {
+        const range = document.createRange();
+        range.selectNodeContents(button.closest(".receipt-code-row")?.querySelector(".receipt-code-value") || button);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      button.textContent = lang === "ar" ? "حدّد الرمز وانسخه" : "Select and copy";
+      window.setTimeout(() => { button.textContent = originalLabel; }, 2200);
+    }
+  });
 
   $("#copy-address")?.addEventListener("click", async () => {
     const address = $("#restaurant-address")?.textContent?.trim() || "";
