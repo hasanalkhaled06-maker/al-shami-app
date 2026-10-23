@@ -170,6 +170,12 @@
       </div>
     </div>
 
+    <div class="stats">
+      <div class="stat"><span>New orders</span><strong id="stat-new">0</strong></div>
+      <div class="stat"><span>In progress</span><strong id="stat-progress">0</strong></div>
+      <div class="stat"><span>Menu items</span><strong id="stat-menu">0</strong></div>
+    </div>
+
     <section id="admin-home" class="admin-home" aria-label="Admin workspaces">
       
       <div class="admin-home-grid">
@@ -242,12 +248,6 @@
       </div>
     </section>
 
-    <div class="stats">
-      <div class="stat"><span>New orders</span><strong id="stat-new">0</strong></div>
-      <div class="stat"><span>In progress</span><strong id="stat-progress">0</strong></div>
-      <div class="stat"><span>Menu items</span><strong id="stat-menu">0</strong></div>
-    </div>
-
     <div class="admin-tabs legacy-main-tabs">
       <button class="tab active" data-tab="orders" type="button">Orders <span id="new-count">0</span></button>
       <button class="tab" data-tab="history" type="button">History</button>
@@ -282,8 +282,8 @@
       </form>
 
       <div class="section-heading" aria-label="Search and export orders">
-        <input id="order-search" type="search" placeholder="Search order number, customer, phone or address…" aria-label="Search orders" autocomplete="off">
-        <button id="export-orders" class="btn btn-light" type="button">Export visible orders (CSV)</button>
+        <input id="order-search" type="search" placeholder="Search orders…" aria-label="Search orders" autocomplete="off">
+        <button id="export-orders" class="btn btn-light" type="button">Export CSV</button>
       </div>
 
       <div id="orders-list" class="orders-list">
