@@ -575,3 +575,24 @@ html body.rider-app .dashboard-footer{color:#897a78!important;border-color:#e4d6
     transition:none!important;animation:none!important;scroll-behavior:auto!important;
   }
 }
+
+
+/* Approval and live-state badges use the warm palette too. */
+html body.rider-app .approval-status-chip,
+html body.rider-app .approval-panel.is-approved .approval-status-chip{
+  color:#6f4b25!important;background:#f8efdc!important;border-color:#e5d2a8!important;
+}
+html body.rider-app .approval-status-dot,
+html body.rider-app .approval-panel.is-approved .approval-status-dot{background:#c6a05a!important}
+html body.rider-app .approval-panel.is-error .approval-status-chip{
+  color:#8b2030!important;background:#fff0ed!important;border-color:#e8c4bd!important;
+}
+html body.rider-app .approval-panel.is-error .approval-status-dot{background:#a83a49!important}
+html body.customer-home-page .success-progress,
+html body.customer-home-page .success-icon,
+html body.customer-home-page .success-header{color:var(--shami-wine)!important}
+html body.customer-home-page .success-card,
+html body.customer-home-page .success-details{background:#fffdf8!important;color:var(--shami-ink)!important;border-color:var(--shami-line)!important}
+html body.customer-home-page .success-title,html body.customer-home-page .success-heading,
+html body.customer-home-page .success-order-number,html body.customer-home-page .success-order-total{color:var(--shami-wine)!important}
+html body.customer-home-page .success-subtitle,html body.customer-home-page .success-eyebrow{color:var(--shami-muted)!important}
