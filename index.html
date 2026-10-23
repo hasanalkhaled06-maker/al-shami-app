@@ -102,6 +102,9 @@
     @media(max-width:480px){.success-card{max-height:39vh;padding:13px 13px 12px;border-radius:15px}.success-icon{flex-basis:38px;width:38px;height:38px;font-size:25px;border-radius:11px}.success-card h2{font-size:17px}.success-card .success-subtitle{font-size:11px}.success-progress{margin:10px 0 9px}.success-details{gap:6px;margin-bottom:9px}#success-order-number,#success-order-total{font-size:11px;padding:6px 8px}.success-actions{gap:7px}.success-whatsapp{font-size:11px;min-height:37px;padding:8px 9px}.success-card #success-close{font-size:11px;min-height:37px;padding:7px 11px}}
     @media(prefers-reduced-motion:reduce){.success-card,.success-icon span,.success-progress span{animation:none!important}.success-progress span{width:100%;opacity:.7}}
     
+    .customer-orders-note{margin:3px 0 10px;color:#6a6060;font-size:.82rem;line-height:1.45}
+    .customer-order-group{margin-top:15px;padding:13px;border:1px solid #f0e4e1;border-radius:13px;background:#fffdfb}
+    .customer-order-group>h3{margin:0 0 10px;color:#67101a;font-size:1rem;font-weight:850}
     .menu-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .menu-tools #search{flex:1;min-width:170px}
     .sort-label{display:flex;align-items:center;gap:7px;font-size:.9rem;font-weight:700}
@@ -113,9 +116,6 @@
     .customer-orders-panel{margin:22px 0;padding:20px;background:#fff;border:1px solid #ead7d9;border-radius:18px;box-shadow:0 8px 24px rgba(35,12,15,.05)}
     .customer-orders-panel .section-heading{margin-bottom:8px}.customer-orders-panel .section-heading h2{margin:0}
     .customer-orders-help{color:#5f5555;line-height:1.5;margin:8px 0 14px}
-    .track-order-form{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:12px 0}
-    .track-order-form label{display:grid;gap:6px;flex:1;min-width:220px;font-weight:700}
-    .track-order-form input{box-sizing:border-box;width:100%;min-height:44px;padding:11px 12px;border:1px solid #d9cacc;border-radius:10px;font:inherit}
     #customer-orders-message:empty{display:none}.tracked-empty{padding:14px;background:#faf7f7;border-radius:10px}
     .customer-order-card{margin:12px 0;padding:16px;border:1px solid #eadfe0;border-radius:14px;background:#fff}
     .tracked-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -133,9 +133,7 @@
     .tracked-steps li.is-complete:after{background:#8d1723}.tracked-steps li.is-complete,.tracked-steps li.is-current{color:#67101a;font-weight:800}
     .tracked-order-meta{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #f0e7e8;padding-top:12px;margin-top:8px}
     .tracked-items{padding:0;margin:10px 0;list-style:none}.tracked-items li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed #eee}
-    .tracked-items li:last-child{border-bottom:0}.tracked-code{margin:12px 0;color:#514646}.tracked-code summary{cursor:pointer;font-weight:700}
-    .tracked-code code{display:block;margin:8px 0;padding:10px;border-radius:8px;background:#fff6e8;color:#67101a;overflow-wrap:anywhere;user-select:all}
-    .tracked-remove{margin-top:5px}    @media(max-width:520px){.customer-orders-panel{padding:15px}.tracked-steps li{font-size:.62rem}.track-order-form label{min-width:100%}}
+    .tracked-items li:last-child{border-bottom:0}.tracked-remove{margin-top:5px}    @media(max-width:520px){.customer-orders-panel{padding:15px}.tracked-steps li{font-size:.62rem}}
 
     .btn-remove-item{min-height:44px;padding:8px 10px;border:1px solid #e6c7c7;border-radius:8px;background:#fff5f5;color:#8d1723;font-weight:700}
     .qty-controls button{min-width:44px;min-height:44px}
@@ -404,7 +402,7 @@
     <div id="active-offers" aria-live="polite"></div>
 
     <section id="customer-orders-panel" class="customer-orders-panel" aria-labelledby="customer-orders-heading">
-      <div class="section-heading"><div><p class="eyebrow">AL SHAMI</p><h2 id="customer-orders-heading" data-i18n="activeOrdersHeading">Active orders</h2></div>
+      <div class="section-heading"><div><p class="eyebrow">AL SHAMI</p><h2 id="customer-orders-heading" data-i18n="activeOrdersHeading">Active orders</h2><p class="customer-orders-note" data-i18n="ordersUpdateNote">We refresh order status automatically while this page is open.</p></div>
         <button id="refresh-customer-orders" class="btn btn-light" type="button" data-i18n="refreshOrders">Refresh</button></div>
       <div id="customer-orders-nav" class="customer-orders-nav"><a class="btn btn-light" href="./history.html">Order History</a></div>
 
