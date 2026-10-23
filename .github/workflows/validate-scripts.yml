@@ -23,3 +23,5 @@ jobs:
           node --check admin.js
           node --check admin-operations.js
           node --check pwa.js
+          node --check rider.js
+          node --check service-worker.js
