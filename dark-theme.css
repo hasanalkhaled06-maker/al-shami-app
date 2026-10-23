@@ -1,7 +1,5 @@
-/* AL SHAMI — Dark premium design system.
-   Loaded last on customer, history, admin and rider pages to override legacy palettes.
-   Palette: near-black charcoal, layered graphite, deep burgundy, champagne gold,
-   with restrained deep-blue/mint icon accents and high-contrast ivory text. */
+/* AL SHAMI — shared customer/history/admin/rider theme stylesheet.
+   Legacy rules remain for layout compatibility; the active cream-blue palette is applied in the final override sections below. */
 :root{
   color-scheme:dark;
   --shami-bg:#121013;
@@ -1108,4 +1106,109 @@ html body.customer-home-page .unavailable-badge,
 html body.customer-history-page .unavailable-badge{background:#EAF2F7!important;color:#5F7482!important;border-color:#C7DCE8!important}
 html body.customer-home-page .skip-link,
 html body.customer-history-page .skip-link{background:#FFFDF8!important;color:#315F7E!important}
+
+
+
+
+/* Cream-blue finishing pass: splash screen, receipt hand-off, contacts and footer. */
+html body.customer-home-page .welcome-screen,
+html body.customer-history-page .welcome-screen{
+  background:radial-gradient(ellipse at 50% 8%,rgba(216,183,121,.18),transparent 34%),
+    linear-gradient(145deg,#EAF2F7 0%,#D5E6F0 58%,#F8F3E8 100%)!important;
+  color:#203748!important;
+}
+html body.customer-home-page .welcome-screen:before,
+html body.customer-home-page .welcome-screen:after,
+html body.customer-history-page .welcome-screen:before,
+html body.customer-history-page .welcome-screen:after{
+  border-color:rgba(49,95,126,.22)!important;
+  box-shadow:0 0 0 24px rgba(49,95,126,.025),0 0 0 52px rgba(49,95,126,.02)!important;
+}
+html body.customer-home-page .welcome-glow,
+html body.customer-history-page .welcome-glow{background:#8EB8D0!important;opacity:.12!important}
+html body.customer-home-page .welcome-glow-two,
+html body.customer-history-page .welcome-glow-two{background:#D8B779!important}
+html body.customer-home-page .welcome-content,
+html body.customer-history-page .welcome-content{
+  background:rgba(255,253,248,.9)!important;color:#203748!important;
+  border:1px solid #C8DCE7!important;box-shadow:0 24px 70px rgba(35,71,95,.12)!important;
+}
+html body.customer-home-page .welcome-emblem,
+html body.customer-history-page .welcome-emblem{
+  border-color:#D8B779!important;color:#315F7E!important;
+  box-shadow:0 0 0 6px rgba(216,183,121,.09),0 12px 30px rgba(35,71,95,.08)!important;
+}
+html body.customer-home-page .welcome-emblem i,
+html body.customer-home-page .welcome-kicker,
+html body.customer-home-page .welcome-divider,
+html body.customer-history-page .welcome-emblem i,
+html body.customer-history-page .welcome-kicker,
+html body.customer-history-page .welcome-divider{color:#315F7E!important}
+html body.customer-home-page .welcome-divider span,
+html body.customer-history-page .welcome-divider span{background:linear-gradient(90deg,transparent,#7DAAC7)!important}
+html body.customer-home-page .welcome-content h1,
+html body.customer-history-page .welcome-content h1{color:#203748!important;text-shadow:none!important}
+html body.customer-home-page .welcome-tagline,
+html body.customer-history-page .welcome-tagline{color:#315F7E!important}
+html body.customer-home-page .welcome-description,
+html body.customer-history-page .welcome-description{color:#5F7482!important}
+html body.customer-home-page .welcome-enter,
+html body.customer-history-page .welcome-enter{
+  background:linear-gradient(120deg,#3A759B,#2B5878)!important;
+  color:#FFFFFF!important;border:1px solid #2C5878!important;box-shadow:0 8px 22px rgba(45,99,134,.16)!important;
+}
+html body.customer-home-page .welcome-foot,
+html body.customer-home-page .welcome-loading,
+html body.customer-history-page .welcome-foot,
+html body.customer-history-page .welcome-loading{color:#5F7482!important}
+html body.customer-home-page .welcome-loading span,
+html body.customer-history-page .welcome-loading span{background:#315F7E!important}
+
+html body.customer-home-page .receipt-code-note,
+html body.customer-history-page .receipt-code-note{
+  background:linear-gradient(145deg,#FFFDF8,#EAF2F7)!important;color:#203748!important;
+  border:1px solid #C7DCE8!important;box-shadow:0 7px 18px rgba(35,71,95,.06)!important;
+}
+html body.customer-home-page .receipt-code-label,
+html body.customer-history-page .receipt-code-label{color:#526D7E!important}
+html body.customer-home-page .receipt-code-value,
+html body.customer-history-page .receipt-code-value{color:#315F7E!important}
+html body.customer-home-page .receipt-code-copy,
+html body.customer-history-page .receipt-code-copy{
+  background:#315F7E!important;color:#FFFFFF!important;border-color:#315F7E!important;
+}
+html body.customer-home-page .receipt-code-copy.is-copied,
+html body.customer-history-page .receipt-code-copy.is-copied{background:#26734B!important;color:#FFFFFF!important;border-color:#26734B!important}
+
+html body.customer-home-page footer,
+html body.customer-history-page footer{
+  background:linear-gradient(180deg,#F0F6F9,#E3EEF4)!important;color:#31536B!important;
+  border-top:1px solid #CADCE7!important;
+}
+html body.customer-home-page footer :is(p,small,strong,span),
+html body.customer-history-page footer :is(p,small,strong,span){color:#526D7E!important}
+html body.customer-home-page footer a,
+html body.customer-history-page footer a{color:#315F7E!important}
+html body.customer-home-page .quick-contact a,
+html body.customer-history-page .quick-contact a,
+html body.customer-home-page .site-contact-links a,
+html body.customer-history-page .site-contact-links a{
+  background:#EAF2F7!important;color:#315F7E!important;border-color:#C7DCE8!important;
+}
+html body.customer-home-page .quick-contact a.quick-contact-call,
+html body.customer-history-page .quick-contact a.quick-contact-call{
+  background:#315F7E!important;color:#FFFFFF!important;border-color:#315F7E!important;
+}
+html body.customer-home-page #cart-items [data-dec],
+html body.customer-home-page #cart-items [data-inc],
+html body.customer-history-page #cart-items [data-dec],
+html body.customer-history-page #cart-items [data-inc]{
+  background:#E7F0F6!important;color:#31536B!important;border:1px solid #C7D9E4!important;
+}
+html body.customer-home-page .copy-address-status,
+html body.customer-history-page .copy-address-status{color:#5F7482!important}
+html body.customer-home-page .customer-rider-bike-glyph,
+html body.customer-history-page .customer-rider-bike-glyph{
+  background:#315F7E!important;color:#FFFFFF!important;border-color:#FFFFFF!important;
+}
 
