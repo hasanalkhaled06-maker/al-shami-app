@@ -1394,21 +1394,18 @@
       : label + " " + String(productName || "") + ", " + quantity;
   }
 
-  function showSuccess(orderNumber, total, trackingToken = null) {
+  function showSuccess(orderNumber, total) {
     try {
       if (typeof window.AL_SHAMI_SHOW_SUCCESS === "function") {
-        window.AL_SHAMI_SHOW_SUCCESS({ orderNumber, total, trackingToken });
+        window.AL_SHAMI_SHOW_SUCCESS({ orderNumber, total });
       } else {
-        showCheckoutMessage(
-          `${tr("sent")} ${orderNumber ? "Order #" + orderNumber : ""}`
-        );
+        showCheckoutMessage(tr("sent") + (orderNumber ? " Order #" + orderNumber : ""));
       }
     } catch (error) {
       console.error("Could not display order confirmation:", error);
       showCheckoutMessage(tr("sent"));
     }
   }
-
   function setLanguage() {
     document.documentElement.lang = lang === "ar" ? "ar" : (lang === "tw" ? "ak" : "en");
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
@@ -2111,7 +2108,7 @@
         const confirmedTotal = result && typeof result === "object" &&
           Number.isFinite(Number(result.total)) ? Number(result.total) : submittedTotal;
         if (trackingToken) rememberOrderTrackingToken(trackingToken, orderNumber);
-        showSuccess(orderNumber, confirmedTotal, trackingToken);
+        showSuccess(orderNumber, confirmedTotal);
         void refreshCustomerOrderHistory();
       } catch (error) {
         console.error("AL SHAMI order submission error:", error);
