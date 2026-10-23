@@ -1643,3 +1643,53 @@ html body.customer-home-page .customer-account .al-shami-chef-spark-b{
     animation:none!important;transform:none!important;
   }
 }
+
+/* Stronger visible depth cue: independent ground shadow and larger perspective movement. */
+html body.customer-home-page .customer-account .al-shami-chef-art{
+  perspective:420px!important;
+  transform-style:preserve-3d!important;
+}
+html body.customer-home-page .customer-account .al-shami-chef-art::before{
+  content:""!important;
+  position:absolute!important;
+  z-index:0!important;
+  left:18%!important;
+  bottom:8px!important;
+  width:64%!important;
+  height:12px!important;
+  border-radius:50%!important;
+  background:radial-gradient(ellipse,rgba(0,0,0,.42) 0%,rgba(0,0,0,.18) 43%,rgba(0,0,0,0) 76%)!important;
+  filter:blur(1.5px)!important;
+  transform:translateZ(0) scaleX(1)!important;
+  animation:shamiChefGroundShadow 4.4s ease-in-out infinite!important;
+  pointer-events:none!important;
+}
+html body.customer-home-page .customer-account svg.al-shami-chef-mascot{
+  position:relative!important;
+  z-index:1!important;
+  animation:shamiChef3DTurn 4.4s cubic-bezier(.45,0,.55,1) infinite!important;
+  will-change:transform,filter!important;
+}
+@keyframes shamiChef3DTurn{
+  0%,100%{transform:perspective(420px) rotateY(-17deg) rotateX(4deg) translateZ(0) translateY(1px) scale(.98)}
+  25%{transform:perspective(420px) rotateY(-5deg) rotateX(-2deg) translateZ(18px) translateY(-5px) scale(1.045)}
+  50%{transform:perspective(420px) rotateY(17deg) rotateX(4deg) translateZ(1px) translateY(1px) scale(.98)}
+  75%{transform:perspective(420px) rotateY(5deg) rotateX(-2deg) translateZ(16px) translateY(-4px) scale(1.035)}
+}
+@keyframes shamiChefGroundShadow{
+  0%,100%{opacity:.8;transform:translateZ(0) scaleX(1) scaleY(1)}
+  25%{opacity:.43;transform:translateZ(0) scaleX(.7) scaleY(.75)}
+  50%{opacity:.78;transform:translateZ(0) scaleX(1.04) scaleY(1)}
+  75%{opacity:.48;transform:translateZ(0) scaleX(.76) scaleY(.78)}
+}
+@media(max-width:480px){
+  html body.customer-home-page .customer-account .al-shami-chef-art::before{
+    bottom:7px!important;height:10px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  html body.customer-home-page .customer-account .al-shami-chef-art::before,
+  html body.customer-home-page .customer-account svg.al-shami-chef-mascot{
+    animation-duration:10s!important;
+  }
+}
