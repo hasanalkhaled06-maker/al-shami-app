@@ -193,17 +193,6 @@
         </div>
       </div>
 
-      <div class="ops-shortcuts" id="ops-quick-links">
-        <div>
-          <span class="ops-shortcuts-kicker">RESTAURANT SETUP</span>
-          <strong>Menu and customer settings</strong>
-          <span class="ops-shortcuts-note">Prices, promotions, delivery fee and minimum order.</span>
-        </div>
-        <button class="ops-shortcut-btn" type="button" data-ops-main-panel="menu">Menu &amp; prices <span aria-hidden="true">↗</span></button>
-        <button class="ops-shortcut-btn" type="button" data-ops-main-panel="offers">Offers <span aria-hidden="true">↗</span></button>
-        <button class="ops-shortcut-btn" type="button" data-ops-main-panel="settings">Delivery settings <span aria-hidden="true">↗</span></button>
-      </div>
-
       <div class="admin-tabs ops-tools-grid" id="ops-subtabs" aria-label="Restaurant management tools">
         <button class="tab active ops-tool-tile" data-opstab="inventory" type="button"><span class="ops-tool-icon" aria-hidden="true">▦</span><span class="ops-tool-title">Inventory</span><span class="ops-tool-description">Stock levels and low-stock items</span></button>
         <button class="tab ops-tool-tile" data-opstab="suppliers" type="button"><span class="ops-tool-icon" aria-hidden="true">⇄</span><span class="ops-tool-title">Suppliers</span><span class="ops-tool-description">Supplier contacts and details</span></button>
@@ -633,14 +622,6 @@
       });
     });
 
-    $("#ops-quick-links").addEventListener("click", event => {
-      const button = event.target.closest("[data-ops-main-panel]");
-      if (!button) return;
-      if (typeof window.__alShamiNavigateMainPanel === "function") {
-        window.__alShamiNavigateMainPanel(button.dataset.opsMainPanel);
-      }
-    });
-
     $("#ops-subtabs").addEventListener("click", event => {
       const btn = event.target.closest("[data-opstab]");
       if (!btn) return;
@@ -686,18 +667,27 @@
 
     $("#dashboard")?.classList.remove("hub-home");
     $("#admin-home")?.classList.add("hidden");
-    $("#back-to-home")?.classList.remove("hidden");
+    $("#settings-hub")?.classList.add("hidden");
 
     ["orders", "history", "menu", "offers", "settings", "operations"].forEach(key => {
       const panel = $("#tab-" + key);
       if (panel) panel.classList.toggle("hidden", key !== name);
     });
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
-
     if (name === "operations") {
+      if (typeof window.__alShamiMarkSettingsChild === "function") {
+        window.__alShamiMarkSettingsChild();
+      } else {
+        const backButton = $("#back-to-home");
+        if (backButton) {
+          backButton.textContent = "← Settings";
+          backButton.classList.remove("hidden");
+        }
+      }
       loadAll().catch(showError);
     }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function message(text, isError = false) {
