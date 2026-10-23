@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#741b28">
+  <meta name="theme-color" content="#761b2a">
   <meta name="description" content="Private AL SHAMI delivery rider app. View assigned deliveries and share live location securely.">
   <meta name="robots" content="noindex,nofollow">
   <meta name="color-scheme" content="light">
@@ -16,7 +16,8 @@
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
   <link rel="stylesheet" href="./rider.css?v=radical-ui-20261023a">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="app-refresh.css?v=contrast-fix-20261023b">
+  <link rel="stylesheet" href="app-refresh.css?v=light-premium-20261023a">
+  <link rel="stylesheet" href="light-theme.css?v=light-premium-20261023a">
 </head>
 <body class="rider-app">
   <header class="rider-header">
@@ -39,7 +40,7 @@
       </div>
       <div class="eyebrow">PRIVATE RIDER ACCESS</div>
       <h1>Deliver with confidence.</h1>
-      <p class="muted">Sign in to view your assigned deliveries.</p>
+      <p class="muted">Sign in to continue.</p>
       <div class="auth-mode-switch" role="group" aria-label="Account action">
         <button id="show-signin" class="auth-mode-button is-active" type="button" aria-pressed="true">Sign in</button>
         <button id="show-signup" class="auth-mode-button" type="button" aria-pressed="false">Create account</button>
@@ -54,7 +55,7 @@
         <button class="primary-button" type="submit" id="login-button">Sign in securely <span aria-hidden="true">→</span></button>
         <p id="login-message" class="form-message" role="status"></p>
       </form>
-      <p class="security-note"><span aria-hidden="true">🔒</span> Your assigned orders only. Order status is managed by AL SHAMI.</p>
+      <p class="security-note"><span aria-hidden="true">🔒</span> Assigned deliveries only.</p>
     </section>
 
     <section id="approval-panel" class="login-panel approval-panel" hidden aria-live="polite">
@@ -63,7 +64,7 @@
       <p id="approval-message" class="muted">Please wait while we verify your rider access with AL SHAMI management.</p>
       <div id="approval-status-chip" class="approval-status-chip"><span class="approval-status-dot"></span><span id="approval-status-label">Checking approval</span></div>
       <button id="approval-refresh-button" class="primary-button approval-refresh-button" type="button">Check approval again ↻</button>
-      <p class="security-note"><span aria-hidden="true">🔒</span> Access is enabled by restaurant management.</p>
+      <p class="security-note"><span aria-hidden="true">🔒</span> Access is approved by management.</p>
     </section>
 
     <section id="rider-dashboard" hidden>
@@ -79,22 +80,22 @@
       <section class="summary-grid" aria-label="Delivery summary">
         <article class="summary-card">
           <span class="summary-icon">▣</span><span class="summary-label">Active deliveries</span>
-          <strong id="active-count">0</strong><small>Assigned to your account</small>
+          <strong id="active-count">0</strong><small>Assigned orders</small>
         </article>
         <article class="summary-card location-summary">
           <span class="summary-icon">⌖</span><span class="summary-label">Location sharing</span>
-          <strong id="location-summary-value">Off</strong><small id="location-summary-note">Start sharing while on delivery</small>
+          <strong id="location-summary-value">Off</strong><small id="location-summary-note">GPS availability</small>
         </article>
       </section>
 
       <section class="location-panel">
         <div class="location-panel-copy">
           <span class="location-icon">⌖</span>
-          <div><strong>Live location</strong><p id="location-status" role="status">Location sharing is off. Start it when you are ready to deliver.</p></div>
+          <div><strong>Live location</strong><p id="location-status" role="status">GPS sharing is off.</p></div>
         </div>
         <button id="location-toggle" class="secondary-button" type="button" disabled>Start location sharing</button>
       </section>
-      <p class="privacy-note">Customers see your GPS only while an order is <strong>Out for delivery</strong>. Keep this page open; iPhone may pause location updates in the background.</p>
+      <p class="privacy-note">GPS is shown to the customer only during delivery. Keep this screen open.</p>
 
       <div class="section-heading">
         <div><p class="eyebrow">YOUR WORK</p><h2>Assigned deliveries</h2></div>
