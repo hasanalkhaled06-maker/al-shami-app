@@ -500,7 +500,6 @@
     $("#customer-auth-form").hidden = false;
     $("#auth-mode-switch").hidden = false;
     $("#auth-forgot-password").hidden = false;
-    $("#auth-continue-guest").hidden = true;
     $("#auth-recovery-back").hidden = false;
     gate.hidden = false;
     document.body.classList.add("auth-dialog-open");
@@ -536,7 +535,6 @@
     $("#auth-method-switch").hidden = true;
     $("#customer-auth-form").hidden = true;
     $("#auth-forgot-password").hidden = true;
-    $("#auth-continue-guest").hidden = true;
     $("#auth-recovery-panel").hidden = false;
     $("#auth-recovery-title").textContent = "Verify your phone";
     $("#auth-recovery-help").textContent = "Enter the Ghana phone number used when you created your account.";
@@ -565,7 +563,6 @@
     $("#auth-method-switch").hidden = true;
     $("#customer-auth-form").hidden = true;
     $("#auth-forgot-password").hidden = true;
-    $("#auth-continue-guest").hidden = true;
     $("#auth-recovery-panel").hidden = false;
     $("#auth-recovery-title").textContent = "Set a new password";
     $("#auth-recovery-help").textContent = "Use at least 8 characters and keep it private.";
@@ -616,7 +613,6 @@
     $("#customer-auth-form").hidden = false;
     $("#auth-mode-switch").hidden = false;
     $("#auth-forgot-password").hidden = false;
-    $("#auth-continue-guest").hidden = false;
     setAuthMode("signin");
     authMessage("");
   });
@@ -772,7 +768,6 @@
       $("#customer-auth-form").hidden = false;
       $("#auth-mode-switch").hidden = false;
       $("#auth-forgot-password").hidden = false;
-      $("#auth-continue-guest").hidden = false;
       $("#auth-password").value = "";
       $("#auth-recovery-new-password").value = "";
       $("#auth-recovery-confirm-password").value = "";
