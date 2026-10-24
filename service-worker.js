@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v99";
+const CACHE_NAME = CACHE_PREFIX + "v100";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -34,6 +34,7 @@ const SHELL_FILES = [
   "./manifest.webmanifest",
   "./admin.webmanifest",
   "./icons/al-shami.svg",
+  "./icons/al-shami-customer.svg?v=icon-20261024",
   "./icons/al-shami-admin.svg",
   "./icons/apple-touch-icon.png",
   "./icons/apple-touch-icon-admin.png"
