@@ -38,8 +38,9 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npm run prepare:web
+          npm run prepare:icons
           npx cap add android
-          npx @capawesome/capacitor-assets generate --android --iconBackgroundColor '#67101a' --iconBackgroundColorDark '#67101a' --splashBackgroundColor '#67101a' --splashBackgroundColorDark '#67101a'
+          npx @capawesome/capacitor-assets generate --android --iconBackgroundColor '#4f0d16' --iconBackgroundColorDark '#4f0d16' --splashBackgroundColor '#4f0d16' --splashBackgroundColorDark '#4f0d16'
           npx cap sync android
 
       - name: Build Android preview artifacts
@@ -74,8 +75,9 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npm run prepare:web
+          npm run prepare:icons
           npx cap add ios
-          npx @capawesome/capacitor-assets generate --ios --iconBackgroundColor '#67101a' --iconBackgroundColorDark '#67101a' --splashBackgroundColor '#67101a' --splashBackgroundColorDark '#67101a'
+          npx @capawesome/capacitor-assets generate --ios --iconBackgroundColor '#4f0d16' --iconBackgroundColorDark '#4f0d16' --splashBackgroundColor '#4f0d16' --splashBackgroundColorDark '#4f0d16'
           npx cap sync ios
 
       - name: Compile for iOS Simulator (no signing)

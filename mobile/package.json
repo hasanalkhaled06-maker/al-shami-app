@@ -6,8 +6,9 @@
   "type": "module",
   "scripts": {
     "prepare:web": "node scripts/prepare-web.mjs",
-    "cap:sync:android": "npm run prepare:web && cap sync android",
-    "cap:sync:ios": "npm run prepare:web && cap sync ios",
+    "prepare:icons": "node scripts/prepare-icons.mjs",
+    "cap:sync:android": "npm run prepare:web && npm run prepare:icons && cap sync android",
+    "cap:sync:ios": "npm run prepare:web && npm run prepare:icons && cap sync ios",
     "cap:doctor": "cap doctor"
   },
   "dependencies": {
@@ -17,7 +18,6 @@
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.2",
-    "typescript": "5.9.3",
-    "@capawesome/capacitor-assets": "4.1.0"
+    "sharp": "0.34.4"
   }
 }
