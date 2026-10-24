@@ -1,21 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#4f0d16"/>
-      <stop offset="1" stop-color="#8f1725"/>
+    <linearGradient id="burgundy" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4b0b14"/>
+      <stop offset="1" stop-color="#861724"/>
     </linearGradient>
     <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ffe9ad"/>
-      <stop offset="1" stop-color="#d6a03a"/>
+      <stop offset="0" stop-color="#ffe8a3"/>
+      <stop offset="1" stop-color="#d39a32"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <circle cx="256" cy="256" r="198" fill="none" stroke="url(#gold)" stroke-width="7"/>
-  <circle cx="256" cy="256" r="180" fill="none" stroke="#ffe9ad" stroke-opacity=".32" stroke-width="2"/>
-  <path d="M132 180 Q256 96 380 180" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
-  <path d="M132 330 Q256 410 380 330" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
-  <text x="256" y="250" text-anchor="middle" font-family="Arial,sans-serif" font-size="63" font-weight="800" letter-spacing="1" fill="url(#gold)">AL SHAMI</text>
-  <path d="M156 270 H356" stroke="#ffe9ad" stroke-opacity=".55" stroke-width="2"/>
-  <text x="256" y="310" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="700" letter-spacing="6" fill="#fff5dc">RESTAURANT</text>
+  <rect width="512" height="512" rx="112" fill="url(#burgundy)"/>
+  <circle cx="256" cy="256" r="196" fill="none" stroke="url(#gold)" stroke-width="7"/>
+  <circle cx="256" cy="256" r="178" fill="none" stroke="#ffe8a3" stroke-opacity=".3" stroke-width="2"/>
+  <path d="M142 178 Q256 105 370 178" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M142 334 Q256 407 370 334" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+  <text x="256" y="250" text-anchor="middle" font-family="Georgia,serif" font-size="66" font-weight="700" letter-spacing="1" fill="url(#gold)">AL SHAMI</text>
+  <path d="M155 272 H357" stroke="#ffe8a3" stroke-opacity=".65" stroke-width="2"/>
+  <text x="256" y="310" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="700" letter-spacing="5" fill="#fff5dc">RESTAURANT</text>
   <path d="M226 125 l30 -18 30 18" fill="none" stroke="url(#gold)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
