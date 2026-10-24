@@ -48,6 +48,7 @@
   let locationWatchId = null;
   let locationHeartbeatTimer = null;
   let sharingLocation = false;
+  let locationPermissionDenied = false;
   let lastLocationSentAt = 0;
   let lastSentPoint = null;
   let lastKnownPoint = null;
@@ -190,7 +191,15 @@
     const activeOrders = Array.isArray(orders) ? orders : [];
     $("#active-count").textContent = String(activeOrders.length);
     const locationButton = $("#location-toggle");
-    if (locationButton) locationButton.disabled = activeOrders.length === 0 || !db;
+    const canShareLocation = activeOrders.some(order =>
+      order.order_type === "delivery" && String(order.status || "").toLowerCase() === "out_for_delivery"
+    );
+    if (locationButton) {
+      locationButton.disabled = !canShareLocation || !db || sharingLocation;
+      locationButton.textContent = sharingLocation ? "Location sharing active" :
+        (canShareLocation ? (locationPermissionDenied ? "Try location again" : "Auto-share location") :
+          "Auto-share when Out for delivery");
+    }
 
     if (!activeOrders.length) {
       renderEmptyState("No deliveries yet",
@@ -267,8 +276,10 @@
       $("#refresh-label").textContent = "Synced " + new Date().toLocaleTimeString("en-GH", { hour: "2-digit", minute: "2-digit" });
       setConnectionState(true, "Connected");
       renderOrders();
-      if (sharingLocation && !orders.length) stopLocationSharing("No active deliveries are assigned. Location sharing has stopped.");
-      if (sharingLocation && orders.length) setLocationStatus("Sharing GPS location securely for your active deliveries.", false);
+      syncAutomaticLocationSharing();
+      if (sharingLocation && lastLocationSentAt > 0) {
+        setLocationStatus("Location sharing is active for your Out for delivery order.", false);
+      }
       if (options.quiet !== true && !nextOrders.length) showMessage("", "info");
       return "approved";
     } catch (error) {
@@ -300,6 +311,24 @@
     }
   }
 
+  function hasOutForDeliveryOrder() {
+    return orders.some(order =>
+      order.order_type === "delivery" && String(order.status || "").toLowerCase() === "out_for_delivery"
+    );
+  }
+
+  function syncAutomaticLocationSharing() {
+    if (!hasOutForDeliveryOrder()) {
+      if (sharingLocation) {
+        stopLocationSharing("Location sharing stopped automatically because no assigned delivery is Out for delivery.");
+      } else {
+        setLocationStatus("Location sharing starts automatically when an assigned delivery is Out for delivery.", false);
+      }
+      return;
+    }
+    if (!sharingLocation && !locationPermissionDenied) startLocationSharing();
+  }
+
   function setLocationStatus(message, isError = false) {
     const node = $("#location-status");
     if (node) {
@@ -309,10 +338,16 @@
     const summary = $("#location-summary-value");
     const note = $("#location-summary-note");
     if (summary) summary.textContent = sharingLocation ? "Live" : "Off";
-    if (note) note.textContent = sharingLocation ? "GPS updates enabled" : "Start sharing while on delivery";
+    const canShareLocation = hasOutForDeliveryOrder();
+    if (note) note.textContent = sharingLocation ? "Automatic sharing is active during delivery" :
+      (canShareLocation && locationPermissionDenied ? "Allow location access, then tap Try location again" :
+        "Sharing starts automatically when a delivery is Out for delivery");
     const button = $("#location-toggle");
     if (button) {
-      button.textContent = sharingLocation ? "Stop location sharing" : "Start location sharing";
+      button.disabled = !canShareLocation || !db || sharingLocation;
+      button.textContent = sharingLocation ? "Location sharing active" :
+        (canShareLocation ? (locationPermissionDenied ? "Try location again" : "Auto-share location") :
+          "Auto-share when Out for delivery");
       button.classList.toggle("is-sharing", sharingLocation);
     }
   }
@@ -330,7 +365,7 @@
 
   async function sendLocation(position, force = false) {
     const coords = position?.coords;
-    if (!sharingLocation || !coords || !db) return;
+    if (!sharingLocation || !hasOutForDeliveryOrder() || !coords || !db) return;
     const point = {
       lat: Number(coords.latitude),
       lng: Number(coords.longitude),
@@ -367,8 +402,8 @@
       setLocationStatus("This browser does not support GPS location sharing.", true);
       return;
     }
-    if (!orders.length) {
-      setLocationStatus("No delivery assigned yet.", true);
+    if (!hasOutForDeliveryOrder()) {
+      setLocationStatus("Location sharing starts automatically when a delivery is marked Out for delivery.", false);
       return;
     }
     if (sharingLocation) return;
@@ -385,7 +420,10 @@
           3: "GPS timed out. Keep the app open and try again."
         };
         setLocationStatus(messages[error?.code] || "Could not read GPS location.", true);
-        if (error?.code === 1) stopLocationSharing(messages[1]);
+        if (error?.code === 1) {
+          locationPermissionDenied = true;
+          stopLocationSharing(messages[1], true);
+        }
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
     );
@@ -394,7 +432,7 @@
     // database timestamp therefore reflects recent GPS readings, not just movement.
     if (locationHeartbeatTimer !== null) window.clearInterval(locationHeartbeatTimer);
     locationHeartbeatTimer = window.setInterval(() => {
-      if (!sharingLocation || !orders.length || document.visibilityState !== "visible") return;
+      if (!sharingLocation || !hasOutForDeliveryOrder() || document.visibilityState !== "visible") return;
       navigator.geolocation.getCurrentPosition(
         position => { void sendLocation(position, true); },
         error => {
@@ -407,7 +445,8 @@
 
     const button = $("#location-toggle");
     if (button) {
-      button.textContent = "Stop location sharing";
+      button.textContent = "Location sharing active";
+      button.disabled = true;
       button.classList.add("is-sharing");
     }
     if ($("#location-summary-value")) $("#location-summary-value").textContent = "Starting…";
@@ -558,8 +597,9 @@
     });
 
     $("#location-toggle")?.addEventListener("click", () => {
-      if (sharingLocation) stopLocationSharing();
-      else startLocationSharing();
+      if (sharingLocation) return;
+      locationPermissionDenied = false;
+      startLocationSharing();
     });
     $("#refresh-button")?.addEventListener("click", () => { void refreshOrders(); });
     approvalRefreshButton?.addEventListener("click", () => { void verifyRiderAccess(); });
