@@ -7,6 +7,10 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
+function emptySuccess(): Response {
+  return new Response(null, { status: 200 });
+}
+
 function canonicalPhone(value: unknown): string | null {
   const raw = String(value ?? "").trim();
   const digits = raw.replace(/[^0-9]/g, "");
@@ -58,6 +62,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   if (req.method !== "POST") return json({ error: "Use POST." }, 405);
+  console.log("Auth SMS hook received POST.");
 
   const arkeselKey = Deno.env.get("ARKESEL_API_KEY");
   if (!arkeselKey) {
@@ -69,6 +74,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const webhookTimestamp = req.headers.get("webhook-timestamp");
   const webhookSignature = req.headers.get("webhook-signature");
   if (!webhookId || !webhookTimestamp || !webhookSignature) {
+    console.error(
+      "Auth SMS hook rejected request: missing signature headers.",
+      JSON.stringify({
+        has_id: Boolean(webhookId),
+        has_timestamp: Boolean(webhookTimestamp),
+        has_signature: Boolean(webhookSignature),
+      }),
+    );
     return json({ error: "Missing webhook signature headers." }, 401);
   }
 
@@ -92,14 +105,26 @@ Deno.serve(async (req: Request): Promise<Response> => {
       "webhook-signature": webhookSignature,
     }) as typeof data;
   } catch {
+    console.error("Auth SMS hook rejected request: signature verification failed.");
     return json({ error: "Invalid webhook signature." }, 401);
   }
 
   const phone = canonicalPhone(data?.user?.phone);
   const otp = String(data?.sms?.otp ?? "").trim();
   if (!phone || !/^\\d{4,10}$/.test(otp)) {
+    console.error(
+      "Auth SMS hook rejected request: payload validation failed.",
+      JSON.stringify({
+        has_phone: Boolean(data?.user?.phone),
+        valid_phone: Boolean(phone),
+        has_otp: Boolean(otp),
+        otp_length: otp.length,
+      }),
+    );
     return json({ error: "Invalid phone number or verification code." }, 400);
   }
+  console.log("Auth SMS hook payload validated.");
+
 
   const sender = (Deno.env.get("ARKESEL_SENDER_ID") || "ALSHAMI").trim();
   const message = `AL SHAMI verification code: ${otp}. Do not share this code.`;
@@ -152,7 +177,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           : null,
       }),
     );
-    return json({ sent: true });
+    return emptySuccess();
   } catch (error) {
     console.error(
       "Auth verification SMS request failed:",
