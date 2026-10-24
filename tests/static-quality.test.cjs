@@ -171,6 +171,20 @@ test("customer email accounts can verify their saved phone for password sign-in"
   assert.ok(source("service-worker.js").includes('CACHE_PREFIX + "v103"'));
 });
 
+test("Arkesel auth SMS hook verifies Supabase signatures and keeps provider secrets server-side", () => {
+  const functionSource = source("supabase/functions/arkesel-auth-sms/index.ts");
+  assert.match(functionSource, /standardwebhooks@1\.0\.0/);
+  assert.match(functionSource, /webhook\.verify\(rawBody, Object\.fromEntries\(request\.headers\)\)/);
+  assert.match(functionSource, /Deno\.env\.get\("ARKESEL_API_KEY"\)/);
+  assert.match(functionSource, /Deno\.env\.get\("ARKESEL_SENDER_ID"\)/);
+  assert.match(functionSource, /Deno\.env\.get\("SEND_SMS_HOOK_SECRET"\)/);
+  assert.match(functionSource, /https:\/\/sms\.arkesel\.com\/api\/v2\/sms\/send/);
+  assert.match(functionSource, /"api-key": apiKey/);
+  assert.match(functionSource, /AbortSignal\.timeout\(4500\)/);
+  assert.doesNotMatch(functionSource, /service[_-]?role|ARKESEL_API_KEY\s*[:=]\s*["'][^"']+["']/i);
+  assert.doesNotMatch(functionSource, /console\.(?:log|error)\([^\n]*(?:phone|otp|message)/i);
+});
+
 test("browser configuration does not contain a Supabase secret/service-role key", () => {
   const config = source("config.js");
   assert.doesNotMatch(config, /SUPABASE_SERVICE_ROLE_KEY\s*:/i);
@@ -251,3 +265,4 @@ test("customer order status automatically refreshes every five seconds while vis
   assert.ok(source("service-worker.js").includes('"./customer.js?v=phone-auth-20261024a"'),
     "service-worker shell must cache the phone-auth and status-polling script");
 });
+
