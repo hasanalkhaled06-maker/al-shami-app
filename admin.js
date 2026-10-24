@@ -1185,7 +1185,13 @@ Status: ${order.status}`;
       }
       incomingOrderQueue.splice(0, incomingOrderQueue.length, ...incomingOrderQueue.filter(itemId => itemId !== id));
       if (activeIncomingOrderId === id) closeIncomingOrderDialog();
-      toast(status === "accepted" ? "Order accepted." : "Order rejected.");
+      toast(
+        updated.smsFailed
+          ? (status === "accepted" ? "Order accepted, but the customer SMS failed." : "Order rejected, but the customer SMS failed.")
+          : updated.smsSent
+            ? (status === "accepted" ? "Order accepted and customer SMS sent." : "Order rejected and customer SMS sent.")
+            : (status === "accepted" ? "Order accepted." : "Order rejected.")
+      );
       openOrdersTab();
       showNextIncomingOrder();
     } catch (error) {
@@ -1226,7 +1232,24 @@ Status: ${order.status}`;
         p_receipt_code: receiptCode
       });
       if (error) throw error;
-      if (message) { message.textContent = "Receipt confirmed. Order moved to History."; message.className = "status-message success"; }
+
+      let receiptSmsFailed = false;
+      try {
+        const { error: smsError } = await db.functions.invoke("notify-order-status", {
+          body: { orderNumber, status: "completed" }
+        });
+        if (smsError) throw smsError;
+      } catch (smsError) {
+        receiptSmsFailed = true;
+        console.warn("Receipt was confirmed, but its SMS notification failed:", smsError);
+      }
+
+      if (message) {
+        message.textContent = receiptSmsFailed
+          ? "Receipt confirmed and moved to History, but the customer SMS could not be sent."
+          : "Receipt confirmed. Customer notified by SMS; order moved to History.";
+        message.className = "status-message success";
+      }
       form.reset();
       await loadOrders();
     } catch (error) {
@@ -1243,6 +1266,7 @@ Status: ${order.status}`;
       return false;
     }
     try {
+      const previousStatus = orders.find(item => item.id === id)?.status;
       const { error } = await db
         .from("orders")
         .update({
@@ -1253,14 +1277,36 @@ Status: ${order.status}`;
 
       if (error) throw error;
 
-      toast("Order status updated.");
+      let smsSent = false;
+      let smsFailed = false;
+      const smsStatuses = ["accepted", "preparing", "ready", "out_for_delivery", "rejected"];
+      if (previousStatus !== newStatus && smsStatuses.includes(newStatus)) {
+        try {
+          const { error: smsError } = await db.functions.invoke("notify-order-status", {
+            body: { orderId: id, status: newStatus }
+          });
+          if (smsError) throw smsError;
+          smsSent = true;
+        } catch (smsError) {
+          smsFailed = true;
+          console.warn("Order status saved, but customer SMS failed:", smsError);
+        }
+      }
+
+      toast(
+        smsFailed
+          ? "Order status updated, but the customer SMS could not be sent."
+          : smsSent
+            ? "Order status updated and customer SMS sent."
+            : "Order status updated."
+      );
       await loadOrders();
       if (!options.fromIncomingDialog && id === activeIncomingOrderId && ["accepted","rejected"].includes(newStatus)) {
         incomingOrderQueue.splice(0, incomingOrderQueue.length, ...incomingOrderQueue.filter(itemId => itemId !== id));
         closeIncomingOrderDialog();
         showNextIncomingOrder();
       }
-      return true;
+      return { ok: true, smsSent, smsFailed };
     } catch (error) {
       console.error("Status update failed:", error);
       toast("Could not update status: " + (error.message || "Unknown error"));
