@@ -299,10 +299,11 @@
   }
 
   let authSession = null;
-  let authMethod = "email";
+  let authMethod = "phone";
   let authRecoveryMode = null;
   let recoveryPhone = "";
   let recoveryPhoneVerified = false;
+  let pendingPhoneLink = "";
   let customerPhoneValidatedUserId = null;
   let phoneProfileValidation = null;
   let inPasswordRecovery = false;
@@ -409,12 +410,17 @@
     const signedIn = Boolean(authSession?.user);
     const openButton = $("#customer-auth-open");
     const account = $("#customer-account");
+    const enablePhoneButton = $("#customer-enable-phone-signin");
+    const phoneLinkPanel = $("#customer-phone-link-panel");
     if (openButton) openButton.hidden = signedIn;
     if (account) account.hidden = !signedIn;
 
     if (!signedIn) {
       customerPhoneValidatedUserId = null;
       phoneProfileValidation = null;
+      pendingPhoneLink = "";
+      if (enablePhoneButton) enablePhoneButton.hidden = true;
+      if (phoneLinkPanel) phoneLinkPanel.hidden = true;
       lockCustomerApp("Please sign in or create an account to continue.");
       return;
     }
@@ -424,6 +430,12 @@
     const label = $("#customer-account-label");
     if (label) label.textContent = "Signed in as " + (user.email || "customer");
     const phone = meta.phone_e164 || meta.phone || user.phone || "";
+    const phoneVerified = Boolean(user.phone && user.phone_confirmed_at);
+    if (enablePhoneButton) enablePhoneButton.hidden = phoneVerified || !phone;
+    const phoneLinkInput = $("#customer-link-phone");
+    if (phoneLinkInput && phone && !pendingPhoneLink) {
+      try { phoneLinkInput.value = normalizeGhanaPhone(phone); } catch (_) { phoneLinkInput.value = ""; }
+    }
     if (checkoutForm?.elements?.customer_phone && phone && !checkoutForm.elements.customer_phone.value) checkoutForm.elements.customer_phone.value = phone;
     if (checkoutForm?.elements?.customer_name && meta.full_name && !checkoutForm.elements.customer_name.value) checkoutForm.elements.customer_name.value = meta.full_name;
 
@@ -446,16 +458,27 @@
     const signupPhoneField = $("#auth-phone-field");
     const signupPhoneInput = $("#auth-phone");
     const password = $("#auth-password");
+    const methodSwitch = $("#auth-method-switch");
+    const identityLabel = $("#auth-identifier-label");
+    const identityInput = $("#auth-identifier");
     const submit = $("#auth-submit");
     const signinButton = $("#auth-mode-signin");
     const signupButton = $("#auth-mode-signup");
     const forgot = $("#auth-forgot-password");
     if (title) title.textContent = signup ? "Create your AL SHAMI account" : "Sign in to your account";
     if (help) {
-      if (authMethod === "phone" && signup) help.textContent = "Create an account with your Ghana number and password. Supabase Auth prevents duplicate phone identities. Phone confirmation, if enabled, requires an SMS provider.";
-      else if (authMethod === "phone") help.textContent = "Use your Ghana phone number and password. Signing in does not send an SMS code.";
-      else if (signup) help.textContent = "Create an account with your email, Ghana phone number, and password. Use an email address you can access for confirmation and password recovery.";
+      if (signup) help.textContent = "Create an account with your email, Ghana phone number, and password. Use an email address you can access for confirmation and password recovery.";
+      else if (authMethod === "phone") help.textContent = "Use your verified Ghana phone number and account password. Your email remains available as another sign-in option.";
       else help.textContent = "Use the email address and password you registered with.";
+    }
+    if (methodSwitch) methodSwitch.hidden = signup;
+    const identityMethod = signup ? "email" : authMethod;
+    if (identityLabel) identityLabel.textContent = identityMethod === "phone" ? "Phone number" : "Email address";
+    if (identityInput) {
+      identityInput.type = identityMethod === "phone" ? "tel" : "email";
+      identityInput.inputMode = identityMethod === "phone" ? "tel" : "email";
+      identityInput.autocomplete = identityMethod === "phone" ? "tel" : "email";
+      identityInput.placeholder = identityMethod === "phone" ? "+233 24 123 4567" : "you@example.com";
     }
     if (nameField) nameField.hidden = !signup;
     if (nameInput) nameInput.required = signup;
@@ -503,7 +526,7 @@
     $("#auth-recovery-back").hidden = false;
     gate.hidden = false;
     document.body.classList.add("auth-dialog-open");
-    setAuthMode("signin");
+    setAuthMethod(authMethod);
     window.requestAnimationFrame(() => $("#auth-identifier")?.focus());
   }
 
@@ -624,6 +647,8 @@
   });
   $("#auth-mode-signin")?.addEventListener("click", () => setAuthMode("signin"));
   $("#auth-mode-signup")?.addEventListener("click", () => setAuthMode("signup"));
+  $("#auth-method-phone")?.addEventListener("click", () => setAuthMethod("phone"));
+  $("#auth-method-email")?.addEventListener("click", () => setAuthMethod("email"));
 
   $("#customer-auth-form")?.addEventListener("submit", async event => {
     event.preventDefault();
@@ -636,8 +661,14 @@
     let identity = "";
     let signupPhone = "";
     try {
-      identity = String($("#auth-identifier")?.value || "").trim().toLowerCase();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity)) throw new Error("Enter a valid email address.");
+      const usePhoneIdentity = mode === "signin" && authMethod === "phone";
+      const enteredIdentity = String($("#auth-identifier")?.value || "").trim();
+      if (usePhoneIdentity) {
+        identity = normalizeGhanaPhone(enteredIdentity);
+      } else {
+        identity = enteredIdentity.toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity)) throw new Error("Enter a valid email address.");
+      }
       if (mode === "signup") signupPhone = normalizeGhanaPhone($("#auth-phone")?.value);
       if (!password) throw new Error("Enter your password.");
       if (password.length < 8) throw new Error("Use a password with at least 8 characters.");
@@ -656,24 +687,28 @@
           applyAuthState(data.session);
           closeAuthDialog();
           authMessage("");
-        } else if (authMethod === "phone" && Array.isArray(data.user?.identities) && data.user.identities.length === 0) {
+        } else if (Array.isArray(data.user?.identities) && data.user.identities.length === 0) {
           authMessage("An account may already exist for this phone number. Try signing in or use Forgot password.");
         } else {
-          authMessage(authMethod === "phone"
-            ? "Account request received. If phone confirmation is enabled, follow the SMS instructions. Phone confirmation requires an SMS provider; without confirmation, phone ownership remains unverified."
-            : "Account request received. If email confirmation is enabled, open the confirmation link sent to your email before signing in.");
+          authMessage("Account request received. If email confirmation is enabled, open the confirmation link sent to your email before signing in.");
         }
       } else {
         const credentials = authMethod === "phone" ? { phone: identity, password } : { email: identity, password };
         const { data, error } = await db.auth.signInWithPassword(credentials);
         if (error) throw error;
+        if (authMethod === "phone" && !data.user?.phone_confirmed_at) {
+          await db.auth.signOut();
+          throw new Error("This phone number is not verified yet. Sign in with email and finish phone verification first.");
+        }
         applyAuthState(data.session);
         closeAuthDialog();
       }
     } catch (error) {
       console.error("Customer account action failed:", error);
       const detail = String(error?.message || "");
-      if (/email address not authorized|not authorized|confirmation email|SMTP|email provider/i.test(detail)) {
+      if (mode === "signin" && authMethod === "phone") {
+        authMessage("Phone sign-in could not be completed. Existing accounts must first sign in with email and verify the saved phone number once. If this number has already been verified, check the password and try again.", true);
+      } else if (/email address not authorized|not authorized|confirmation email|SMTP|email provider/i.test(detail))
         authMessage("Email delivery is not configured for public customers yet. Supabase's default sender only delivers to project team addresses. Configure a custom SMTP sender before customer signup and password recovery.", true);
       } else if (/duplicate key|unique constraint|23505|already linked/i.test(detail)) {
         authMessage("This phone number is already linked to another customer account. Sign in to the existing account or use a different number.", true);
@@ -794,6 +829,87 @@
     }
   });
 
+
+  const phoneLinkPanel = $("#customer-phone-link-panel");
+  const phoneLinkStatus = $("#customer-phone-link-status");
+  const phoneLinkCodeField = $("#customer-phone-link-code-field");
+  const phoneLinkCodeInput = $("#customer-phone-link-code");
+  const phoneLinkVerifyButton = $("#customer-phone-link-verify");
+  const phoneLinkMessage = (message, error = false) => {
+    if (!phoneLinkStatus) return;
+    phoneLinkStatus.textContent = message || "";
+    phoneLinkStatus.className = "status-message" + (error ? " error" : " success");
+  };
+
+  $("#customer-enable-phone-signin")?.addEventListener("click", () => {
+    if (!authSession?.user) return;
+    pendingPhoneLink = "";
+    if (phoneLinkCodeInput) phoneLinkCodeInput.value = "";
+    if (phoneLinkCodeField) phoneLinkCodeField.hidden = true;
+    if (phoneLinkVerifyButton) phoneLinkVerifyButton.hidden = true;
+    if (phoneLinkPanel) phoneLinkPanel.hidden = false;
+    phoneLinkMessage("Verify your saved number once. After that, sign in with this number and the same password.");
+    $("#customer-link-phone")?.focus();
+  });
+
+  $("#customer-phone-link-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const user = authSession?.user;
+    if (!db || !user) { phoneLinkMessage("Sign in with your email before linking a phone number.", true); return; }
+    const savedPhone = user.user_metadata?.phone_e164 || user.user_metadata?.phone || "";
+    const enteredPhone = String($("#customer-link-phone")?.value || "").trim();
+    let phone;
+    try {
+      phone = normalizeGhanaPhone(enteredPhone);
+      if (!savedPhone || normalizeGhanaPhone(savedPhone) !== phone) {
+        throw new Error("For account safety, verify the phone number already saved on this account. Contact the restaurant if it needs correction.");
+      }
+    } catch (error) { phoneLinkMessage(error.message, true); return; }
+    const button = $("#customer-phone-link-send");
+    if (button) { button.disabled = true; button.textContent = "Sending verification code…"; }
+    phoneLinkMessage("Requesting a phone verification code…");
+    try {
+      const { error } = await db.auth.updateUser({ phone });
+      if (error) throw error;
+      pendingPhoneLink = phone;
+      if (phoneLinkCodeField) phoneLinkCodeField.hidden = false;
+      if (phoneLinkVerifyButton) phoneLinkVerifyButton.hidden = false;
+      $("#customer-phone-link-code")?.focus();
+      phoneLinkMessage("A verification code was sent to your saved phone number. Enter it here to enable phone sign-in.");
+    } catch (error) {
+      console.error("Customer phone linking failed:", error);
+      const detail = String(error?.message || "");
+      phoneLinkMessage(/sms|phone.*provider|not enabled/i.test(detail)
+        ? "Phone verification is not configured yet. Supabase needs phone authentication and a working SMS provider before phone sign-in can be enabled."
+        : detail || "Could not send a verification code. Try again later.", true);
+    } finally { if (button) { button.disabled = false; button.textContent = "Send verification code"; } }
+  });
+
+  phoneLinkVerifyButton?.addEventListener("click", async () => {
+    const token = String(phoneLinkCodeInput?.value || "").trim();
+    if (!pendingPhoneLink || !token) { phoneLinkMessage("Enter the SMS verification code.", true); return; }
+    if (phoneLinkVerifyButton) { phoneLinkVerifyButton.disabled = true; phoneLinkVerifyButton.textContent = "Verifying…"; }
+    try {
+      const { data, error } = await db.auth.verifyOtp({ phone: pendingPhoneLink, token, type: "phone_change" });
+      if (error) throw error;
+      const updatedSession = data.session || (data.user && authSession ? { ...authSession, user: data.user } : authSession);
+      applyAuthState(updatedSession);
+      pendingPhoneLink = "";
+      if (phoneLinkPanel) phoneLinkPanel.hidden = true;
+      phoneLinkMessage("Phone verified. You can now sign in with this number and your existing password.");
+    } catch (error) {
+      console.error("Customer phone verification failed:", error);
+      phoneLinkMessage(error.message || "That code could not be verified. Request a new code and try again.", true);
+    } finally {
+      if (phoneLinkVerifyButton) { phoneLinkVerifyButton.disabled = false; phoneLinkVerifyButton.textContent = "Verify phone"; }
+    }
+  });
+
+  $("#customer-phone-link-cancel")?.addEventListener("click", () => {
+    pendingPhoneLink = "";
+    if (phoneLinkPanel) phoneLinkPanel.hidden = true;
+    phoneLinkMessage("");
+  });
 
   let products = [];
   let offers = [];
