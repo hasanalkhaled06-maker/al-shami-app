@@ -19,16 +19,10 @@
   ],
   "icons": [
     {
-      "src": "./icons/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "./icons/al-shami.svg",
+      "src": "./icons/al-shami-customer.svg?v=icon-20261024",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
