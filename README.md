@@ -26,6 +26,12 @@ Install each app separately using Safari:
 
 This installs web apps on the iPhone Home Screen; these are not native apps published in the App Store. When a new website version is deployed, the app checks for updates on launch/return to the foreground. Ordering still requires an internet connection.
 
+## Customer phone sign-in
+
+Customers can sign in with a verified Ghana phone number and their existing password, or keep using email and password. Existing email accounts must sign in by email once, choose **Enable phone sign-in**, and verify the phone number already saved on the account. The number is verified once; normal phone/password sign-ins do not send an SMS.
+
+Phone linking requires the **Phone** Auth provider, phone confirmation, and a working SMS provider configured in the Supabase dashboard. Keep the provider credentials in Supabase settings; never add them to browser files. If SMS setup is incomplete, email sign-in remains available and the app explains that phone verification is not configured.
+
 ## Main files
 
 - `index.html`, `customer.js`: customer menu, basket, cash-only checkout, order tracking and confirmation.
