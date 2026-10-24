@@ -12,7 +12,7 @@ The customer, admin, and rider entry points share the existing Supabase project 
 
 ## Visual design
 
-The active shared visual palette is **cream + soft blue**: warm cream page backgrounds, pale-blue surfaces and cards, deep-blue primary buttons and icons, navy text, light borders, and restrained champagne-gold utility accents. The shared `dark-theme.css` loads last on the customer, order-history, admin, and delivery-rider pages to override earlier legacy styling and keep all four interfaces visually consistent. Statuses retain clear, accessible semantic colors (green for accepted/completed, amber for pending/preparing, blue for ready/in-progress, and red for errors or rejected orders). Avoid restoring charcoal/black surface backgrounds or low-contrast text in later CSS changes.
+The active shared visual palette is **deep burgundy, gold, and warm cream**: dark wine surfaces, bright gold highlights and buttons, warm light text, and clear status colors (green for accepted/completed, amber for pending/preparing, blue for ready/in-progress, and red for errors or rejected orders). The shared `dark-theme.css` loads last on the customer, order-history, admin, and delivery-rider pages to keep all four interfaces consistent. The customer home page also includes the animated 3D chef and AL SHAMI wordmark; reduced-motion preferences disable its animation.
 
 
 ## Install on iPhone
@@ -29,7 +29,7 @@ This installs web apps on the iPhone Home Screen; these are not native apps publ
 ## Main files
 
 - `index.html`, `customer.js`: customer menu, basket, cash-only checkout, order tracking and confirmation.
-- `dark-theme.css`: approved shared cream-blue design system across customer, history, admin, and rider pages.
+- `dark-theme.css`: shared burgundy-and-gold design system across customer, history, admin, and rider pages.
 - `admin.html`, `admin.js`: sign-in, incoming orders, menu/prices, offers, restaurant settings.
 - `admin-operations.js`: inventory, stock-movement history, suppliers, staff roster, expenses, cash shifts, and basic daily reporting.
 - `config.js`: Supabase project URL and public publishable key. Never put a service-role/secret key in browser code.

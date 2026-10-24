@@ -147,6 +147,12 @@ test("animated AL SHAMI chef wordmark is included and cached", () => {
   assert.ok(worker.includes('"./assets/al-shami-chef-3d.webp"'));
 });
 
+test("customer auth dialog does not expose an unsupported guest-checkout control", () => {
+  assert.doesNotMatch(source("index.html"), /auth-continue-guest|Continue without an account/);
+  assert.doesNotMatch(source("history.html"), /auth-continue-guest|Continue without an account/);
+  assert.doesNotMatch(source("customer.js"), /auth-continue-guest/);
+});
+
 test("browser configuration does not contain a Supabase secret/service-role key", () => {
   const config = source("config.js");
   assert.doesNotMatch(config, /SUPABASE_SERVICE_ROLE_KEY\s*:/i);

@@ -1,6 +1,6 @@
 # AL SHAMI — system quality audit
 
-**Audit date:** 23 October 2026  
+**Audit date:** 24 October 2026  
 **Repository:** `hasanalkhaled06-maker/al-shami-app`  
 **Production DB:** connected Supabase project `al_shami_orders`  
 **Scope:** all four app entry pages, JavaScript and CSS, PWA manifests/cache, SQL migration files, live RLS/grants and database functions, Supabase security/performance advisors, recent GitHub Actions, and aggregated Auth logs. This is a source/configuration audit, not a formal penetration test or end-to-end certification.
@@ -12,8 +12,15 @@ Good foundations already exist: server-calculated prices, menu availability chec
 ## Fixes made during this audit
 
 1. **Auth isolation.** The customer and admin clients previously used Supabase's default auth storage key, while the rider already had a separate key. Same-origin `localStorage` is shared between pages, so the customer and admin could collide. Unique keys are now configured for customer/history, admin and rider. This is preventive, not proof that it caused every Auth error. The last-24-hour aggregate log query returned 485 `refresh_token_not_found` and 89 `refresh_token_already_used` events. Existing customer/admin users may need to sign in again after deployment.
-2. **PWA cache alignment.** The admin stylesheet's versioned URL was missing from the cache shell; it was added. Unused `light-theme.css` cache entries were removed from the shell, but the file was not deleted from the repository. The chef-image-only CSS has been removed while keeping the centered AL SHAMI wordmark.
-3. **Regression checks.** CI includes the rider approval test plus static checks for duplicate IDs, local assets, manifest icons, CSS load order, cache references, removed chef CSS, public-key configuration and auth-key separation. Syntax/static tests are not runtime end-to-end tests.
+2. **PWA cache and visual identity.** The admin stylesheet's versioned URL was missing from the cache shell; it was added. The current shared design uses burgundy, gold, and warm cream, with the animated 3D chef and AL SHAMI wordmark on the customer home page. `prefers-reduced-motion` disables the animation. The unused `light-theme.css` source remains in the repository because it may matter for rollback or an external reference.
+3. **Regression checks.** CI includes the rider approval test plus static checks for duplicate IDs, local assets, manifest icons, CSS load order, cache references, the animated chef, public-key configuration and auth-key separation. Syntax/static tests are not runtime end-to-end tests.
+
+## Review update — 24 October 2026
+
+- Rechecked all repository paths (43 text/code files and 4 image assets), the production Supabase schema, RLS policies, security-definer RPCs and current advisor findings. Also searched 344 web results across 113 distinct websites, then opened authoritative references for checkout, PWA caching, responsive images, WCAG, Supabase RLS/advisors, and OWASP input validation. Web discovery identifies candidate improvements; it is not a substitute for browser-based testing.
+- Corrected the README and theme header comment to match the currently deployed burgundy-and-gold identity.
+- Removed the unused “Continue without an account” button and its show/hide code. Repository-wide search found no click handler or anonymous sign-in path, and the mandatory authentication gate hid the control whenever it could otherwise appear. Added a regression test to prevent the unsupported control from returning.
+- No database policies, functions, indexes, migrations or data were changed. The unused light-theme file and advisor-reported unused indexes were retained because their deletion is not proven safe for rollback or representative production traffic.
 
 ## Findings requiring follow-up
 
@@ -59,7 +66,7 @@ Good foundations already exist: server-calculated prices, menu availability chec
 
 ## Reference library reviewed
 
-Cross-checking used more than 60 web references covering security, accessibility, browser behavior, testing, database access, performance and map services. This is a reference library, not a claim that every listed tool has already run against production.
+The reference library contains more than 60 sources covering security, accessibility, browser behavior, testing, database access, performance and map services. For the 24 October review, discovery returned 344 results across 113 distinct websites; authoritative guidance on checkout, caching, responsive images, WCAG, Supabase RLS/advisors and OWASP validation was opened and reviewed. This is research input, not a claim that every listed tool has been run against production.
 
 ### Security, authentication and data access
 - [OWASP ASVS](https://asvs.owasp.org/)

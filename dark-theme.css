@@ -1,5 +1,5 @@
 /* AL SHAMI — shared customer/history/admin/rider theme stylesheet.
-   Legacy rules remain for layout compatibility; the active cream-blue palette is applied in the final override sections below. */
+   Legacy rules remain for layout compatibility; the active burgundy-and-gold palette is applied in the final override sections below. */
 :root{
   color-scheme:dark;
   --shami-bg:#121013;
@@ -507,7 +507,7 @@ html body.customer-home-page footer a,html body.customer-history-page footer a{c
 }
 
 
-/* Removed obsolete high-specificity dark palette override block. The active cream-blue rules below now control the palette. */
+/* Removed obsolete high-specificity dark palette override block. The active burgundy-and-gold rules below now control the palette. */
 
 /* Outer page canvas only — keep all existing card, icon and button colors unchanged. */
 html:has(body.customer-home-page),
