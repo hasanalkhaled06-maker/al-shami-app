@@ -26,6 +26,26 @@ Install each app separately using Safari:
 
 This installs web apps on the iPhone Home Screen; these are not native apps published in the App Store. When a new website version is deployed, the app checks for updates on launch/return to the foreground. Ordering still requires an internet connection.
 
+## Customer phone sign-in
+
+Customers can sign in with a verified Ghana phone number and their existing password, or keep using email and password. Existing email accounts must sign in by email once, choose **Enable phone sign-in**, and verify the phone number already saved on the account. The number is verified once; normal phone/password sign-ins do not send an SMS.
+
+Phone linking requires the **Phone** Auth provider, phone confirmation, and a working SMS provider configured in the Supabase dashboard. Keep the provider credentials in Supabase settings; never add them to browser files. If SMS setup is incomplete, email sign-in remains available and the app explains that phone verification is not configured.
+
+### Ghana SMS delivery with Arkesel
+
+The Supabase Edge Function at `supabase/functions/arkesel-auth-sms/index.ts` sends Supabase-generated authentication codes through Arkesel. Supabase remains responsible for creating and verifying codes; Arkesel only delivers the SMS. The function verifies Supabase's signed Auth Hook request before reading the phone/code and keeps the Arkesel API key server-side.
+
+To enable it after the Arkesel account and sender ID are ready:
+
+1. In Arkesel, create an API key and request approval for the sender ID `ALSHAMI`. Sender IDs in Ghana require provider/network approval; wait for approval before the production delivery test.
+2. In Supabase Dashboard → **Edge Functions → Secrets**, add `ARKESEL_API_KEY`, `ARKESEL_SENDER_ID=ALSHAMI`, and `SEND_SMS_HOOK_SECRET`. Use a strong random webhook secret in the Standard Webhooks format (`v1,whsec_...`); never commit these values or paste the Arkesel API key into browser code.
+3. From the repository root, deploy only this function with `supabase functions deploy arkesel-auth-sms --no-verify-jwt --project-ref rxjfvuxzseuybfmfyjvs`. The function disables the platform JWT check because Supabase Auth calls it as a webhook; the function itself verifies the signed webhook secret on every request.
+4. In Supabase Dashboard → **Authentication → Hooks**, add the **Send SMS** HTTP hook with URL `https://rxjfvuxzseuybfmfyjvs.supabase.co/functions/v1/arkesel-auth-sms` and configure the same webhook secret as in step 2.
+5. Under **Authentication → Providers → Phone**, enable phone sign-in and phone confirmation. Keep email sign-in enabled as the fallback. Then test a real Ghana number and inspect the Auth Hook, Edge Function, and Arkesel delivery result before announcing phone sign-in.
+
+Arkesel offers a sandbox for API testing, but sandbox success does not prove carrier delivery. Live SMS requires an Arkesel account with SMS credit and an approved sender ID. Existing email customers still need to sign in with email and verify their saved phone once; after that, their phone number and existing password work together.
+
 ## Main files
 
 - `index.html`, `customer.js`: customer menu, basket, cash-only checkout, order tracking and confirmation.
@@ -66,3 +86,4 @@ For a new environment, apply `supabase-schema.sql` first, configure the public S
 ## Deployment
 
 GitHub Pages is configured to publish the `main` branch from the repository root. Changes merged directly to `main` trigger a Pages deployment. After deployment succeeds, open the two live URLs above and verify that the customer page loads and admin sign-in/operations are working.
+

@@ -153,6 +153,41 @@ test("customer auth dialog does not expose an unsupported guest-checkout control
   assert.doesNotMatch(source("customer.js"), /auth-continue-guest/);
 });
 
+test("customer email accounts can verify their saved phone for password sign-in", () => {
+  const customer = source("customer.js");
+  for (const page of ["index.html", "history.html"]) {
+    const html = source(page);
+    assert.match(html, /id="auth-method-phone"/);
+    assert.match(html, /id="auth-method-email"/);
+    assert.match(html, /id="customer-enable-phone-signin"/);
+    assert.match(html, /id="customer-phone-link-code"/);
+    assert.ok(html.includes("customer.js?v=phone-auth-20261024a"), page + " must load phone-auth changes");
+  }
+  assert.match(customer, /const credentials = authMethod === "phone" \? \{ phone: identity, password \} : \{ email: identity, password \}/);
+  assert.match(customer, /authMethod === "phone" && !data\.user\?\.phone_confirmed_at/);
+  assert.match(customer, /db\.auth\.updateUser\(\{ phone \}\)/);
+  assert.match(customer, /type: "phone_change"/);
+  assert.ok(source("service-worker.js").includes('"./customer.js?v=phone-auth-20261024a"'));
+  assert.ok(source("service-worker.js").includes('CACHE_PREFIX + "v103"'));
+});
+
+test("Arkesel auth SMS hook verifies Supabase signatures and keeps provider secrets server-side", () => {
+  const functionSource = source("supabase/functions/arkesel-auth-sms/index.ts");
+  const supabaseConfig = source("supabase/config.toml");
+  assert.match(supabaseConfig, /project_id\s*=\s*"rxjfvuxzseuybfmfyjvs"/);
+  assert.match(supabaseConfig, /\[functions\.arkesel-auth-sms\][\s\S]*?verify_jwt\s*=\s*false/);
+  assert.match(functionSource, /standardwebhooks@1\.0\.0/);
+  assert.match(functionSource, /webhook\.verify\(rawBody, Object\.fromEntries\(request\.headers\)\)/);
+  assert.match(functionSource, /Deno\.env\.get\("ARKESEL_API_KEY"\)/);
+  assert.match(functionSource, /Deno\.env\.get\("ARKESEL_SENDER_ID"\)/);
+  assert.match(functionSource, /Deno\.env\.get\("SEND_SMS_HOOK_SECRET"\)/);
+  assert.match(functionSource, /https:\/\/sms\.arkesel\.com\/api\/v2\/sms\/send/);
+  assert.match(functionSource, /"api-key": apiKey/);
+  assert.match(functionSource, /AbortSignal\.timeout\(4500\)/);
+  assert.doesNotMatch(functionSource, /service[_-]?role|ARKESEL_API_KEY\s*[:=]\s*["'][^"']+["']/i);
+  assert.doesNotMatch(functionSource, /console\.(?:log|error)\([^\n]*(?:phone|otp|message)/i);
+});
+
 test("browser configuration does not contain a Supabase secret/service-role key", () => {
   const config = source("config.js");
   assert.doesNotMatch(config, /SUPABASE_SERVICE_ROLE_KEY\s*:/i);
@@ -227,9 +262,10 @@ test("customer order status automatically refreshes every five seconds while vis
     if (document.visibilityState === "visible") void refreshCustomerOrderHistory();
   }, CUSTOMER_ORDER_STATUS_POLL_INTERVAL_MS);`));
   for (const page of ["index.html", "history.html"]) {
-    assert.ok(source(page).includes("customer.js?v=auto-status-20261023a"),
-      page + " must request the updated status-polling script");
+    assert.ok(source(page).includes("customer.js?v=phone-auth-20261024a"),
+      page + " must request the phone-auth and status-polling script");
   }
-  assert.ok(source("service-worker.js").includes('"./customer.js?v=auto-status-20261023a"'),
-    "service-worker shell must cache the updated status-polling script");
+  assert.ok(source("service-worker.js").includes('"./customer.js?v=phone-auth-20261024a"'),
+    "service-worker shell must cache the phone-auth and status-polling script");
 });
+

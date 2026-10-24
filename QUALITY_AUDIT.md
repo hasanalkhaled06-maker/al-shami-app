@@ -22,6 +22,11 @@ Good foundations already exist: server-calculated prices, menu availability chec
 - Removed the unused “Continue without an account” button and its show/hide code. Repository-wide search found no click handler or anonymous sign-in path, and the mandatory authentication gate hid the control whenever it could otherwise appear. Added a regression test to prevent the unsupported control from returning.
 - No database policies, functions, indexes, migrations or data were changed. The unused light-theme file and advisor-reported unused indexes were retained because their deletion is not proven safe for rollback or representative production traffic.
 
+## Phone sign-in implementation update — 24 October 2026
+
+- The customer and order-history pages now support phone-number/password sign-in alongside the existing email/password path. Existing email-based accounts can link their saved number after email sign-in; the link requires SMS verification before phone sign-in is accepted.
+- Phone sign-in was not merged to the live app in this branch because the Supabase Phone provider, phone-confirmation setting, and SMS provider must be configured and verified first. No Auth settings, provider credentials, database rows, or SQL objects were changed.
+
 ## Findings requiring follow-up
 
 | Priority | Finding | Recommended next step |

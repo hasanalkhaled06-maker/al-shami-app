@@ -63,6 +63,13 @@
     @media(max-width:480px){.customer-auth-card{padding:22px 18px}.customer-account-toolbar{align-items:stretch;flex-direction:column}.customer-account-toolbar .customer-account{flex-wrap:wrap}}
     .customer-account{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;margin:12px auto;max-width:1100px;background:#fff7e8;border:1px solid #ead7b3;border-radius:12px}
     .customer-account[hidden]{display:none!important}
+    .customer-phone-link-panel{max-width:1068px;margin:0 auto 14px;padding:16px;border:1px solid rgba(216,183,121,.55);border-radius:16px;background:var(--shami-surface,#fff7e8);color:var(--shami-text,#241)}
+    .customer-phone-link-panel form{display:grid;gap:10px;max-width:560px}
+    .customer-phone-link-panel h2,.customer-phone-link-panel p{margin:0}
+    .customer-phone-link-panel label{display:grid;gap:6px;font-weight:700}
+    .customer-phone-link-panel input{box-sizing:border-box;width:100%;min-height:44px;padding:10px;border:1px solid #b9a789;border-radius:10px;font:inherit}
+    .customer-phone-link-actions{display:flex;flex-wrap:wrap;gap:8px}
+    .customer-phone-link-panel #customer-phone-link-status{min-height:1.4em}
     body.auth-required{overflow:hidden}
     .site-contact-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
     .site-contact-links a{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border:1px solid rgba(141,23,35,.2);border-radius:10px;color:#8d1723;text-decoration:none;font-weight:700}
@@ -295,8 +302,11 @@
       </div>
       <form id="customer-auth-form" data-mode="signin" novalidate>
         <label id="auth-name-field" hidden>Full name<input id="auth-name" type="text" autocomplete="name" maxlength="100" placeholder="Your full name"></label>
-        <div id="auth-method-switch" hidden></div>
-        <label id="auth-identifier-field"><span id="auth-identifier-label">Email address</span><input id="auth-identifier" type="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required></label>
+        <div id="auth-method-switch" class="auth-mode" role="group" aria-label="Sign-in method">
+          <button id="auth-method-phone" class="btn btn-light active" type="button" aria-pressed="true">Phone number</button>
+          <button id="auth-method-email" class="btn btn-light" type="button" aria-pressed="false">Email</button>
+        </div>
+        <label id="auth-identifier-field"><span id="auth-identifier-label">Phone number</span><input id="auth-identifier" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="+233 24 123 4567" required></label>
         <label id="auth-phone-field" hidden>Phone number<input id="auth-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="+233 24 123 4567"></label>
         <label>Password<input id="auth-password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="At least 8 characters" required></label>
         <label id="auth-confirm-field" hidden>Confirm password<input id="auth-confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="Enter password again"></label>
@@ -335,8 +345,28 @@
     <div class="al-shami-chef-wordmark">AL SHAMI</div>
     <div class="al-shami-chef-caption">RESTAURANT</div>
   </aside>
+      <button id="customer-enable-phone-signin" class="btn btn-light" type="button" hidden>Enable phone sign-in</button>
       <button id="customer-sign-out" class="btn btn-light" type="button">Sign out</button></div>
   </div>
+
+  <section id="customer-phone-link-panel" class="customer-phone-link-panel" hidden aria-labelledby="customer-phone-link-title">
+    <form id="customer-phone-link-form">
+      <h2 id="customer-phone-link-title">Enable phone sign-in</h2>
+      <p class="muted">Verify the phone number saved on your account once. Then use this number and your existing password to sign in.</p>
+      <label for="customer-link-phone">Saved Ghana phone number</label>
+      <input id="customer-link-phone" type="tel" autocomplete="tel" readonly>
+      <div id="customer-phone-link-code-field" hidden>
+        <label for="customer-phone-link-code">SMS verification code</label>
+        <input id="customer-phone-link-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9]*">
+      </div>
+      <div class="customer-phone-link-actions">
+        <button id="customer-phone-link-send" class="btn btn-primary" type="submit">Send verification code</button>
+        <button id="customer-phone-link-verify" class="btn btn-primary" type="button" hidden>Verify phone</button>
+        <button id="customer-phone-link-cancel" class="btn btn-light" type="button">Close</button>
+      </div>
+      <p id="customer-phone-link-status" class="status-message" role="status" aria-live="polite"></p>
+    </form>
+  </section>
 
   <main id="main-content" class="container" tabindex="-1">
 
@@ -695,7 +725,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
-  <script src="customer.js?v=auto-status-20261023a"></script>
+  <script src="customer.js?v=phone-auth-20261024a"></script>
   <script src="pwa.js"></script>
 </body>
 </html>
