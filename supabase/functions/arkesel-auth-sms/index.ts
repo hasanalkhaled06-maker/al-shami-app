@@ -8,13 +8,13 @@ function json(data: unknown, status = 200): Response {
 }
 
 function emptySuccess(): Response {
-  return new Response(null, { status: 200 });
+  return json({});
 }
 
 function canonicalPhone(value: unknown): string | null {
   const raw = String(value ?? "").trim();
   const digits = raw.replace(/[^0-9]/g, "");
-  if (/^\\+[1-9][0-9]{7,14}$/.test(raw)) return raw;
+  if (/^\+[1-9][0-9]{7,14}$/.test(raw)) return raw;
   if (/^[1-9][0-9]{7,14}$/.test(digits)) return `+${digits}`;
   return null;
 }
@@ -111,7 +111,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const phone = canonicalPhone(data?.user?.phone);
   const otp = String(data?.sms?.otp ?? "").trim();
-  if (!phone || !/^\\d{4,10}$/.test(otp)) {
+  if (!phone || !/^\d{6}$/.test(otp)) {
     console.error(
       "Auth SMS hook rejected request: payload validation failed.",
       JSON.stringify({
