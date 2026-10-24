@@ -1,0 +1,4 @@
+project_id = "rxjfvuxzseuybfmfyjvs"
+
+[functions.arkesel-auth-sms]
+verify_jwt = false
