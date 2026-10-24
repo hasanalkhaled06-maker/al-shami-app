@@ -136,13 +136,15 @@ test("every versioned local stylesheet is listed in the service-worker cache she
   }
 });
 
-test("removed chef illustration has no orphan animation CSS", () => {
+test("animated AL SHAMI chef wordmark is included and cached", () => {
   const html = source("index.html");
   const theme = source("dark-theme.css");
-  assert.doesNotMatch(html, /al-shami-chef-mascot|al-shami-chef-art|al-shami-chef-spark/);
-  assert.doesNotMatch(theme, /al-shami-chef-art|al-shami-chef-spark|al-shami-chef-mascot/);
-  assert.doesNotMatch(theme, /@keyframes\s+(?:alShamiChef|shamiChef)/i);
-  assert.match(theme, /AL SHAMI account brand: text-only, centered wordmark/);
+  const worker = source("service-worker.js");
+  assert.match(html, /class="shami-brand-stage"/);
+  assert.match(html, /src="\.\/assets\/al-shami-chef-3d\.webp"/);
+  assert.match(theme, /@keyframes shami-wave/);
+  assert.match(theme, /\.shami-brand-wordmark/);
+  assert.ok(worker.includes('"./assets/al-shami-chef-3d.webp"'));
 });
 
 test("browser configuration does not contain a Supabase secret/service-role key", () => {
