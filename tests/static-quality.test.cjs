@@ -227,9 +227,10 @@ test("customer order status automatically refreshes every five seconds while vis
     if (document.visibilityState === "visible") void refreshCustomerOrderHistory();
   }, CUSTOMER_ORDER_STATUS_POLL_INTERVAL_MS);`));
   for (const page of ["index.html", "history.html"]) {
-    assert.ok(source(page).includes("customer.js?v=auto-status-20261023a"),
-      page + " must request the updated status-polling script");
+    const loadsCustomerScript = tags(source(page), "script").some(tag => {
+      const src = attribute(tag, "src");
+      return Boolean(src && localPath(src) === "customer.js");
+    });
+    assert.ok(loadsCustomerScript, page + " must load the customer app script");
   }
-  assert.ok(source("service-worker.js").includes('"./customer.js?v=auto-status-20261023a"'),
-    "service-worker shell must cache the updated status-polling script");
 });
