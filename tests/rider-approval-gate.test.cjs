@@ -13,6 +13,10 @@ function makeHarness(initialRpcResult) {
   let authListener = null;
   let rpcResult = initialRpcResult;
   let intervalId = 0;
+  let locationWatchId = 0;
+  const locationWatches = new Map();
+  const clearedLocationWatches = [];
+  const locationRpcCalls = [];
 
   function element(selector) {
     if (elements.has(selector)) return elements.get(selector);
@@ -61,9 +65,15 @@ function makeHarness(initialRpcResult) {
       async signInWithPassword() { return { data: { session: null }, error: null }; },
       async signUp() { return { data: { user: { identities: [{}] }, session: null }, error: null }; }
     },
-    async rpc(name) {
-      assert.equal(name, "get_my_delivery_orders");
-      return typeof rpcResult === "function" ? rpcResult() : rpcResult;
+    async rpc(name, args) {
+      if (name === "get_my_delivery_orders") {
+        return typeof rpcResult === "function" ? rpcResult() : rpcResult;
+      }
+      if (name === "update_my_delivery_location") {
+        locationRpcCalls.push(args);
+        return { data: { ok: true }, error: null };
+      }
+      assert.fail("Unexpected rider RPC: " + name);
     }
   };
 
@@ -72,7 +82,24 @@ function makeHarness(initialRpcResult) {
     querySelector: element,
     addEventListener(type, handler) { element("document").listeners[type] = handler; }
   };
-  const navigator = { onLine: true, vibrate() {} };
+  const navigator = {
+    onLine: true,
+    vibrate() {},
+    geolocation: {
+      watchPosition(success, error, options) {
+        const id = ++locationWatchId;
+        locationWatches.set(id, { success, error, options });
+        return id;
+      },
+      clearWatch(id) {
+        clearedLocationWatches.push(id);
+        locationWatches.delete(id);
+      },
+      getCurrentPosition(success) {
+        success({ coords: { latitude: 5.6, longitude: -0.2, accuracy: 8, heading: 90, speed: 4 } });
+      }
+    }
+  };
   const window = {
     AL_SHAMI_CONFIG: {
       SUPABASE_URL: "https://example.supabase.co",
@@ -94,7 +121,12 @@ function makeHarness(initialRpcResult) {
       authListener(session ? "SIGNED_IN" : "SIGNED_OUT", session);
     },
     setRpcResult(result) { rpcResult = result; },
-    async settle() { await new Promise(resolve => setTimeout(resolve, 20)); }
+    getLocationWatchCount() { return locationWatchId; },
+    getActiveLocationWatchCount() { return locationWatches.size; },
+    getClearedLocationWatches() { return clearedLocationWatches.slice(); },
+    getLocationRpcCalls() { return locationRpcCalls.slice(); },
+    triggerLocation(position, id = 1) { locationWatches.get(id)?.success(position); },
+    async settle() { await new Promise(resolve => setTimeout(resolve, 30)); }
   };
 }
 
@@ -138,4 +170,46 @@ test("revoked rider access hides the dashboard on the next refresh", async () =>
   assert.equal(harness.element("#approval-panel").hidden, false);
   assert.equal(harness.element("#rider-dashboard").hidden, true);
   assert.match(harness.element("#approval-title").textContent, /awaiting approval/i);
+});
+
+test("rider location starts automatically only when an assigned delivery is Out for delivery and stops afterward", async () => {
+  const order = {
+    id: "delivery-1",
+    order_number: "1001",
+    order_type: "delivery",
+    status: "accepted",
+    created_at: "2026-10-24T00:00:00Z",
+    items: []
+  };
+  const harness = makeHarness({ data: [order], error: null });
+  await harness.settle();
+  harness.emitSession({ user: { id: "approved-user-id", email: "rider@example.com" } });
+  await harness.settle();
+
+  assert.equal(harness.getLocationWatchCount(), 0, "accepted orders must not start GPS sharing");
+  assert.equal(harness.element("#location-toggle").disabled, true);
+
+  harness.setRpcResult({ data: [{ ...order, status: "out_for_delivery" }], error: null });
+  harness.element("#refresh-button").listeners.click();
+  await harness.settle();
+
+  assert.equal(harness.getLocationWatchCount(), 1, "Out for delivery should start GPS automatically");
+  assert.equal(harness.element("#location-toggle").disabled, true, "automatic sharing should stay enabled while delivery is active");
+  harness.triggerLocation({
+    coords: { latitude: 5.6037, longitude: -0.187, accuracy: 8, heading: 90, speed: 4 }
+  });
+  await harness.settle();
+
+  const locationCalls = harness.getLocationRpcCalls();
+  assert.equal(locationCalls.length, 1, "the first GPS fix should be sent to Supabase");
+  assert.equal(locationCalls[0].p_latitude, 5.6037);
+  assert.equal(locationCalls[0].p_longitude, -0.187);
+
+  harness.setRpcResult({ data: [], error: null });
+  harness.element("#refresh-button").listeners.click();
+  await harness.settle();
+
+  assert.equal(harness.getActiveLocationWatchCount(), 0, "GPS watch should stop when no delivery is out");
+  assert.deepEqual(harness.getClearedLocationWatches(), [1]);
+  assert.equal(harness.element("#location-summary-value").textContent, "Off");
 });
