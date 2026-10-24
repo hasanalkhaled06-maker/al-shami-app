@@ -45,7 +45,6 @@
     .customer-auth form input{min-height:46px}
     .customer-auth #auth-password-help{margin:0}
     .customer-auth #auth-message{overflow-wrap:anywhere}
-    .customer-auth #auth-continue-guest{margin-top:10px}
 
     .customer-auth [hidden]{display:none!important}
     .customer-auth #auth-method-switch{margin:10px 0 0}
@@ -162,8 +161,7 @@
       visibility:visible!important;
       pointer-events:auto!important;
     }
-    body.customer-auth-required #auth-close,
-    body.customer-auth-required #auth-continue-guest{display:none!important}
+    body.customer-auth-required #auth-close{display:none!important}
 
     /* Customer home navigation cards — visually aligned with the AL SHAMI admin hub. */
     .customer-home-actions{margin:28px 0 24px;padding:clamp(16px,2.5vw,28px);border:1px solid #ead8d4;border-radius:22px;background:linear-gradient(180deg,#fffdf9 0%,#fff8ef 100%);box-shadow:0 12px 34px rgba(55,25,28,.055)}
@@ -329,7 +327,6 @@
         <button id="auth-recovery-back" class="btn btn-light auth-secondary" type="button">Back to sign in</button>
       </div>
       <p id="auth-message" class="status-message" role="status" aria-live="polite"></p>
-      <button id="auth-continue-guest" class="btn btn-light btn-wide" type="button" hidden>Continue without an account</button>
     </div>
   </section>
   <div class="customer-account-toolbar">
