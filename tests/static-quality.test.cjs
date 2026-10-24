@@ -173,6 +173,9 @@ test("customer email accounts can verify their saved phone for password sign-in"
 
 test("Arkesel auth SMS hook verifies Supabase signatures and keeps provider secrets server-side", () => {
   const functionSource = source("supabase/functions/arkesel-auth-sms/index.ts");
+  const supabaseConfig = source("supabase/config.toml");
+  assert.match(supabaseConfig, /project_id\s*=\s*"rxjfvuxzseuybfmfyjvs"/);
+  assert.match(supabaseConfig, /\[functions\.arkesel-auth-sms\][\s\S]*?verify_jwt\s*=\s*false/);
   assert.match(functionSource, /standardwebhooks@1\.0\.0/);
   assert.match(functionSource, /webhook\.verify\(rawBody, Object\.fromEntries\(request\.headers\)\)/);
   assert.match(functionSource, /Deno\.env\.get\("ARKESEL_API_KEY"\)/);
