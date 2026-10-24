@@ -708,7 +708,7 @@
       const detail = String(error?.message || "");
       if (mode === "signin" && authMethod === "phone") {
         authMessage("Phone sign-in could not be completed. Existing accounts must first sign in with email and verify the saved phone number once. If this number has already been verified, check the password and try again.", true);
-      } else if (/email address not authorized|not authorized|confirmation email|SMTP|email provider/i.test(detail))
+      } else if (/email address not authorized|not authorized|confirmation email|SMTP|email provider/i.test(detail)) {
         authMessage("Email delivery is not configured for public customers yet. Supabase's default sender only delivers to project team addresses. Configure a custom SMTP sender before customer signup and password recovery.", true);
       } else if (/duplicate key|unique constraint|23505|already linked/i.test(detail)) {
         authMessage("This phone number is already linked to another customer account. Sign in to the existing account or use a different number.", true);
