@@ -1820,7 +1820,7 @@
             ).join("") + "</ol>";
         const items = Array.isArray(order.items) ? order.items : [];
         const itemHtml = items.map(item => {
-          const reviewButton = status === "completed" && order.id && item.menu_item_id
+          const reviewButton = status === "completed" && order.can_review && order.id && item.menu_item_id
             ? '<button type="button" class="btn btn-light" data-review-order="' + escapeHTML(order.id) + '" data-review-item="' + escapeHTML(item.menu_item_id) + '">' + escapeHTML(localized("Review", "قيّم", "Review")) + '</button>'
             : "";
           return '<li><span>' + escapeHTML(item.quantity) + " × " + escapeHTML(item.name || "Item") +
