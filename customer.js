@@ -2688,11 +2688,25 @@
       const submittedTotal =
         subtotal + (orderType === "delivery" ? deliveryFee : 0);
 
-      const orderSummary = `${tr("orderType")}: ${tr(orderType)}\n` + rows.map(([id, quantity]) => {
-        const product = products.find(item => String(item.id) === String(id));
-        return `${quantity} × ${product?.name || "Item"}`;
-      }).join("\n");
-      if (!window.confirm(localized("Confirm your order?\n\n", "تأكيد الطلب؟\n\n", "Wopɛ sɛ wosi wo order so dua?\n\n") + orderSummary + "\n\n" + localized("Total: ", "المجموع: ", "Ne nyinaa: ") + money(submittedTotal))) return;
+      const generalNotes = String(formData.get("notes") || "").trim();
+      const pickupInstructions = orderType === "pickup" ? String(formData.get("pickup_instructions") || "").trim() : "";
+      const orderSummary = [
+        localized("Order type: ", "نوع الطلب: ", "Order no su: ") + tr(orderType),
+        localized("Name: ", "الاسم: ", "Din: ") + customerName,
+        localized("Phone: ", "الهاتف: ", "Telefon: ") + normalizedPhone,
+        ...rows.map(([id, quantity]) => {
+          const product = products.find(item => String(item.id) === String(id));
+          return `${quantity} × ${product?.name || "Item"}`;
+        }),
+        ...(orderType === "delivery" ? [localized("Delivery address: ", "عنوان التوصيل: ", "Delivery address: ") + address] : []),
+        ...(pickupInstructions ? [localized("Pickup instructions: ", "تعليمات الاستلام: ", "Pickup instructions: ") + pickupInstructions] : []),
+        ...(generalNotes ? [localized("Order notes: ", "ملاحظات الطلب: ", "Order notes: ") + generalNotes] : []),
+        "",
+        localized("Subtotal: ", "المجموع الفرعي: ", "Subtotal: ") + money(subtotal),
+        localized("Delivery fee: ", "رسوم التوصيل: ", "Delivery fee: ") + money(orderType === "delivery" ? deliveryFee : 0),
+        localized("Total: ", "الإجمالي: ", "Ne nyinaa: ") + money(submittedTotal)
+      ].join("\n");
+      if (!window.confirm(localized("Review your order before sending:\n\n", "راجع طلبك قبل الإرسال:\n\n", "Hwɛ wo order no ansa na woasoma:\n\n") + orderSummary)) return;
 
       const submittedItems = rows.map(([product_id, quantity]) => ({
         product_id,
