@@ -178,8 +178,8 @@ begin
   end if;
 
   select max(m.prep_minutes) into v_prep
-  from jsonb_array_elements(p_items) i
-  join public.menu_items m on m.id = (i->>'product_id')::uuid;
+  from jsonb_array_elements(p_items) as it(item)
+  join public.menu_items m on m.id = (it.item->>'product_id')::uuid;
 
   if v_requested is null then v_requested := now(); end if;
   v_delivery_minutes := case
