@@ -2095,9 +2095,9 @@
       .normalize("NFKC")
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\\u0300-\\u036f\\u0591-\\u05c7\\u0610-\\u061a\\u064b-\\u065f\\u0670\\u06d6-\\u06ed]/g, "")
+      .replace(/[\u0300-\u036f\u0591-\u05c7\u0610-\u061a\u064b-\u065f\u0670\u06d6-\u06ed]/g, "")
       .replace(/[ـ]/g, "")
-      .replace(/[^\\p{L}\\p{N}]+/gu, " ")
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
       .trim();
   }
 
@@ -2106,7 +2106,7 @@
     const searchText = normalizeMenuSearch(
       `${product.name || ""} ${product.description || ""} ${product.category || ""}`
     );
-    return query.split(/\\s+/).filter(Boolean).every(term => {
+    return query.split(/\s+/).filter(Boolean).every(term => {
       const synonyms = menuSearchSynonymGroups.find(group => group.includes(term)) || [term];
       return synonyms.some(alias => searchText.includes(alias));
     });
