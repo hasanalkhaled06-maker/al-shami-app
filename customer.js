@@ -1401,7 +1401,7 @@
     if (record.distanceNode) {
       const km = Number.isFinite(record.routeDistanceMeters) ? record.routeDistanceMeters / 1000 : null;
       record.distanceNode.textContent = km == null ? "" : (
-        localized("Road distance " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " km · ETA does not include live traffic", "مسافة الطريق حوالي " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " كم · التقدير لا يحتسب زحمة المرور المباشرة", "Ɔkwan no tenten yɛ bɛyɛ " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " km · Bere no mfa kar a ɛwɔ kwan so mprempren nka ho")
+        localized("Road distance " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " km · " + (record.routeSource === "google" ? "Google live-traffic estimate" : "estimate excludes live traffic"), "مسافة الطريق حوالي " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " كم · " + (record.routeSource === "google" ? "تقدير Google حسب حركة المرور" : "التقدير لا يحتسب الزحمة المباشرة"), "Ɔkwan no tenten yɛ bɛyɛ " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " km · " + (record.routeSource === "google" ? "Google live-traffic estimate" : "estimate excludes live traffic"))
       );
     }
   }
@@ -1458,6 +1458,39 @@
     record.animationFrame = window.requestAnimationFrame(frame);
   }
 
+  function decodeGoogleEncodedPolyline(encoded) {
+    if (typeof encoded !== "string" || !encoded.length) return [];
+    const points = [];
+    let index = 0;
+    let latitude = 0;
+    let longitude = 0;
+    while (index < encoded.length) {
+      const deltas = [];
+      for (let coordinate = 0; coordinate < 2; coordinate += 1) {
+        let result = 0;
+        let shift = 0;
+        let byte;
+        do {
+          if (index >= encoded.length || shift > 30) throw new Error("Google polyline is malformed.");
+          byte = encoded.charCodeAt(index++) - 63;
+          if (byte < 0 || byte > 63) throw new Error("Google polyline is malformed.");
+          result |= (byte & 0x1f) << shift;
+          shift += 5;
+        } while (byte >= 0x20);
+        deltas.push((result & 1) ? ~(result >> 1) : (result >> 1));
+      }
+      latitude += deltas[0];
+      longitude += deltas[1];
+      const point = [latitude / 1e5, longitude / 1e5];
+      if (!Number.isFinite(point[0]) || !Number.isFinite(point[1]) ||
+          Math.abs(point[0]) > 90 || Math.abs(point[1]) > 180) {
+        throw new Error("Google polyline contains invalid coordinates.");
+      }
+      points.push(point);
+    }
+    return points;
+  }
+
   let lastCustomerRouteRequestAt = 0;
   let customerRouteQueue = Promise.resolve();
 
@@ -1485,29 +1518,53 @@
       }
       lastCustomerRouteRequestAt = Date.now();
       record.lastRouteRequestedAt = lastCustomerRouteRequestAt;
-      const base = String(cfg.ROUTING_URL || "https://router.project-osrm.org/route/v1/driving").replace(/\/+$/, "");
-      const url = base + "/" + routeOrigin.lng + "," + routeOrigin.lat + ";" +
-        record.destinationPoint.lng + "," + record.destinationPoint.lat +
-        "?overview=full&geometries=geojson&steps=false";
       try {
-        const response = await fetch(url, {
-          method: "GET",
-          headers: { "Accept": "application/json" },
-          credentials: "omit"
-        });
-        if (!response.ok) throw new Error("Routing service returned HTTP " + response.status);
-        const result = await response.json();
-        const route = Array.isArray(result.routes) ? result.routes[0] : null;
-        if (result.code !== "Ok" || !route || !route.geometry ||
-            !Array.isArray(route.geometry.coordinates) || !route.geometry.coordinates.length ||
-            !Number.isFinite(Number(route.duration)) || !Number.isFinite(Number(route.distance))) {
-          throw new Error("No road route is available for this rider location.");
+        let latLngs = null;
+        let routeDistanceMeters = NaN;
+        let routeDurationSeconds = NaN;
+        let routeSource = "google";
+
+        try {
+          const { data, error } = await db.functions.invoke("google-route-eta", {
+            body: { trackingToken: record.token }
+          });
+          if (error) throw error;
+          latLngs = decodeGoogleEncodedPolyline(data?.encodedPolyline);
+          routeDurationSeconds = Number(data?.durationSeconds);
+          routeDistanceMeters = Number(data?.distanceMeters);
+          if (latLngs.length < 2 || !Number.isFinite(routeDurationSeconds) ||
+              !Number.isFinite(routeDistanceMeters)) {
+            throw new Error("Google route response is invalid.");
+          }
+        } catch (googleError) {
+          routeSource = "osrm";
+          const base = String(cfg.ROUTING_URL || "https://router.project-osrm.org/route/v1/driving").replace(/\\/+$/, "");
+          const url = base + "/" + routeOrigin.lng + "," + routeOrigin.lat + ";" +
+            record.destinationPoint.lng + "," + record.destinationPoint.lat +
+            "?overview=full&geometries=geojson&steps=false";
+          const response = await fetch(url, {
+            method: "GET",
+            headers: { "Accept": "application/json" },
+            credentials: "omit"
+          });
+          if (!response.ok) throw new Error("Routing service returned HTTP " + response.status);
+          const result = await response.json();
+          const route = Array.isArray(result.routes) ? result.routes[0] : null;
+          if (result.code !== "Ok" || !route || !route.geometry ||
+              !Array.isArray(route.geometry.coordinates) || !route.geometry.coordinates.length ||
+              !Number.isFinite(Number(route.duration)) || !Number.isFinite(Number(route.distance))) {
+            throw new Error("No road route is available for this rider location.");
+          }
+          latLngs = route.geometry.coordinates
+            .map(coords => [Number(coords[1]), Number(coords[0])])
+            .filter(coords => Number.isFinite(coords[0]) && Number.isFinite(coords[1]));
+          routeDurationSeconds = Number(route.duration);
+          routeDistanceMeters = Number(route.distance);
+          if (latLngs.length < 2) throw new Error("The road route did not contain enough points.");
+          console.info("Using OSRM route ETA fallback:", googleError?.message || "Google route unavailable");
         }
+
         if (!customerRiderMapInstances.has(record.token) || requestId !== record.routeRequestId) return;
-        const latLngs = route.geometry.coordinates
-          .map(coords => [Number(coords[1]), Number(coords[0])])
-          .filter(coords => Number.isFinite(coords[0]) && Number.isFinite(coords[1]));
-        if (latLngs.length < 2) throw new Error("The road route did not contain enough points.");
         if (!record.routeLayer) {
           record.routeLayer = window.L.polyline(latLngs, {
             color: "#8d1723",
@@ -1521,17 +1578,12 @@
         }
         record.routeLayer.bringToBack();
         record.lastRoutePoint = routeOrigin;
-        record.routeDistanceMeters = Number(route.distance);
-        record.etaDurationSeconds = Number(route.duration);
+        record.routeDistanceMeters = routeDistanceMeters;
+        record.etaDurationSeconds = routeDurationSeconds;
         record.etaCalculatedAt = Date.now();
+        record.routeSource = routeSource;
         record.routeError = false;
         updateCustomerRiderEta(record);
-      } catch (error) {
-        console.warn("Customer rider road route failed:", error);
-        if (customerRiderMapInstances.has(record.token) && requestId === record.routeRequestId) {
-          record.routeError = true;
-          updateCustomerRiderEta(record);
-        }
       } finally {
         record.routeRequestPending = false;
       }
@@ -1634,6 +1686,7 @@
         etaDurationSeconds: null,
         etaCalculatedAt: 0,
         routeError: false,
+        routeSource: null,
         animationFrame: null
       };
       customerRiderMapInstances.set(token, record);
