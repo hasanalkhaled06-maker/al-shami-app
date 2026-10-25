@@ -253,6 +253,11 @@ begin
 
   insert into public.menu_reviews(order_id, menu_item_id, customer_user_id, rating, review_text, photo_url)
   values (p_order_id, p_menu_item_id, v_user_id, p_rating, nullif(trim(p_review_text), ''), nullif(trim(p_photo_url), ''))
+  on conflict (order_id, menu_item_id, customer_user_id) do update
+    set rating = excluded.rating,
+        review_text = excluded.review_text,
+        photo_url = excluded.photo_url,
+        status = 'pending'
   returning id into v_review_id;
   return v_review_id;
 end;
