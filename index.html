@@ -169,7 +169,7 @@
     .customer-home-actions-intro .eyebrow{color:var(--red)}
     .customer-home-actions-intro h2{margin:0 0 7px;font-size:clamp(23px,3vw,32px);letter-spacing:-.035em;color:#29191b}
     .customer-home-actions-intro>p:last-child{margin:0;color:#75696a;font-size:14px;line-height:1.6}
-    .customer-home-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,1.8vw,18px)}
+    .customer-home-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(12px,1.8vw,18px)}
     .customer-home-card{position:relative;isolation:isolate;overflow:hidden;display:flex;min-width:0;min-height:245px;flex-direction:column;align-items:stretch;padding:clamp(16px,2vw,24px);border:1px solid rgba(255,255,255,.24);border-radius:19px;color:#fffaf1;text-decoration:none;box-shadow:0 12px 28px rgba(43,16,19,.12);transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
     .customer-home-card::before{content:"";position:absolute;z-index:-1;top:-95px;right:-95px;width:220px;height:220px;border-radius:50%;border:1px solid rgba(255,255,255,.16);box-shadow:0 0 0 22px rgba(255,255,255,.025),0 0 0 46px rgba(255,255,255,.02)}
     .customer-home-card::after{content:"";position:absolute;z-index:-1;right:0;bottom:0;left:0;height:4px;background:rgba(255,255,255,.38)}
@@ -177,6 +177,7 @@
     .customer-home-card:focus-visible{outline:3px solid #d8a842;outline-offset:4px}
     .customer-card-order{background:radial-gradient(circle at 85% 12%,rgba(255,255,255,.13),transparent 33%),linear-gradient(145deg,#4a0b13 0%,#761522 58%,#a62030 100%)}
     .customer-card-history{background:radial-gradient(circle at 88% 12%,rgba(255,255,255,.16),transparent 32%),linear-gradient(145deg,#15394d 0%,#1c6171 60%,#267d83 100%)}
+    .customer-card-active-orders{background:radial-gradient(circle at 88% 12%,rgba(255,255,255,.14),transparent 32%),linear-gradient(145deg,#123c2d 0%,#17623d 60%,#23834f 100%)}
     .customer-card-help{background:radial-gradient(circle at 88% 10%,rgba(255,255,255,.24),transparent 30%),linear-gradient(145deg,#f7e6c0 0%,#e6bf70 58%,#d4a44b 100%);color:#3a2020;border-color:#e4c783}
     .customer-card-help::before{border-color:rgba(91,50,17,.15);box-shadow:0 0 0 22px rgba(91,50,17,.025),0 0 0 46px rgba(91,50,17,.02)}
     .customer-card-help::after{background:#9e7127}
@@ -201,10 +202,12 @@
     @media(max-width:360px){.customer-card-badge{font-size:8px;padding:6px 7px}.customer-home-card{padding:14px}}
 
 
-    /* Customer landing page shows only the three action cards until a choice is made. */
-    body.customer-home-page:not(.has-current-orders) #customer-orders-panel{display:none!important}
+    /* Customer landing page keeps ordering and order tracking in separate views. */
     body.customer-home-page:not(.customer-ordering-open) #customer-ordering-view{display:none!important}
-    body.customer-home-page.customer-ordering-open .customer-home-actions{display:none!important}
+    body.customer-home-page.customer-ordering-open .customer-home-actions,
+    body.customer-home-page.customer-active-orders-open .customer-home-actions{display:none!important}
+    .customer-active-orders-view[hidden]{display:none!important}
+    @media(max-width:980px){.customer-home-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     .customer-ordering-view{margin:10px 0 28px;scroll-margin-top:18px}
     .customer-ordering-view[hidden]{display:none!important}
     .customer-ordering-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 20px;padding:0 0 14px;border-bottom:1px solid #ead8d4}
@@ -373,6 +376,18 @@
           <span class="customer-card-bottom"><strong data-i18n="placeOrderCardCta">Browse the menu</strong><span class="customer-card-arrow" aria-hidden="true">↗</span></span>
         </a>
 
+        <a class="customer-home-card customer-card-active-orders" href="#active-orders">
+          <span class="customer-card-top">
+            <span class="customer-card-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none"><path d="M24 5 39 11v11c0 9.7-6.4 16.7-15 21-8.6-4.3-15-11.3-15-21V11L24 5Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="m17 24 5 5 10-11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="customer-card-badge"><span class="customer-live-dot"></span> LIVE STATUS</span>
+          </span>
+          <span class="customer-card-title" data-i18n="activeOrdersCard">Active orders</span>
+          <span class="customer-card-description" data-i18n="activeOrdersCardDesc">Follow accepted orders while they are being prepared or delivered.</span>
+          <span class="customer-card-bottom"><strong data-i18n="activeOrdersCardCta">Check order status</strong><span class="customer-card-arrow" aria-hidden="true">↗</span></span>
+        </a>
+
         <a class="customer-home-card customer-card-history" href="./history.html">
           <span class="customer-card-top">
             <span class="customer-card-icon" aria-hidden="true">
@@ -403,7 +418,15 @@
     <button id="retry-menu" class="btn btn-light retry-menu" type="button" data-i18n="retry" hidden>Retry</button>
     <div id="active-offers" aria-live="polite"></div>
 
-    <section id="customer-orders-panel" class="customer-orders-panel" aria-labelledby="customer-orders-heading">
+    
+
+
+    <section id="customer-active-orders-view" class="customer-active-orders-view" hidden aria-labelledby="customer-orders-heading">
+      <div class="customer-ordering-toolbar">
+        <button id="customer-orders-back" type="button" class="btn btn-light" data-i18n="backToHome">← Back to home</button>
+        <p class="customer-ordering-toolbar-title" data-i18n="activeOrdersCard">Active orders</p>
+      </div>
+      <section id="customer-orders-panel" class="customer-orders-panel" aria-labelledby="customer-orders-heading">
       <div class="section-heading"><div><p class="eyebrow">AL SHAMI</p><h2 id="customer-orders-heading" data-i18n="activeOrdersHeading">Active orders</h2><p class="customer-orders-note" data-i18n="ordersUpdateNote"></p></div>
         <button id="refresh-customer-orders" class="btn btn-light" type="button" data-i18n="refreshOrders">Refresh</button></div>
       <div id="customer-orders-nav" class="customer-orders-nav"><a class="btn btn-light" href="./history.html">Order History</a></div>
@@ -411,7 +434,7 @@
       <p id="customer-orders-message" role="status" aria-live="polite" class="status-message"></p>
       <div id="customer-order-history"><p class="muted">Loading your saved orders…</p></div>
     </section>
-
+    </section>
 
     <section id="customer-ordering-view" class="customer-ordering-view" hidden aria-labelledby="menu-section">
       <div class="customer-ordering-toolbar">
@@ -701,12 +724,17 @@
 
       document.getElementById("success-track")?.addEventListener("click", () => {
         closePanel();
-        const orderCard = Array.from(document.querySelectorAll("#customer-order-history .customer-order-card"))
-          .find(card => card.textContent.includes("#" + activeSuccessOrderNumber));
-        const history = document.getElementById("customer-order-history");
-        (orderCard || history)?.scrollIntoView({ behavior: "smooth", block: "center" });
-        orderCard?.classList.add("tracked-card-highlight");
-        if (orderCard) window.setTimeout(() => orderCard.classList.remove("tracked-card-highlight"), 1800);
+        if (typeof window.AL_SHAMI_OPEN_ACTIVE_ORDERS === "function") {
+          window.AL_SHAMI_OPEN_ACTIVE_ORDERS();
+        }
+        window.requestAnimationFrame(() => {
+          const orderCard = Array.from(document.querySelectorAll("#customer-order-history .customer-order-card"))
+            .find(card => card.textContent.includes("#" + activeSuccessOrderNumber));
+          const history = document.getElementById("customer-order-history");
+          (orderCard || history)?.scrollIntoView({ behavior: "smooth", block: "center" });
+          orderCard?.classList.add("tracked-card-highlight");
+          if (orderCard) window.setTimeout(() => orderCard.classList.remove("tracked-card-highlight"), 1800);
+        });
       });
       closeButton.addEventListener("click", closePanel);
       document.addEventListener("keydown", event => {
@@ -718,7 +746,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
-  <script src="customer.js?v=scroll-refresh-fix-20261025a"></script>
+  <script src="customer.js?v=active-orders-page-20261025a"></script>
   <script src="customer-features.js?v=account-settings-20261025c"></script>
   <script src="pwa.js"></script>
 </body>
