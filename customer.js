@@ -866,6 +866,7 @@
 
 
   let products = [];
+  let menuFeatureDetailsAvailable = false;
   let offers = [];
   let popularityByMenuItem = new Map();
   let cart = {};
@@ -2117,6 +2118,15 @@
                 .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
                 .slice(0, 3)
             : [];
+          const foodDetails = [];
+          if (menuFeatureDetailsAvailable && product.prep_minutes) foodDetails.push(localized("Preparation: ", "التحضير: ", "Bere a wɔde yɛ: ") + product.prep_minutes + " min");
+          if (menuFeatureDetailsAvailable && product.portion_info) foodDetails.push(localized("Serving: ", "الحصة: ", "Serving: ") + product.portion_info);
+          if (menuFeatureDetailsAvailable && product.ingredients) foodDetails.push(localized("Ingredients: ", "المكونات: ", "Ingredients: ") + product.ingredients);
+          if (menuFeatureDetailsAvailable && product.spice_level != null) foodDetails.push(localized("Spice: ", "الحرارة: ", "Spice: ") + product.spice_level + "/5");
+          if (menuFeatureDetailsAvailable && Array.isArray(product.allergens) && product.allergens.length) foodDetails.push(localized("Allergens: ", "مسببات الحساسية: ", "Allergens: ") + product.allergens.join(", "));
+          const foodDetailsMarkup = foodDetails.length
+            ? '<small class="product-food-details">' + foodDetails.map(escapeHTML).join(" · ") + '</small>'
+            : "";
           const alternativesMarkup = alternativeProducts.length
             ? `<div class="unavailable-alternatives"><p class="muted">${escapeHTML(localized(
                 "Available alternatives",
@@ -2146,6 +2156,7 @@
           <div class="product-info">
             <h3>${escapeHTML(product.name)}</h3>
             <p>${escapeHTML(product.description || "Freshly prepared at AL SHAMI.")}</p>
+            ${foodDetailsMarkup}
             <div class="product-bottom">
               <span class="price">${money(product.price)}</span>
               ${addControl}
@@ -2373,6 +2384,13 @@
       }
 
       products = menuResult.data || [];
+      const detailsResult = await db.from("menu_items")
+        .select("id,prep_minutes,ingredients,portion_info,spice_level,allergens");
+      menuFeatureDetailsAvailable = !detailsResult.error;
+      if (menuFeatureDetailsAvailable) {
+        const detailsById = new Map((detailsResult.data || []).map(row => [String(row.id), row]));
+        products = products.map(product => ({ ...product, ...(detailsById.get(String(product.id)) || {}) }));
+      }
       const now = Date.now();
       offers = (offerResult.data || []).filter(offer =>
         (!offer.starts_at || new Date(offer.starts_at).getTime() <= now) &&
