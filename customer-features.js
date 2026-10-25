@@ -96,14 +96,20 @@
     }
     document.querySelectorAll("#customer-order-history .customer-order-card[data-order-subtotal]").forEach(card=>{
       let note=card.querySelector(".customer-order-points");
-      if(!note){note=document.createElement("p");note.className="customer-order-points";const meta=card.querySelector(".tracked-order-meta");(meta||card).insertAdjacentElement("afterend",note);}
+      if(!loyaltySettings||!loyaltySettings.enabled){note?.remove();return;}
       const state=card.dataset.orderStatus||"";
-      if(state==="rejected"){note.classList.remove("is-earned","is-pending");note.textContent=t.rejected;return;}
-      if(!loyaltySettings||!loyaltySettings.enabled){note.remove();return;}
-      const points=pointsForSubtotal(card.dataset.orderSubtotal);
+      const message=state==="rejected"
+        ? t.rejected
+        : (state==="completed"?t.earned:t.pending).replace("{points}",String(pointsForSubtotal(card.dataset.orderSubtotal)));
+      if(!note){
+        note=document.createElement("p");
+        note.className="customer-order-points";
+        const meta=card.querySelector(".tracked-order-meta");
+        (meta||card).insertAdjacentElement("afterend",note);
+      }
       note.classList.toggle("is-earned",state==="completed");
-      note.classList.toggle("is-pending",state!=="completed");
-      note.textContent=(state==="completed"?t.earned:t.pending).replace("{points}",String(points));
+      note.classList.toggle("is-pending",state!=="completed"&&state!=="rejected");
+      if(note.textContent!==message)note.textContent=message;
     });
   }
   const cartSubtotalNode=document.querySelector("#cart-subtotal");
