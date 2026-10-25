@@ -21,6 +21,7 @@
         }
       })
     : null;
+  window.AL_SHAMI_RIDER_DB = db;
 
   const $ = selector => document.querySelector(selector);
   const loginPanel = $("#login-panel");
