@@ -2935,21 +2935,45 @@
       showCheckoutMessage("");
 
       try {
-        const { data, error } = await db.rpc("place_order_with_location", {
+        const pickupNote = orderType === "pickup" ? String(formData.get("pickup_instructions") || "").trim() : "";
+        const itemNotesForLegacy = submittedItems.map(item => {
+          if (!item.item_note) return "";
+          const product = products.find(row => String(row.id) === String(item.product_id));
+          return (product?.name || "Item") + ": " + item.item_note;
+        }).filter(Boolean);
+        const orderNotes = [
+          generalNotes,
+          pickupNote ? "Pickup instructions: " + pickupNote : "",
+          requestedForDate ? "Requested time: " + requestedForDate.toLocaleString() : "",
+          ...itemNotesForLegacy
+        ].filter(Boolean).join("\n") || null;
+        const rpcArgs = {
           p_customer_name: String(formData.get("customer_name") || "").trim(),
           p_customer_phone: normalizedPhone,
           p_order_type: orderType,
           p_delivery_address: orderType === "delivery" ? address : null,
-          p_notes: [
-            String(formData.get("notes") || "").trim(),
-            orderType === "pickup" && String(formData.get("pickup_instructions") || "").trim()
-              ? "Pickup instructions: " + String(formData.get("pickup_instructions")).trim()
-              : ""
-          ].filter(Boolean).join("\n") || null,
+          p_notes: orderNotes,
           p_items: submittedItems,
           p_delivery_latitude: deliveryLatitude,
-          p_delivery_longitude: deliveryLongitude
-        });
+          p_delivery_longitude: deliveryLongitude,
+          p_requested_for: requestedForIso
+        };
+        let { data, error } = await db.rpc("place_order_with_options", rpcArgs);
+        if (error?.code === "PGRST202") {
+          if (deliveryZoneLookupAvailable && activeDeliveryZones.length) {
+            throw new Error(localized("Apply the optional database upgrade before accepting zone-priced orders.", "قبل قبول طلبات برسوم حسب المنطقة، لازم تطبيق تحديث قاعدة البيانات.", "Apply the optional database upgrade before accepting zone-priced orders."));
+          }
+          ({ data, error } = await db.rpc("place_order_with_location", {
+            p_customer_name: rpcArgs.p_customer_name,
+            p_customer_phone: rpcArgs.p_customer_phone,
+            p_order_type: rpcArgs.p_order_type,
+            p_delivery_address: rpcArgs.p_delivery_address,
+            p_notes: orderNotes,
+            p_items: submittedItems,
+            p_delivery_latitude: deliveryLatitude,
+            p_delivery_longitude: deliveryLongitude
+          }));
+        }
 
         if (error) throw error;
 
