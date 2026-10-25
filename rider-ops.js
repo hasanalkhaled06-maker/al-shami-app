@@ -20,12 +20,12 @@
   function render(){
     const sorted=[...orders].sort((a,b)=>{
       if(!position)return new Date(a.created_at)-new Date(b.created_at);
-      const da=Number.isFinite(Number(a.delivery_latitude))?dist(position,{lat:Number(a.delivery_latitude),lng:Number(a.delivery_longitude)}):Infinity;
-      const dbb=Number.isFinite(Number(b.delivery_latitude))?dist(position,{lat:Number(b.delivery_latitude),lng:Number(b.delivery_longitude)}):Infinity;
+      const da=a.delivery_latitude!==null&&a.delivery_latitude!==undefined&&Number.isFinite(Number(a.delivery_latitude))?dist(position,{lat:Number(a.delivery_latitude),lng:Number(a.delivery_longitude)}):Infinity;
+      const dbb=b.delivery_latitude!==null&&b.delivery_latitude!==undefined&&Number.isFinite(Number(b.delivery_latitude))?dist(position,{lat:Number(b.delivery_latitude),lng:Number(b.delivery_longitude)}):Infinity;
       return da-dbb;
     });
     $("#rider-ops-list").innerHTML=sorted.length?sorted.map((o,i)=>{
-      const distance=position&&Number.isFinite(Number(o.delivery_latitude))?'<small> · '+dist(position,{lat:Number(o.delivery_latitude),lng:Number(o.delivery_longitude)}).toFixed(1)+' km away</small>':"";
+      const distance=position&&o.delivery_latitude!==null&&o.delivery_latitude!==undefined&&Number.isFinite(Number(o.delivery_latitude))?'<small> · '+dist(position,{lat:Number(o.delivery_latitude),lng:Number(o.delivery_longitude)}).toFixed(1)+' km away</small>':"";
       return '<article class="delivery-card" style="margin:10px 0;padding:12px"><strong>'+(position&&i===0?"Closest · ":"")+'Order #'+esc(o.order_number)+'</strong>'+distance+'<p>'+esc(o.delivery_address||"Delivery location not provided")+'</p><p><small>Last GPS update: '+esc(time(o.gps_updated_at))+'</small></p><p><small>Arrived at restaurant: '+esc(time(o.arrived_at))+' · Left restaurant: '+esc(time(o.left_at))+'</small></p><div class="feature-row"><button class="secondary-button" data-event="arrived_at_restaurant" data-order="'+esc(o.id)+'" '+(o.arrived_at?"disabled":"")+'>Arrived at restaurant</button><button class="secondary-button" data-event="left_restaurant" data-order="'+esc(o.id)+'" '+(o.left_at?"disabled":"")+'>Left restaurant</button><select data-reason="'+esc(o.id)+'"><option value="">Failed delivery reason…</option>'+Object.entries(reasonLabels).map(([k,v])=>'<option value="'+k+'">'+v+'</option>').join("")+'</select><button class="secondary-button" data-failed="'+esc(o.id)+'">Record failed attempt</button></div></article>';
     }).join(""):'<p>No active assigned deliveries.</p>';
   }
