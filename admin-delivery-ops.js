@@ -3,7 +3,7 @@
   "use strict";
   const cfg=window.AL_SHAMI_CONFIG||{};
   if(!window.supabase||!cfg.SUPABASE_URL||!cfg.SUPABASE_ANON_KEY)return;
-  const db=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY,{
+  const db=window.AL_SHAMI_ADMIN_DB||window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY,{
     auth:{storageKey:"al-shami-admin-auth-v1",persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
   });
   const $=s=>document.querySelector(s), esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
