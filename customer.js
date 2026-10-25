@@ -2697,7 +2697,10 @@
   $("#delivery-map-cancel")?.addEventListener("click", closeDeliveryMapPicker);
   $("#delivery-map-modal [data-close-delivery-map]")?.addEventListener("click", closeDeliveryMapPicker);
   $("#delivery-map-confirm")?.addEventListener("click", confirmDeliveryLocation);
-  $("#clear-delivery-location")?.addEventListener("click", clearDeliveryLocationSelection);
+  $("#clear-delivery-location")?.addEventListener("click", () => {
+    clearDeliveryLocationSelection();
+    renderCart();
+  });
   $("#delivery-map-modal")?.addEventListener("keydown", event => {
     if (event.key === "Escape") closeDeliveryMapPicker();
   });
@@ -3018,6 +3021,13 @@
 
           const typeSelect = $("#order-type");
           if (typeSelect) typeSelect.value = "delivery";
+          const scheduleToggle = $("#schedule-order-toggle");
+          if (scheduleToggle) scheduleToggle.checked = false;
+          $("#schedule-order-controls")?.setAttribute("hidden", "");
+          if (formElement.elements?.requested_for) {
+            formElement.elements.requested_for.value = "";
+            formElement.elements.requested_for.required = false;
+          }
 
           $("#address-field")?.classList.remove("hidden");
 
