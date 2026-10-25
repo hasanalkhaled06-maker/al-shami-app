@@ -3033,7 +3033,7 @@
         };
         let { data, error } = await db.rpc("place_order_with_rewards", rpcArgs);
         if (error?.code === "PGRST202") {
-          if (rpcArgs.p_points_to_redeem > 0 || rpcArgs.p_referral_code) {
+          if (rpcArgs.p_points_to_redeem > 0 || rpcArgs.p_redeem_stamp_reward || rpcArgs.p_referral_code) {
             throw new Error(localized("Apply the optional rewards database upgrade before using points or a referral code.", "لازم تطبيق تحديث المكافآت على قاعدة البيانات قبل استخدام النقاط أو رمز الإحالة.", "Apply the optional rewards database upgrade before using points or a referral code."));
           }
           const legacyArgs = { ...rpcArgs };
