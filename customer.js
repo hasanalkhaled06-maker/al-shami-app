@@ -970,6 +970,7 @@
       mapsLoadError: "The map library could not load. Check your connection or enter the address manually.",
       copyAddress: "Copy address",
       notes: "Notes (optional)",
+      pickupInstructions: "Pickup instructions (optional)",
       add: "Add to order",
       empty: "Your basket is empty.",
       send: "Place order",
@@ -1062,6 +1063,7 @@
       mapsLoadError: "ما قدرنا نحمل خرائط Google. تأكد من مفتاح API والخدمات المفعّلة، أو اكتب العنوان يدوياً.",
       copyAddress: "نسخ العنوان",
       notes: "ملاحظات (اختياري)",
+      pickupInstructions: "تعليمات الاستلام (اختياري)",
       add: "أضف للطلب",
       empty: "السلة فارغة.",
       send: "إرسال الطلب",
@@ -1154,6 +1156,7 @@
       mapsLoadError: "Map no antumi amma. Hwɛ internet anaa kyerɛw wo address wɔ ase ha.",
       copyAddress: "Kɔpi address",
       notes: "Nsɛm foforo (wopɛ a)",
+      pickupInstructions: "Akwan a yɛmfa nkyerɛ wo wɔ restaurant no (wopɛ a)",
       add: "Fa ka wo nneɛma ho",
       empty: "Wunni biribiara wɔ wo nneɛma mu.",
       send: "Fa wo nhyehyɛe no mena",
@@ -2580,6 +2583,7 @@
     const isPickup = $("#order-type").value === "pickup";
 
     $("#address-field")?.classList.toggle("hidden", isPickup);
+    $("#pickup-instructions-field")?.classList.toggle("hidden", !isPickup);
     if (isPickup) clearDeliveryLocationSelection();
 
     if (checkoutForm?.elements?.delivery_address) {
@@ -2710,7 +2714,12 @@
           p_customer_phone: normalizedPhone,
           p_order_type: orderType,
           p_delivery_address: orderType === "delivery" ? address : null,
-          p_notes: String(formData.get("notes") || "").trim() || null,
+          p_notes: [
+            String(formData.get("notes") || "").trim(),
+            orderType === "pickup" && String(formData.get("pickup_instructions") || "").trim()
+              ? "Pickup instructions: " + String(formData.get("pickup_instructions")).trim()
+              : ""
+          ].filter(Boolean).join("\n") || null,
           p_items: submittedItems,
           p_delivery_latitude: deliveryLatitude,
           p_delivery_longitude: deliveryLongitude
