@@ -507,6 +507,15 @@
             <textarea id="pickup-instructions-input" name="pickup_instructions" rows="2" maxlength="250" placeholder="Tell us where to meet you at the restaurant"></textarea>
           </div>
 
+          <div id="schedule-order-section" class="full" hidden>
+            <label class="remember-customer"><input id="schedule-order-toggle" type="checkbox"><span data-i18n="scheduleOrder">Schedule this order</span></label>
+            <div id="schedule-order-controls" hidden>
+              <label for="requested-for-input"><span data-i18n="scheduleFor">Preferred date and time</span></label>
+              <input id="requested-for-input" name="requested_for" type="datetime-local">
+              <small class="field-help" data-i18n="scheduleHint">The restaurant will confirm the requested time.</small>
+            </div>
+          </div>
+
           <label class="full">
             <span data-i18n="notes">Notes (optional)</span>
             <textarea name="notes" rows="2" maxlength="500" placeholder="No onions, call on arrival…"></textarea>
