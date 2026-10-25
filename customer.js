@@ -1955,7 +1955,7 @@
               : (localized("Checking the rider location…", "عم نتحقق من موقع السائق…", "Yɛrehwɛ driver no beae…"))) +
             '</p></section>'
           : "";
-        return '<article class="customer-order-card">' +
+        return '<article class="customer-order-card" data-order-subtotal="' + escapeHTML(order.subtotal ?? 0) + '" data-order-status="' + escapeHTML(status) + '">' +
           '<div class="tracked-card-heading"><div><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(number) + '</strong><p class="tracked-date">' + escapeHTML(tr("orderedAt")) + ": " + escapeHTML(trackingDate(order.created_at)) + '</p>' + updatedAtHtml + '</div><span class="tracked-status status-' + escapeHTML(status.replace(/[^a-z_]/g,"")) + '">' + escapeHTML(trackingStatusText(status, order.order_type)) + "</span></div>" +
           timeline + '<div class="tracked-order-meta"><span>' + escapeHTML(order.order_type === "pickup" ? tr("pickup") : tr("delivery")) + '</span><strong>' + money(order.total) + "</strong></div>" +
           (order.requested_for ? '<p class="tracked-date">' + escapeHTML(localized("Requested for: ", "موعد الطلب: ", "Requested for: ")) + escapeHTML(trackingDate(order.requested_for)) + '</p>' : "") +
