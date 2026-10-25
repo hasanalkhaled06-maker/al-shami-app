@@ -1853,8 +1853,12 @@
       return;
     }
     trackedOrdersLoading = true;
-    clearCustomerRiderMaps();
-    list.innerHTML = '<p class="muted">' + escapeHTML(tr("loadingTrackedOrders")) + "</p>";
+    // Keep the current cards (and document height) in place during background polling.
+    // Replacing them with a short loading line makes mobile browsers clamp scrollY to 0.
+    const hasRenderedOrders = Boolean(list.querySelector(".customer-order-card, .customer-order-group"));
+    if (!hasRenderedOrders) {
+      list.innerHTML = '<p class="muted">' + escapeHTML(tr("loadingTrackedOrders")) + "</p>";
+    }
     try {
       const results = await Promise.all(entries.map(async entry => {
         try {
