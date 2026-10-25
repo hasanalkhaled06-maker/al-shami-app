@@ -158,7 +158,7 @@
     const results = $("#delivery-map-search-results");
     const query = String(input?.value || "").trim();
     if (!query || query.length < 3) {
-      setMapMessage(lang === "ar" ? "اكتب اسم مكان أو عنواناً أطول للبحث." : "Enter a place name or a longer address to search.", true);
+      setMapMessage(localized("Enter a place name or a longer address to search.", "اكتب اسم مكان أو عنواناً أطول للبحث.", "Kyerɛw beae bi din anaa address tenten kakra na hwehwɛ."), true);
       return;
     }
     if (!results || !button) return;
@@ -193,7 +193,7 @@
 
       const heading = document.createElement("p");
       heading.className = "delivery-map-search-results-heading";
-      heading.textContent = lang === "ar" ? "اختر نتيجة للانتقال إليها:" : "Choose a result to move the map:";
+      heading.textContent = localized("Choose a result to move the map:", "اختر نتيجة للانتقال إليها:", "Paw nea ɛfata na map no akɔ hɔ:");
       results.appendChild(heading);
       places.slice(0, 5).forEach(place => {
         const lat = Number(place.lat);
@@ -899,9 +899,7 @@
     else if (national.startsWith("233")) national = national.slice(3);
     else if (national.startsWith("0")) national = national.slice(1);
     if (!validCharacters || !/^[0-9]{9}$/.test(national)) {
-      throw new Error(lang === "ar"
-        ? "أدخل رقم غاني صحيح، مثال 0241234567."
-        : "Enter a valid Ghana phone number, e.g. 0241234567.");
+      throw new Error(localized("Enter a valid Ghana phone number, e.g. 0241234567.", "أدخل رقم غاني صحيح، مثال 0241234567.", "Kyerɛw Ghana telefon nɔma a ɛyɛ nokware, sɛ nhwɛso 0241234567."));
     }
     return "+233" + national;
   }
@@ -1209,6 +1207,7 @@
 
   const money = value => "GH₵ " + Number(value || 0).toFixed(2);
   const tr = key => (translations[lang] && translations[lang][key]) || translations.en[key] || key;
+  const localized = (english, arabic, twi) => lang === "ar" ? arabic : lang === "tw" ? twi : english;
 
   function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -1281,7 +1280,7 @@
   function trackingDate(value) {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "";
-    return date.toLocaleString(lang === "ar" ? "ar" : "en-GH", { dateStyle:"medium", timeStyle:"short" });
+    return date.toLocaleString(lang === "ar" ? "ar" : (lang === "tw" ? "ak-GH" : "en-GH"), { dateStyle:"medium", timeStyle:"short" });
   }
 
   function setHomeCurrentOrdersVisible(visible) {
@@ -1335,9 +1334,7 @@
   function updateCustomerRiderEta(record) {
     if (!record.etaValueNode) return;
     if (!record.currentRiderPoint) {
-      record.etaValueNode.textContent = lang === "ar"
-        ? "بانتظار أول تحديث من السائق…"
-        : "Waiting for the rider's first GPS update…";
+      record.etaValueNode.textContent = localized("Waiting for the rider's first GPS update…", "بانتظار أول تحديث من السائق…", "Yɛretwɛn GPS nsɛm foforo a edi kan afi driver no hɔ…");
       return;
     }
     if (record.isStale) {
@@ -1346,25 +1343,21 @@
         const remaining = Math.max(0, record.etaDurationSeconds - elapsed);
         const minutes = Math.max(1, Math.ceil(remaining / 60));
         record.etaValueNode.textContent = remaining <= 45
-          ? (lang === "ar" ? "وقت الوصول السابق: كان السائق قريباً" : "Last ETA: rider was nearly there")
-          : (lang === "ar" ? "حوالي " + minutes + " دقيقة حسب آخر مسار" : "About " + minutes + " min based on last route");
+          ? localized("Last ETA: rider was nearly there", "وقت الوصول السابق: كان السائق قريباً", "Bere a etwaa mu no, na driver no abɛn")
+          : localized("About " + minutes + " min based on last route", "حوالي " + minutes + " دقيقة حسب آخر مسار", "Ɛbɛyɛ sima " + minutes + " sɛnea ɔkwan a etwaa mu no kyerɛ");
         if (record.distanceNode) {
-          record.distanceNode.textContent = lang === "ar"
-            ? "تقدير قديم — إشارة GPS متأخرة، والوقت الفعلي غير مؤكّد"
-            : "Outdated estimate — GPS is delayed, actual arrival time is uncertain";
+          record.distanceNode.textContent = localized("Outdated estimate — GPS is delayed, actual arrival time is uncertain", "تقدير قديم — إشارة GPS متأخرة، والوقت الفعلي غير مؤكّد", "Bere no yɛ dedaw — GPS nsɛm no akyɛ, enti bere a ɔbɛba no nni hɔ pefee");
         }
       } else {
-        record.etaValueNode.textContent = lang === "ar"
-          ? "بانتظار موقع حديث لحساب وقت الوصول"
-          : "Waiting for a fresh GPS fix to calculate arrival";
+        record.etaValueNode.textContent = localized("Waiting for a fresh GPS fix to calculate arrival", "بانتظار موقع حديث لحساب وقت الوصول", "Yɛretwɛn GPS beae foforo na yɛabu bere a ɔbɛba");
         if (record.distanceNode) record.distanceNode.textContent = "";
       }
       return;
     }
     if (!Number.isFinite(record.etaDurationSeconds) || !record.etaCalculatedAt) {
       record.etaValueNode.textContent = record.routeError
-        ? (lang === "ar" ? "وقت الوصول غير متاح حالياً، عم نعيد المحاولة" : "ETA temporarily unavailable — retrying")
-        : (lang === "ar" ? "عم نحسب الطريق ووقت الوصول…" : "Calculating road route and arrival time…");
+        ? localized("ETA temporarily unavailable — retrying", "وقت الوصول غير متاح حالياً، عم نعيد المحاولة", "Bere a ɔbɛba no nni hɔ seesei — yɛresan asɔ ahwɛ")
+        : localized("Calculating road route and arrival time…", "عم نحسب الطريق ووقت الوصول…", "Yɛrebu ɔkwan ne bere a ɔbɛba…");
       if (record.distanceNode) record.distanceNode.textContent = "";
       return;
     }
@@ -1372,14 +1365,12 @@
     const remaining = Math.max(0, record.etaDurationSeconds - elapsed);
     const minutes = Math.max(1, Math.ceil(remaining / 60));
     record.etaValueNode.textContent = remaining <= 45
-      ? (lang === "ar" ? "السائق صار قريب — الوصول بأي لحظة" : "The rider should be arriving soon")
-      : (lang === "ar" ? "باقي تقريباً " + minutes + " دقيقة للوصول" : "About " + minutes + " min to arrival");
+      ? localized("The rider should be arriving soon", "السائق صار قريب — الوصول بأي لحظة", "Driver no abɛn — ɔreba ntɛm ara")
+      : localized("About " + minutes + " min to arrival", "باقي تقريباً " + minutes + " دقيقة للوصول", "Sima bɛyɛ " + minutes + " na wobedu");
     if (record.distanceNode) {
       const km = Number.isFinite(record.routeDistanceMeters) ? record.routeDistanceMeters / 1000 : null;
       record.distanceNode.textContent = km == null ? "" : (
-        lang === "ar"
-          ? "مسافة الطريق حوالي " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " كم · التقدير لا يحتسب زحمة المرور المباشرة"
-          : "Road distance " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " km · ETA does not include live traffic"
+        localized("Road distance " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " km · ETA does not include live traffic", "مسافة الطريق حوالي " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " كم · التقدير لا يحتسب زحمة المرور المباشرة", "Ɔkwan no tenten yɛ bɛyɛ " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " km · Bere no mfa kar a ɛwɔ kwan so mprempren nka ho")
       );
     }
   }
@@ -1387,9 +1378,7 @@
   function updateCustomerRiderMotion(record) {
     if (!record.motionNode) return;
     if (record.isStale) {
-      record.motionNode.textContent = lang === "ar"
-        ? "آخر إشارة GPS قديمة — عم ننتظر السائق"
-        : "GPS update delayed — waiting for the rider";
+      record.motionNode.textContent = localized("GPS update delayed — waiting for the rider", "آخر إشارة GPS قديمة — عم ننتظر السائق", "GPS nsɛm no akyɛ — yɛretwɛn driver no");
       return;
     }
     let speed = Number(record.latestSpeedMps);
@@ -1400,17 +1389,11 @@
     }
     if (Number.isFinite(speed) && speed >= 1.15) {
       const kmh = Math.round(speed * 3.6);
-      record.motionNode.textContent = lang === "ar"
-        ? "السائق عم يتحرّك" + (kmh > 0 ? " · " + kmh + " كم/س تقريباً" : "")
-        : "Rider moving" + (kmh > 0 ? " · about " + kmh + " km/h" : "");
+      record.motionNode.textContent = localized("Rider moving" + (kmh > 0 ? " · about " + kmh + " km/h" : ""), "السائق عم يتحرّك" + (kmh > 0 ? " · " + kmh + " كم/س تقريباً" : ""), "Driver no retu" + (kmh > 0 ? " · bɛyɛ " + kmh + " km/h" : "" ));
     } else if (Number.isFinite(speed) && speed <= 0.55) {
-      record.motionNode.textContent = lang === "ar"
-        ? "السائق متوقّف حالياً أو عند إشارة"
-        : "Rider appears stopped or waiting";
+      record.motionNode.textContent = localized("Rider appears stopped or waiting", "السائق متوقّف حالياً أو عند إشارة", "Ɛte sɛ driver no agyina anaa ɔretwɛn");
     } else {
-      record.motionNode.textContent = lang === "ar"
-        ? "موقع السائق مباشر · عم نحدّث الحركة"
-        : "Live location · updating movement";
+      record.motionNode.textContent = localized("Live location · updating movement", "موقع السائق مباشر · عم نحدّث الحركة", "Driver no beae yɛ live · yɛreyɛ movement nsɛm foforo");
     }
   }
 
@@ -1545,9 +1528,7 @@
     if (!window.L || typeof window.L.map !== "function") {
       hosts.forEach(host => {
         const statusNode = host.parentElement?.querySelector(".customer-rider-map-status");
-        if (statusNode) statusNode.textContent = lang === "ar"
-          ? "تعذّر تحميل الخريطة. حدّث الصفحة للتحقق من موقع السائق."
-          : "The map could not load. Refresh the page to check the rider location.";
+        if (statusNode) statusNode.textContent = localized("The map could not load. Refresh the page to check the rider location.", "تعذّر تحميل الخريطة. حدّث الصفحة للتحقق من موقع السائق.", "Yentumi amfa map no amma. San bue krataafa yi na hwɛ driver no beae.");
       });
       return;
     }
@@ -1572,7 +1553,7 @@
       let destinationMarker = null;
       if (destination) {
         destinationMarker = window.L.marker([destination.lat, destination.lng]).addTo(map);
-        destinationMarker.bindPopup(lang === "ar" ? "عنوان التوصيل" : "Delivery destination");
+        destinationMarker.bindPopup(localized("Delivery destination", "عنوان التوصيل", "Beae a wɔde aduan bɛkɔ"));
       }
 
       const initialHeading = host.dataset.riderHeading || null;
@@ -1581,7 +1562,7 @@
         riderMarker = window.L.marker([initialRider.lat, initialRider.lng], {
           icon: riderBikeIcon(initialHeading)
         }).addTo(map);
-        riderMarker.bindPopup(host.dataset.riderName || (lang === "ar" ? "السائق" : "Delivery rider"));
+        riderMarker.bindPopup(host.dataset.riderName || (localized("Delivery rider", "السائق", "Driver a ɔde aduan reba")));
       }
 
       if (destination && initialRider) {
@@ -1630,21 +1611,15 @@
         updateCustomerRiderMotion(record);
         updateCustomerRiderEta(record);
       } else if (record.etaValueNode) {
-        record.etaValueNode.textContent = lang === "ar"
-          ? "بانتظار أول تحديث من السائق…"
-          : "Waiting for the rider's first GPS update…";
+        record.etaValueNode.textContent = localized("Waiting for the rider's first GPS update…", "بانتظار أول تحديث من السائق…", "Yɛretwɛn GPS nsɛm foforo a edi kan afi driver no hɔ…");
       }
 
       if (record.statusNode && initialRider) {
         const updated = record.lastUpdatedAt ? trackingDate(record.lastUpdatedAt) : "";
-        record.statusNode.textContent = (lang === "ar"
-          ? "آخر موقع مستلم" + (updated ? " · " + updated : "")
-          : "Latest rider location" + (updated ? " · " + updated : "")) +
-          (record.isStale ? (lang === "ar" ? " · الموقع قديم، بانتظار تحديث" : " · Location may be stale; waiting for an update") : "");
+        record.statusNode.textContent = localized("Latest rider location", "آخر موقع مستلم", "Driver no beae a etwaa mu") + (updated ? " · " + updated : "") +
+          (record.isStale ? localized(" · Location may be stale; waiting for an update", " · الموقع قديم، بانتظار تحديث", " · Ebia sɛ beae no yɛ dedaw; yɛretwɛn foforo") : "");
       } else if (record.statusNode) {
-        record.statusNode.textContent = lang === "ar"
-          ? "عم نتحقق من موقع السائق…"
-          : "Checking for the rider's latest location…";
+        record.statusNode.textContent = localized("Checking for the rider's latest location…", "عم نتحقق من موقع السائق…", "Yɛrehwɛ driver no beae foforo…");
       }
       window.setTimeout(() => {
         try { map.invalidateSize({ pan: false }); } catch (_) {}
@@ -1668,16 +1643,12 @@
           record.isStale = true;
           updateCustomerRiderEta(record);
           updateCustomerRiderMotion(record);
-          if (record.statusNode) record.statusNode.textContent = lang === "ar"
-            ? "عم ننتظر أول تحديث لموقع السائق. رح يظهر موقعه أثناء التوصيل."
-            : "Waiting for the rider's first GPS update. Their location appears during delivery.";
+          if (record.statusNode) record.statusNode.textContent = localized("Waiting for the rider's first GPS update. Their location appears during delivery.", "عم ننتظر أول تحديث لموقع السائق. رح يظهر موقعه أثناء التوصيل.", "Yɛretwɛn driver no GPS nsɛm a edi kan. Ne beae bɛda adi bere a ɔde aduan reba.");
           return;
         }
         const point = validRiderPoint(data.latitude, data.longitude);
         if (!point) {
-          if (record.statusNode) record.statusNode.textContent = lang === "ar"
-            ? "بيانات موقع السائق غير صالحة."
-            : "The rider location data is invalid.";
+          if (record.statusNode) record.statusNode.textContent = localized("The rider location data is invalid.", "بيانات موقع السائق غير صالحة.", "Driver no beae nsɛm no nyɛ nokware.");
           return;
         }
 
@@ -1707,7 +1678,7 @@
           record.riderMarker = window.L.marker([point.lat, point.lng], {
             icon: riderBikeIcon(data.heading_deg)
           }).addTo(record.map);
-          record.riderMarker.bindPopup(data.rider_name || (lang === "ar" ? "السائق" : "Delivery rider"));
+          record.riderMarker.bindPopup(data.rider_name || (localized("Delivery rider", "السائق", "Driver a ɔde aduan reba")));
           if (record.destinationMarker) {
             const dest = record.destinationMarker.getLatLng();
             record.map.fitBounds(window.L.latLngBounds(
@@ -1750,16 +1721,12 @@
 
         if (record.statusNode) {
           const updated = record.lastUpdatedAt ? trackingDate(record.lastUpdatedAt) : "";
-          record.statusNode.textContent = (lang === "ar"
-            ? "السائق: " + record.riderName + (updated ? " · آخر تحديث: " + updated : "")
-            : "Rider: " + record.riderName + (updated ? " · Updated: " + updated : "")) +
-            (record.isStale ? (lang === "ar" ? " · آخر موقع قديم، عم ننتظر تحديثاً" : " · Location is stale; waiting for a fresh update") : "");
+          record.statusNode.textContent = localized("Rider: " + record.riderName, "السائق: " + record.riderName, "Driver: " + record.riderName) + (updated ? " · " + localized("Updated: ", "آخر تحديث: ", "Nsɛm foforo: ") + updated : "") +
+            (record.isStale ? localized(" · Location is stale; waiting for a fresh update", " · آخر موقع قديم، عم ننتظر تحديثاً", " · Driver no beae yɛ dedaw; yɛretwɛn nsɛm foforo") : "");
         }
       } catch (error) {
         console.warn("Customer rider location refresh failed:", error);
-        if (record.statusNode) record.statusNode.textContent = lang === "ar"
-          ? "تعذّر تحديث موقع السائق حالياً. رح نعيد المحاولة تلقائياً."
-          : "Could not refresh the rider location. We will retry automatically.";
+        if (record.statusNode) record.statusNode.textContent = localized("Could not refresh the rider location. We will retry automatically.", "تعذّر تحديث موقع السائق حالياً. رح نعيد المحاولة تلقائياً.", "Yentumi anyɛ driver no beae foforo seesei. Yɛbɛsan asɔ ahwɛ ara kwa.");
       }
     }));
   }
@@ -1855,8 +1822,8 @@
           : null;
         const riderMapMarkup = riderTrackingVisible
           ? '<section class="customer-rider-tracking"><div class="customer-rider-map-heading"><strong>' +
-            escapeHTML(lang === "ar" ? "تتبّع السائق مباشرة" : "Track your delivery rider") +
-            '</strong><p>' + escapeHTML(lang === "ar" ? "شوف حركة السائق والطريق ووقت الوصول التقريبي. الموقع يتحدّث تلقائياً أثناء التوصيل." : "Follow the rider, road route and estimated arrival time. Location updates automatically during delivery.") + '</p></div>' +
+            escapeHTML(localized("Track your delivery rider", "تتبّع السائق مباشرة", "Hwɛ wo driver a ɔde aduan reba no")) +
+            '</strong><p>' + escapeHTML(localized("Follow the rider, road route and estimated arrival time. Location updates automatically during delivery.", "شوف حركة السائق والطريق ووقت الوصول التقريبي. الموقع يتحدّث تلقائياً أثناء التوصيل.", "Hwɛ driver no, ɔkwan ne bere a obedu. Wɔyɛ beae no foforo bere a wɔde aduan reba.")) + '</p></div>' +
             '<div class="customer-rider-map" data-customer-rider-map data-tracking-token="' + escapeHTML(entry.token) + '"' +
             (destinationPoint ? ' data-destination-lat="' + destinationPoint.lat + '" data-destination-lng="' + destinationPoint.lng + '"' : "") +
             (currentRiderPoint ? ' data-rider-lat="' + currentRiderPoint.lat + '" data-rider-lng="' + currentRiderPoint.lng + '"' : "") +
@@ -1865,16 +1832,16 @@
             (order.rider_location?.updated_at ? ' data-rider-updated-at="' + escapeHTML(order.rider_location.updated_at) + '"' : "") +
             (order.rider_location?.rider_name ? ' data-rider-name="' + escapeHTML(order.rider_location.rider_name) + '"' : "") +
             (order.rider_location?.is_stale ? ' data-rider-stale="true"' : "") +
-            ' role="application" aria-label="' + escapeHTML(lang === "ar" ? "خريطة موقع السائق والوجهة" : "Map showing the live rider and delivery destination") + '"></div>' +
+            ' role="application" aria-label="' + escapeHTML(localized("Map showing the live rider and delivery destination", "خريطة موقع السائق والوجهة", "Map a ɛkyerɛ driver no beae ne beae a wɔde aduan bɛkɔ")) + '"></div>' +
             '<div class="customer-rider-eta" data-customer-rider-eta><div class="customer-rider-eta-main"><span class="customer-rider-eta-icon" aria-hidden="true">🛵</span><div class="customer-rider-eta-copy"><strong data-rider-eta-value>' +
-            escapeHTML(currentRiderPoint ? (lang === "ar" ? "عم نحسب وقت الوصول…" : "Calculating arrival time…") : (lang === "ar" ? "بانتظار أول تحديث من السائق…" : "Waiting for the rider’s first GPS update…")) +
-            '</strong><span data-rider-motion>' + escapeHTML(lang === "ar" ? "عم نتحقق من حركة السائق…" : "Checking rider movement…") + '</span><small data-rider-distance></small></div></div>' +
+            escapeHTML(currentRiderPoint ? localized("Calculating arrival time…", "عم نحسب وقت الوصول…", "Yɛrebu bere a ɔbɛba…") : localized("Waiting for the rider’s first GPS update…", "بانتظار أول تحديث من السائق…", "Yɛretwɛn GPS nsɛm foforo a edi kan afi driver no hɔ…")) +
+            '</strong><span data-rider-motion>' + escapeHTML(localized("Checking rider movement…", "عم نتحقق من حركة السائق…", "Yɛrehwɛ driver no movement")) + '</span><small data-rider-distance></small></div></div>' +
             '<a class="customer-rider-google-maps" data-open-google-maps href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" hidden>' +
-            escapeHTML(lang === "ar" ? "افتح المسار في Google Maps ↗" : "Open route in Google Maps ↗") + '</a></div>' +
+            escapeHTML(localized("Open route in Google Maps ↗", "افتح المسار في Google Maps ↗", "Bue ɔkwan no wɔ Google Maps ↗")) + '</a></div>' +
             '<p class="customer-rider-map-status" role="status">' +
             escapeHTML(currentRiderPoint
-              ? (lang === "ar" ? "عم نحدّث موقع السائق…" : "Updating the rider location…")
-              : (lang === "ar" ? "عم نتحقق من موقع السائق…" : "Checking the rider location…")) +
+              ? (localized("Updating the rider location…", "عم نحدّث موقع السائق…", "Yɛreyɛ driver no beae foforo…"))
+              : (localized("Checking the rider location…", "عم نتحقق من موقع السائق…", "Yɛrehwɛ driver no beae…"))) +
             '</p></section>'
           : "";
         return '<article class="customer-order-card">' +
@@ -1883,7 +1850,7 @@
           (itemHtml ? '<ul class="tracked-items">' + itemHtml + "</ul>" : "") +
           riderMapMarkup +
           (status !== "completed" && status !== "rejected" && order.receipt_code
-            ? '<div class="receipt-code-note"><span class="receipt-code-label">' + escapeHTML(lang === "ar" ? "رمز تأكيد الاستلام — أعطه للكاشير عند الاستلام" : "Receipt code — show it to the cashier") + '</span><div class="receipt-code-row"><strong class="receipt-code-value">' + escapeHTML(order.receipt_code) + '</strong><button type="button" class="receipt-code-copy" data-receipt-code="' + escapeHTML(order.receipt_code) + '">' + escapeHTML(lang === "ar" ? "نسخ الرمز" : "Copy code") + '</button></div></div>'
+            ? '<div class="receipt-code-note"><span class="receipt-code-label">' + escapeHTML(localized("Receipt code — show it to the cashier", "رمز تأكيد الاستلام — أعطه للكاشير عند الاستلام", "Code a ɛkyerɛ sɛ woagye aduan no — kyerɛ cashier no")) + '</span><div class="receipt-code-row"><strong class="receipt-code-value">' + escapeHTML(order.receipt_code) + '</strong><button type="button" class="receipt-code-copy" data-receipt-code="' + escapeHTML(order.receipt_code) + '">' + escapeHTML(localized("Copy code", "نسخ الرمز", "Kɔpi code no")) + '</button></div></div>'
             : "") + remove + "</article>";
       };
       // A customer must continue seeing an order after it is accepted.
@@ -1918,8 +1885,8 @@
       const nav = $("#customer-orders-nav");
       if (nav) {
         nav.innerHTML = isHistoryPage
-          ? '<a class="btn btn-light" href="./index.html">' + escapeHTML(lang === "ar" ? "العودة للمنيو والطلبات الجديدة" : "Menu & New Order") + '</a>'
-          : '<a class="btn btn-light" href="./history.html">' + escapeHTML(lang === "ar" ? "سجل الطلبات" : "Order History") + '</a>';
+          ? '<a class="btn btn-light" href="./index.html">' + escapeHTML(localized("Menu & New Order", "العودة للمنيو والطلبات الجديدة", "San kɔ aduan din ne order foforo")) + '</a>'
+          : '<a class="btn btn-light" href="./history.html">' + escapeHTML(localized("Order History", "سجل الطلبات", "Order abakɔsɛm")) + '</a>';
       }
     } finally {
       trackedOrdersLoading = false;
@@ -2184,7 +2151,7 @@
               <div class="qty-controls" aria-label="Quantity controls for ${escapeHTML(product.name)}">
                 <button type="button" data-dec="${escapeHTML(id)}"
                   aria-label="${lang === "ar" ? "إنقاص كمية " : lang === "tw" ? "Te dodow so " : "Decrease quantity of "}${escapeHTML(product.name)}">−</button>
-                <strong aria-label="${lang === "ar" ? "الكمية " : "Quantity "}${Number(quantity)}">${Number(quantity)}</strong>
+                <strong aria-label="${localized("Quantity ", "الكمية ", "Dodow ")}${Number(quantity)}">${Number(quantity)}</strong>
                 <button type="button" data-inc="${escapeHTML(id)}"
                   aria-label="${lang === "ar" ? "زيادة كمية " : lang === "tw" ? "Ma dodow nyin " : "Increase quantity of "}${escapeHTML(product.name)}">+</button>
                 <button type="button" class="btn-remove-item" data-remove="${escapeHTML(id)}"
@@ -2285,10 +2252,10 @@
     details.textContent = offers.map(offer => {
       const dates = [];
       if (offer.starts_at && Number.isFinite(new Date(offer.starts_at).getTime())) {
-        dates.push((lang === "ar" ? "يبدأ " : "Starts ") + new Date(offer.starts_at).toLocaleDateString());
+        dates.push(localized("Starts ", "يبدأ ", "Ɛhyɛ ase ") + new Date(offer.starts_at).toLocaleDateString());
       }
       if (offer.ends_at && Number.isFinite(new Date(offer.ends_at).getTime())) {
-        dates.push((lang === "ar" ? "ينتهي " : "Ends ") + new Date(offer.ends_at).toLocaleDateString());
+        dates.push(localized("Ends ", "ينتهي ", "Ɛba awiei ") + new Date(offer.ends_at).toLocaleDateString());
       }
       const dateInfo = dates.length ? " (" + dates.join(" · ") + ")" : "";
       return `${offer.title || ""}${offer.details ? " — " + offer.details : ""}${dateInfo}`;
@@ -2372,7 +2339,7 @@
       const detail = String(error?.message || "");
       const message = (typeof navigator !== "undefined" && navigator.onLine === false) ||
         /failed to fetch|networkerror|network request failed|fetch failed/i.test(detail)
-        ? (lang === "ar" ? "تعذر الاتصال لتحميل المنيو. تحقق من الإنترنت ثم أعد المحاولة." : "Couldn't connect to load the menu. Check your connection and retry.")
+        ? localized("Couldn't connect to load the menu. Check your connection and retry.", "تعذر الاتصال لتحميل المنيو. تحقق من الإنترنت ثم أعد المحاولة.", "Yentumi anhyɛ aduan din no. Hwɛ internet na san sɔ hwɛ.")
         : (detail || tr("loadError"));
       showAppStatus(message, true);
       if (menu) menu.innerHTML = `<p class="muted">${escapeHTML(tr("loadError"))}</p>`;
@@ -2392,7 +2359,7 @@
     if (!code) return;
     const originalLabel = button.textContent;
     const announceCopied = () => {
-      button.textContent = lang === "ar" ? "تم النسخ ✓" : "Copied ✓";
+      button.textContent = localized("Copied ✓", "تم النسخ ✓", "Wɔakɔpi ✓");
       button.classList.add("is-copied");
       window.setTimeout(() => {
         button.textContent = originalLabel;
@@ -2423,7 +2390,7 @@
         selection.removeAllRanges();
         selection.addRange(range);
       }
-      button.textContent = lang === "ar" ? "حدّد الرمز وانسخه" : "Select and copy";
+      button.textContent = localized("Select and copy", "حدّد الرمز وانسخه", "Paw na kɔpi");
       window.setTimeout(() => { button.textContent = originalLabel; }, 2200);
     }
   });
@@ -2435,7 +2402,7 @@
       if (status) status.textContent = message;
     };
     if (!address) {
-      announce(lang === "ar" ? "عنوان المطعم غير متوفر." : "Restaurant address is unavailable.");
+      announce(localized("Restaurant address is unavailable.", "عنوان المطعم غير متوفر.", "Adidibea no address nni hɔ."));
       return;
     }
     try {
@@ -2463,7 +2430,7 @@
         selection.removeAllRanges();
         selection.addRange(range);
       }
-      announce(lang === "ar" ? "تعذّر النسخ تلقائياً. تم تحديد العنوان؛ انسخه يدوياً." : "Automatic copy was blocked. The address is selected so you can copy it manually.");
+      announce(localized("Automatic copy was blocked. The address is selected so you can copy it manually.", "تعذّر النسخ تلقائياً. تم تحديد العنوان؛ انسخه يدوياً.", "Yentumi ankɔpi no ara kwa. Yɛapaw address no; kɔpi no wo nsa."));
     }
   });
 
@@ -2507,7 +2474,7 @@
   });
   $("#delivery-map-use-current")?.addEventListener("click", () => {
     if (!navigator.geolocation) {
-      setMapMessage(lang === "ar" ? "هذا الجهاز لا يدعم تحديد الموقع. اضغط على الخريطة لاختيار الموقع يدوياً." : "This device does not support location access. Tap the map to choose a location.", true);
+      setMapMessage(localized("This device does not support location access. Tap the map to choose a location.", "هذا الجهاز لا يدعم تحديد الموقع. اضغط على الخريطة لاختيار الموقع يدوياً.", "Mfiri yi ntumi nkyerɛ wo beae. Mia map no so na paw beae bi."), true);
       return;
     }
     const button = $("#delivery-map-use-current");
@@ -2524,8 +2491,8 @@
     }, error => {
       if (button) button.disabled = false;
       const msg = error?.code === 1
-        ? (lang === "ar" ? "اسمح للموقع بالوصول لموقع جهازك، أو اختار الموقع بالضغط على الخريطة." : "Allow location access, or tap the map to choose your location.")
-        : (lang === "ar" ? "تعذّر تحديد موقع جهازك. اختار الموقع بالضغط على الخريطة." : "Couldn't get your location. Tap the map to choose it manually.");
+        ? localized("Allow location access, or tap the map to choose your location.", "اسمح للموقع بالوصول لموقع جهازك، أو اختار الموقع بالضغط على الخريطة.", "Ma app no kwan nhwɛ wo beae, anaa mia map no so na paw wo beae.")
+        : localized("Couldn't get your location. Tap the map to choose it manually.", "تعذّر تحديد موقع جهازك. اختار الموقع بالضغط على الخريطة.", "Yentumi anhu wo beae. Mia map no so na paw beae no wo nsa.");
       setMapMessage(msg, true);
     }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
   });
@@ -2548,7 +2515,7 @@
       try { localStorage.removeItem(CUSTOMER_KEY); } catch (_) {}
     } else {
       saveRememberedCustomerFromForm();
-      showCheckoutMessage(lang === "ar" ? "سيتم حفظ الاسم والرقم على هذا الجهاز فقط." : "Your name and phone will be saved on this device only.");
+      showCheckoutMessage(localized("Your name and phone will be saved on this device only.", "سيتم حفظ الاسم والرقم على هذا الجهاز فقط.", "Wɔbɛkora wo din ne telefon nɔma no wɔ mfiri yi so nko ara."));
     }
   });
   checkoutForm?.elements?.customer_name?.addEventListener("input", saveRememberedCustomerFromForm);
@@ -2569,7 +2536,7 @@
 
   $("#clear-cart")?.addEventListener("click", () => {
     if (submitting || !getCartRows().length) return;
-    if (!window.confirm(lang === "ar" ? "متأكد بدك تفضّي السلة كلها؟" : "Clear all items from your basket?")) return;
+    if (!window.confirm(localized("Clear all items from your basket?", "متأكد بدك تفضّي السلة كلها؟", "Wopɛ sɛ wopopa nneɛma a ɛwɔ basket no nyinaa?"))) return;
     cart = {};
     persistCart();
     renderCart();
@@ -2589,7 +2556,7 @@
 
       if (!authSession?.user || (authSession.user.user_metadata?.phone_e164 && customerPhoneValidatedUserId !== authSession.user.id)) {
         lockCustomerApp("Please sign in or finish account verification before ordering.");
-        showCheckoutMessage(lang === "ar" ? "سجّل الدخول أو أكمل التحقق من الحساب أولاً." : "Please sign in or finish account verification before ordering.", true);
+        showCheckoutMessage(localized("Please sign in or finish account verification before ordering.", "سجّل الدخول أو أكمل التحقق من الحساب أولاً.", "Yɛsrɛ wo, sign in anaa wie wo account verification ansa na woahyɛ order."), true);
         return;
       }
 
@@ -2608,7 +2575,7 @@
       const formData = new FormData(formElement);
       const customerName = String(formData.get("customer_name") || "").trim();
       if (!customerName) {
-        showCheckoutMessage(lang === "ar" ? "اكتب اسمك." : "Please enter your name.", true);
+        showCheckoutMessage(localized("Please enter your name.", "اكتب اسمك.", "Yɛsrɛ wo, kyerɛw wo din."), true);
         formElement.elements.customer_name.focus();
         return;
       }
@@ -2628,9 +2595,7 @@
 
       if (orderType === "delivery" && (deliveryLatitude === null || deliveryLongitude === null)) {
         showCheckoutMessage(
-          lang === "ar"
-            ? "اختار موقع التوصيل من الخريطة وثبّته قبل إرسال الطلب. تحديد الموقع إلزامي للتوصيل."
-            : "Please select and confirm your delivery location on the map before placing the order. Map location is required for delivery.",
+          localized("Please select and confirm your delivery location on the map before placing the order. Map location is required for delivery.", "اختار موقع التوصيل من الخريطة وثبّته قبل إرسال الطلب. تحديد الموقع إلزامي للتوصيل.", "Paw wo delivery beae wɔ map no so na si so dua ansa na woahyɛ order. Ɛsɛ sɛ wopaw beae ma delivery."),
           true
         );
         $("#choose-delivery-location")?.focus();
@@ -2647,7 +2612,7 @@
           ((deliveryLatitude === null) !== (deliveryLongitude === null) ||
            (deliveryLatitude !== null && (!Number.isFinite(deliveryLatitude) || deliveryLatitude < -90 || deliveryLatitude > 90 ||
             !Number.isFinite(deliveryLongitude) || deliveryLongitude < -180 || deliveryLongitude > 180)))) {
-        showCheckoutMessage(lang === "ar" ? "موقع الخريطة غير صالح. اختار الموقع من جديد أو امسحه." : "The selected map location is invalid. Choose the location again or clear it.", true);
+        showCheckoutMessage(localized("The selected map location is invalid. Choose the location again or clear it.", "موقع الخريطة غير صالح. اختار الموقع من جديد أو امسحه.", "Map beae a woapaw no nyɛ nokware. Paw beae foforo anaa popa no."), true);
         return;
       }
 
@@ -2668,7 +2633,7 @@
         const product = products.find(item => String(item.id) === String(id));
         return `${quantity} × ${product?.name || "Item"}`;
       }).join("\n");
-      if (!window.confirm((lang === "ar" ? "تأكيد الطلب؟\n\n" : "Confirm your order?\n\n") + orderSummary + "\n\n" + (lang === "ar" ? "المجموع: " : "Total: ") + money(submittedTotal))) return;
+      if (!window.confirm(localized("Confirm your order?\n\n", "تأكيد الطلب؟\n\n", "Wopɛ sɛ wosi wo order so dua?\n\n") + orderSummary + "\n\n" + localized("Total: ", "المجموع: ", "Ne nyinaa: ") + money(submittedTotal))) return;
 
       const submittedItems = rows.map(([product_id, quantity]) => ({
         product_id,
@@ -2758,9 +2723,9 @@
         const detail = String(error?.message || "");
         const message = (typeof navigator !== "undefined" && navigator.onLine === false) ||
           /failed to fetch|networkerror|network request failed|fetch failed/i.test(detail)
-          ? (lang === "ar" ? "ما قدرنا نتصل بالمطعم. تأكد من الإنترنت وحاول مرة ثانية. طلبك لم يُؤكَّد." : "We couldn't connect to the restaurant. Check your internet and try again. Your order has not been confirmed.")
+          ? localized("We couldn't connect to the restaurant. Check your internet and try again. Your order has not been confirmed.", "ما قدرنا نتصل بالمطعم. تأكد من الإنترنت وحاول مرة ثانية. طلبك لم يُؤكَّد.", "Yentumi anka adidibea no ho. Hwɛ internet na san sɔ hwɛ. Wɔansi wo order so dua.")
           : /unavailable/i.test(detail)
-            ? (lang === "ar" ? "في صنف من طلبك صار غير متوفر. راجع السلة وحاول من جديد." : "One of your selected items is no longer available. Review your basket and try again.")
+            ? localized("One of your selected items is no longer available. Review your basket and try again.", "في صنف من طلبك صار غير متوفر. راجع السلة وحاول من جديد.", "Aduan bi a woapaw no nni hɔ bio. Hwɛ wo basket no na san sɔ bio.")
             : tr("orderError");
         showCheckoutMessage(message, true);
       } finally {
