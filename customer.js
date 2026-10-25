@@ -2834,6 +2834,19 @@
         return;
       }
 
+      const requestedForValue = $("#schedule-order-toggle")?.checked
+        ? String(formData.get("requested_for") || "").trim()
+        : "";
+      const requestedForDate = requestedForValue ? new Date(requestedForValue) : null;
+      if (requestedForValue && (!schedulingEnabled || !requestedForDate || !Number.isFinite(requestedForDate.getTime()) ||
+          requestedForDate.getTime() < Date.now() + scheduleMinNoticeMinutes * 60000 ||
+          requestedForDate.getTime() > Date.now() + scheduleMaxDays * 86400000)) {
+        showCheckoutMessage(localized("Choose a time inside the available scheduling window.", "اختار وقت ضمن فترة الجدولة المتاحة.", "Choose a time inside the available scheduling window."), true);
+        $("#requested-for-input")?.focus();
+        return;
+      }
+      const requestedForIso = requestedForDate ? requestedForDate.toISOString() : null;
+
       const subtotal = calculateSubtotal(rows);
 
       if (subtotal < minimumOrder) {
@@ -2848,6 +2861,13 @@
         ? (deliveryZone ? Number(deliveryZone.delivery_fee) : deliveryFee)
         : 0;
       const submittedTotal = subtotal + selectedDeliveryFee;
+      const itemPreparationMinutes = rows.map(([id]) => Number(products.find(product => String(product.id) === String(id))?.prep_minutes || 0));
+      const maxPreparationMinutes = itemPreparationMinutes.length ? Math.max(...itemPreparationMinutes) : 0;
+      const configuredPreparationMinutes = maxPreparationMinutes || Number(defaultPrepMinutes || 0);
+      const configuredTravelMinutes = orderType === "pickup" ? 0 : Number(deliveryZone?.estimated_delivery_minutes || defaultDeliveryMinutes || 0);
+      const estimatedOrderMinutes = configuredPreparationMinutes > 0 && (orderType === "pickup" || configuredTravelMinutes > 0)
+        ? configuredPreparationMinutes + configuredTravelMinutes
+        : null;
 
       const generalNotes = String(formData.get("notes") || "").trim();
       const pickupInstructions = orderType === "pickup" ? String(formData.get("pickup_instructions") || "").trim() : "";
@@ -2860,11 +2880,14 @@
           return `${quantity} × ${product?.name || "Item"}`;
         }),
         ...(orderType === "delivery" ? [localized("Delivery address: ", "عنوان التوصيل: ", "Delivery address: ") + address] : []),
+        ...(deliveryZone ? [localized("Delivery zone: ", "منطقة التوصيل: ", "Delivery zone: ") + deliveryZone.name] : []),
+        ...(requestedForDate ? [localized("Requested time: ", "الوقت المطلوب: ", "Requested time: ") + requestedForDate.toLocaleString()] : []),
         ...(pickupInstructions ? [localized("Pickup instructions: ", "تعليمات الاستلام: ", "Pickup instructions: ") + pickupInstructions] : []),
         ...(generalNotes ? [localized("Order notes: ", "ملاحظات الطلب: ", "Order notes: ") + generalNotes] : []),
         "",
         localized("Subtotal: ", "المجموع الفرعي: ", "Subtotal: ") + money(subtotal),
         localized("Delivery fee: ", "رسوم التوصيل: ", "Delivery fee: ") + money(selectedDeliveryFee),
+        ...(Number.isFinite(estimatedOrderMinutes) ? [localized("Estimated ready/delivery: ", "الوقت التقريبي للجهوزية/الوصول: ", "Estimated ready/delivery: ") + new Date((requestedForDate ? requestedForDate.getTime() : Date.now()) + estimatedOrderMinutes * 60000).toLocaleString()] : []),
         localized("Total: ", "الإجمالي: ", "Ne nyinaa: ") + money(submittedTotal)
       ].join("\n");
       if (!window.confirm(localized("Review your order before sending:\n\n", "راجع طلبك قبل الإرسال:\n\n", "Hwɛ wo order no ansa na woasoma:\n\n") + orderSummary)) return;
