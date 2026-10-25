@@ -5,8 +5,12 @@ This upgrade adds restaurant operations features to the existing AL SHAMI applic
 ## Files
 
 - admin-operations.js
-  Adds the Operations dashboard for inventory, suppliers, expenses,
-  cash shifts and basic daily reports.
+  Adds inventory, suppliers, expenses, cash shifts and daily reports, using
+  the authenticated session created by admin.js.
+
+- admin-delivery-ops.js
+  Adds delivery monitoring under Operations → Reports and loyalty configuration
+  under Settings.
 
 - supabase-migration-v2.sql
   Creates new database tables and functions for the operations module.
@@ -21,12 +25,13 @@ This upgrade adds restaurant operations features to the existing AL SHAMI applic
 
 The current `admin.html` already loads `config.js`, `admin.js`, `admin-operations.js`, and `pwa.js) in the required order. Do not add duplicate script tags.
 
-## Install as two home-screen apps
+## Install as three home-screen apps
 
 The repository now provides two installable web-app entry points:
 
 - Customer app: `index.html` + `manifest.webmanifest`
 - Private admin app: `admin.html` + `admin.webmanifest`
+- Private delivery rider app: `rider.html` + `rider.webmanifest`
 
 Shared PWA files:
 
@@ -40,6 +45,7 @@ For each app separately, open its URL in Safari, tap Share, choose **Add to Home
 
 - Customer: `https://alshamiapp.xyz/`
 - Admin: `https://alshamiapp.xyz/admin.html`
+- Delivery rider: `https://alshamiapp.xyz/rider.html`
 
 The admin still requires an authorised login. Home-screen installation does not publish the apps to the App Store. After a new website version is published, the installed web apps check for updates when opened or returned to the foreground; a native App Store release is not part of this PWA workflow.
 
@@ -68,6 +74,8 @@ Never put the Supabase service-role key in browser JavaScript.
 - The purchase-order UI currently creates a single stock-item line per order.
 - Cash reconciliation uses order status as the cash-sale signal because the current ordering flow is cash-only; mark orders Completed only after cash is collected.
 - The operations summary is not a complete net-profit calculation; ingredient costs are reflected only where recipes and stock costs are configured, and payroll/overhead still need accurate recording.
+- Loyalty rules are disabled until the restaurant configures stamps and points in **Settings**. Points are store credit for order discounts only; there is no cash-out.
+- The customer’s alert-category preferences are saved, but customer push delivery is not configured.
 - Online payments and phone OTP login are deferred until payment/SMS providers are configured.
 - Push notifications while the app is fully closed are not included. PWA updates require internet access and the app must be opened/foregrounded to check for updates; offline mode does not submit orders.
 
