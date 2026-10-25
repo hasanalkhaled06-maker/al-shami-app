@@ -13,7 +13,7 @@
   const form=document.querySelector("#checkout-form");
   if(form&&!form.querySelector("[name=loyalty_points_to_redeem]")){
     const box=document.createElement("section");box.className="customer-feature-card";box.id="checkout-rewards";
-    box.innerHTML='<h3>Rewards for this order</h3><p class="customer-feature-note">Use your points or an available stamp reward at checkout.</p><div class="feature-row"><label>Points to redeem <input name="loyalty_points_to_redeem" type="number" min="0" step="1" value="0" inputmode="numeric"></label><label>Referral code (first order) <input name="referral_code" type="text" maxlength="8" autocomplete="off"></label></div><div class="feature-row"><label><input name="redeem_stamp_reward" type="checkbox"> Redeem available stamp reward</label></div>';
+    box.innerHTML='<h3>Rewards for this order</h3><p class="customer-feature-note">Your points and stamp rewards only reduce an order total at checkout. They cannot be withdrawn or paid as cash.</p><div class="feature-row"><label>Points to use as order discount <input name="loyalty_points_to_redeem" type="number" min="0" step="1" value="0" inputmode="numeric"></label><label>Referral code (first order) <input name="referral_code" type="text" maxlength="8" autocomplete="off"></label></div><div class="feature-row"><label><input name="redeem_stamp_reward" type="checkbox"> Redeem available stamp reward</label></div>';
     form.insertBefore(box,form.querySelector('button[type="submit"]')||form.lastElementChild);
   }
 
@@ -46,7 +46,7 @@
     if(summary){
       summary.hidden=false;
       summary.innerHTML=rewards.enabled
-        ? '<p><strong>'+Number(rewards.points||0)+'</strong> points · <strong>'+Number(rewards.stamps||0)+' / '+Number(rewards.stamps_per_reward||10)+'</strong> stamps toward a reward ('+Number(rewards.stamp_reward_ghs||0)+' GH₵ checkout discount)</p><p>Your referral code: <strong>'+String(rewards.referral_code||"")+'</strong></p><p class="customer-feature-note">Points and stamps are earned after an order is completed. Invite a new customer with your code.</p>'
+        ? '<p><strong>'+Number(rewards.points||0)+'</strong> points · <strong>'+Number(rewards.stamps||0)+' / '+Number(rewards.stamps_per_reward||10)+'</strong> stamps toward a reward ('+Number(rewards.stamp_reward_ghs||0)+' GH₵ checkout discount)</p><p>Your referral code: <strong>'+String(rewards.referral_code||"")+'</strong></p><p class="customer-feature-note">Points become store credit for order discounts only; there is no cash withdrawal. They’re earned after completed orders.</p>'
         : '<p>Loyalty is awaiting restaurant setup. Your referral code: <strong>'+String(rewards.referral_code||"")+'</strong></p>';
     }
     if(status)status.textContent=prefsError?"Alert preferences will save after the optional database migration is applied.":"Your reward balance and alert choices.";
