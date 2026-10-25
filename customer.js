@@ -27,6 +27,7 @@
         }
       )
     : null;
+  window.AL_SHAMI_CUSTOMER_DB = db;
 
   const $ = selector => document.querySelector(selector);
   const CUSTOMER_PUBLIC_URL = "https://alshamiapp.xyz/";
