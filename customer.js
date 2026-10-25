@@ -1302,7 +1302,7 @@
     token = String(token || "").trim().toLowerCase();
     if (!TRACKING_TOKEN_RE.test(token)) return false;
     const rows = readTrackedOrders().filter(row => row.token !== token);
-    rows.unshift({ token, orderNumber: String(orderNumber || ""), savedAt: new Date().toISOString() });
+    rows.unshift({ token, orderNumber: String(orderNumber || ""), savedAt: new Date().toISOString(), lastStatus: "new" });
     saveTrackedOrders(rows);
     return true;
   }
@@ -1883,6 +1883,35 @@
         saveTrackedOrders(readTrackedOrders().filter(row => !missingSet.has(row.token)));
       }
       const validResults = results.filter(result => !result.missing);
+      let trackedStatusesChanged = false;
+      for (const result of validResults) {
+        if (result.failed || !result.order) continue;
+        const status = String(result.order.status || "").toLowerCase();
+        const previousStatus = String(result.entry.lastStatus || "");
+        if (status === "completed" && previousStatus && previousStatus !== "completed" && result.order.can_review === true) {
+          const details = {
+            trackingToken: result.entry.token,
+            orderId: result.order.id,
+            orderNumber: result.order.order_number ?? result.entry.orderNumber ?? "",
+            subtotal: Number(result.order.subtotal || 0),
+            orderType: result.order.order_type || "delivery"
+          };
+          if (typeof window.AL_SHAMI_SHOW_DELIVERY_COMPLETE === "function") {
+            window.AL_SHAMI_SHOW_DELIVERY_COMPLETE(details);
+          } else {
+            window.AL_SHAMI_PENDING_DELIVERY_COMPLETIONS = window.AL_SHAMI_PENDING_DELIVERY_COMPLETIONS || [];
+            window.AL_SHAMI_PENDING_DELIVERY_COMPLETIONS.push(details);
+          }
+        }
+        if (result.entry.lastStatus !== status) {
+          result.entry.lastStatus = status;
+          trackedStatusesChanged = true;
+        }
+      }
+      if (trackedStatusesChanged) {
+        const missingSet = new Set(missingTokens);
+        saveTrackedOrders(entries.filter(entry => !missingSet.has(entry.token)));
+      }
 
       trackedOrderRemovalTokens = new Map();
       const renderResult = result => {
