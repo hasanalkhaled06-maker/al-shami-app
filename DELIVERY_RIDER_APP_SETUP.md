@@ -2,59 +2,68 @@
 
 ## Scope
 
-This feature adds a third installable Progressive Web App (PWA) for delivery riders. It shares the existing AL SHAMI Supabase project; it does not create a second order database.
+The rider app is a third installable PWA in the same AL SHAMI app and Supabase project.
 
-- rider.html: private rider login and delivery board.
-- rider.js and rider.css: assigned order cards, directions, phone links, status refresh, and GPS sharing.
-- rider.webmanifest and icons/al-shami-rider.svg: separate rider install identity.
-- supabase/migrations/20261023131500_delivery_rider_live_tracking_v1.sql: rider role, automatic assignment, protected location storage, and scoped RPC functions.
+- `rider.html`: private rider login and delivery board.
+- `rider.js` and `rider.css`: assigned deliveries, directions, phone links, status refresh, and GPS sharing.
+- `rider-ops.js`: arrival/departure events, failed-attempt reasons, last GPS update, and nearest assigned deliveries.
+- `rider.webmanifest` and `icons/al-shami-rider.svg`: separate rider install identity.
+- `supabase/migrations/20261023131500_delivery_rider_live_tracking_v1.sql`: rider role, assignment, protected location storage, and scoped RPCs.
+- `supabase/migrations/20261025173500_rider_delivery_operations_view.sql`: private assigned-delivery details for riders.
+- `supabase/migrations/20261025173000_customer_rewards_delivery_ops.sql`: rider events, stale-GPS reporting, delivery duration by zone, and customer rewards.
+- `supabase/migrations/20261025174000_customer_rewards_delivery_fk_indexes.sql`: supporting foreign-key indexes.
+- `supabase/migrations/20261025175000_referral_bonus_awarded_once.sql`: one-time referral bonus on a referred customer's first completed order.
 
-The rider screen is read-only for order workflow: there are no accept, reject, completed, or status-change controls. The admin dashboard remains the only place where order status changes. Delivery orders are automatically assigned when accepted, using the active rider profile with the fewest unfinished deliveries. Pickup orders are never assigned. If there is no active rider account linked to an employee profile, the order remains unassigned until setup is completed.
+The rider screen does not accept, reject, complete, or otherwise change order status. Management remains responsible for order status. Accepted delivery orders are assigned automatically to an active rider profile with the fewest unfinished deliveries. Pickup orders are never assigned. An order stays unassigned when no active rider account is linked to an employee profile.
 
-## Important rollout rule
+## Current database rollout state
 
-The rider app is deployed from main. The registration screen creates a Supabase Auth account but does not approve it; only management can grant access by linking that Auth UUID to an active Delivery Rider employee profile. End-to-end phone-to-customer GPS tracking still requires a controlled test.
+The customer rewards and delivery-operations migrations listed above have been applied to the connected production Supabase project. Loyalty is disabled by default. No customer points, stamps, or referral rewards were issued during setup. The referral bonus is now marked once, on the referred customer's first completed order, and is awarded only while loyalty is enabled.
 
-Before using it in production, back up the Supabase project and review both migrations. The production migration list previously showed delivery_map_location_v1 but did not list the repository migration 20261023130000_order_status_visibility_and_location_security.sql. Check whether that security migration has already been applied. If not, review and apply it first, then apply 20261023131500_delivery_rider_live_tracking_v1.sql. Do not apply a migration again under another name without checking its state.
+The pre-existing order-visibility security migration and rider live-tracking migration are also present in the production migration history. Do not reapply them under a second name. The current schema is additive: it retains existing orders and cash checkout.
 
 ## Set up a rider account
 
 1. On the rider app, choose **Create account**, enter the rider's full name, email, and a password of at least 8 characters. Complete email confirmation if Supabase requests it. Never share the administrator login with a rider.
-2. Account creation does **not** approve the rider or grant order access. The new account must wait for restaurant management approval.
-3. In Supabase Authentication → Users, find the new account and copy its Auth user UUID.
-4. Sign in to the AL SHAMI admin app and open Operations → Employee management. Create or edit the employee profile; set System role to Delivery Rider, employment status to Active, and paste the exact Auth user UUID. Save the profile. This link is the approval gate enforced by the server.
-5. Keep the profile active. On the next accepted delivery order, the database trigger chooses an eligible linked rider. The first version uses load-based automatic assignment rather than an assignment selector.
-6. Open the rider app: https://alshamiapp.xyz/rider.html or https://hasanalkhaled06-maker.github.io/al-shami-app/rider.html. Sign in with the dedicated rider credentials. In Safari, use Share → Add to Home Screen to install it separately.
+2. Account creation does not approve the rider or grant order access. Management must link the account to an active rider employee profile.
+3. In Supabase Authentication → Users, find the account and copy its Auth user UUID.
+4. Sign in to the AL SHAMI admin app and open **Operations → Employee management**. Create or edit the employee profile; set System role to **Delivery Rider**, employment status to **Active**, and paste the exact Auth UUID. Save the profile. This is the approval gate checked by the server.
+5. Keep the profile active. On the next accepted delivery order, the database assigns an eligible linked rider. Assignment is automatic and load-based; there is no manual assignment selector.
+6. Open the rider app at [alshamiapp.xyz/rider.html](https://alshamiapp.xyz/rider.html) or [GitHub Pages rider app](https://hasanalkhaled06-maker.github.io/al-shami-app/rider.html). Sign in with the rider's own credentials. In Safari, use Share → Add to Home Screen to install it separately.
 
 ## How live tracking works
 
 1. A customer places a delivery order with a map pin, address, and contact details.
-2. Management accepts the order. The database assigns it to an active linked delivery rider; the rider app refreshes the assignment board automatically.
-3. On the rider's phone, the rider taps Start location sharing and allows GPS access. The app publishes only the latest coordinates while the rider has active assigned deliveries.
-4. Management changes the order to Out for delivery when the rider actually starts the delivery. Only then does the customer see the live map and rider marker; the map refreshes independently every few seconds.
-5. Management continues to control status, including the existing receipt-code confirmation for completed handoff. Once marked Completed, the order leaves the rider's active board and the customer history shows it as complete.
+2. Management accepts it. The database assigns it to an active linked rider; the rider app refreshes the assignment board.
+3. The rider taps **Start location sharing** and grants GPS permission. The app publishes the latest coordinates while active assigned deliveries exist.
+4. Management sets the order to **Out for delivery** when the rider starts the delivery. Only then does the customer see the live map and rider marker.
+5. Management controls the final status, including the existing receipt-code confirmation. Once completed, the order leaves the rider's active board and appears complete in customer history.
 
-The database stores the latest GPS point per rider, not a route history. The customer tracking RPC exposes only the rider point connected to the customer's private tracking token and only while that delivery is Out for delivery. Direct browser access to the GPS table is revoked.
+The database stores the latest GPS point per rider, not a route history. Customer tracking exposes only the rider point for that customer's private tracking token and only while the order is **Out for delivery**. Direct browser access to the GPS table is revoked.
+
+The rider operations panel records arrival at the restaurant, departure, and failed-attempt reason. The admin **Operations → Reports** area shows active deliveries with a stale-location warning after 45 seconds without a current GPS update and a delivery-duration report by zone. Stale-location warnings appear in the open dashboard; they are not push notifications.
 
 ## iPhone GPS limitations
 
-Location sharing requires HTTPS, network connectivity, and location permission. Keep the rider app open in the foreground during a delivery. iOS may suspend GPS updates when a browser/PWA is backgrounded or the screen is locked; the first version does not guarantee always-on background tracking. Native/background-location support would be a separate later phase.
+Location sharing requires HTTPS, network connectivity, and location permission. Keep the rider app open in the foreground during a delivery. iOS may suspend GPS updates when a browser/PWA is backgrounded or the screen is locked; this version does not guarantee always-on background tracking.
 
-## Required acceptance and security tests
+## Required acceptance and security checks
 
-- Existing customer checkout, sign-in, menu, admin login, order status, and history still work.
-- Create a test delivery-rider Auth account and link it to an active Delivery Rider employee profile.
-- Submit a test delivery order with a map pin; confirm admin acceptance assigns it automatically and the rider board displays customer name/phone, address, items, total, status, and directions.
-- Submit a test pickup order and confirm it never appears on the rider board.
-- Verify the rider screen has no accept, reject, completion, or status-change controls.
-- Tap Start location sharing on the rider phone and grant GPS permission. Verify the latest point and timestamp update.
-- Change the test delivery to Out for delivery in admin. Confirm the customer tracking card displays destination and rider map, and the rider marker changes as the GPS point changes.
-- Confirm the location is hidden from customer tracking when the status is Accepted, Preparing, Ready, Completed, or Rejected.
-- Complete a test order through the existing admin receipt-code flow. Confirm it leaves the rider active list and moves to customer History.
-- Confirm one customer cannot request location with another customer's token, and an unrelated rider cannot read the assigned order or update GPS.
-- Test offline/reconnect, a denied GPS permission, no active rider profile, an old GPS point, and the app on an iPhone.
+These checks require test accounts and a real rider/customer phone session; repository presence and a successful deployment alone do not prove end-to-end behavior.
 
-A script syntax check is not an end-to-end test. Do not mark the feature verified until the database migration, deployment, permissions, and phone-to-customer map are tested with test accounts.
+- Confirm customer checkout, sign-in, menu, admin login, order status, and history still work.
+- Create a test rider Auth account and link it to an active Delivery Rider employee profile.
+- Submit a test delivery with a map pin; confirm accepting it assigns it and the rider board shows the intended order details and directions.
+- Submit a pickup and confirm it does not appear on the rider board.
+- Confirm the rider screen has no order-status controls.
+- On the rider's phone, start location sharing and verify the position and timestamp change.
+- Set the test delivery to **Out for delivery** and confirm customer tracking follows the rider's new location.
+- Confirm customer tracking hides the location for every other order status.
+- Complete the test order through the existing admin receipt-code flow; confirm it leaves the active rider list and appears in History.
+- Confirm another customer cannot use the customer's tracking token and an unrelated rider cannot read or update the delivery.
+- Check denied GPS permission, reconnect after offline use, a stale GPS point, and the iPhone foreground behavior.
+
+A script syntax check is not an end-to-end test. Mark these checks complete only after the database, deployment, permissions, and phone-to-customer map have been exercised with test accounts.
 
 ## Secrets
 
