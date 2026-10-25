@@ -2041,22 +2041,50 @@
     });
   }
 
+  const menuSearchSynonymGroups = [
+    ["shawarma", "shawerma", "شاورما", "شاورمه", "شاورمة"],
+    ["burger", "burgers", "hamburger", "hamburgers", "برغر", "برجر"],
+    ["pizza", "بيتزا"],
+    ["chicken", "دجاج", "فروج", "akokɔ"],
+    ["rice", "رز", "أرز", "aburow"],
+    ["fries", "chips", "french fries", "بطاطا", "بطاطس"],
+    ["juice", "عصير"],
+    ["beef", "لحم بقري"]
+  ].map(group => group.map(normalizeMenuSearch));
+
+  function normalizeMenuSearch(value) {
+    return String(value || "")
+      .normalize("NFKC")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\\u0300-\\u036f\\u0591-\\u05c7\\u0610-\\u061a\\u064b-\\u065f\\u0670\\u06d6-\\u06ed]/g, "")
+      .replace(/[ـ]/g, "")
+      .replace(/[^\\p{L}\\p{N}]+/gu, " ")
+      .trim();
+  }
+
+  function menuSearchMatches(product, query) {
+    if (!query) return true;
+    const searchText = normalizeMenuSearch(
+      `${product.name || ""} ${product.description || ""} ${product.category || ""}`
+    );
+    return query.split(/\\s+/).filter(Boolean).every(term => {
+      const synonyms = menuSearchSynonymGroups.find(group => group.includes(term)) || [term];
+      return synonyms.some(alias => searchText.includes(alias));
+    });
+  }
+
   function renderMenu() {
     const menu = $("#menu");
     const search = $("#search");
     if (!menu || !search) return;
 
-    const query = search.value.trim().toLowerCase();
+    const query = normalizeMenuSearch(search.value);
 
     const visibleProducts = products.filter(product => {
       const categoryMatches =
         category === "All" || product.category === category;
-
-      const searchText =
-        `${product.name || ""} ${product.description || ""} ${product.category || ""}`
-          .toLowerCase();
-
-      return categoryMatches && searchText.includes(query);
+      return categoryMatches && menuSearchMatches(product, query);
     });
     if (sortMode === "price-asc") visibleProducts.sort((a, b) => Number(a.price) - Number(b.price));
     if (sortMode === "price-desc") visibleProducts.sort((a, b) => Number(b.price) - Number(a.price));
