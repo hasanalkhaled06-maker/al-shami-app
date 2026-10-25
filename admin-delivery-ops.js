@@ -15,6 +15,7 @@
   const today=new Date(), from=new Date(today.getTime()-29*86400000), fmt=d=>d.toISOString().slice(0,10);
   $("#delivery-report-from").value=fmt(from);$("#delivery-report-to").value=fmt(today);
   function labelTime(v){if(!v)return "No GPS update";const dt=new Date(v);return Number.isNaN(dt.getTime())?"Unknown":dt.toLocaleString("en-GH",{dateStyle:"medium",timeStyle:"short"});}
+  let settingsLoaded=false;
   async function monitor(){
     if($("#dashboard")?.classList.contains("hidden"))return;
     const status=$("#delivery-ops-status");
@@ -27,7 +28,7 @@
     if(status)status.textContent=rows.length?rows.length+" active delivery"+(rows.length===1?"":"ies")+" · "+stale.length+" GPS alert"+(stale.length===1?"":"s"):"No active deliveries currently out for delivery.";
     $("#delivery-ops-alerts").innerHTML=stale.map(o=>'<article class="admin-menu-row" style="border-left:4px solid #b42318;padding:10px;margin:8px 0"><strong>GPS stopped updating · Order #'+esc(o.order_number)+'</strong><div>'+esc(o.customer_name||"Customer")+' · '+esc(o.zone||o.address||"Area not set")+'</div><small>Last update: '+esc(labelTime(o.gps_updated_at))+'</small></article>').join("")+
       rows.filter(o=>o.last_failure_reason).map(o=>'<p class="muted">Order #'+esc(o.order_number)+' · last failed attempt: '+esc(o.last_failure_reason.replaceAll("_"," "))+' · '+esc(labelTime(o.last_failed_at))+'</p>').join("");
-    if(!setErr&&settings){$("#loyalty-enabled").checked=settings.enabled;$("#stamps-goal").value=settings.stamps_per_reward;$("#points-per-ghs").value=settings.points_per_ghs;$("#points-redemption").value=settings.points_per_ghs_redeemed;$("#referral-bonus").value=settings.referral_bonus_points;$("#stamp-reward-ghs").value=settings.stamp_reward_ghs;}
+    if(!setErr&&settings&&!settingsLoaded){$("#loyalty-enabled").checked=settings.enabled;$("#stamps-goal").value=settings.stamps_per_reward;$("#points-per-ghs").value=settings.points_per_ghs;$("#points-redemption").value=settings.points_per_ghs_redeemed;$("#referral-bonus").value=settings.referral_bonus_points;$("#stamp-reward-ghs").value=settings.stamp_reward_ghs;settingsLoaded=true;}
   }
   async function report(){
     const out=$("#delivery-duration-result");
