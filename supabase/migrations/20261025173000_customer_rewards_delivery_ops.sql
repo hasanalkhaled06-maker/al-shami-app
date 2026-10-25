@@ -122,7 +122,7 @@ revoke all on function public.record_my_delivery_event(uuid,text,text,text) from
 grant execute on function public.record_my_delivery_event(uuid,text,text,text) to authenticated;
 
 create or replace function public.get_delivery_admin_ops()
-returns jsonb language plpgsql security definer set search_path = pg_catalog, public as $
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public as $$
 declare v jsonb;
 begin
   if auth.uid() is null or not exists(select 1 from public.admin_users a where a.user_id=auth.uid()) then
