@@ -339,7 +339,7 @@ begin
 
   return v_result;
 end;
-$;
+$$;
 
 revoke all on function public.get_customer_order_tracking(uuid) from public, anon;
 grant execute on function public.get_customer_order_tracking(uuid) to authenticated;
