@@ -245,7 +245,7 @@ begin
     referral_bonus_points=p_referral_bonus_points, stamp_reward_ghs=p_stamp_reward_ghs, updated_at=now() where id=1;
 end $$;
 revoke all on function public.admin_update_loyalty_settings(boolean,integer,integer,integer,integer,numeric) from public, anon;
-grant execute on function public.admin_update_loyalty_settings(boolean,integer,integer,integer,integer) to authenticated;
+grant execute on function public.admin_update_loyalty_settings(boolean,integer,integer,integer,integer,numeric) to authenticated;
 
 create or replace function public.al_shami_award_customer_loyalty()
 returns trigger language plpgsql security definer set search_path = pg_catalog, public as $$
