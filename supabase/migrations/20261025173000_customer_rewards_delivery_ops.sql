@@ -58,6 +58,11 @@ alter table public.customer_loyalty_ledger enable row level security;
 alter table public.customer_referral_codes enable row level security;
 alter table public.customer_referrals enable row level security;
 alter table public.customer_notification_preferences enable row level security;
+grant select on public.customer_loyalty_settings to authenticated;
+drop policy if exists "Admins read customer loyalty settings" on public.customer_loyalty_settings;
+create policy "Admins read customer loyalty settings" on public.customer_loyalty_settings
+  for select to authenticated
+  using (exists (select 1 from public.admin_users a where a.user_id=(select auth.uid())));
 revoke all on public.customer_loyalty_settings, public.customer_loyalty_ledger,
   public.customer_referral_codes, public.customer_referrals,
   public.customer_notification_preferences from public, anon, authenticated;
