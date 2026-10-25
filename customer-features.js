@@ -12,7 +12,7 @@
   const form=document.querySelector("#checkout-form");
   if(form&&!form.querySelector("[name=loyalty_points_to_redeem]")){
     const box=document.createElement("div"); box.className="customer-feature-card";box.id="checkout-rewards";
-    box.innerHTML='<h3>Rewards & referral</h3><p class="customer-feature-note" id="checkout-rewards-summary">Sign in and enable rewards to earn stamps and points.</p><div class="feature-row"><label>Points to redeem <input name="loyalty_points_to_redeem" type="number" min="0" step="1" value="0" inputmode="numeric"></label><label>Referral code (first order) <input name="referral_code" type="text" maxlength="8" autocomplete="off"></label></div>';
+    box.innerHTML='<h3>Rewards & referral</h3><p class="customer-feature-note" id="checkout-rewards-summary">Sign in and enable rewards to earn stamps and points.</p><div class="feature-row"><label>Points to redeem <input name="loyalty_points_to_redeem" type="number" min="0" step="1" value="0" inputmode="numeric"></label><label>Referral code (first order) <input name="referral_code" type="text" maxlength="8" autocomplete="off"></label></div><div class="feature-row"><label><input name="redeem_stamp_reward" type="checkbox"> Redeem available stamp reward</label></div>';
     form.insertBefore(box,form.querySelector("button[type=submit],button:not([type])")||form.lastElementChild);
   }
   const host=document.querySelector("#customer-order-history");
@@ -40,7 +40,7 @@
     if(summary){
       summary.hidden=false;
       summary.innerHTML=rewards.enabled
-        ? '<p><strong>'+Number(rewards.points||0)+'</strong> points · <strong>'+Number(rewards.stamps||0)+' / '+Number(rewards.stamps_per_reward||10)+'</strong> stamps toward a reward</p><p>Your referral code: <strong>'+String(rewards.referral_code||"")+'</strong></p><p class="customer-feature-note">Redeem points during checkout. Referral rewards are credited after your friend completes an order.</p>'
+        ? '<p><strong>'+Number(rewards.points||0)+'</strong> points · <strong>'+Number(rewards.stamps||0)+' / '+Number(rewards.stamps_per_reward||10)+'</strong> stamps toward a reward ('+Number(rewards.stamp_reward_ghs||0)+' GH₵ checkout discount)</p><p>Your referral code: <strong>'+String(rewards.referral_code||"")+'</strong></p><p class="customer-feature-note">Redeem points during checkout. Referral rewards are credited after your friend completes an order.</p>'
         : '<p>Loyalty rewards are waiting for restaurant setup. Your referral code: <strong>'+String(rewards.referral_code||"")+'</strong></p>';
     }
     if(status)status.textContent=prefsError?"Rewards loaded. Alert preferences will save after the optional database migration.":"Choose the updates you want to receive.";
