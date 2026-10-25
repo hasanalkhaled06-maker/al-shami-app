@@ -2869,7 +2869,13 @@
       const requestedForValue = $("#schedule-order-toggle")?.checked
         ? String(formData.get("requested_for") || "").trim()
         : "";
+      const scheduleRequested = Boolean($("#schedule-order-toggle")?.checked);
       const requestedForDate = requestedForValue ? new Date(requestedForValue) : null;
+      if (scheduleRequested && !requestedForValue) {
+        showCheckoutMessage(localized("Choose the preferred date and time.", "اختار التاريخ والوقت المطلوبين.", "Choose the preferred date and time."), true);
+        $("#requested-for-input")?.focus();
+        return;
+      }
       if (requestedForValue && (!schedulingEnabled || !requestedForDate || !Number.isFinite(requestedForDate.getTime()) ||
           requestedForDate.getTime() < Date.now() + scheduleMinNoticeMinutes * 60000 ||
           requestedForDate.getTime() > Date.now() + scheduleMaxDays * 86400000)) {
@@ -3024,6 +3030,7 @@
           const scheduleToggle = $("#schedule-order-toggle");
           if (scheduleToggle) scheduleToggle.checked = false;
           $("#schedule-order-controls")?.setAttribute("hidden", "");
+          $("#pickup-instructions-field")?.classList.add("hidden");
           if (formElement.elements?.requested_for) {
             formElement.elements.requested_for.value = "";
             formElement.elements.requested_for.required = false;
