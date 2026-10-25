@@ -2784,6 +2784,15 @@
         return;
       }
 
+      const deliveryZone = orderType === "delivery" && deliveryZoneLookupAvailable && activeDeliveryZones.length
+        ? deliveryZoneForPoint(deliveryLatitude, deliveryLongitude)
+        : null;
+      if (orderType === "delivery" && deliveryZoneLookupAvailable && activeDeliveryZones.length && !deliveryZone) {
+        showCheckoutMessage(localized("This address is outside our delivery zones.", "هالعنوان خارج مناطق التوصيل.", "This address is outside our delivery zones."), true);
+        $("#choose-delivery-location")?.focus();
+        return;
+      }
+
       const subtotal = calculateSubtotal(rows);
 
       if (subtotal < minimumOrder) {
@@ -2794,8 +2803,10 @@
         return;
       }
 
-      const submittedTotal =
-        subtotal + (orderType === "delivery" ? deliveryFee : 0);
+      const selectedDeliveryFee = orderType === "delivery"
+        ? (deliveryZone ? Number(deliveryZone.delivery_fee) : deliveryFee)
+        : 0;
+      const submittedTotal = subtotal + selectedDeliveryFee;
 
       const generalNotes = String(formData.get("notes") || "").trim();
       const pickupInstructions = orderType === "pickup" ? String(formData.get("pickup_instructions") || "").trim() : "";
@@ -2812,7 +2823,7 @@
         ...(generalNotes ? [localized("Order notes: ", "ملاحظات الطلب: ", "Order notes: ") + generalNotes] : []),
         "",
         localized("Subtotal: ", "المجموع الفرعي: ", "Subtotal: ") + money(subtotal),
-        localized("Delivery fee: ", "رسوم التوصيل: ", "Delivery fee: ") + money(orderType === "delivery" ? deliveryFee : 0),
+        localized("Delivery fee: ", "رسوم التوصيل: ", "Delivery fee: ") + money(selectedDeliveryFee),
         localized("Total: ", "الإجمالي: ", "Ne nyinaa: ") + money(submittedTotal)
       ].join("\n");
       if (!window.confirm(localized("Review your order before sending:\n\n", "راجع طلبك قبل الإرسال:\n\n", "Hwɛ wo order no ansa na woasoma:\n\n") + orderSummary)) return;
