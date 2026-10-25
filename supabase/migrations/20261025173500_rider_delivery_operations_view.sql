@@ -11,7 +11,7 @@ begin
     'id',o.id,'order_number',o.order_number,'status',o.status,
     'delivery_address',o.delivery_address,'delivery_latitude',o.delivery_latitude,
     'delivery_longitude',o.delivery_longitude,'created_at',o.created_at,
-    'gps_updated_at',loc.updated_at,'arrived_at',ev.arrived_at,'left_at',ev.left_at
+    'gps_updated_at',case when o.rider_tracking_started_at is not null and loc.updated_at>=o.rider_tracking_started_at then loc.updated_at else null end,'arrived_at',ev.arrived_at,'left_at',ev.left_at
   ) order by o.created_at), '[]'::jsonb) into v_result
   from public.orders o left join public.delivery_rider_locations loc on loc.rider_user_id=v_uid
   left join lateral (
