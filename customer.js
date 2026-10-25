@@ -1885,6 +1885,8 @@
         return '<article class="customer-order-card">' +
           '<div class="tracked-card-heading"><div><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(number) + '</strong><p class="tracked-date">' + escapeHTML(tr("orderedAt")) + ": " + escapeHTML(trackingDate(order.created_at)) + '</p>' + updatedAtHtml + '</div><span class="tracked-status status-' + escapeHTML(status.replace(/[^a-z_]/g,"")) + '">' + escapeHTML(trackingStatusText(status, order.order_type)) + "</span></div>" +
           timeline + '<div class="tracked-order-meta"><span>' + escapeHTML(order.order_type === "pickup" ? tr("pickup") : tr("delivery")) + '</span><strong>' + money(order.total) + "</strong></div>" +
+          (order.requested_for ? '<p class="tracked-date">' + escapeHTML(localized("Requested for: ", "موعد الطلب: ", "Requested for: ")) + escapeHTML(trackingDate(order.requested_for)) + '</p>' : "") +
+          (order.estimated_ready_at ? '<p class="tracked-date">' + escapeHTML(localized("Estimated ready/delivery: ", "الوقت التقريبي للجهوزية/الوصول: ", "Estimated ready/delivery: ")) + escapeHTML(trackingDate(order.estimated_ready_at)) + '</p>' : "") +
           (itemHtml ? '<ul class="tracked-items">' + itemHtml + "</ul>" : "") +
           riderMapMarkup +
           (status !== "completed" && status !== "rejected" && order.receipt_code
