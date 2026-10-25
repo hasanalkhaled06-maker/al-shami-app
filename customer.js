@@ -2946,9 +2946,9 @@
         const orderNotes = [
           generalNotes,
           pickupNote ? "Pickup instructions: " + pickupNote : "",
-          requestedForDate ? "Requested time: " + requestedForDate.toLocaleString() : "",
-          ...itemNotesForLegacy
+          requestedForDate ? "Requested time: " + requestedForDate.toLocaleString() : ""
         ].filter(Boolean).join("\n") || null;
+        const legacyOrderNotes = [orderNotes, ...itemNotesForLegacy].filter(Boolean).join("\n") || null;
         const rpcArgs = {
           p_customer_name: String(formData.get("customer_name") || "").trim(),
           p_customer_phone: normalizedPhone,
@@ -2970,7 +2970,7 @@
             p_customer_phone: rpcArgs.p_customer_phone,
             p_order_type: rpcArgs.p_order_type,
             p_delivery_address: rpcArgs.p_delivery_address,
-            p_notes: orderNotes,
+            p_notes: legacyOrderNotes,
             p_items: submittedItems,
             p_delivery_latitude: deliveryLatitude,
             p_delivery_longitude: deliveryLongitude
