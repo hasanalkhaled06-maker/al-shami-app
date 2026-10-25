@@ -12,6 +12,7 @@ create table if not exists public.customer_loyalty_settings (
   stamps_per_reward integer not null default 10 check (stamps_per_reward between 2 and 100),
   points_per_ghs integer not null default 1 check (points_per_ghs between 0 and 100),
   points_per_ghs_redeemed integer not null default 100 check (points_per_ghs_redeemed between 1 and 10000),
+  stamp_reward_ghs numeric(10,2) not null default 0 check (stamp_reward_ghs between 0 and 500),
   referral_bonus_points integer not null default 100 check (referral_bonus_points between 0 and 100000),
   updated_at timestamptz not null default now()
 );
@@ -116,7 +117,7 @@ revoke all on function public.record_my_delivery_event(uuid,text,text,text) from
 grant execute on function public.record_my_delivery_event(uuid,text,text,text) to authenticated;
 
 create or replace function public.get_delivery_admin_ops()
-returns jsonb language plpgsql stable security definer set search_path = pg_catalog, public as $$
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public as $
 declare v jsonb;
 begin
   if auth.uid() is null or not exists(select 1 from public.admin_users a where a.user_id=auth.uid()) then
@@ -218,6 +219,7 @@ begin
   return jsonb_build_object('enabled',v_set.enabled,'points',v_points,'stamps',v_stamps,
     'stamps_per_reward',v_set.stamps_per_reward,'points_per_ghs',v_set.points_per_ghs,
     'points_per_ghs_redeemed',v_set.points_per_ghs_redeemed,
+    'stamp_reward_ghs',v_set.stamp_reward_ghs,
     'referral_bonus_points',v_set.referral_bonus_points,'referral_code',v_code);
 end $$;
 revoke all on function public.get_my_loyalty_summary() from public, anon;
@@ -225,7 +227,7 @@ grant execute on function public.get_my_loyalty_summary() to authenticated;
 
 create or replace function public.admin_update_loyalty_settings(
   p_enabled boolean, p_stamps_per_reward integer, p_points_per_ghs integer,
-  p_points_per_ghs_redeemed integer, p_referral_bonus_points integer
+  p_points_per_ghs_redeemed integer, p_referral_bonus_points integer, p_stamp_reward_ghs numeric
 ) returns void language plpgsql security definer set search_path = pg_catalog, public as $$
 begin
   if auth.uid() is null or not exists(select 1 from public.admin_users where user_id=auth.uid()) then
@@ -233,9 +235,9 @@ begin
   end if;
   update public.customer_loyalty_settings set enabled=p_enabled, stamps_per_reward=p_stamps_per_reward,
     points_per_ghs=p_points_per_ghs, points_per_ghs_redeemed=p_points_per_ghs_redeemed,
-    referral_bonus_points=p_referral_bonus_points, updated_at=now() where id=1;
+    referral_bonus_points=p_referral_bonus_points, stamp_reward_ghs=p_stamp_reward_ghs, updated_at=now() where id=1;
 end $$;
-revoke all on function public.admin_update_loyalty_settings(boolean,integer,integer,integer,integer) from public, anon;
+revoke all on function public.admin_update_loyalty_settings(boolean,integer,integer,integer,integer,numeric) from public, anon;
 grant execute on function public.admin_update_loyalty_settings(boolean,integer,integer,integer,integer) to authenticated;
 
 create or replace function public.al_shami_award_customer_loyalty()
@@ -275,10 +277,11 @@ for each row execute function public.al_shami_award_customer_loyalty();
 create or replace function public.place_order_with_rewards(
   p_customer_name text, p_customer_phone text, p_order_type text, p_delivery_address text,
   p_notes text, p_items jsonb, p_delivery_latitude double precision, p_delivery_longitude double precision,
-  p_requested_for timestamptz default null, p_points_to_redeem integer default 0, p_referral_code text default null
+  p_requested_for timestamptz default null, p_points_to_redeem integer default 0,
+  p_redeem_stamp_reward boolean default false, p_referral_code text default null
 ) returns jsonb language plpgsql security definer set search_path = pg_catalog, public as $$
 declare v_uid uuid:=auth.uid(); v_result jsonb; v_id uuid; v_subtotal numeric; v_balance bigint;
-  v_cfg public.customer_loyalty_settings%rowtype; v_use integer:=0; v_discount numeric:=0; v_referrer uuid;
+  v_cfg public.customer_loyalty_settings%rowtype; v_use integer:=0; v_discount numeric:=0; v_stamp_discount numeric:=0; v_referrer uuid;
 begin
   if v_uid is null then raise exception 'Sign in required'; end if;
   if coalesce(p_points_to_redeem,0)<0 then raise exception 'Points to redeem cannot be negative'; end if;
@@ -310,9 +313,24 @@ begin
       values(v_uid,v_id,'points',-v_use,'order_redemption');
     update public.orders set loyalty_discount=v_discount,total=greatest(0,total-v_discount) where id=v_id;
   end if;
-  return v_result||jsonb_build_object('loyalty_discount',v_discount,'points_redeemed',v_use);
+  if coalesce(p_redeem_stamp_reward,false) then
+    if not coalesce(v_cfg.enabled,false) then raise exception 'Loyalty rewards are not enabled'; end if;
+    select coalesce(sum(amount),0) into v_balance from public.customer_loyalty_ledger
+      where customer_user_id=v_uid and entry_type='stamp';
+    if v_balance < v_cfg.stamps_per_reward or v_cfg.stamp_reward_ghs <= 0 then
+      raise exception 'No stamp reward is available yet';
+    end if;
+    select subtotal into v_subtotal from public.orders where id=v_id and customer_user_id=v_uid;
+    v_stamp_discount:=least(v_subtotal,v_cfg.stamp_reward_ghs);
+    insert into public.customer_loyalty_ledger(customer_user_id,order_id,entry_type,amount,reason)
+      values(v_uid,v_id,'stamp',-v_cfg.stamps_per_reward,'stamp_reward_redemption');
+    update public.orders set loyalty_discount=loyalty_discount+v_stamp_discount,
+      total=greatest(0,total-v_stamp_discount) where id=v_id;
+  end if;
+  return v_result||jsonb_build_object('loyalty_discount',v_discount+v_stamp_discount,
+    'points_redeemed',v_use,'stamps_redeemed',case when p_redeem_stamp_reward then v_cfg.stamps_per_reward else 0 end);
 end $$;
-revoke all on function public.place_order_with_rewards(text,text,text,text,text,jsonb,double precision,double precision,timestamptz,integer,text) from public, anon;
+revoke all on function public.place_order_with_rewards(text,text,text,text,text,jsonb,double precision,double precision,timestamptz,integer,boolean,text) from public, anon;
 grant execute on function public.place_order_with_rewards(text,text,text,text,text,jsonb,double precision,double precision,timestamptz,integer,text) to authenticated;
 
 -- The admin aggregates delivery operation info without exposing rider GPS coordinates.
