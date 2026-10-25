@@ -286,6 +286,7 @@ begin
     'id', o.id,
     'order_number', o.order_number,
     'status', o.status,
+    'can_review', (o.status = 'completed' and o.customer_user_id = auth.uid()),
     'order_type', o.order_type,
     'subtotal', o.subtotal,
     'delivery_fee', o.delivery_fee,
