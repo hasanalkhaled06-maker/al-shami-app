@@ -11,11 +11,12 @@
     return;
   }
 
-  const db = window.supabase.createClient(
+  const db = window.AL_SHAMI_ADMIN_DB || window.supabase.createClient(
     cfg.SUPABASE_URL,
     cfg.SUPABASE_ANON_KEY,
     {
       auth: {
+        storageKey: "al-shami-admin-auth-v1",
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true
