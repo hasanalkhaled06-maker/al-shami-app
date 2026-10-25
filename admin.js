@@ -704,13 +704,14 @@
       loadProducts(),
       loadOffers(),
       loadSettings(),
-      loadMenuReviews()
+      loadMenuReviews(),
+      loadDeliveryZones()
     ]);
 
     const failed = results
       .map((result, index) => ({
         result,
-        name: ["orders", "history", "menu", "offers", "settings", "reviews"][index]
+        name: ["orders", "history", "menu", "offers", "settings", "reviews", "delivery zones"][index]
       }))
       .filter(item => item.result.status === "rejected");
 
@@ -1652,6 +1653,81 @@ Status: ${order.status}`;
     $("#offer-form").reset();
     $("#offer-form").elements.id.value = "";
   };
+
+  let deliveryZones = [];
+
+  async function loadDeliveryZones() {
+    const list = $("#delivery-zones-list");
+    if (!list) return;
+    const { data, error } = await db.from("delivery_zones")
+      .select("*")
+      .order("radius_km");
+    if (error) {
+      deliveryZones = [];
+      list.innerHTML = '<p class="muted">Zone editing becomes available after the optional database upgrade is applied.</p>';
+      return;
+    }
+    deliveryZones = data || [];
+    list.innerHTML = deliveryZones.length ? deliveryZones.map(zone => `
+      <article class="admin-menu-row">
+        <div class="grow">
+          <strong>${esc(zone.name)} · ${money(zone.delivery_fee)}</strong>
+          <small>Centre ${Number(zone.center_latitude).toFixed(5)}, ${Number(zone.center_longitude).toFixed(5)} · radius ${esc(zone.radius_km)} km · ${esc(zone.estimated_delivery_minutes || "—")} min travel · ${zone.is_active ? "Active" : "Inactive"}</small>
+        </div>
+        <button class="btn btn-light" data-edit-delivery-zone="${esc(zone.id)}">Edit</button>
+      </article>
+    `).join("") : '<p class="muted">No delivery zones configured; the existing single delivery fee is still used.</p>';
+    list.querySelectorAll("[data-edit-delivery-zone]").forEach(button => {
+      button.onclick = () => {
+        const zone = deliveryZones.find(item => item.id === button.dataset.editDeliveryZone);
+        if (!zone) return;
+        const form = $("#delivery-zone-form");
+        Object.entries(zone).forEach(([key, value]) => {
+          const field = form.elements[key];
+          if (!field) return;
+          if (field.type === "checkbox") field.checked = Boolean(value);
+          else field.value = value == null ? "" : value;
+        });
+        form.scrollIntoView({ behavior: "smooth", block: "center" });
+      };
+    });
+  }
+
+  $("#delivery-zone-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = {
+      name: form.elements.name.value.trim(),
+      center_latitude: Number(form.elements.center_latitude.value),
+      center_longitude: Number(form.elements.center_longitude.value),
+      radius_km: Number(form.elements.radius_km.value),
+      delivery_fee: Number(form.elements.delivery_fee.value),
+      estimated_delivery_minutes: form.elements.estimated_delivery_minutes.value
+        ? Number(form.elements.estimated_delivery_minutes.value) : null,
+      is_active: form.elements.is_active.checked,
+      updated_at: new Date().toISOString()
+    };
+    const id = form.elements.id.value;
+    const result = id
+      ? await db.from("delivery_zones").update(data).eq("id", id)
+      : await db.from("delivery_zones").insert(data);
+    if (result.error) {
+      status(result.error.message, "#delivery-zone-message", true);
+      return;
+    }
+    status("Delivery zone saved.", "#delivery-zone-message");
+    form.reset();
+    form.elements.id.value = "";
+    form.elements.is_active.checked = true;
+    await loadDeliveryZones();
+  });
+
+  $("#cancel-delivery-zone")?.addEventListener("click", () => {
+    const form = $("#delivery-zone-form");
+    form.reset();
+    form.elements.id.value = "";
+    form.elements.is_active.checked = true;
+  });
 
   async function loadMenuReviews() {
     const list = $("#menu-reviews-list");
