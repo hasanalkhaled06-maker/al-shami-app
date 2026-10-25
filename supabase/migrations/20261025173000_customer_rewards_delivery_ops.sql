@@ -132,7 +132,9 @@ begin
     'order_id',o.id,'order_number',o.order_number,'status',o.status,
     'customer_name',o.customer_name,'address',o.delivery_address,
     'zone',z.name,'started_at',o.rider_tracking_started_at,
-    'gps_updated_at',loc.updated_at,'gps_stale',loc.updated_at is null or loc.updated_at < now()-interval '45 seconds',
+    'gps_updated_at',case when o.rider_tracking_started_at is not null and loc.updated_at>=o.rider_tracking_started_at then loc.updated_at else null end,
+    'gps_stale',loc.updated_at is null or o.rider_tracking_started_at is null
+      or loc.updated_at<o.rider_tracking_started_at or loc.updated_at<now()-interval '45 seconds',
     'arrived_at',ev.arrived_at,'left_at',ev.left_at,
     'last_failed_at',ev.last_failed_at,'last_failure_reason',ev.last_failure_reason
   ) order by o.created_at), '[]'::jsonb) into v
