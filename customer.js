@@ -875,6 +875,8 @@
   let category = "All";
   let sortMode = "default";
   const CART_KEY = "alShamiCartV1";
+  const CART_ITEM_NOTES_KEY = "alShamiCartItemNotesV1";
+  let cartItemNotes = {};
   const CUSTOMER_KEY = "alShamiCustomerV1";
   const ORDER_HISTORY_KEY = "alShamiOrderHistoryV1";
   const TRACKING_TOKEN_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -885,6 +887,13 @@
   function storageGet(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
   function storageSet(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
   function persistCart() { storageSet(CART_KEY, JSON.stringify(cart)); }
+  function persistCartItemNotes() { storageSet(CART_ITEM_NOTES_KEY, JSON.stringify(cartItemNotes)); }
+  function restoreCartItemNotes() {
+    try {
+      const saved = JSON.parse(storageGet(CART_ITEM_NOTES_KEY) || "{}");
+      if (saved && typeof saved === "object" && !Array.isArray(saved)) cartItemNotes = Object.fromEntries(Object.entries(saved).filter(([id, note]) => typeof note === "string").map(([id, note]) => [id, note.slice(0, 500)]));
+    } catch (_) { cartItemNotes = {}; }
+  }
   function restoreCart() {
     try {
       const saved = JSON.parse(storageGet(CART_KEY) || "{}");
@@ -2301,6 +2310,9 @@
                 <strong>${escapeHTML(product.name)}</strong>
                 <small>${money(product.price)} each</small>
               </div>
+              <label class="cart-item-note">${escapeHTML(localized("Note for this item (optional)", "ملاحظة لهالصنف (اختياري)", "Note for this item (optional)"))}
+                <textarea data-item-note="${escapeHTML(id)}" maxlength="500" rows="2">${escapeHTML(cartItemNotes[id] || "")}</textarea>
+              </label>
               <div class="qty-controls" aria-label="Quantity controls for ${escapeHTML(product.name)}">
                 <button type="button" data-dec="${escapeHTML(id)}"
                   aria-label="${lang === "ar" ? "إنقاص كمية " : lang === "tw" ? "Te dodow so " : "Decrease quantity of "}${escapeHTML(product.name)}">−</button>
@@ -2352,6 +2364,13 @@
         : "";
     }
 
+    cartItems.querySelectorAll("[data-item-note]").forEach(field => {
+      field.addEventListener("input", () => {
+        cartItemNotes[field.dataset.itemNote] = field.value.slice(0, 500);
+        persistCartItemNotes();
+      });
+    });
+
     cartItems.querySelectorAll("[data-dec]").forEach(button => {
       button.addEventListener("click", () => {
         const id = button.dataset.dec;
@@ -2359,7 +2378,11 @@
 
         const product = products.find(item => String(item.id) === String(id));
         const removed = cart[id] <= 0;
-        if (removed) delete cart[id];
+        if (removed) {
+          delete cart[id];
+          delete cartItemNotes[id];
+          persistCartItemNotes();
+        }
         persistCart();
         renderCart();
         if (product) announceCartChange(removed ? "cartRemoved" : "cartQuantity", product.name, removed ? undefined : cart[id]);
@@ -2382,6 +2405,8 @@
         const id = button.dataset.remove;
         const product = products.find(item => String(item.id) === String(id));
         delete cart[id];
+        delete cartItemNotes[id];
+        persistCartItemNotes();
         persistCart();
         renderCart();
         if (product) announceCartChange("cartRemoved", product.name);
@@ -2747,6 +2772,8 @@
     if (submitting || !getCartRows().length) return;
     if (!window.confirm(localized("Clear all items from your basket?", "متأكد بدك تفضّي السلة كلها؟", "Wopɛ sɛ wopopa nneɛma a ɛwɔ basket no nyinaa?"))) return;
     cart = {};
+    cartItemNotes = {};
+    persistCartItemNotes();
     persistCart();
     renderCart();
     announceCartChange("cartCleared", "");
@@ -2877,7 +2904,7 @@
         localized("Phone: ", "الهاتف: ", "Telefon: ") + normalizedPhone,
         ...rows.map(([id, quantity]) => {
           const product = products.find(item => String(item.id) === String(id));
-          return `${quantity} × ${product?.name || "Item"}`;
+          return `${quantity} × ${product?.name || "Item"}${cartItemNotes[id] ? " — " + cartItemNotes[id] : ""}`;
         }),
         ...(orderType === "delivery" ? [localized("Delivery address: ", "عنوان التوصيل: ", "Delivery address: ") + address] : []),
         ...(deliveryZone ? [localized("Delivery zone: ", "منطقة التوصيل: ", "Delivery zone: ") + deliveryZone.name] : []),
@@ -2894,7 +2921,8 @@
 
       const submittedItems = rows.map(([product_id, quantity]) => ({
         product_id,
-        quantity: Number(quantity)
+        quantity: Number(quantity),
+        item_note: String(cartItemNotes[product_id] || "").trim() || null
       }));
 
       submitting = true;
@@ -2948,6 +2976,8 @@
 
         // استخدم مرجع النموذج المحفوظ، وليس event.currentTarget بعد await.
         cart = {};
+        cartItemNotes = {};
+        persistCartItemNotes();
         persistCart();
         if ($("#remember-customer")?.checked) {
           storageSet(CUSTOMER_KEY, JSON.stringify({ consent: true, name: customerName, phone: normalizedPhone }));
@@ -3030,6 +3060,7 @@
   if ($(".checkout-section")) floatingCartObserver.observe($(".checkout-section"));
 
   restoreCart();
+  restoreCartItemNotes();
   restoreCustomerDetails();
   // Authentication is required before the menu, order history, or checkout is loaded.
   void initializeCustomerAuth();
