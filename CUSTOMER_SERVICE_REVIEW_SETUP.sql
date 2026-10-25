@@ -13,6 +13,9 @@ create table if not exists public.customer_service_reviews (
   unique (order_id, customer_user_id)
 );
 
+create index if not exists customer_service_reviews_created_at_idx
+  on public.customer_service_reviews(created_at desc);
+
 alter table public.customer_service_reviews enable row level security;
 revoke all on public.customer_service_reviews from public, anon, authenticated;
 grant select on public.customer_service_reviews to authenticated;
