@@ -22,6 +22,7 @@
         }
       )
     : null;
+  window.AL_SHAMI_ADMIN_DB = db;
 
   const $ = selector => document.querySelector(selector);
 
