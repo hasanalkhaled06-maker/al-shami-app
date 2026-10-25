@@ -2103,6 +2103,32 @@
             : `<button type="button" class="btn btn-primary"
                 data-add="${escapeHTML(product.id)}"
                 aria-label="${escapeHTML(tr("add") + " " + product.name)}">${tr("add")}</button>`;
+          const alternativePool = products.filter(candidate =>
+            candidate.is_available !== false && String(candidate.id) !== String(product.id)
+          );
+          const sameCategoryAlternatives = alternativePool.filter(candidate =>
+            String(candidate.category || "").trim().toLowerCase() === String(product.category || "").trim().toLowerCase()
+          );
+          const alternativeProducts = product.is_available === false
+            ? (sameCategoryAlternatives.length ? sameCategoryAlternatives : alternativePool)
+                .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+                .slice(0, 3)
+            : [];
+          const alternativesMarkup = alternativeProducts.length
+            ? `<div class="unavailable-alternatives"><p class="muted">${escapeHTML(localized(
+                "Available alternatives",
+                "بدائل متوفرة",
+                "Nneɛma foforo a ɛwɔ hɔ"
+              ))}</p><div class="menu-tools">${alternativeProducts.map(alternative =>
+                `<button type="button" class="btn btn-light"
+                  data-add="${escapeHTML(alternative.id)}"
+                  aria-label="${escapeHTML(localized(
+                    "Add alternative: " + alternative.name,
+                    "أضف البديل: " + alternative.name,
+                    "Fa eyi ka wo order ho: " + alternative.name
+                  ))}">${escapeHTML(alternative.name)} · ${money(alternative.price)}</button>`
+              ).join("")}</div></div>`
+            : "";
           return `
         <article class="product-card ${product.is_available === false ? "product-unavailable" : ""}">
           <div class="product-image">
@@ -2121,6 +2147,7 @@
               <span class="price">${money(product.price)}</span>
               ${addControl}
             </div>
+            ${alternativesMarkup}
           </div>
         </article>
       `;
