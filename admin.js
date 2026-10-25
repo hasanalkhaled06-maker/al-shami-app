@@ -703,13 +703,14 @@
       loadOrders(),
       loadProducts(),
       loadOffers(),
-      loadSettings()
+      loadSettings(),
+      loadMenuReviews()
     ]);
 
     const failed = results
       .map((result, index) => ({
         result,
-        name: ["orders", "history", "menu", "offers", "settings"][index]
+        name: ["orders", "history", "menu", "offers", "settings", "reviews"][index]
       }))
       .filter(item => item.result.status === "rejected");
 
@@ -1651,6 +1652,42 @@ Status: ${order.status}`;
     $("#offer-form").reset();
     $("#offer-form").elements.id.value = "";
   };
+
+  async function loadMenuReviews() {
+    const list = $("#menu-reviews-list");
+    if (!list) return;
+    const { data, error } = await db.from("menu_reviews")
+      .select("id,order_id,menu_item_id,rating,review_text,photo_url,status,created_at,menu_items(name),orders(order_number)")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) {
+      list.innerHTML = '<p class="muted">Review tools become available after the optional database upgrade is applied.</p>';
+      return;
+    }
+    const reviews = data || [];
+    list.innerHTML = reviews.length ? reviews.map(review => `
+      <article class="admin-menu-row">
+        <div class="grow">
+          <strong>${esc(review.menu_items?.name || "Menu item")} · ${"★".repeat(Number(review.rating || 0))}</strong>
+          <small>Order #${esc(review.orders?.order_number || review.order_id)} · ${esc(review.status)} · ${esc(review.review_text || "")}</small>
+          ${review.photo_url ? `<p><img src="${esc(review.photo_url)}" alt="Customer review photo" loading="lazy" style="max-width:180px;max-height:140px;border-radius:8px"></p>` : ""}
+          ${review.status === "pending" ? `<button class="btn btn-primary" data-review-state="approved" data-review-id="${esc(review.id)}">Approve</button> <button class="btn btn-light" data-review-state="rejected" data-review-id="${esc(review.id)}">Reject</button>` : ""}
+        </div>
+      </article>
+    `).join("") : '<p class="muted">No customer reviews yet.</p>';
+    list.querySelectorAll("[data-review-id]").forEach(button => {
+      button.onclick = async () => {
+        const { error: updateError } = await db.from("menu_reviews")
+          .update({ status: button.dataset.reviewState })
+          .eq("id", button.dataset.reviewId);
+        if (updateError) {
+          toast(updateError.message);
+          return;
+        }
+        await loadMenuReviews();
+      };
+    });
+  }
 
   async function loadSettings() {
     const { data, error } = await db
