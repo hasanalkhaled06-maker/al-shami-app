@@ -329,6 +329,39 @@
           <input name="description" maxlength="250">
         </label>
 
+        <label class="full">
+          Ingredients
+          <textarea name="ingredients" maxlength="1000" rows="2" placeholder="List main ingredients"></textarea>
+        </label>
+
+        <label>
+          Portion / serving
+          <input name="portion_info" maxlength="120" placeholder="e.g. 1 serving">
+        </label>
+
+        <label>
+          Preparation time (minutes)
+          <input name="prep_minutes" type="number" min="1" max="360" step="1">
+        </label>
+
+        <label>
+          Spice level (0–5)
+          <select name="spice_level">
+            <option value="">Not specified</option>
+            <option value="0">0 · Mild</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3 · Medium</option>
+            <option value="4">4</option>
+            <option value="5">5 · Hot</option>
+          </select>
+        </label>
+
+        <label class="full">
+          Allergens (comma-separated, optional)
+          <input name="allergens" maxlength="300" placeholder="e.g. milk, wheat, eggs">
+        </label>
+
         <label class="checkbox-label">
           <input name="is_available" type="checkbox" checked>
           Available for orders
