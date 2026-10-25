@@ -24,5 +24,8 @@ jobs:
           node --check admin-operations.js
           node --check pwa.js
           node --check rider.js
+          node --check customer-features.js
+          node --check admin-delivery-ops.js
+          node --check rider-ops.js
           node --check service-worker.js
           node --test tests/*.test.cjs
