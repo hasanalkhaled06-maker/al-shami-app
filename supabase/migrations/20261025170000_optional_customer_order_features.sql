@@ -261,6 +261,83 @@ $$;
 revoke all on function public.submit_menu_review(uuid,uuid,smallint,text,text) from public, anon;
 grant execute on function public.submit_menu_review(uuid,uuid,smallint,text,text) to authenticated;
 
+drop policy if exists "Customers read their own menu reviews" on public.menu_reviews;
+create policy "Customers read their own menu reviews" on public.menu_reviews
+  for select to authenticated using (customer_user_id = (select auth.uid()));
+
+create or replace function public.get_customer_order_tracking(p_tracking_token uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = pg_catalog, public
+as $
+declare
+  v_result jsonb;
+begin
+  if auth.uid() is null or p_tracking_token is null then return null; end if;
+
+  select jsonb_build_object(
+    'id', o.id,
+    'order_number', o.order_number,
+    'status', o.status,
+    'order_type', o.order_type,
+    'subtotal', o.subtotal,
+    'delivery_fee', o.delivery_fee,
+    'total', o.total,
+    'created_at', o.created_at,
+    'updated_at', o.updated_at,
+    'completed_at', o.completed_at,
+    'requested_for', o.requested_for,
+    'estimated_ready_at', o.estimated_ready_at,
+    'receipt_code', o.receipt_code,
+    'delivery_latitude', o.delivery_latitude,
+    'delivery_longitude', o.delivery_longitude,
+    'rider_location', case
+      when o.status = 'out_for_delivery' and o.assigned_rider_user_id is not null then (
+        select jsonb_build_object(
+          'latitude', loc.latitude,
+          'longitude', loc.longitude,
+          'accuracy_m', loc.accuracy_m,
+          'heading_deg', loc.heading_deg,
+          'speed_mps', loc.speed_mps,
+          'updated_at', loc.updated_at,
+          'is_stale', loc.updated_at < now() - interval '45 seconds',
+          'rider_name', coalesce(sp.full_name, 'AL SHAMI delivery rider')
+        )
+        from public.delivery_rider_locations loc
+        left join public.staff_profiles sp on sp.user_id = o.assigned_rider_user_id
+        where loc.rider_user_id = o.assigned_rider_user_id
+          and o.rider_tracking_started_at is not null
+          and loc.updated_at >= o.rider_tracking_started_at
+        limit 1
+      )
+      else null
+    end,
+    'items', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', oi.id,
+        'menu_item_id', oi.menu_item_id,
+        'name', oi.item_name,
+        'quantity', oi.quantity,
+        'unit_price', oi.unit_price,
+        'line_total', oi.line_total,
+        'item_note', oi.item_note
+      ) order by oi.id)
+      from public.order_items oi where oi.order_id = o.id
+    ), '[]'::jsonb)
+  )
+  into v_result
+  from public.orders o
+  where o.customer_tracking_token = p_tracking_token;
+
+  return v_result;
+end;
+$;
+
+revoke all on function public.get_customer_order_tracking(uuid) from public, anon;
+grant execute on function public.get_customer_order_tracking(uuid) to authenticated;
+
 -- For customer photo uploads, create a private Storage bucket named
 -- "al-shami-review-photos" in Supabase Storage. This migration stores HTTPS URLs
 -- so text/photo reviews work before a bucket is configured.
