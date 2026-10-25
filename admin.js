@@ -712,7 +712,7 @@
     const failed = results
       .map((result, index) => ({
         result,
-        name: ["orders", "history", "menu", "offers", "settings", "reviews", "delivery zones"][index]
+        name: ["orders", "menu", "offers", "settings", "reviews", "delivery zones"][index]
       }))
       .filter(item => item.result.status === "rejected");
 
