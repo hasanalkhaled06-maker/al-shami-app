@@ -160,6 +160,9 @@ begin
     order by z.radius_km asc
     limit 1;
     v_zone_found := found;
+    if not v_zone_found and exists (select 1 from public.delivery_zones where is_active) then
+      raise exception 'This location is outside the active delivery zones';
+    end if;
   end if;
 
   v_result := public.place_order_with_location(
