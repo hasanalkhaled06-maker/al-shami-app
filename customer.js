@@ -3026,9 +3026,20 @@
           p_items: submittedItems,
           p_delivery_latitude: deliveryLatitude,
           p_delivery_longitude: deliveryLongitude,
-          p_requested_for: requestedForIso
+          p_requested_for: requestedForIso,
+          p_points_to_redeem: Math.max(0, Number(formData.get("loyalty_points_to_redeem") || 0)),
+          p_referral_code: String(formData.get("referral_code") || "").trim().toUpperCase() || null
         };
-        let { data, error } = await db.rpc("place_order_with_options", rpcArgs);
+        let { data, error } = await db.rpc("place_order_with_rewards", rpcArgs);
+        if (error?.code === "PGRST202") {
+          if (rpcArgs.p_points_to_redeem > 0 || rpcArgs.p_referral_code) {
+            throw new Error(localized("Apply the optional rewards database upgrade before using points or a referral code.", "لازم تطبيق تحديث المكافآت على قاعدة البيانات قبل استخدام النقاط أو رمز الإحالة.", "Apply the optional rewards database upgrade before using points or a referral code."));
+          }
+          const legacyArgs = { ...rpcArgs };
+          delete legacyArgs.p_points_to_redeem;
+          delete legacyArgs.p_referral_code;
+          ({ data, error } = await db.rpc("place_order_with_options", legacyArgs));
+        }
         if (error?.code === "PGRST202") {
           if (deliveryZoneLookupAvailable && activeDeliveryZones.length) {
             throw new Error(localized("Apply the optional database upgrade before accepting zone-priced orders.", "قبل قبول طلبات برسوم حسب المنطقة، لازم تطبيق تحديث قاعدة البيانات.", "Apply the optional database upgrade before accepting zone-priced orders."));
