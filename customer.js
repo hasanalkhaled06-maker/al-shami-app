@@ -296,6 +296,7 @@
     const clearButton = $("#clear-delivery-location");
     if (clearButton) clearButton.hidden = false;
     closeDeliveryMapPicker();
+    renderCart();
   }
 
   let authSession = null;
@@ -924,6 +925,8 @@
   }
   let lang = "en";
   let deliveryFee = 0;
+  let activeDeliveryZones = [];
+  let deliveryZoneLookupAvailable = false;
   let minimumOrder = 0;
   let submitting = false;
   let menuLoading = false;
@@ -2234,6 +2237,21 @@
     );
   }
 
+  function deliveryZoneForPoint(latitude, longitude) {
+    const lat = Number(latitude), lng = Number(longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    const rad = value => value * Math.PI / 180;
+    const matches = activeDeliveryZones.map(zone => {
+      const lat1 = rad(lat), lat2 = rad(Number(zone.center_latitude));
+      const dLat = lat2 - lat1, dLng = rad(Number(zone.center_longitude) - lng);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+      const distanceKm = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return { zone, distanceKm };
+    }).filter(row => row.distanceKm <= Number(row.zone.radius_km))
+      .sort((a, b) => Number(a.zone.radius_km) - Number(b.zone.radius_km));
+    return matches[0]?.zone || null;
+  }
+
   function calculateSubtotal(rows = getCartRows()) {
     return rows.reduce((sum, [id, quantity]) => {
       const product = products.find(item => String(item.id) === String(id));
@@ -2247,7 +2265,15 @@
 
     const rows = getCartRows();
     persistCart();
-    if (orderButton) orderButton.disabled = submitting || rows.length === 0;
+    const isDelivery = $("#order-type")?.value !== "pickup";
+    const deliveryLatitude = $("#delivery-latitude")?.value;
+    const deliveryLongitude = $("#delivery-longitude")?.value;
+    const selectedZone = deliveryZoneLookupAvailable && activeDeliveryZones.length
+      ? deliveryZoneForPoint(deliveryLatitude, deliveryLongitude)
+      : null;
+    const zoneRequired = isDelivery && deliveryZoneLookupAvailable && activeDeliveryZones.length > 0;
+    const zoneAllowsOrder = !zoneRequired || Boolean(selectedZone);
+    if (orderButton) orderButton.disabled = submitting || rows.length === 0 || !zoneAllowsOrder;
     const clearButton = $("#clear-cart");
     if (clearButton) clearButton.disabled = submitting || rows.length === 0;
 
@@ -2277,9 +2303,8 @@
       : `<p class="muted">${tr("empty")}</p>`;
 
     const subtotal = calculateSubtotal(rows);
-    const isDelivery = $("#order-type")?.value !== "pickup";
-    const currentFee = isDelivery ? deliveryFee : 0;
-    const total = subtotal + currentFee;
+    const currentFee = isDelivery ? (selectedZone ? Number(selectedZone.delivery_fee) : (zoneRequired ? null : deliveryFee)) : 0;
+    const total = subtotal + Number(currentFee || 0);
     const itemCount = rows.reduce((sum, [, quantity]) => sum + Number(quantity || 0), 0);
     if (floatingCartCount) floatingCartCount.textContent = String(itemCount);
     if (floatingCartTotal) floatingCartTotal.textContent = money(total);
@@ -2293,7 +2318,9 @@
     }
 
     if ($("#cart-delivery-fee")) {
-      $("#cart-delivery-fee").textContent = money(currentFee);
+      $("#cart-delivery-fee").textContent = currentFee === null
+        ? localized("Outside delivery area", "خارج مناطق التوصيل", "Outside delivery area")
+        : money(currentFee);
     }
 
     if ($("#cart-total")) {
@@ -2414,6 +2441,13 @@
       if (menuResult.error) throw menuResult.error;
       if (offerResult.error) throw offerResult.error;
       if (settingsResult.error) throw settingsResult.error;
+
+      const zonesResult = await db.from("delivery_zones")
+        .select("id,name,center_latitude,center_longitude,radius_km,delivery_fee,estimated_delivery_minutes")
+        .eq("is_active", true)
+        .order("radius_km");
+      deliveryZoneLookupAvailable = !zonesResult.error;
+      activeDeliveryZones = deliveryZoneLookupAvailable ? (zonesResult.data || []) : [];
 
       popularityByMenuItem = new Map();
       try {
