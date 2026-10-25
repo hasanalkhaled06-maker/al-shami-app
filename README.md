@@ -31,11 +31,16 @@ This installs web apps on the iPhone Home Screen; these are not native apps publ
 - `index.html`, `customer.js`: customer menu, basket, cash-only checkout, order tracking and confirmation.
 - `dark-theme.css`: shared burgundy-and-gold design system across customer, history, admin, and rider pages.
 - `admin.html`, `admin.js`: sign-in, incoming orders, menu/prices, offers, restaurant settings.
-- `admin-operations.js`: inventory, stock-movement history, suppliers, staff roster, expenses, cash shifts, and basic daily reporting.
+- `admin-operations.js`: inventory, stock-movement history, suppliers, staff roster, expenses, cash shifts, and basic daily reporting; it shares the authenticated admin client from `admin.js`.
+- `admin-delivery-ops.js`: delivery GPS alerts and area-duration reports under **Operations → Reports**, plus customer loyalty rules under **Settings**.
+- `customer-features.js`: customer reward balance and alert preferences in **Account & rewards**; point/stamp redemption and referral codes appear only during checkout.
+- `rider-ops.js`: rider arrival/departure events, failed-attempt reasons, last GPS timestamp, and nearest assigned deliveries inside the private rider app.
 - `config.js`: Supabase project URL and public publishable key. Never put a service-role/secret key in browser code.
 - `manifest.webmanifest`, `admin.webmanifest`, `rider.webmanifest`: separate install settings for customers, administrators, and delivery riders.
 - `rider.html`, `rider.js`, `rider.css`: private rider workspace with assigned deliveries, map navigation, and GPS sharing.
 - `supabase/migrations/20261023131500_delivery_rider_live_tracking_v1.sql`: additive rider role, automatic delivery assignment, and securely scoped location RPCs.
+- `supabase/migrations/20261025173000_customer_rewards_delivery_ops.sql`: checkout-only loyalty discounts, referral attribution, customer alert preferences, and protected rider-event/admin-report RPCs. Loyalty starts disabled; configure its conversion under **Settings** before enabling it. Points cannot be withdrawn or paid as cash.
+- `supabase/migrations/20261025173500_rider_delivery_operations_view.sql`: read-only assigned-delivery details for the rider workspace.
 - `DELIVERY_RIDER_APP_SETUP.md`: rollout sequence, rider-account linking instructions, and required acceptance/security tests.
 - `pwa.js`, `service-worker.js`: install/update registration and network-first static asset caching.
 - `tests/`: rider approval-gate regression tests plus static checks for page IDs, assets, manifests, cache references, and isolated app sessions.
@@ -61,7 +66,7 @@ For a new environment, apply `supabase-schema.sql` first, configure the public S
 - Reports show completed sales less recorded expenses and payouts; this is not a full net-profit calculation unless ingredient costs, payroll and all other costs are consistently configured and recorded.
 - Purchase-order entry currently creates one stock-item line per order. The database structure supports multiple lines, but the UI can be expanded for multi-item receiving.
 - Online payment gateways are intentionally deferred. The customer checkout remains cash-only; phone OTP login is paused until a supported SMS provider is configured.
-- Push notifications while the app is fully closed are not included; the admin dashboard’s in-page alerts require the page to remain active.
+- Customer alert preferences are stored, but customer push delivery is not wired to a notification provider. Push notifications while the app is fully closed are not included; admin GPS alerts are shown in the active Operations → Reports dashboard.
 
 ## Deployment
 
