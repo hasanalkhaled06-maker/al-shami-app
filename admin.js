@@ -909,6 +909,9 @@
             ${order.notes
               ? "<br>Notes: " + esc(order.notes)
               : ""}
+            ${order.requested_for ? "<br>Scheduled: " + esc(new Date(order.requested_for).toLocaleString()) : ""}
+            ${order.estimated_ready_at ? "<br>Estimated ready/delivery: " + esc(new Date(order.estimated_ready_at).toLocaleString()) : ""}
+            ${order.delivery_zone_id ? "<br>Zone: " + esc(deliveryZones.find(zone => zone.id === order.delivery_zone_id)?.name || "") : ""}
             ${deliveryMapLink(order) ? "<br>" + deliveryMapLink(order) : ""}
           </p>
           ${deliveryRiderAssignmentMarkup(order)}
@@ -923,6 +926,7 @@
                     item.menu_items?.name ||
                     "Menu item"
                   )}
+                  ${item.item_note ? '<small class="order-item-note">Note: ' + esc(item.item_note) + '</small>' : ""}
                 </span>
 
                 <strong>
