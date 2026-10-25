@@ -10,7 +10,7 @@
   const dash=$("#rider-dashboard");if(!dash)return;
   const panel=document.createElement("section");panel.className="location-panel";panel.id="rider-ops-panel";
   panel.style.cssText="display:block;margin:16px 0;padding:18px";
-  panel.innerHTML='<div><strong>Delivery check-ins & nearest stops</strong><p id="rider-ops-status" role="status">Loading delivery details…</p><button id="sort-nearest" class="secondary-button" type="button">Sort by nearest from my current position</button></div><div id="rider-ops-list"></div>';
+  panel.innerHTML='<details><summary><strong>Delivery check-ins & nearest stops</strong></summary><div><p id="rider-ops-status" role="status">Loading delivery details…</p><button id="sort-nearest" class="secondary-button" type="button">Sort by nearest from my current position</button></div><div id="rider-ops-list"></div></details>';
   const anchor=$("#delivery-list");anchor?.parentElement?.insertBefore(panel,anchor);
   const reasonLabels={customer_no_answer:"Customer did not answer",cannot_reach_address:"Could not reach the address",customer_unavailable:"Customer unavailable",unsafe_location:"Unsafe location",other:"Other"};
   let position=null;
