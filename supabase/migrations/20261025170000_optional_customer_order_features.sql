@@ -276,7 +276,7 @@ language plpgsql
 stable
 security definer
 set search_path = pg_catalog, public
-as $
+as $$
 declare
   v_result jsonb;
 begin
