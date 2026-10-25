@@ -867,6 +867,7 @@
 
   let products = [];
   let menuFeatureDetailsAvailable = false;
+  let approvedMenuReviewsByItem = new Map();
   let offers = [];
   let popularityByMenuItem = new Map();
   let cart = {};
@@ -2390,6 +2391,19 @@
       if (menuFeatureDetailsAvailable) {
         const detailsById = new Map((detailsResult.data || []).map(row => [String(row.id), row]));
         products = products.map(product => ({ ...product, ...(detailsById.get(String(product.id)) || {}) }));
+      }
+      approvedMenuReviewsByItem = new Map();
+      const reviewsResult = await db.from("menu_reviews")
+        .select("menu_item_id,rating,review_text,photo_url,created_at")
+        .eq("status", "approved")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (!reviewsResult.error) {
+        for (const review of reviewsResult.data || []) {
+          const key = String(review.menu_item_id);
+          if (!approvedMenuReviewsByItem.has(key)) approvedMenuReviewsByItem.set(key, []);
+          approvedMenuReviewsByItem.get(key).push(review);
+        }
       }
       const now = Date.now();
       offers = (offerResult.data || []).filter(offer =>
