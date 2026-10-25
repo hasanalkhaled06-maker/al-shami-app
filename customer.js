@@ -2128,6 +2128,15 @@
           const foodDetailsMarkup = foodDetails.length
             ? '<small class="product-food-details">' + foodDetails.map(escapeHTML).join(" · ") + '</small>'
             : "";
+          const itemReviews = approvedMenuReviewsByItem.get(String(product.id)) || [];
+          const reviewMarkup = itemReviews.length
+            ? '<small class="menu-review-summary">★ ' +
+              (itemReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / itemReviews.length).toFixed(1) +
+              ' · ' + escapeHTML(localized(itemReviews.length + " customer reviews", itemReviews.length + " تقييمات زبائن", itemReviews.length + " customer reviews")) +
+              (itemReviews[0].photo_url ? '<img src="' + escapeHTML(itemReviews[0].photo_url) + '" alt="' + escapeHTML(localized("Customer review photo", "صورة تقييم زبون", "Customer review photo")) + '" loading="lazy">' : "") +
+              (itemReviews[0].review_text ? '<span>' + escapeHTML(itemReviews[0].review_text) + '</span>' : "") +
+              '</small>'
+            : "";
           const alternativesMarkup = alternativeProducts.length
             ? `<div class="unavailable-alternatives"><p class="muted">${escapeHTML(localized(
                 "Available alternatives",
@@ -2158,6 +2167,7 @@
             <h3>${escapeHTML(product.name)}</h3>
             <p>${escapeHTML(product.description || "Freshly prepared at AL SHAMI.")}</p>
             ${foodDetailsMarkup}
+            ${reviewMarkup}
             <div class="product-bottom">
               <span class="price">${money(product.price)}</span>
               ${addControl}
