@@ -957,6 +957,9 @@
       placeOrderCard: "Place an order",
       placeOrderCardDesc: "Explore our menu, choose your favourites and order for delivery or pickup.",
       placeOrderCardCta: "Browse the menu",
+      activeOrdersCard: "Active orders",
+      activeOrdersCardDesc: "Follow accepted orders while they are being prepared or delivered.",
+      activeOrdersCardCta: "Check order status",
       historyCard: "Your orders",
       historyCardDesc: "Track orders in progress and review previous orders.",
       historyCardCta: "Track your orders",
@@ -1053,6 +1056,9 @@
       placeOrderCard: "اطلب الآن",
       placeOrderCardDesc: "تصفّح المنيو واختار وجباتك للتوصيل أو الاستلام من المطعم.",
       placeOrderCardCta: "تصفّح المنيو",
+      activeOrdersCard: "الطلبات النشطة",
+      activeOrdersCardDesc: "تابع طلبك بعد قبوله وأثناء تحضيره أو توصيله.",
+      activeOrdersCardCta: "تابع حالة الطلب",
       historyCard: "طلباتك",
       historyCardDesc: "تابع طلباتك الجارية وراجع الطلبات السابقة.",
       historyCardCta: "تابع طلباتك",
@@ -1149,6 +1155,9 @@
       placeOrderCard: "Hyɛ aduan ho nhyehyɛe",
       placeOrderCardDesc: "Hwɛ yɛn aduan din no na paw nea wopɛ ama wɔde abrɛ wo anaa woba abɛfa.",
       placeOrderCardCta: "Hwɛ aduan din",
+      activeOrdersCard: "Nneɛma a wɔresiesie",
+      activeOrdersCardDesc: "Hwɛ wo nhyehyɛe a wɔagye atom bere a wɔresiesie anaa wɔde rebrɛ wo.",
+      activeOrdersCardCta: "Hwɛ nhyehyɛe no tebea",
       historyCard: "Wo nhyehyɛe",
       historyCardDesc: "Hwɛ nhyehyɛe a ɛrekɔ so ne nea woayɛ dada.",
       historyCardCta: "Hwɛ wo nhyehyɛe",
@@ -2727,11 +2736,13 @@
     }
   });
 
-  // On the customer landing page, the ordering and checkout UI opens only
-  // after the customer selects "Place an order"; Home cards stay uncluttered.
+  // Keep the menu and order tracking in their own customer views.
   function openCustomerOrdering() {
     const view = $("#customer-ordering-view");
     if (!view) return;
+    const ordersView = $("#customer-active-orders-view");
+    if (ordersView) ordersView.hidden = true;
+    document.body.classList.remove("customer-active-orders-open");
     document.body.classList.add("customer-ordering-open");
     view.hidden = false;
     const target = $("#menu-section") || view;
@@ -2746,12 +2757,39 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function openCustomerActiveOrders() {
+    const view = $("#customer-active-orders-view");
+    if (!view) return;
+    const orderingView = $("#customer-ordering-view");
+    if (orderingView) orderingView.hidden = true;
+    document.body.classList.remove("customer-ordering-open");
+    document.body.classList.add("customer-active-orders-open");
+    view.hidden = false;
+    $("#refresh-customer-orders")?.click();
+    view.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function closeCustomerActiveOrders() {
+    const view = $("#customer-active-orders-view");
+    if (!view) return;
+    document.body.classList.remove("customer-active-orders-open");
+    view.hidden = true;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  window.AL_SHAMI_OPEN_ACTIVE_ORDERS = openCustomerActiveOrders;
+
   if (document.body.classList.contains("customer-home-page")) {
     $(".customer-card-order")?.addEventListener("click", event => {
       event.preventDefault();
       openCustomerOrdering();
     });
+    $(".customer-card-active-orders")?.addEventListener("click", event => {
+      event.preventDefault();
+      openCustomerActiveOrders();
+    });
     $("#customer-order-back")?.addEventListener("click", closeCustomerOrdering);
+    $("#customer-orders-back")?.addEventListener("click", closeCustomerActiveOrders);
   }
 
 
