@@ -3028,6 +3028,7 @@
           p_delivery_longitude: deliveryLongitude,
           p_requested_for: requestedForIso,
           p_points_to_redeem: Math.max(0, Number(formData.get("loyalty_points_to_redeem") || 0)),
+          p_redeem_stamp_reward: formData.get("redeem_stamp_reward") === "on",
           p_referral_code: String(formData.get("referral_code") || "").trim().toUpperCase() || null
         };
         let { data, error } = await db.rpc("place_order_with_rewards", rpcArgs);
@@ -3037,6 +3038,7 @@
           }
           const legacyArgs = { ...rpcArgs };
           delete legacyArgs.p_points_to_redeem;
+          delete legacyArgs.p_redeem_stamp_reward;
           delete legacyArgs.p_referral_code;
           ({ data, error } = await db.rpc("place_order_with_options", legacyArgs));
         }
