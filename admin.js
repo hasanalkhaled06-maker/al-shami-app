@@ -29,6 +29,7 @@
   let orders = [];
   let products = [];
   let menuFeatureColumnsAvailable = false;
+  let scheduleSettingsAvailable = false;
   let deliveryRiderDirectory = [];
   let lastRiderDirectoryFetchAt = 0;
   // Order alerts stay enabled; browsers may require a user gesture to unlock audio.
@@ -1779,6 +1780,18 @@ Status: ${order.status}`;
 
     $("#settings-form").elements.minimum_order.value =
       data.minimum_order;
+    scheduleSettingsAvailable = Object.prototype.hasOwnProperty.call(data, "allow_scheduled_orders");
+    ["allow_scheduled_orders", "schedule_min_notice_minutes", "schedule_max_days", "default_prep_minutes", "default_delivery_minutes"].forEach(name => {
+      const field = $("#settings-form").elements[name];
+      if (field) field.disabled = !scheduleSettingsAvailable;
+    });
+    if (scheduleSettingsAvailable) {
+      $("#settings-form").elements.allow_scheduled_orders.checked = Boolean(data.allow_scheduled_orders);
+      $("#settings-form").elements.schedule_min_notice_minutes.value = data.schedule_min_notice_minutes;
+      $("#settings-form").elements.schedule_max_days.value = data.schedule_max_days;
+      $("#settings-form").elements.default_prep_minutes.value = data.default_prep_minutes ?? "";
+      $("#settings-form").elements.default_delivery_minutes.value = data.default_delivery_minutes ?? "";
+    }
   }
 
   $("#settings-form").onsubmit = async event => {
@@ -1791,6 +1804,13 @@ Status: ${order.status}`;
       minimum_order: Number(form.elements.minimum_order.value),
       updated_at: new Date().toISOString()
     };
+    if (scheduleSettingsAvailable) {
+      data.allow_scheduled_orders = form.elements.allow_scheduled_orders.checked;
+      data.schedule_min_notice_minutes = Number(form.elements.schedule_min_notice_minutes.value);
+      data.schedule_max_days = Number(form.elements.schedule_max_days.value);
+      data.default_prep_minutes = form.elements.default_prep_minutes.value ? Number(form.elements.default_prep_minutes.value) : null;
+      data.default_delivery_minutes = form.elements.default_delivery_minutes.value ? Number(form.elements.default_delivery_minutes.value) : null;
+    }
 
     const { error } = await db
       .from("restaurant_settings")
