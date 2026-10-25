@@ -425,6 +425,15 @@
           <input name="minimum_order" type="number" min="0" step="0.01" required>
         </label>
 
+        <label class="checkbox-label">
+          <input name="allow_scheduled_orders" type="checkbox">
+          Allow scheduled orders
+        </label>
+        <label>Minimum schedule notice (minutes)<input name="schedule_min_notice_minutes" type="number" min="0" max="10080" step="1" value="60"></label>
+        <label>Schedule window (days)<input name="schedule_max_days" type="number" min="1" max="60" step="1" value="14"></label>
+        <label>Default preparation time (minutes)<input name="default_prep_minutes" type="number" min="1" max="360" step="1"></label>
+        <label>Default delivery travel time (minutes)<input name="default_delivery_minutes" type="number" min="1" max="360" step="1"></label>
+
         <div class="form-actions">
           <button class="btn btn-primary" type="submit">Save settings</button>
         </div>
