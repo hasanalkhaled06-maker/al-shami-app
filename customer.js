@@ -1538,7 +1538,7 @@
           }
         } catch (googleError) {
           routeSource = "osrm";
-          const base = String(cfg.ROUTING_URL || "https://router.project-osrm.org/route/v1/driving").replace(/\\/+$/, "");
+          const base = String(cfg.ROUTING_URL || "https://router.project-osrm.org/route/v1/driving").replace(/\/+$/, "");
           const url = base + "/" + routeOrigin.lng + "," + routeOrigin.lat + ";" +
             record.destinationPoint.lng + "," + record.destinationPoint.lat +
             "?overview=full&geometries=geojson&steps=false";
@@ -1584,6 +1584,12 @@
         record.routeSource = routeSource;
         record.routeError = false;
         updateCustomerRiderEta(record);
+      } catch (error) {
+        console.warn("Customer rider route ETA failed:", error);
+        if (customerRiderMapInstances.has(record.token) && requestId === record.routeRequestId) {
+          record.routeError = true;
+          updateCustomerRiderEta(record);
+        }
       } finally {
         record.routeRequestPending = false;
       }
