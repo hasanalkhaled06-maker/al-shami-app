@@ -58,14 +58,14 @@ alter table public.customer_loyalty_ledger enable row level security;
 alter table public.customer_referral_codes enable row level security;
 alter table public.customer_referrals enable row level security;
 alter table public.customer_notification_preferences enable row level security;
+revoke all on public.customer_loyalty_settings, public.customer_loyalty_ledger,
+  public.customer_referral_codes, public.customer_referrals,
+  public.customer_notification_preferences from public, anon, authenticated;
 grant select on public.customer_loyalty_settings to authenticated;
 drop policy if exists "Admins read customer loyalty settings" on public.customer_loyalty_settings;
 create policy "Admins read customer loyalty settings" on public.customer_loyalty_settings
   for select to authenticated
   using (exists (select 1 from public.admin_users a where a.user_id=(select auth.uid())));
-revoke all on public.customer_loyalty_settings, public.customer_loyalty_ledger,
-  public.customer_referral_codes, public.customer_referrals,
-  public.customer_notification_preferences from public, anon, authenticated;
 grant select, insert, update on public.customer_notification_preferences to authenticated;
 drop policy if exists "Customers manage own notification preferences" on public.customer_notification_preferences;
 create policy "Customers manage own notification preferences"
@@ -213,7 +213,7 @@ revoke all on function public.apply_my_referral_code(text) from public, anon;
 grant execute on function public.apply_my_referral_code(text) to authenticated;
 
 create or replace function public.get_my_loyalty_summary()
-returns jsonb language plpgsql stable security definer set search_path = pg_catalog, public as $$
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public as $$
 declare v_uid uuid:=auth.uid(); v_points bigint; v_stamps bigint; v_set public.customer_loyalty_settings%rowtype; v_code text;
 begin
   if v_uid is null then raise exception 'Sign in required'; end if;
@@ -338,7 +338,7 @@ begin
     'points_redeemed',v_use,'stamps_redeemed',case when p_redeem_stamp_reward then v_cfg.stamps_per_reward else 0 end);
 end $$;
 revoke all on function public.place_order_with_rewards(text,text,text,text,text,jsonb,double precision,double precision,timestamptz,integer,boolean,text) from public, anon;
-grant execute on function public.place_order_with_rewards(text,text,text,text,text,jsonb,double precision,double precision,timestamptz,integer,text) to authenticated;
+grant execute on function public.place_order_with_rewards(text,text,text,text,text,jsonb,double precision,double precision,timestamptz,integer,boolean,text) to authenticated;
 
 -- The admin aggregates delivery operation info without exposing rider GPS coordinates.
 commit;
