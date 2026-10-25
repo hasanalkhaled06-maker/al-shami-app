@@ -927,6 +927,11 @@
   let deliveryFee = 0;
   let activeDeliveryZones = [];
   let deliveryZoneLookupAvailable = false;
+  let schedulingEnabled = false;
+  let scheduleMinNoticeMinutes = 60;
+  let scheduleMaxDays = 14;
+  let defaultPrepMinutes = null;
+  let defaultDeliveryMinutes = null;
   let minimumOrder = 0;
   let submitting = false;
   let menuLoading = false;
@@ -976,6 +981,9 @@
       copyAddress: "Copy address",
       notes: "Notes (optional)",
       pickupInstructions: "Pickup instructions (optional)",
+      scheduleOrder: "Schedule this order",
+      scheduleFor: "Preferred date and time",
+      scheduleHint: "The restaurant will confirm the requested time.",
       add: "Add to order",
       empty: "Your basket is empty.",
       send: "Place order",
@@ -1069,6 +1077,9 @@
       copyAddress: "نسخ العنوان",
       notes: "ملاحظات (اختياري)",
       pickupInstructions: "تعليمات الاستلام (اختياري)",
+      scheduleOrder: "جدولة الطلب",
+      scheduleFor: "التاريخ والوقت المطلوبان",
+      scheduleHint: "المطعم سيؤكد الوقت المطلوب.",
       add: "أضف للطلب",
       empty: "السلة فارغة.",
       send: "إرسال الطلب",
@@ -1162,6 +1173,9 @@
       copyAddress: "Kɔpi address",
       notes: "Nsɛm foforo (wopɛ a)",
       pickupInstructions: "Akwan a yɛmfa nkyerɛ wo wɔ restaurant no (wopɛ a)",
+      scheduleOrder: "Hyɛ bere ma wo order",
+      scheduleFor: "Da ne bere a wopɛ",
+      scheduleHint: "Restaurant no bɛsi bere a wopɛ no so dua.",
       add: "Fa ka wo nneɛma ho",
       empty: "Wunni biribiara wɔ wo nneɛma mu.",
       send: "Fa wo nhyehyɛe no mena",
@@ -2442,6 +2456,27 @@
       if (offerResult.error) throw offerResult.error;
       if (settingsResult.error) throw settingsResult.error;
 
+      const schedulingResult = await db.from("restaurant_settings")
+        .select("allow_scheduled_orders,schedule_min_notice_minutes,schedule_max_days,default_prep_minutes,default_delivery_minutes")
+        .eq("id", 1).maybeSingle();
+      schedulingEnabled = !schedulingResult.error && schedulingResult.data?.allow_scheduled_orders === true;
+      if (!schedulingResult.error && schedulingResult.data) {
+        scheduleMinNoticeMinutes = Number(schedulingResult.data.schedule_min_notice_minutes || 60);
+        scheduleMaxDays = Number(schedulingResult.data.schedule_max_days || 14);
+        defaultPrepMinutes = schedulingResult.data.default_prep_minutes == null ? null : Number(schedulingResult.data.default_prep_minutes);
+        defaultDeliveryMinutes = schedulingResult.data.default_delivery_minutes == null ? null : Number(schedulingResult.data.default_delivery_minutes);
+      }
+      const scheduleSection = $("#schedule-order-section");
+      if (scheduleSection) scheduleSection.hidden = !schedulingEnabled;
+      const scheduleInput = $("#requested-for-input");
+      if (scheduleInput) {
+        const minDate = new Date(Date.now() + scheduleMinNoticeMinutes * 60000);
+        const maxDate = new Date(Date.now() + scheduleMaxDays * 86400000);
+        const toLocalInput = date => new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        scheduleInput.min = toLocalInput(minDate);
+        scheduleInput.max = toLocalInput(maxDate);
+      }
+
       const zonesResult = await db.from("delivery_zones")
         .select("id,name,center_latitude,center_longitude,radius_km,delivery_fee,estimated_delivery_minutes")
         .eq("is_active", true)
@@ -2687,6 +2722,12 @@
   });
   checkoutForm?.elements?.customer_name?.addEventListener("input", saveRememberedCustomerFromForm);
   checkoutForm?.elements?.customer_phone?.addEventListener("input", saveRememberedCustomerFromForm);
+
+  $("#schedule-order-toggle")?.addEventListener("change", () => {
+    const enabled = $("#schedule-order-toggle").checked;
+    $("#schedule-order-controls")?.toggleAttribute("hidden", !enabled);
+    if (checkoutForm?.elements?.requested_for) checkoutForm.elements.requested_for.required = enabled;
+  });
 
   $("#order-type")?.addEventListener("change", () => {
     const isPickup = $("#order-type").value === "pickup";
