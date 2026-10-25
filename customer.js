@@ -1819,7 +1819,14 @@
               '<li class="' + (active >= 0 && i < active ? "is-complete " : "") + (active === i ? "is-current" : "") + '"><span>' + escapeHTML(tr(key)) + "</span></li>"
             ).join("") + "</ol>";
         const items = Array.isArray(order.items) ? order.items : [];
-        const itemHtml = items.map(item => '<li><span>' + escapeHTML(item.quantity) + " × " + escapeHTML(item.name || "Item") + '</span><strong>' + money(item.line_total ?? (Number(item.unit_price || 0) * Number(item.quantity || 0))) + "</strong></li>").join("");
+        const itemHtml = items.map(item => {
+          const reviewButton = status === "completed" && order.id && item.menu_item_id
+            ? '<button type="button" class="btn btn-light" data-review-order="' + escapeHTML(order.id) + '" data-review-item="' + escapeHTML(item.menu_item_id) + '">' + escapeHTML(localized("Review", "قيّم", "Review")) + '</button>'
+            : "";
+          return '<li><span>' + escapeHTML(item.quantity) + " × " + escapeHTML(item.name || "Item") +
+            (item.item_note ? '<small class="tracked-item-note">' + escapeHTML(item.item_note) + '</small>' : "") +
+            '</span><span><strong>' + money(item.line_total ?? (Number(item.unit_price || 0) * Number(item.quantity || 0))) + '</strong>' + reviewButton + '</span></li>';
+        }).join("");
         const riderTrackingVisible = isDelivery && status === "out_for_delivery";
         const destinationPoint = validRiderPoint(order.delivery_latitude, order.delivery_longitude);
         const currentRiderPoint = order.rider_location
@@ -1906,8 +1913,34 @@
 
   $("#refresh-customer-orders")?.addEventListener("click", () => { void refreshCustomerOrderHistory(); });
 
-  $("#customer-order-history")?.addEventListener("click", event => {
+  $("#customer-order-history")?.addEventListener("click", async event => {
     const target = event.target instanceof Element ? event.target : null;
+    const reviewButton = target?.closest("[data-review-order]");
+    if (reviewButton) {
+      const ratingRaw = window.prompt(localized("Rate this item from 1 to 5.", "قيّم الصنف من 1 لـ5.", "Rate this item from 1 to 5."));
+      if (ratingRaw === null) return;
+      const rating = Number(ratingRaw);
+      if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+        window.alert(localized("Enter a whole number from 1 to 5.", "اكتب رقم صحيح من 1 لـ5.", "Enter a whole number from 1 to 5."));
+        return;
+      }
+      const reviewText = window.prompt(localized("Add a comment (optional).", "اكتب تعليق (اختياري).", "Add a comment (optional).")) || "";
+      const photoUrl = window.prompt(localized("Paste an HTTPS photo link (optional).", "الصق رابط صورة HTTPS (اختياري).", "Paste an HTTPS photo link (optional).")) || "";
+      const { error } = await db.rpc("submit_menu_review", {
+        p_order_id: reviewButton.dataset.reviewOrder,
+        p_menu_item_id: reviewButton.dataset.reviewItem,
+        p_rating: rating,
+        p_review_text: reviewText.trim() || null,
+        p_photo_url: photoUrl.trim() || null
+      });
+      if (error) {
+        window.alert(localized("Reviews become available after the optional database upgrade is applied.", "التقييمات بتشتغل بعد تطبيق تحديث قاعدة البيانات.", "Reviews become available after the optional database upgrade is applied."));
+      } else {
+        reviewButton.disabled = true;
+        reviewButton.textContent = localized("Sent for approval", "أُرسل للمراجعة", "Sent for approval");
+      }
+      return;
+    }
     const remove = target?.closest("[data-remove-tracked]");
     if (!remove) return;
     const removeId = remove.getAttribute("data-remove-tracked");
