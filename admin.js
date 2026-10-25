@@ -28,6 +28,7 @@
   let currentUser = null;
   let orders = [];
   let products = [];
+  let menuFeatureColumnsAvailable = false;
   let deliveryRiderDirectory = [];
   let lastRiderDirectoryFetchAt = 0;
   // Order alerts stay enabled; browsers may require a user gesture to unlock audio.
@@ -1394,6 +1395,14 @@ Status: ${order.status}`;
 
     if (error) throw error;
 
+    const featureCheck = await db.from("menu_items")
+      .select("prep_minutes,ingredients,portion_info,spice_level,allergens")
+      .limit(1);
+    menuFeatureColumnsAvailable = !featureCheck.error;
+    ["ingredients", "portion_info", "prep_minutes", "spice_level", "allergens"].forEach(name => {
+      const field = $("#product-form")?.elements?.[name];
+      if (field) field.disabled = !menuFeatureColumnsAvailable;
+    });
     products = data || [];
 
     $("#stat-menu").textContent = products.length;
@@ -1416,6 +1425,7 @@ Status: ${order.status}`;
             ${product.description
               ? " · " + esc(product.description)
               : ""}
+            ${product.prep_minutes ? " · " + esc(product.prep_minutes) + " min prep" : ""}
           </small>
         </div>
 
@@ -1448,6 +1458,11 @@ Status: ${order.status}`;
             price: product.price,
             image_url: product.image_url || "",
             description: product.description || "",
+            ingredients: product.ingredients || "",
+            portion_info: product.portion_info || "",
+            prep_minutes: product.prep_minutes || "",
+            spice_level: product.spice_level == null ? "" : String(product.spice_level),
+            allergens: Array.isArray(product.allergens) ? product.allergens.join(", ") : "",
             is_available: product.is_available
           }).forEach(([key, value]) => {
             if (form.elements[key].type === "checkbox") {
@@ -1501,6 +1516,13 @@ Status: ${order.status}`;
       description: form.elements.description.value.trim() || null,
       is_available: form.elements.is_available.checked
     };
+    if (menuFeatureColumnsAvailable) {
+      data.ingredients = form.elements.ingredients.value.trim() || null;
+      data.portion_info = form.elements.portion_info.value.trim() || null;
+      data.prep_minutes = form.elements.prep_minutes.value ? Number(form.elements.prep_minutes.value) : null;
+      data.spice_level = form.elements.spice_level.value === "" ? null : Number(form.elements.spice_level.value);
+      data.allergens = form.elements.allergens.value.split(",").map(value => value.trim()).filter(Boolean);
+    }
 
     if (!Number.isFinite(data.price) || data.price <= 0) {
       status("Price must be greater than zero.");
