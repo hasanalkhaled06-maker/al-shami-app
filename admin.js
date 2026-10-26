@@ -743,7 +743,8 @@
     // Prepare audio during the sign-in gesture; notification permission is requested after admin access is confirmed.
     initializeOrderAlerts(true);
 
-    const form = new FormData(event.currentTarget);
+    const loginForm = event.currentTarget;
+    const form = new FormData(loginForm);
 
     const credentials = {
       email: form.get("email"),
@@ -767,7 +768,7 @@
         if (ownerError) throw ownerError;
         selectedDb = ownerDb;
         currentUser = ownerData.user;
-        event.currentTarget.reset();
+        loginForm.reset();
         if (isDeviceSetupComplete()) {
           await ownerDb.auth.signOut();
           currentUser = null;
@@ -780,7 +781,7 @@
       } else {
         selectedDb = staffDb;
       }
-      event.currentTarget.reset();
+      loginForm.reset();
       await showDashboard();
     } catch (error) {
       console.error("Login error:", error);
