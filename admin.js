@@ -1743,7 +1743,7 @@ Status: ${order.status}`;
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) {
-        list.innerHTML = '<p class="muted">Review tools become available after the optional database upgrade is applied.</p>';
+        list.innerHTML = '<p class="muted">Could not load menu reviews. Check database access or refresh the page.</p>';
       } else {
         const reviews = data || [];
         list.innerHTML = reviews.length ? reviews.map(review => `
@@ -1778,7 +1778,7 @@ Status: ${order.status}`;
       .order("created_at", { ascending: false })
       .limit(100);
     if (serviceError) {
-      serviceList.innerHTML = '<p class="muted">Service ratings become available after the customer service review setup is applied.</p>';
+      serviceList.innerHTML = '<p class="muted">Could not load restaurant and service reviews. Check database access or refresh the page.</p>';
       return;
     }
     serviceList.innerHTML = serviceReviews?.length ? serviceReviews.map(review => `
