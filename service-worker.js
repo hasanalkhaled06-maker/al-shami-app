@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v109";
+const CACHE_NAME = CACHE_PREFIX + "v115";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -14,6 +14,7 @@ const SHELL_FILES = [
   "./app-refresh.css?v=light-premium-20261023b",
   "./dark-theme.css?v=deep-accents-20261023i",
   "./dark-theme.css?v=modern-wine-gold-20261024a",
+  "./dark-theme.css?v=olive-sand-copper-20261026a",
   "./assets/al-shami-chef-3d.webp",
   "./style.css?v=radical-ui-20261023a",
   "./dark-theme.css?v=shami-wordmark-cleanup-20261023q",
@@ -33,7 +34,8 @@ const SHELL_FILES = [
   "./admin-delivery-ops.js?v=operations-settings-20261025c",
   "./rider-ops.js?v=delivery-ops-20261025b",
   "./admin.js",
-  "./admin.js?v=isolated-auth-20261023a",
+  "./admin.js?v=staff-user-roles-20261026b",
+  "./order-workflow.js?v=order-flow-guard-20261026a",
   "./admin-operations.js",
   "./admin-operations.js?v=radical-ui-20261023a",
   "./rider.html",

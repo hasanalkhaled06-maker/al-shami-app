@@ -60,11 +60,23 @@
   .settings-hub-title { font-size:17px; font-weight:900; }
   .settings-hub-description { max-width:340px; color:#7b7071; font-size:12px; line-height:1.55; }
   .settings-hub-arrow { position:absolute; top:18px; right:18px; display:grid; place-items:center; width:30px; height:30px; border:1px solid #e7ddd4; border-radius:50%; color:#7c1722; font-size:18px; }
+  .user-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}
+  .user-choice{min-height:96px;padding:18px;border:1px solid #d9e2e8;border-radius:16px;background:linear-gradient(145deg,#fff,#f4f8fb);color:#263c50;text-align:left;font-weight:800;box-shadow:0 6px 18px rgba(28,55,74,.06)}
+  .user-choice[aria-pressed="true"]{border-color:#b9974b;box-shadow:0 0 0 3px rgba(185,151,75,.2)}
+  .user-choice small{display:block;margin-top:5px;color:#6b7781;font-weight:600}
+  .user-access-list{display:grid;gap:10px;margin-top:16px}
+  .user-access-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:1px solid #e7ddd4;border-radius:12px;background:#fff}
+  .user-access-row strong,.user-access-row small{display:block;overflow-wrap:anywhere}
+  .user-access-row small{margin-top:3px;color:#75696a}
+  .user-access-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
   @media(max-width:760px) {
     #dashboard.hub-home .admin-home-grid { grid-template-columns:1fr; }
     .settings-hub-grid { grid-template-columns:1fr; gap:11px; }
     .settings-hub-card { min-height:142px; padding:16px; }
     .settings-hub-title { font-size:16px; }
+    .user-choice-grid{grid-template-columns:1fr}
+    .user-access-row{grid-template-columns:1fr}
+    .user-access-actions{justify-content:flex-start}
   }
 
   /* AL SHAMI administration hub — mobile-first, large workspace cards */
@@ -115,7 +127,7 @@
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="app-refresh.css?v=light-premium-20261023b">
-  <link rel="stylesheet" href="dark-theme.css?v=modern-wine-gold-20261024a">
+  <link rel="stylesheet" href="dark-theme.css?v=olive-sand-copper-20261026a">
 </head>
 
 <body class="admin-body">
@@ -152,9 +164,56 @@
         <input name="password" type="password" required autocomplete="current-password">
       </label>
 
+      <button class="btn btn-light" type="button" data-open-password-recovery>Forgot password?</button>
       <button class="btn btn-primary btn-wide" type="submit">Sign in</button>
       <p id="login-message" class="status-message" role="status"></p>
     </form>
+  </section>
+
+  <section id="owner-user-bootstrap" class="panel login-panel hidden" aria-labelledby="owner-user-bootstrap-title">
+    <p class="eyebrow">ONE-TIME DEVICE SETUP</p>
+    <h1 id="owner-user-bootstrap-title">Create your admin username</h1>
+    <p class="muted">Your existing email sign-in stays unchanged. Choose a username for the Admin option; its password remains the password for your existing admin account.</p>
+    <form id="owner-user-bootstrap-form">
+      <label>Admin username<input name="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,29}" autocomplete="username" placeholder="hasan"></label>
+      <button class="btn btn-primary btn-wide" type="submit">Save username and continue</button>
+      <p id="owner-user-bootstrap-message" class="status-message" role="status"></p>
+    </form>
+  </section>
+
+  <section id="user-picker-panel" class="panel login-panel hidden" aria-labelledby="user-picker-title">
+    <p class="eyebrow">AL SHAMI · TEAM ACCESS</p>
+    <h1 id="user-picker-title">Choose a user</h1>
+    <p class="muted">Select the work profile, then enter that user's username and password.</p>
+    <div class="user-choice-grid" role="group" aria-label="Choose an access role">
+      <button class="user-choice" type="button" data-user-role="owner" aria-pressed="false">Administration<small>Full management access</small></button>
+      <button class="user-choice" type="button" data-user-role="staff" aria-pressed="false">Cashier<small>Read orders, accept them, and update their stages</small></button>
+    </div>
+    <form id="role-login-form" class="hidden">
+      <input type="hidden" name="role_type">
+      <label>Username<input name="username" required minlength="3" maxlength="30" autocomplete="username"></label>
+      <label>Password<input name="password" type="password" required autocomplete="current-password"></label>
+      <button class="btn btn-primary btn-wide" type="submit">Continue</button>
+      <button id="role-login-back" class="btn btn-light btn-wide" type="button">Choose another user</button>
+      <p id="role-login-message" class="status-message" role="status"></p>
+    </form>
+  </section>
+
+  <section id="password-recovery-panel" class="panel login-panel hidden" aria-labelledby="password-recovery-title">
+    <p class="eyebrow">ACCOUNT SECURITY</p>
+    <h1 id="password-recovery-title">Reset password</h1>
+    <p id="password-recovery-description" class="muted">Enter the email for the account. If it exists, we’ll send a secure reset link.</p>
+    <form id="password-recovery-request-form">
+      <label>Account email<input name="email" type="email" required autocomplete="username"></label>
+      <button class="btn btn-primary btn-wide" type="submit">Send reset link</button>
+    </form>
+    <form id="password-recovery-set-form" class="hidden">
+      <label>New password<input name="password" type="password" minlength="8" required autocomplete="new-password"></label>
+      <label>Confirm new password<input name="confirm_password" type="password" minlength="8" required autocomplete="new-password"></label>
+      <button class="btn btn-primary btn-wide" type="submit">Save new password</button>
+    </form>
+    <p id="password-recovery-message" class="status-message" role="status"></p>
+    <button id="password-recovery-back" class="btn btn-light" type="button">Back</button>
   </section>
 
   <section id="dashboard" class="hidden hub-home">
@@ -168,6 +227,7 @@
       <div class="dashboard-heading-actions">
         <button id="back-to-home" class="btn btn-light hidden" type="button">← Home</button>
         <button id="refresh" class="btn btn-light" type="button">Refresh</button>
+        <button id="lock-admin" class="btn btn-light hidden" type="button" aria-label="Lock owner management">🔒 Lock management</button>
       </div>
     </div>
 
@@ -176,6 +236,18 @@
       <div class="stat"><span>In progress</span><strong id="stat-progress">0</strong></div>
       <div class="stat"><span>Menu items</span><strong id="stat-menu">0</strong></div>
     </div>
+
+    <section id="staff-owner-lock" class="panel hidden" aria-labelledby="staff-owner-lock-title">
+      <h2 id="staff-owner-lock-title">Owner management · locked</h2>
+      <p class="muted">Active orders stay available to staff. Enter the owner account to open settings and management tools.</p>
+      <form id="owner-unlock-form" class="form-grid admin-form">
+        <label>Owner email<input name="email" type="email" autocomplete="username" required></label>
+        <label>Owner password<input name="password" type="password" autocomplete="current-password" required></label>
+        <button class="btn btn-primary" type="submit">Unlock management</button>
+        <button class="btn btn-light" type="button" data-open-password-recovery>Forgot owner password?</button>
+        <p id="owner-unlock-message" class="status-message full" role="status"></p>
+      </form>
+    </section>
 
     <section id="admin-home" class="admin-home" aria-label="Admin workspaces">
       
@@ -244,6 +316,12 @@
           <span class="settings-hub-icon" aria-hidden="true">▦</span>
           <span class="settings-hub-title">Operations</span>
           
+          <span class="settings-hub-arrow" aria-hidden="true">↗</span>
+        </button>
+        <button class="settings-hub-card settings-link-users" type="button" data-settings-nav="users">
+          <span class="settings-hub-icon" aria-hidden="true">♙</span>
+          <span class="settings-hub-title">Users &amp; access</span>
+          <span class="settings-hub-description">Create cashier accounts and manage access.</span>
           <span class="settings-hub-arrow" aria-hidden="true">↗</span>
         </button>
       </div>
@@ -478,6 +556,28 @@
 
     </section>
 
+    <section id="tab-users" class="panel hidden" aria-labelledby="users-title">
+      <h2 id="users-title">Users &amp; access</h2>
+      <p class="muted">Create separate staff logins. Passwords are handled by Supabase Auth and are never displayed or stored in this app.</p>
+      <form id="staff-user-form" class="form-grid admin-form">
+        <label>Username<input name="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,29}" autocomplete="off" placeholder="cashier"></label>
+        <label>Staff name<input name="full_name" required maxlength="120" autocomplete="name"></label>
+        <label>Role<select name="role" required><option value="cashier">Cashier</option></select></label>
+        <label>Cashier password<input name="password" type="password" required minlength="6" maxlength="128" autocomplete="new-password" placeholder="At least 6 characters"></label>
+        <div class="form-actions full"><button class="btn btn-primary" type="submit">Create staff user</button></div>
+        <p id="staff-user-message" class="status-message full" role="status"></p>
+      </form>
+      <form id="staff-password-form" class="form-grid admin-form hidden">
+        <input type="hidden" name="user_id">
+        <label>New staff password<input name="password" type="password" required minlength="6" maxlength="128" autocomplete="new-password"></label>
+        <label>Confirm password<input name="confirm_password" type="password" required minlength="6" maxlength="128" autocomplete="new-password"></label>
+        <div class="form-actions full"><button class="btn btn-primary" type="submit">Save password</button><button id="cancel-staff-password" class="btn btn-light" type="button">Cancel</button></div>
+        <p id="staff-password-message" class="status-message full" role="status"></p>
+      </form>
+      <div class="section-heading"><h3>Team accounts</h3><button id="refresh-staff-users" class="btn btn-light" type="button">Refresh list</button></div>
+      <div id="staff-user-list" class="user-access-list"><p class="muted">Load users after opening this section.</p></div>
+    </section>
+
   </section>
 </main>
 
@@ -503,7 +603,8 @@
 <div id="toast" class="toast hidden" role="status"></div>
 
 <script src="config.js"></script>
-<script src="admin.js?v=isolated-auth-20261023a"></script>
+<script src="order-workflow.js?v=order-flow-guard-20261026a"></script>
+<script src="admin.js?v=staff-user-roles-20261026b"></script>
 <script src="admin-operations.js?v=radical-ui-20261023a"></script>
 <script src="admin-delivery-ops.js?v=operations-settings-20261025c"></script>
 <script src="pwa.js"></script>
