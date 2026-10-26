@@ -101,6 +101,8 @@
   let refreshInProgress = false;
   let ordersLoadPromise = null;
   let ordersReloadRequested = false;
+  let liveOrdersChannel = null;
+  let liveOrdersClient = null;
   let dashboardStartedAt = null;
   const incomingOrderQueue = [];
   let activeIncomingOrderId = null;
@@ -645,6 +647,9 @@
     }
 
     $("#login-panel").classList.add("hidden");
+    $("#user-picker-panel")?.classList.add("hidden");
+    $("#owner-user-bootstrap")?.classList.add("hidden");
+    $("#password-recovery-panel")?.classList.add("hidden");
     $("#dashboard").classList.remove("hidden");
     setAccessMode(accessMode);
     if (accessMode === "staff") {
@@ -1934,7 +1939,20 @@ Status: ${order.status}`;
   }
 
   function subscribe() {
-    db.channel("al-shami-live-orders")
+    if (!selectedDb) return;
+    if (liveOrdersChannel && liveOrdersClient === selectedDb) return;
+    if (liveOrdersChannel && liveOrdersClient) {
+      const previousChannel = liveOrdersChannel;
+      const previousClient = liveOrdersClient;
+      liveOrdersChannel = null;
+      liveOrdersClient = null;
+      void previousClient.removeChannel(previousChannel).catch(error => {
+        console.warn("Could not close the previous live orders subscription:", error);
+      });
+    }
+
+    const client = selectedDb;
+    const channel = client.channel("al-shami-live-orders")
       .on(
         "postgres_changes",
         {
@@ -1986,14 +2004,28 @@ Status: ${order.status}`;
             console.error("Could not reload updated orders:", error);
           }
         }
-      )
-      .subscribe(state => {
+      );
+    liveOrdersChannel = channel;
+    liveOrdersClient = client;
+    try {
+      channel.subscribe(state => {
+        if (liveOrdersChannel !== channel) return;
+        if (["CLOSED", "CHANNEL_ERROR", "TIMED_OUT"].includes(state)) {
+          liveOrdersChannel = null;
+          liveOrdersClient = null;
+        }
         setConnection(
           state === "SUBSCRIBED"
             ? "Live · Realtime connected"
             : "Live connection: " + state
         );
       });
+    } catch (error) {
+      liveOrdersChannel = null;
+      liveOrdersClient = null;
+      console.error("Could not start live order updates:", error);
+      setConnection("Live updates unavailable · checking every 5 seconds");
+    }
   }
 
   function resetProduct() {
