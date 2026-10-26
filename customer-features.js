@@ -8,7 +8,7 @@
   });
   const css=document.createElement("style");
   css.textContent=".customer-reward-balance-card{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:16px 0 2px;padding:16px 18px;border:1px solid #ead8b7;border-radius:16px;background:linear-gradient(120deg,#fff8e7,#fffdf8);color:#281a17}.customer-reward-balance-card p{margin:3px 0}.customer-reward-title{font-size:.82rem;font-weight:800;color:#67101a}.customer-reward-balance{font-size:1.15rem}.customer-reward-value{color:#665750;font-size:.9rem}.customer-reward-balance-card button{margin:0}.customer-order-points{margin:10px 0 0;padding:9px 11px;border-radius:9px;background:#f5f1e7;color:#4d3917;font-size:.9rem;font-weight:700}.customer-order-points.is-earned{background:#eaf7ed;color:#17623d}.customer-order-points.is-pending{background:#fff7e8;color:#795317}.customer-points-estimate{margin:5px 0 0;padding:10px 12px;border-radius:10px;background:#f1f8f2;color:#17623d;font-weight:750}.customer-feature-card{margin:16px 0;padding:18px;border:1px solid #e7d9d0;border-radius:16px;background:#fffaf6;color:#281a17}.customer-feature-card h3{margin:0 0 10px}.customer-feature-card .feature-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:9px 0}.customer-feature-card input[type=number],.customer-feature-card input[type=text]{max-width:190px;padding:9px;border:1px solid #c9b9ae;border-radius:8px}.customer-feature-card label{display:inline-flex;gap:7px;align-items:center}.customer-feature-note{font-size:.9em;color:#665750}.customer-settings-overlay[hidden]{display:none!important}.customer-settings-overlay{position:fixed;inset:0;z-index:10020;background:#150d0dd9;display:grid;place-items:center;padding:18px}.customer-settings-dialog{width:min(620px,100%);max-height:85vh;overflow:auto;background:#fff;border-radius:20px;padding:22px;color:#241a18;box-shadow:0 18px 60px #0006}.customer-settings-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px}.customer-settings-dialog h2{margin:0}.customer-settings-dialog #customer-settings-close{font-size:1.2rem}";
-  css.textContent += ".customer-delivery-complete-modal[hidden]{display:none!important}.customer-delivery-complete-modal{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:18px;background:rgba(26,11,13,.74);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.customer-delivery-complete-card{width:min(500px,100%);max-height:88vh;overflow:auto;padding:24px;border:1px solid #ead8b7;border-top:5px solid #caa45e;border-radius:22px;background:#fffdf8;color:#281a17;box-shadow:0 22px 70px #0006}.customer-delivery-complete-card h2{margin:0 0 9px;color:#641622}.customer-delivery-complete-card p{line-height:1.5}.customer-delivery-complete-earned{padding:12px;border-radius:12px;background:#eaf7ed;color:#17623d;font-weight:850}.customer-delivery-complete-balance{color:#665750;font-weight:700}.customer-service-stars{display:flex;gap:8px;margin:12px 0}.customer-service-stars button{min-width:48px;min-height:48px;border:1px solid #d7c6a2;border-radius:12px;background:#fff8e7;color:#8a6828;font-size:28px;cursor:pointer}.customer-service-stars button[aria-pressed=true]{background:#e8c677;color:#4d3510;border-color:#bd9344}.customer-service-review-label{display:block;margin:14px 0 6px;font-weight:800}.customer-service-review-text{box-sizing:border-box;width:100%;min-height:90px;padding:11px;border:1px solid #d8cfc5;border-radius:10px;font:inherit;resize:vertical}.customer-delivery-complete-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.customer-delivery-complete-actions button{flex:1 1 140px;min-height:46px;margin:0}.customer-service-review-message{min-height:1.4em;color:#17623d;font-weight:700}@media(max-width:480px){.customer-delivery-complete-card{padding:19px;border-radius:18px}.customer-service-stars button{min-width:44px;min-height:44px}}";
+  css.textContent += ".customer-delivery-complete-modal[hidden]{display:none!important}.customer-delivery-complete-modal{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:18px;background:rgba(26,11,13,.74);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.customer-delivery-complete-card{width:min(500px,100%);max-height:88vh;overflow:auto;padding:24px;border:1px solid #ead8b7;border-top:5px solid #caa45e;border-radius:22px;background:#fffdf8;color:#281a17;box-shadow:0 22px 70px #0006}.customer-delivery-complete-card h2{margin:0 0 9px;color:#641622}.customer-delivery-complete-card p{line-height:1.5}.customer-delivery-complete-earned{padding:12px;border-radius:12px;background:#eaf7ed;color:#17623d;font-weight:850}.customer-delivery-complete-balance{color:#665750;font-weight:700}.customer-service-stars{display:flex;gap:8px;margin:12px 0}.customer-service-stars button{min-width:48px;min-height:48px;border:1px solid #d7c6a2;border-radius:12px;background:#fff8e7;color:#8a6828;font-size:28px;cursor:pointer}.customer-service-stars button[aria-pressed=true]{background:#e8c677;color:#4d3510;border-color:#8b5e13;box-shadow:0 0 0 3px #caa45e55;transform:translateY(-2px)}.customer-service-stars button:focus-visible{outline:3px solid #641622;outline-offset:3px}.customer-service-review-label{display:block;margin:14px 0 6px;font-weight:800}.customer-service-review-text{box-sizing:border-box;width:100%;min-height:90px;padding:11px;border:1px solid #d8cfc5;border-radius:10px;font:inherit;resize:vertical}.customer-delivery-complete-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.customer-delivery-complete-actions button{flex:1 1 140px;min-height:46px;margin:0}.customer-service-review-message{min-height:1.4em;color:#17623d;font-weight:700}@media(max-width:480px){.customer-delivery-complete-card{padding:19px;border-radius:18px}.customer-service-stars button{min-width:44px;min-height:44px}}";
   document.head.append(css);
 
   const form=document.querySelector("#checkout-form");
@@ -133,13 +133,15 @@
   let activeCompletion=null;
   let selectedServiceRating=0;
   let serviceReviewSaved=false;
+  let completionCloseTimer=0;
   const completionWords={
-    en:{deliveryTitle:"Delivery completed!",pickupTitle:"Pickup completed!",deliveryText:"Your order #{number} was delivered and confirmed.",pickupText:"Your order #{number} was collected and confirmed.",earned:"You earned +{points} points. They have been added to your balance.",noPoints:"This order is complete, but points are not enabled for this account.",balance:"Your new balance: {points} points · about GH₵ {value}",ratingTitle:"Rate AL SHAMI",ratingPrompt:"How was the restaurant and service?",ratingLabel:"Tell us more (optional)",ratingPlaceholder:"Share your experience…",send:"Send rating",later:"Later",done:"Done",thanks:"Thank you for rating AL SHAMI!",choose:"Choose a star rating first.",saveError:"Could not save your rating. Apply the customer service review setup, then try again."},
-    ar:{deliveryTitle:"تم إتمام التسليم!",pickupTitle:"تم تأكيد استلام طلبك!",deliveryText:"تم تسليم طلبك رقم {number} وتأكيده.",pickupText:"تم استلام طلبك رقم {number} وتأكيده.",earned:"كسبت +{points} نقطة، وانضافت لرصيدك.",noPoints:"اكتمل الطلب، لكن النقاط غير مفعّلة لهذا الحساب.",balance:"رصيدك الجديد: {points} نقطة · تعادل تقريباً GH₵ {value}",ratingTitle:"قيّم مطعم الشامي",ratingPrompt:"كيف كانت تجربتك مع المطعم والخدمة؟",ratingLabel:"اكتب لنا ملاحظتك (اختياري)",ratingPlaceholder:"شاركنا تجربتك…",send:"إرسال التقييم",later:"لاحقاً",done:"تم",thanks:"شكراً لتقييمك مطعم الشامي!",choose:"اختار عدد النجوم أولاً.",saveError:"ما قدرنا نحفظ تقييمك. لازم تفعيل إعداد تقييم الخدمة أولاً."},
-    tw:{deliveryTitle:"Wɔawie de aduan no abrɛ wo!",pickupTitle:"Wɔagye aduan no!",deliveryText:"Wɔde wo order #{number} abrɛ wo na wɔasi so dua.",pickupText:"Wɔagye wo order #{number} na wɔasi so dua.",earned:"Woanya points +{points}, na wɔde aka wo points ho.",noPoints:"Order no awie, nanso points no nni hɔ ma account yi.",balance:"Wo points nyinaa: {points} · ɛyɛ GH₵ {value}",ratingTitle:"Ma AL SHAMI rating",ratingPrompt:"Restaurant ne service no yɛɛ dɛn?",ratingLabel:"Ka wo adwene (ɛnyɛ mmara)",ratingPlaceholder:"Ka wo suahu…",send:"Fa rating no kɔ",later:"Akyiri",done:"Ewie",thanks:"Yɛda wo ase sɛ wode rating maa AL SHAMI!",choose:"Paw star rating ansa.",saveError:"Yentumi ansie wo rating. Ma customer service review setup no nyɛ adwuma."}
+    en:{deliveryTitle:"Delivery completed!",pickupTitle:"Pickup completed!",deliveryText:"Your order #{number} was delivered and confirmed.",pickupText:"Your order #{number} was collected and confirmed.",earned:"You earned +{points} points. They have been added to your balance.",noPoints:"This order is complete, but points are not enabled for this account.",balance:"Your new balance: {points} points · about GH₵ {value}",ratingTitle:"Rate AL SHAMI",ratingPrompt:"How was the restaurant and service?",ratingLabel:"Tell us more (optional)",ratingPlaceholder:"Share your experience…",send:"Send rating",later:"Later",done:"Done",thanks:"Thank you for rating AL SHAMI!",choose:"Choose a star rating first.",saveError:"Could not save your rating. Check your connection and try again."},
+    ar:{deliveryTitle:"تم إتمام التسليم!",pickupTitle:"تم تأكيد استلام طلبك!",deliveryText:"تم تسليم طلبك رقم {number} وتأكيده.",pickupText:"تم استلام طلبك رقم {number} وتأكيده.",earned:"كسبت +{points} نقطة، وانضافت لرصيدك.",noPoints:"اكتمل الطلب، لكن النقاط غير مفعّلة لهذا الحساب.",balance:"رصيدك الجديد: {points} نقطة · تعادل تقريباً GH₵ {value}",ratingTitle:"قيّم مطعم الشامي",ratingPrompt:"كيف كانت تجربتك مع المطعم والخدمة؟",ratingLabel:"اكتب لنا ملاحظتك (اختياري)",ratingPlaceholder:"شاركنا تجربتك…",send:"إرسال التقييم",later:"لاحقاً",done:"تم",thanks:"شكراً لتقييمك مطعم الشامي!",choose:"اختار عدد النجوم أولاً.",saveError:"ما قدرنا نحفظ تقييمك. تأكد من الإنترنت وحاول مرة تانية."},
+    tw:{deliveryTitle:"Wɔawie de aduan no abrɛ wo!",pickupTitle:"Wɔagye aduan no!",deliveryText:"Wɔde wo order #{number} abrɛ wo na wɔasi so dua.",pickupText:"Wɔagye wo order #{number} na wɔasi so dua.",earned:"Woanya points +{points}, na wɔde aka wo points ho.",noPoints:"Order no awie, nanso points no nni hɔ ma account yi.",balance:"Wo points nyinaa: {points} · ɛyɛ GH₵ {value}",ratingTitle:"Ma AL SHAMI rating",ratingPrompt:"Restaurant ne service no yɛɛ dɛn?",ratingLabel:"Ka wo adwene (ɛnyɛ mmara)",ratingPlaceholder:"Ka wo suahu…",send:"Fa rating no kɔ",later:"Akyiri",done:"Ewie",thanks:"Yɛda wo ase sɛ wode rating maa AL SHAMI!",choose:"Paw star rating ansa.",saveError:"Yentumi ansie wo rating. Hwɛ internet no na san sɔ bio."}
   };
   function completionText(){return completionWords[language()]||completionWords.en;}
   function closeCompletionModal(){
+    if(completionCloseTimer){window.clearTimeout(completionCloseTimer);completionCloseTimer=0;}
     completionModal.hidden=true;
     activeCompletion=null;
     selectedServiceRating=0;
@@ -200,7 +202,7 @@
       star.setAttribute("aria-pressed",value<=selectedServiceRating?"true":"false");
     });
     const message=document.querySelector("#customer-service-review-message");
-    if(message)message.textContent="";
+    if(message)message.textContent=selectedServiceRating+"/5";
   });
   document.querySelector("#customer-service-review-later")?.addEventListener("click",closeCompletionModal);
   document.querySelector("#customer-service-review-submit")?.addEventListener("click",async()=>{
@@ -213,11 +215,15 @@
     const {data:{session}}=await db.auth.getSession();
     if(!session?.user){if(message)message.textContent="Sign in again to send your rating.";return;}
     if(submit)submit.disabled=true;
-    const {error}=await db.rpc("submit_customer_service_review",{
-      p_order_id:activeCompletion.orderId,
-      p_rating:selectedServiceRating,
-      p_review_text:document.querySelector("#customer-service-review-text")?.value||""
-    });
+    let error=null;
+    try {
+      const result=await db.rpc("submit_customer_service_review",{
+        p_order_id:activeCompletion.orderId,
+        p_rating:selectedServiceRating,
+        p_review_text:document.querySelector("#customer-service-review-text")?.value||""
+      });
+      error=result.error;
+    } catch (_) { error=true; }
     if(error){
       if(message)message.textContent=t.saveError;
       if(submit)submit.disabled=false;
@@ -227,6 +233,7 @@
     if(message)message.textContent=t.thanks;
     if(submit){submit.textContent=t.done;submit.disabled=false}
     if(later)later.textContent=t.done;
+    completionCloseTimer=window.setTimeout(closeCompletionModal,1300);
   });
   document.addEventListener("keydown",event=>{
     if(event.key==="Escape"&&!completionModal.hidden)closeCompletionModal();
