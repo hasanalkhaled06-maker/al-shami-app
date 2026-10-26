@@ -1,0 +1,1240 @@
+From 12b55cd12afaaf74c79a883fc7535dd4902bf69a Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Mon, 26 Oct 2026 12:32:42 +0100
+Subject: [PATCH] Add kitchen, staff roles, stocktake and reporting
+
+---
+ PRODUCTION_BACKUP_AND_RESTORE.md              |  31 +++
+ accessibility.css                             |   8 +
+ admin-operations.js                           |  65 ++++++-
+ admin.html                                    |  20 +-
+ admin.js                                      | 113 ++++++++++-
+ customer.js                                   |  15 +-
+ history.html                                  |   4 +-
+ index.html                                    |   2 +
+ kitchen.html                                  |  23 +++
+ kitchen.js                                    |  25 +++
+ rider.html                                    |   4 +-
+ service-worker.js                             |   8 +-
+ staff.html                                    |   7 +
+ staff.js                                      |  29 +++
+ ...111958_kitchen_offers_reports_security.sql | 181 ++++++++++++++++++
+ .../20261026112253_order_approval_audit.sql   |  90 +++++++++
+ .../20261026112418_staff_role_rpcs.sql        |  76 ++++++++
+ ...1026112948_backfill_order_status_clock.sql |   4 +
+ ...20261026113012_include_zero_sale_items.sql |  22 +++
+ .../20261026113103_fix_kitchen_queue_rpc.sql  |  62 ++++++
+ 20 files changed, 769 insertions(+), 20 deletions(-)
+ create mode 100644 PRODUCTION_BACKUP_AND_RESTORE.md
+ create mode 100644 accessibility.css
+ create mode 100644 kitchen.html
+ create mode 100644 kitchen.js
+ create mode 100644 staff.html
+ create mode 100644 staff.js
+ create mode 100644 supabase/migrations/20261026111958_kitchen_offers_reports_security.sql
+ create mode 100644 supabase/migrations/20261026112253_order_approval_audit.sql
+ create mode 100644 supabase/migrations/20261026112418_staff_role_rpcs.sql
+ create mode 100644 supabase/migrations/20261026112948_backfill_order_status_clock.sql
+ create mode 100644 supabase/migrations/20261026113012_include_zero_sale_items.sql
+ create mode 100644 supabase/migrations/20261026113103_fix_kitchen_queue_rpc.sql
+
+diff --git a/PRODUCTION_BACKUP_AND_RESTORE.md b/PRODUCTION_BACKUP_AND_RESTORE.md
+new file mode 100644
+index 0000000..2301b24
+--- /dev/null
++++ b/PRODUCTION_BACKUP_AND_RESTORE.md
+@@ -0,0 +1,31 @@
++# Production backup and restore review
++
++**Status: prepared for management review.** This document is not evidence that a backup was downloaded or a restore was tested. A manager must confirm the project’s current backup entitlement, latest successful backup, retention window, and recovery contact before approving a production release.
++
++## Before a production schema or application change
++
++1. Record the change, owner, planned time, and affected Supabase project.
++2. Check the Supabase project dashboard for the latest successful automatic backup and its timestamp. Confirm retention and point-in-time recovery availability on the current plan.
++3. If a downloadable backup is required, create and store it in the restaurant’s approved private storage. Never put a database dump, service-role key, or customer data in this repository.
++4. Review the migration as additive or destructive. For destructive changes, require a separate manager sign-off and verify a restore path before execution.
++5. Apply and inspect the change, then record the migration version, result, and any warnings.
++
++## Recovery procedure
++
++1. Stop further releases and tell the manager which project and migration are affected.
++2. Preserve the current project state and logs. Do not reset or overwrite production while investigating.
++3. Manager chooses the recovery point based on the incident time and confirmed backup availability.
++4. Restore using the recovery controls available in the Supabase dashboard for the project’s current plan. Where a restore cannot preserve the current database, restore to a separate project first and reconcile required orders after review.
++5. Confirm menu, orders, inventory movements, and staff access before directing the app to a restored project.
++6. Record the restore point, operator, manager approval, validation, and customer-facing impact.
++
++## Review record
++
++Complete in the release/change record before the next production change:
++
++- Manager reviewer and date:
++- Backup timestamp checked:
++- Retention / recovery option confirmed:
++- Restore path tested or verified:
++- Approval for planned production change:
++
+diff --git a/accessibility.css b/accessibility.css
+new file mode 100644
+index 0000000..d42b435
+--- /dev/null
++++ b/accessibility.css
+@@ -0,0 +1,8 @@
++/* Shared mobile readability and keyboard/screen-reader defaults. */
++:where(button,a,input,select,textarea,[tabindex]):focus-visible{outline:3px solid #7b4e00!important;outline-offset:3px!important}
++:where(button,input,select,textarea){font-size:16px}
++:where(button){min-height:44px}
++:where(a,button,input,select,textarea){touch-action:manipulation}
++.skip-link{position:absolute;left:12px;top:-100px;z-index:99;background:#fff;color:#3b1016;padding:12px;border:2px solid #7b4e00;border-radius:8px;font-weight:800}.skip-link:focus{top:12px}
++.connection-problem{display:inline-block!important;background:#fff0ee;color:#85141e!important;border:2px solid #a51e2c;border-radius:8px;padding:8px 10px;font-weight:800}
++@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+diff --git a/admin-operations.js b/admin-operations.js
+index 0b65406..9dfe626 100644
+--- a/admin-operations.js
++++ b/admin-operations.js
+@@ -216,6 +216,9 @@
+           <label>Item name
+             <input name="name" required maxlength="120">
+           </label>
++          <label>Barcode (optional)
++            <input name="barcode" inputmode="numeric" maxlength="100" autocomplete="off">
++          </label>
+           <label>Unit
+             <input name="unit" required value="kg" maxlength="20">
+           </label>
+@@ -239,6 +242,16 @@
+           <button class="btn btn-primary" type="submit">Add stock item</button>
+         </form>
+ 
++        <form id="ops-stocktake-form" class="ops-form">
++          <label>Barcode <input name="barcode" required autocomplete="off" inputmode="numeric"></label>
++          <label>Counted quantity <input name="counted" required type="number" min="0" step="0.001"></label>
++          <button class="btn btn-light" type="button" id="ops-barcode-camera">Scan with camera</button>
++          <button class="btn btn-light" type="button" id="ops-barcode-stop" hidden>Stop camera</button>
++          <button class="btn btn-primary" type="submit">Record stocktake</button>
++          <video id="ops-barcode-video" playsinline hidden style="max-width:260px"></video>
++          <p id="ops-stocktake-message" class="status-message" role="status"></p>
++        </form>
++
+         <form id="ops-movement-form" class="ops-form">
+           <label>Stock item
+             <select name="item_id" id="ops-item-select" required></select>
+@@ -648,6 +661,9 @@
+     });
+ 
+     $("#ops-item-form").addEventListener("submit", addInventoryItem);
++    $("#ops-stocktake-form").addEventListener("submit", recordStocktake);
++    $("#ops-barcode-camera").addEventListener("click", scanInventoryBarcode);
++    $("#ops-barcode-stop").addEventListener("click", () => { const video=$("#ops-barcode-video"); video.srcObject?.getTracks().forEach(track=>track.stop()); video.hidden=true; $("#ops-barcode-stop").hidden=true; });
+     $("#ops-movement-form").addEventListener("submit", saveMovement);
+     $("#ops-supplier-form").addEventListener("submit", addSupplier);
+     $("#ops-staff-form").addEventListener("submit", addStaff);
+@@ -775,16 +791,22 @@
+       : '<option value="">Add an inventory item first</option>';
+ 
+     $("#ops-inventory-list").innerHTML = table(
+-      ["Item", "Quantity", "Reorder at", "Unit cost", "Stock value", "Supplier"],
++      ["Item", "Barcode", "Quantity", "Reorder at", "Unit cost", "Stock value", "Supplier", "Action"],
+       items.map(item => [
+         item.name,
++        item.barcode || "—",
+         `${item.quantity} ${item.unit}`,
+         item.reorder_level,
+         money(item.unit_cost),
+         money(Number(item.quantity) * Number(item.unit_cost)),
+-        item.suppliers?.name || "—"
++        item.suppliers?.name || "—",
++        {kind:"html",value:'<button type="button" class="btn btn-light" data-barcode-edit="'+esc(item.id)+'">Set barcode</button>'}
+       ])
+     );
++    $("#ops-inventory-list").querySelectorAll("[data-barcode-edit]").forEach(button=>button.onclick=async()=>{
++      const item=items.find(row=>row.id===button.dataset.barcodeEdit);const barcode=(prompt("Enter or scan this stock item's barcode:",item?.barcode||"")||"").trim();if(!barcode)return;
++      const {error}=await db.from("inventory_items").update({barcode}).eq("id",item.id);if(error){message(error.message,true);return;}await loadInventory();
++    });
+   }
+ 
+   async function addInventoryItem(event) {
+@@ -803,6 +825,7 @@
+           quantity: 0,
+           reorder_level: Number(data.get("reorder_level")),
+           unit_cost: Number(data.get("unit_cost")),
++          barcode: String(data.get("barcode") || "").trim() || null,
+           supplier_id: String(data.get("supplier_id") || "").trim() || null,
+           notes: String(data.get("notes") || "").trim() || null
+         })
+@@ -842,6 +865,27 @@
+     }
+   }
+ 
++  async function recordStocktake(event) {
++    event.preventDefault();
++    const form=event.currentTarget, data=new FormData(form), messageBox=$("#ops-stocktake-message");
++    messageBox.textContent="Recording counted stock…";
++    const {data:result,error}=await db.rpc("record_inventory_stocktake",{p_barcode:String(data.get("barcode")).trim(),p_counted:Number(data.get("counted"))});
++    if(error){messageBox.textContent=error.message;messageBox.className="status-message error";return;}
++    messageBox.textContent=`${result.item}: expected ${result.expected}, counted ${result.counted}, difference ${result.difference}.`;
++    messageBox.className="status-message success";form.elements.counted.value="";await loadInventory();
++  }
++
++  async function scanInventoryBarcode() {
++    const video=$("#ops-barcode-video");
++    if(!("BarcodeDetector" in window)){message("Camera barcode scanning is not supported in this browser; type or use a hardware scanner.",true);return;}
++    let stream;
++    try{
++      const detector=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128","code_39","qr_code"]});
++      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}}});video.srcObject=stream;video.hidden=false;$("#ops-barcode-stop").hidden=false;await video.play();
++      const scan=async()=>{if(video.hidden)return;try{const codes=await detector.detect(video);if(codes.length){$("#ops-stocktake-form").elements.barcode.value=codes[0].rawValue;video.hidden=true;$("#ops-barcode-stop").hidden=true;stream.getTracks().forEach(track=>track.stop());return;}}catch(e){console.warn("Barcode scan failed",e);}requestAnimationFrame(scan);};scan();
++    }catch(error){if(stream)stream.getTracks().forEach(track=>track.stop());$("#ops-barcode-stop").hidden=true;message("Could not start camera: "+error.message,true);}
++  }
++
+   async function saveMovement(event) {
+     event.preventDefault();
+ 
+@@ -1643,7 +1687,9 @@
+         {data:orders,error:ordersError},
+         {data:completedOrders,error:completedOrdersError},
+         {data:expenses,error:expensesError},
+-        {data:payouts,error:payoutsError}
++        {data:payouts,error:payoutsError},
++        {data:itemPerformance,error:itemPerformanceError},
++        {data:repeatRate,error:repeatRateError}
+       ]=await Promise.all([
+         db.from("orders").select("id,order_number,customer_name,customer_phone,total,status,created_at")
+           .gte("created_at",startISO).lt("created_at",endExclusive).order("created_at",{ascending:false}),
+@@ -1652,12 +1698,16 @@
+         db.from("expenses").select("expense_date,category,description,amount,payment_method,reference")
+           .gte("expense_date",fromDate).lte("expense_date",toDate).order("expense_date",{ascending:false}),
+         db.from("cash_payouts").select("payout_date,category,description,amount,payment_method,reference")
+-          .gte("payout_date",fromDate).lte("payout_date",toDate).order("payout_date",{ascending:false})
++          .gte("payout_date",fromDate).lte("payout_date",toDate).order("payout_date",{ascending:false}),
++        db.rpc("get_sales_item_performance",{p_from:startISO,p_to:endExclusive}),
++        db.rpc("get_repeat_customer_rate",{p_from:startISO,p_to:endExclusive})
+       ]);
+       if(ordersError) throw ordersError;
+       if(completedOrdersError) throw completedOrdersError;
+       if(expensesError) throw expensesError;
+       if(payoutsError) throw payoutsError;
++      if(itemPerformanceError) throw itemPerformanceError;
++      if(repeatRateError) throw repeatRateError;
+ 
+       const allOrderItems=(completedOrders||[]).flatMap(order=>order.order_items||[]);
+       const orderItemIds=allOrderItems.map(item=>item.id).filter(Boolean);
+@@ -1724,7 +1774,12 @@
+         '<p><strong>Estimated result after mapped ingredient cost and recorded expenses:</strong> '+money(estimatedResult)+'</p>'+
+         '<p class="ops-note">This estimate excludes menu lines without recorded recipe deductions, unrecorded payroll/overhead, and any costs entered incompletely. '+unmappedLines+' completed order line(s) in this period have no recipe deduction ledger entry.</p>'+
+         '<p class="ops-note">Payouts are shown separately and are not subtracted from the estimated result because they may be transfers/drawings or already recorded in expenses. Sales are grouped by completion time; expenses and payouts use their entered dates.</p>'+
++        '<h3>Menu performance</h3><div class="ops-grid"><div class="ops-stat"><small>Repeat-customer rate</small><strong>'+Number(repeatRate?.repeat_rate||0).toFixed(1)+'%</strong><small>'+Number(repeatRate?.repeat_customers||0)+' of '+Number(repeatRate?.customers||0)+' identifiable customers</small></div></div>'+
++        table(["Menu item","Units sold","Sales","Estimated ingredient cost","Estimated food profit"],(itemPerformance||[]).map(item=>[item.item_name,item.units_sold,money(item.gross_sales),money(item.estimated_food_cost),money(item.estimated_food_profit)]))+
++        '<p class="ops-note">Food profit uses current recipe quantities and ingredient costs, so it is an estimate; historical supplier prices are not applied to this menu comparison.</p>'+
+         '<p class="ops-note">Report period: '+esc(fromDate)+' through '+esc(toDate)+'.</p>';
++      (itemPerformance||[]).forEach(item=>lastReportRows.push(["Menu performance",fromDate+" to "+toDate,item.item_name,"Units sold",item.units_sold,"",item.estimated_food_profit,"Estimated food profit"]));
++      lastReportRows.push(["Repeat-customer rate",fromDate+" to "+toDate,"","Repeat customers",repeatRate?.repeat_customers||0,"",repeatRate?.repeat_rate||0,"Percent"]);
+     } catch(error) {
+       showError(error);
+     }
+@@ -1793,4 +1848,4 @@
+   } else {
+     init();
+   }
+-})();
+\ No newline at end of file
++})();
+diff --git a/admin.html b/admin.html
+index 03de634..3e557ec 100644
+--- a/admin.html
++++ b/admin.html
+@@ -116,15 +116,17 @@
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   <link rel="stylesheet" href="app-refresh.css?v=light-premium-20261023b">
+   <link rel="stylesheet" href="dark-theme.css?v=modern-wine-gold-20261024a">
++  <link rel="stylesheet" href="accessibility.css?v=20261026a">
+ </head>
+ 
+ <body class="admin-body">
++<a class="skip-link" href="#main-content">Skip to main content</a>
+ 
+ <header class="admin-top">
+   <a class="admin-brand" href="index.html">AL SHAMI <span>ADMIN</span></a>
+ 
+   <div class="admin-actions">
+-    <span id="connection-state" class="connection">Checking connection…</span>
++    <span id="connection-state" class="connection" role="status" aria-live="assertive">Checking connection…</span>
+     
+     <button id="signout" class="btn btn-light hidden">Sign out</button>
+   </div>
+@@ -132,7 +134,7 @@
+ 
+ 
+ 
+-<main class="admin-container">
++<main id="main-content" class="admin-container" tabindex="-1">
+ 
+   <section id="login-panel" class="panel login-panel">
+     <p class="eyebrow">PRIVATE STAFF AREA</p>
+@@ -282,9 +284,13 @@
+         <p id="receipt-confirm-message" class="status-message" role="status"></p>
+       </form>
+ 
++      <section class="admin-form" aria-labelledby="approval-title"><h3 id="approval-title">Manager approvals</h3><div id="manager-approvals" aria-live="polite"><p class="muted">Loading pending approvals…</p></div></section>
++
+       <div class="section-heading" aria-label="Search and export orders">
+         <input id="order-search" type="search" placeholder="Search orders…" aria-label="Search orders" autocomplete="off">
+         <button id="export-orders" class="btn btn-light" type="button">Export CSV</button>
++        <a class="btn btn-light" href="kitchen.html" target="_blank" rel="noopener">Open kitchen display</a>
++        <a class="btn btn-light" href="staff.html" target="_blank" rel="noopener">Open staff desk</a>
+       </div>
+ 
+       <div id="orders-list" class="orders-list">
+@@ -394,6 +400,15 @@
+           <input name="details" maxlength="250">
+         </label>
+ 
++        <label>Starts at<input name="starts_at" type="datetime-local"></label>
++        <label>Ends at<input name="ends_at" type="datetime-local"></label>
++        <label>Maximum uses (blank = unlimited)<input name="max_uses" type="number" min="1" step="1"></label>
++        <label>Days of week<select name="days_of_week" multiple aria-describedby="offer-days-help"><option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option></select><small id="offer-days-help">Leave empty for every day.</small></label>
++        <label>Daily start time<input name="starts_local_time" type="time"></label>
++        <label>Daily end time<input name="ends_local_time" type="time"></label>
++        <label>Event / match name<input name="event_name" maxlength="120" placeholder="Matchday or occasion"></label>
++        <label>Applicable menu item IDs (comma-separated)<input name="menu_item_ids" placeholder="Leave empty for all items"></label>
++
+         <label class="checkbox-label">
+           <input name="is_active" type="checkbox" checked>
+           Active
+@@ -408,6 +423,7 @@
+       </form>
+ 
+       <div id="offers-list" class="admin-menu-list"></div>
++      <section class="admin-form" aria-labelledby="menu-qr-title"><h3 id="menu-qr-title">Menu QR code</h3><p>Share this QR to open the live menu.</p><button id="create-menu-qr" class="btn btn-light" type="button">Create / print menu QR</button><div id="menu-qr-result" role="status"></div></section>
+     </section>
+ 
+     <section id="tab-settings" class="panel hidden">
+diff --git a/admin.js b/admin.js
+index e9444dc..b7271a6 100644
+--- a/admin.js
++++ b/admin.js
+@@ -128,7 +128,13 @@
+ 
+   function setConnection(message) {
+     const element = $("#connection-state");
+-    if (element) element.textContent = message;
++    if (element) {
++      element.textContent = message;
++      const isProblem = /error|failed|timeout|closed|unavailable|offline/i.test(message);
++      element.setAttribute("role", isProblem ? "alert" : "status");
++      element.setAttribute("aria-live", isProblem ? "assertive" : "polite");
++      element.classList.toggle("connection-problem", isProblem);
++    }
+   }
+ 
+   const ADMIN_PANEL_NAMES = ["orders", "history", "menu", "offers", "settings", "operations"];
+@@ -707,18 +713,20 @@
+       loadOffers(),
+       loadSettings(),
+       loadMenuReviews(),
+-      loadDeliveryZones()
++      loadDeliveryZones(),
++      loadManagerApprovals()
+     ]);
+ 
+     const failed = results
+       .map((result, index) => ({
+         result,
+-        name: ["orders", "menu", "offers", "settings", "reviews", "delivery zones"][index]
++        name: ["orders", "menu", "offers", "settings", "reviews", "delivery zones", "manager approvals"][index]
+       }))
+       .filter(item => item.result.status === "rejected");
+ 
+     if (failed.length) {
+       console.error("Dashboard refresh errors:", failed);
++      setConnection("Database connection error · " + failed.map(item => item.name).join(", "));
+ 
+       throw new Error(
+         failed.map(item =>
+@@ -746,6 +754,10 @@
+ 
+     try {
+       await ordersLoadPromise;
++      setConnection("Connected · database reachable");
++    } catch (error) {
++      setConnection("Database connection error · " + (error.message || "retrying"));
++      throw error;
+     } finally {
+       ordersLoadPromise = null;
+     }
+@@ -879,7 +891,14 @@
+       order.status !== "completed" && (order.status !== "rejected" || selectedOrderFilter === "rejected")
+     );
+ 
+-    $("#orders-list").innerHTML = filteredOrders.length
++    const staleOrders = filteredOrders.filter(order =>
++      ["new", "accepted", "preparing", "ready", "out_for_delivery"].includes(order.status) &&
++      Date.now() - new Date(order.status_changed_at || order.updated_at || order.created_at).getTime() > (order.status === "new" ? 10 : 20) * 60 * 1000
++    );
++    const staleNotice = staleOrders.length
++      ? `<div class="status-message error" role="alert"><strong>Attention:</strong> These orders passed their status time limit (10 minutes for new orders, 20 minutes for others): ${staleOrders.map(order => "#" + esc(order.order_number || order.id.slice(0,8)) + " · " + esc(order.status)).join(", ")}</div>`
++      : "";
++    $("#orders-list").innerHTML = staleNotice + (filteredOrders.length
+       ? filteredOrders.map(order => `
+         <article class="order-card ${
+           order.status === "new" ? "is-new" : ""
+@@ -979,7 +998,7 @@
+           </div>
+         </article>
+       `).join("")
+-      : '<p class="muted">No orders in this view.</p>';
++      : '<p class="muted">No orders in this view.</p>');
+ 
+     $("#orders-list")
+       .querySelectorAll("[data-status]")
+@@ -1276,10 +1295,31 @@ Status: ${order.status}`;
+     }
+     try {
+       const previousStatus = orders.find(item => item.id === id)?.status;
++      const current = orders.find(item => item.id === id);
++      const reason = previousStatus !== newStatus
++        ? (window.prompt(newStatus === "rejected" ? "Reason for rejecting this order:" : "Reason for changing the order status:") || "").trim()
++        : "";
++      if (previousStatus !== newStatus && reason.length < 3) {
++        toast("Enter a reason of at least 3 characters.");
++        await loadOrders();
++        return false;
++      }
++      if (previousStatus === "accepted" && newStatus === "rejected") {
++        const { data: approvalId, error: approvalError } = await db.rpc("request_manager_approval", {
++          p_action_type: "cancel_accepted_order", p_entity_id: id, p_reason: reason,
++          p_old_value: { status: previousStatus }, p_new_value: { status: "rejected" }
++        });
++        if (approvalError) throw approvalError;
++        toast("Cancellation request sent for manager approval.");
++        await loadManagerApprovals();
++        await loadOrders();
++        return { ok: true, approvalId };
++      }
+       const { error } = await db
+         .from("orders")
+         .update({
+           status: newStatus,
++          status_reason: reason || null,
+           updated_at: new Date().toISOString()
+         })
+         .eq("id", id);
+@@ -1310,6 +1350,7 @@ Status: ${order.status}`;
+             : "Order status updated."
+       );
+       await loadOrders();
++      loadManagerApprovals().catch(console.warn);
+       if (!options.fromIncomingDialog && id === activeIncomingOrderId && ["accepted","rejected"].includes(newStatus)) {
+         incomingOrderQueue.splice(0, incomingOrderQueue.length, ...incomingOrderQueue.filter(itemId => itemId !== id));
+         closeIncomingOrderDialog();
+@@ -1323,6 +1364,22 @@ Status: ${order.status}`;
+     }
+   }
+ 
++  async function loadManagerApprovals() {
++    const host = $("#manager-approvals");
++    if (!host || !db) return;
++    const { data, error } = await db.rpc("get_manager_approvals");
++    if (error) { host.innerHTML = '<p class="muted">Could not load approval requests: ' + esc(error.message) + '</p>'; return; }
++    const rows = Array.isArray(data) ? data : [];
++    host.innerHTML = rows.length ? rows.map(item => '<article class="admin-menu-row"><div class="grow"><strong>' + esc(item.action_type === "cancel_accepted_order" ? "Cancel accepted order" : "Change menu price") + '</strong><small>Requested ' + esc(new Date(item.created_at).toLocaleString()) + ' · ' + esc(item.reason) + (item.new_value?.price ? ' · New price GH₵ ' + esc(item.new_value.price) : '') + '</small></div><button type="button" class="btn btn-primary" data-approval="approve" data-id="' + esc(item.id) + '">Approve</button><button type="button" class="btn btn-light" data-approval="reject" data-id="' + esc(item.id) + '">Reject</button></article>').join("") : '<p class="muted">No pending approval requests.</p>';
++    host.querySelectorAll("[data-approval]").forEach(button => button.onclick = async () => {
++      button.disabled = true;
++      const { error: decisionError } = await db.rpc("decide_manager_approval", { p_approval_id: button.dataset.id, p_approve: button.dataset.approval === "approve" });
++      if (decisionError) { toast(decisionError.message); button.disabled = false; return; }
++      toast(button.dataset.approval === "approve" ? "Approved." : "Request rejected.");
++      await loadManagerApprovals(); await loadOrders();
++    });
++  }
++
+   function subscribe() {
+     db.channel("al-shami-live-orders")
+       .on(
+@@ -1539,6 +1596,21 @@ Status: ${order.status}`;
+ 
+     const id = form.elements.id.value;
+ 
++    const priorProduct = id ? products.find(item => item.id === id) : null;
++    if (priorProduct && Number(priorProduct.price) !== data.price) {
++      const reason = (window.prompt("Reason for changing this item's price:") || "").trim();
++      if (reason.length < 3) { status("Enter a reason of at least 3 characters."); return; }
++      const { error: approvalError } = await db.rpc("request_manager_approval", {
++        p_action_type: "change_menu_price", p_entity_id: id, p_reason: reason,
++        p_old_value: { price: Number(priorProduct.price) }, p_new_value: { price: data.price }
++      });
++      if (approvalError) { status(approvalError.message, "#product-message", true); return; }
++      const otherChanges = { ...data }; delete otherChanges.price;
++      const { error: otherError } = await db.from("menu_items").update(otherChanges).eq("id", id);
++      if (otherError) { status(otherError.message, "#product-message", true); return; }
++      status("Other item details saved. Price change is pending manager approval.", "#product-message");
++      form.reset(); form.elements.id.value = ""; await loadProducts(); loadManagerApprovals().catch(console.warn); return;
++    }
+     const result = id
+       ? await db.from("menu_items").update(data).eq("id", id)
+       : await db.from("menu_items").insert(data);
+@@ -1572,6 +1644,10 @@ Status: ${order.status}`;
+           <small>
+             ${esc(offer.details || "")} ·
+             ${offer.is_active ? "Active" : "Inactive"}
++            ${offer.event_name ? " · Event: " + esc(offer.event_name) : ""}
++            ${offer.starts_at ? " · Starts " + esc(new Date(offer.starts_at).toLocaleString()) : ""}
++            ${offer.ends_at ? " · Ends " + esc(new Date(offer.ends_at).toLocaleString()) : ""}
++            ${offer.max_uses ? " · Usage cap configured: " + esc(offer.max_uses) + " (use tracking not connected to checkout)" : ""}
+           </small>
+         </div>
+ 
+@@ -1599,6 +1675,14 @@ Status: ${order.status}`;
+           form.elements.title.value = offer.title;
+           form.elements.details.value = offer.details || "";
+           form.elements.is_active.checked = offer.is_active;
++          form.elements.starts_at.value = offer.starts_at ? new Date(offer.starts_at).toISOString().slice(0,16) : "";
++          form.elements.ends_at.value = offer.ends_at ? new Date(offer.ends_at).toISOString().slice(0,16) : "";
++          form.elements.max_uses.value = offer.max_uses ?? "";
++          form.elements.starts_local_time.value = offer.starts_local_time || "";
++          form.elements.ends_local_time.value = offer.ends_local_time || "";
++          form.elements.event_name.value = offer.event_name || "";
++          form.elements.menu_item_ids.value = (offer.menu_item_ids || []).join(", ");
++          Array.from(form.elements.days_of_week.options).forEach(option => { option.selected = (offer.days_of_week || []).includes(Number(option.value)); });
+         };
+       });
+ 
+@@ -1632,7 +1716,15 @@ Status: ${order.status}`;
+     const data = {
+       title: form.elements.title.value.trim(),
+       details: form.elements.details.value.trim() || null,
+-      is_active: form.elements.is_active.checked
++      is_active: form.elements.is_active.checked,
++      starts_at: form.elements.starts_at.value ? new Date(form.elements.starts_at.value).toISOString() : null,
++      ends_at: form.elements.ends_at.value ? new Date(form.elements.ends_at.value).toISOString() : null,
++      max_uses: form.elements.max_uses.value ? Number(form.elements.max_uses.value) : null,
++      starts_local_time: form.elements.starts_local_time.value || null,
++      ends_local_time: form.elements.ends_local_time.value || null,
++      event_name: form.elements.event_name.value.trim() || null,
++      menu_item_ids: form.elements.menu_item_ids.value.split(",").map(value => value.trim()).filter(Boolean),
++      days_of_week: Array.from(form.elements.days_of_week.selectedOptions).map(option => Number(option.value))
+     };
+ 
+     const id = form.elements.id.value;
+@@ -1660,6 +1752,13 @@ Status: ${order.status}`;
+     $("#offer-form").elements.id.value = "";
+   };
+ 
++  $("#create-menu-qr")?.addEventListener("click", () => {
++    const url = new URL("./index.html", window.location.href).href;
++    const host = $("#menu-qr-result");
++    host.innerHTML = '<p><a href="' + esc(url) + '">' + esc(url) + '</a></p><img width="260" height="260" loading="lazy" alt="QR code that opens the menu" src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=' + encodeURIComponent(url) + '"><p><button id="print-menu-qr" type="button" class="btn btn-light">Print QR</button></p>';
++    $("#print-menu-qr").onclick = () => window.print();
++  });
++
+   let deliveryZones = [];
+ 
+   async function loadDeliveryZones() {
+@@ -1921,4 +2020,4 @@ Status: ${order.status}`;
+   });
+ 
+   start();
+-})();
+\ No newline at end of file
++})();
+diff --git a/customer.js b/customer.js
+index e0fce31..cc5e37f 100644
+--- a/customer.js
++++ b/customer.js
+@@ -2541,7 +2541,11 @@
+         dates.push(localized("Ends ", "ينتهي ", "Ɛba awiei ") + new Date(offer.ends_at).toLocaleDateString());
+       }
+       const dateInfo = dates.length ? " (" + dates.join(" · ") + ")" : "";
+-      return `${offer.title || ""}${offer.details ? " — " + offer.details : ""}${dateInfo}`;
++      const eventInfo = offer.event_name ? " · " + offer.event_name : "";
++      const timeInfo = offer.starts_local_time && offer.ends_local_time ? " · " + offer.starts_local_time.slice(0,5) + "–" + offer.ends_local_time.slice(0,5) : "";
++      const targetItems = (offer.menu_item_ids || []).map(id => products.find(item => String(item.id) === String(id))?.name).filter(Boolean);
++      const itemInfo = targetItems.length ? " · " + localized("Eligible items: ", "الأصناف المشمولة: ", "Nneɛma a ɛka ho: ") + targetItems.join(", ") : "";
++      return `${offer.title || ""}${offer.details ? " — " + offer.details : ""}${eventInfo}${itemInfo}${timeInfo}${dateInfo}`;
+     }).join(" · ");
+ 
+     section.append(heading, details);
+@@ -2647,9 +2651,16 @@
+         }
+       }
+       const now = Date.now();
++      const scheduleParts = new Intl.DateTimeFormat("en-US", { timeZone: "Africa/Accra", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date());
++      const scheduleValues = Object.fromEntries(scheduleParts.map(part => [part.type, part.value]));
++      const day = ({Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6})[scheduleValues.weekday];
++      const clock = scheduleValues.hour + ":" + scheduleValues.minute;
+       offers = (offerResult.data || []).filter(offer =>
+         (!offer.starts_at || new Date(offer.starts_at).getTime() <= now) &&
+-        (!offer.ends_at || new Date(offer.ends_at).getTime() >= now)
++        (!offer.ends_at || new Date(offer.ends_at).getTime() >= now) &&
++        (!(offer.days_of_week || []).length || offer.days_of_week.includes(day)) &&
++        (!offer.starts_local_time || clock >= String(offer.starts_local_time).slice(0,5)) &&
++        (!offer.ends_local_time || clock <= String(offer.ends_local_time).slice(0,5))
+       );
+       cart = Object.fromEntries(Object.entries(cart).filter(([id, quantity]) =>
+         Number.isInteger(Number(quantity)) && Number(quantity) > 0 && Number(quantity) <= 50 &&
+diff --git a/history.html b/history.html
+index cbe6e80..c748251 100644
+--- a/history.html
++++ b/history.html
+@@ -168,12 +168,12 @@
+   </style>
+   <link rel="stylesheet" href="app-refresh.css?v=light-premium-20261023b">
+   <link rel="stylesheet" href="dark-theme.css?v=modern-wine-gold-20261024a">
++  <link rel="stylesheet" href="accessibility.css?v=20261026a">
+ </head>
+ 
+ 
+ <body class="history-page customer-history-page customer-auth-required">
+-
+-  <a class="skip-link" href="#main-content">Skip to menu and ordering</a>
++  <a class="skip-link" href="#main-content">Skip to main content</a>
+   <header class="hero">
+     <div class="hero-inner">
+       <div class="brand-mark" aria-label="AL SHAMI">AL<br>SHAMI</div>
+diff --git a/index.html b/index.html
+index a7624e1..45a8d82 100644
+--- a/index.html
++++ b/index.html
+@@ -256,10 +256,12 @@
+   </style>
+   <link rel="stylesheet" href="app-refresh.css?v=light-premium-20261023b">
+   <link rel="stylesheet" href="dark-theme.css?v=modern-wine-gold-20261024a">
++  <link rel="stylesheet" href="accessibility.css?v=20261026a">
+ </head>
+ 
+ 
+ <body class="customer-home-page customer-auth-required">
++  <a class="skip-link" href="#main-content">Skip to main content</a>
+ 
+ 
+ 
+diff --git a/kitchen.html b/kitchen.html
+new file mode 100644
+index 0000000..51fd766
+--- /dev/null
++++ b/kitchen.html
+@@ -0,0 +1,23 @@
++<!doctype html>
++<html lang="en">
++<head>
++  <meta charset="utf-8">
++  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
++  <meta name="theme-color" content="#67101a">
++  <meta name="robots" content="noindex,nofollow">
++  <title>AL SHAMI · Kitchen Display</title>
++  <link rel="stylesheet" href="accessibility.css">
++  <style>
++    :root{font-family:system-ui,sans-serif;color:#201b1b;background:#f7f3ef}*{box-sizing:border-box}body{margin:0}.top{position:sticky;top:0;background:#67101a;color:white;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;z-index:2}.top a{color:white}.wrap{max-width:1500px;margin:auto;padding:20px}.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px;margin-top:18px}.ticket{background:white;border:2px solid #e5d9d2;border-radius:14px;padding:18px}.ticket.is-due{border-color:#a51e2c;background:#fff6f4}.ticket h2{margin:0;font-size:26px}.meta{color:#554b49;font-size:15px}.items{padding-left:20px}.items li{padding:9px 0;border-bottom:1px solid #eee}.item-name{font-size:20px;font-weight:800}.item-note,.allergen{display:block;margin-top:6px;padding:7px 9px;border-radius:7px}.item-note{background:#fff1ce;color:#553d0b}.allergen{background:#fbe0e0;color:#780d18;font-weight:800}.ticket-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.ticket-actions button{min-height:46px}.status{font-weight:800;color:#641622}.login{max-width:400px;margin:9vh auto;background:white;padding:24px;border-radius:14px}.login form{display:grid;gap:12px}#signout{background:#fff;color:#641622}.muted{color:#514846}@media print{.top,.bar,.ticket-actions,.login{display:none!important}.wrap{max-width:none;padding:0}.board{display:block}.ticket{break-inside:avoid;border:1px solid #555;margin-bottom:12px}.ticket.is-due{background:white}body.print-one .ticket:not(.print-target){display:none!important}}
++  </style>
++  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
++</head>
++<body><a class="skip-link" href="#main-content">Skip to main content</a>
++  <header class="top"><strong>AL SHAMI · KITCHEN</strong><div><span id="connection" role="status" aria-live="polite">Checking connection…</span> <button id="signout" type="button" hidden>Sign out</button></div></header>
++  <main id="main-content" class="wrap" tabindex="-1">
++    <section id="login" class="login"><h1>Kitchen sign in</h1><p>Use an active kitchen staff account.</p><form id="login-form"><label>Email<input name="email" type="email" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button type="submit">Sign in</button></form><p id="login-message" role="status"></p></section>
++    <section id="screen" hidden><div class="bar"><div><h1>Kitchen orders</h1><p>Scheduled pickup and delivery orders are prioritised by due time.</p></div><button id="refresh" type="button">Refresh</button></div><div id="board" class="board" aria-live="polite"></div></section>
++  </main>
++  <script src="config.js"></script><script src="kitchen.js"></script>
++</body>
++</html>
+diff --git a/kitchen.js b/kitchen.js
+new file mode 100644
+index 0000000..28f9013
+--- /dev/null
++++ b/kitchen.js
+@@ -0,0 +1,25 @@
++(() => {
++  const cfg=window.AL_SHAMI_CONFIG||{};
++  const db=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY,{auth:{storageKey:"al-shami-kitchen-auth-v1",persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
++  const $=s=>document.querySelector(s);
++  const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
++  let timer;
++  const date=s=>s?new Date(s).toLocaleString():"ASAP";
++  async function load(){
++    const {data,error}=await db.rpc("get_kitchen_queue");
++    if(error){$("#connection").textContent="Kitchen access / connection issue";$("#board").innerHTML='<p role="alert">'+esc(error.message)+'</p>';return;}
++    $("#connection").textContent="Connected · updated "+new Date().toLocaleTimeString();
++    const orders=(Array.isArray(data)?data:[]).sort((a,b)=>new Date(a.requested_for||a.estimated_ready_at||a.created_at)-new Date(b.requested_for||b.estimated_ready_at||b.created_at));
++    $("#board").innerHTML=orders.map(o=>{
++      const due=o.requested_for||o.estimated_ready_at;
++      const isDue=due&&new Date(due).getTime()-Date.now()<12*60*1000;
++      return '<article class="ticket '+(isDue?'is-due':'')+'"><div class="bar"><h2>Order #'+esc(o.order_number||o.id.slice(0,8))+'</h2><span class="status">'+esc(o.status)+'</span></div><p class="meta">'+esc(o.order_type)+' · due '+esc(date(due))+' · received '+esc(date(o.created_at))+'</p>'+(o.notes?'<p class="item-note"><strong>Order note:</strong> '+esc(o.notes)+'</p>':'')+'<ul class="items">'+(o.items||[]).map(i=>'<li><span class="item-name">'+Number(i.quantity)+' × '+esc(i.name)+'</span>'+(i.note?'<span class="item-note"><strong>Modification:</strong> '+esc(i.note)+'</span>':'')+((i.allergens||[]).length?'<span class="allergen">⚠ Allergens: '+esc(i.allergens.join(', '))+'</span>':'')+'<span class="meta">Station: '+esc(i.station||'Kitchen')+'</span></li>').join('')+'</ul><div class="ticket-actions">'+(o.status==='accepted'||o.status==='preparing'?'<button data-state="preparing" data-id="'+esc(o.id)+'">Start preparation</button><button data-state="ready" data-id="'+esc(o.id)+'">Mark ready</button>':'')+'<button data-print="'+esc(o.id)+'">Print ticket</button></div></article>';
++    }).join('')||'<p class="muted">No active kitchen orders.</p>';
++    document.querySelectorAll('[data-state]').forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await db.rpc('update_kitchen_order',{p_order_id:b.dataset.id,p_status:b.dataset.state});if(error)alert(error.message);await load();});
++    document.querySelectorAll('[data-print]').forEach(b=>b.onclick=()=>{document.body.classList.add('print-one');b.closest('.ticket')?.classList.add('print-target');window.print();});
++  }
++  async function enter(){const {data:{session}}=await db.auth.getSession();if(!session){$("#login").hidden=false;$("#screen").hidden=true;return;}$("#login").hidden=true;$("#screen").hidden=false;$("#signout").hidden=false;await load();clearInterval(timer);timer=setInterval(load,15000);}
++  $("#login-form").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const {error}=await db.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});$("#login-message").textContent=error?.message||'';if(!error)await enter();};
++  window.addEventListener('afterprint',()=>{document.body.classList.remove('print-one');document.querySelectorAll('.print-target').forEach(el=>el.classList.remove('print-target'));});
++  $("#signout").onclick=async()=>{clearInterval(timer);await db.auth.signOut();await enter();};$("#refresh").onclick=load;enter();
++})();
+diff --git a/rider.html b/rider.html
+index 5853432..309f154 100644
+--- a/rider.html
++++ b/rider.html
+@@ -18,8 +18,10 @@
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   <link rel="stylesheet" href="app-refresh.css?v=light-premium-20261023b">
+   <link rel="stylesheet" href="dark-theme.css?v=modern-wine-gold-20261024a">
++  <link rel="stylesheet" href="accessibility.css?v=20261026a">
+ </head>
+ <body class="rider-app">
++  <a class="skip-link" href="#main-content">Skip to main content</a>
+   <header class="rider-header">
+     <a class="brand" href="./rider.html" aria-label="AL SHAMI Rider home">
+       <span class="brand-mark" aria-hidden="true">S</span>
+@@ -31,7 +33,7 @@
+     </div>
+   </header>
+ 
+-  <main class="page-shell">
++  <main id="main-content" class="page-shell" tabindex="-1">
+     <section id="login-panel" class="login-panel">
+       <div class="login-art" aria-hidden="true">
+         <div class="route-line"></div>
+diff --git a/service-worker.js b/service-worker.js
+index 189d22e..ac0f041 100644
+--- a/service-worker.js
++++ b/service-worker.js
+@@ -2,12 +2,18 @@
+ "use strict";
+ 
+ const CACHE_PREFIX = "al-shami-static-";
+-const CACHE_NAME = CACHE_PREFIX + "v109";
++const CACHE_NAME = CACHE_PREFIX + "v110";
+ const SHELL_FILES = [
+   "./",
+   "./index.html",
+   "./history.html",
+   "./admin.html",
++  "./kitchen.html",
++  "./staff.html",
++  "./kitchen.js",
++  "./staff.js",
++  "./accessibility.css",
++  "./accessibility.css?v=20261026a",
+   "./style.css",
+   "./app-refresh.css",
+   "./dark-theme.css",
+diff --git a/staff.html b/staff.html
+new file mode 100644
+index 0000000..abb4225
+--- /dev/null
++++ b/staff.html
+@@ -0,0 +1,7 @@
++<!doctype html>
++<html lang="en">
++<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>AL SHAMI · Staff Desk</title><link rel="stylesheet" href="accessibility.css"><style>:root{font-family:system-ui,sans-serif;color:#201b1b;background:#f7f3ef}body{margin:0}.top{background:#67101a;color:#fff;padding:15px 20px;display:flex;justify-content:space-between}main{max-width:1100px;margin:auto;padding:20px}.panel,.ticket{background:#fff;padding:18px;border:1px solid #e8ddd6;border-radius:13px;margin:12px 0}.panel{max-width:420px;margin:10vh auto}.panel form{display:grid;gap:12px}.ticket{display:grid;gap:8px}.ticket h2{margin:0}.actions{display:flex;gap:8px;flex-wrap:wrap}.muted{color:#514846}button{min-height:44px}</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
++<body><a class="skip-link" href="#main-content">Skip to main content</a><header class="top"><strong>AL SHAMI · STAFF DESK</strong><button id="signout" type="button" hidden>Sign out</button></header><main id="main-content" tabindex="-1">
++  <section id="login" class="panel"><h1>Staff sign in</h1><form id="login-form"><label>Email<input name="email" type="email" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button type="submit">Sign in</button></form><p id="message" role="status"></p></section>
++  <section id="desk" hidden><h1 id="desk-title">Staff desk</h1><p id="role-help" class="muted"></p><section id="approvals"></section><section id="orders"></section></section>
++</main><script src="config.js"></script><script src="staff.js"></script></body></html>
+diff --git a/staff.js b/staff.js
+new file mode 100644
+index 0000000..8d52b39
+--- /dev/null
++++ b/staff.js
+@@ -0,0 +1,29 @@
++(() => {
++  const cfg=window.AL_SHAMI_CONFIG||{},db=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY,{auth:{storageKey:"al-shami-staff-auth-v1",persistSession:true,autoRefreshToken:true}});
++  const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
++  async function start(){
++    const {data:{session}}=await db.auth.getSession();if(!session){$("#login").hidden=false;$("#desk").hidden=true;return;}
++    const {data:role,error}=await db.rpc("get_my_staff_role");if(error||!role){$("#message").textContent="This account has no active staff role.";await db.auth.signOut();return;}
++    $("#login").hidden=true;$("#desk").hidden=false;$("#signout").hidden=false;$("#desk-title").textContent=role.replaceAll("_"," ")+" desk";
++    $("#role-help").textContent=role==="manager"||role==="owner"?"Review manager approvals and monitor active orders.":role==="cashier"?"Review new orders and request manager approval for accepted-order cancellations.":role==="kitchen"?"Kitchen access is available in the kitchen display.":role==="delivery_rider"?"Delivery access is available in the rider app.":"No desk features are assigned to this role.";
++    if(["manager","owner"].includes(role))await approvals();
++    if(["cashier","manager","owner"].includes(role))await queue();
++    if(role==="kitchen")$("#orders").innerHTML='<p><a href="kitchen.html">Open Kitchen Display</a></p>';
++    if(role==="delivery_rider")$("#orders").innerHTML='<p><a href="rider.html">Open Rider App</a></p>';
++  }
++  async function queue(){
++    const {data,error}=await db.rpc("get_cashier_queue");if(error){$("#orders").innerHTML='<p role="alert">'+esc(error.message)+'</p>';return;}
++    const rows=Array.isArray(data)?data:[];
++    $("#orders").innerHTML='<h2>Order queue</h2>'+rows.map(o=>'<article class="ticket"><h2>Order #'+esc(o.order_number||o.id.slice(0,8))+' · '+esc(o.status)+'</h2><div>'+esc(o.customer_name)+' · '+esc(o.order_type)+' · GH₵ '+Number(o.total||0).toFixed(2)+'</div><div>'+esc(o.delivery_address||'')+'</div><ul>'+(o.items||[]).map(i=>'<li>'+Number(i.quantity)+' × '+esc(i.name)+'</li>').join('')+'</ul>'+(o.notes?'<p>'+esc(o.notes)+'</p>':'')+'<div class="actions">'+(o.status==="new"?'<button data-decide="accepted" data-id="'+esc(o.id)+'">Accept</button><button data-decide="rejected" data-id="'+esc(o.id)+'">Reject</button>':'')+(o.status==="accepted"?'<button data-cancel="'+esc(o.id)+'">Request cancellation</button>':'')+'</div></article>').join("")||'<p class="muted">No active orders.</p>';
++    document.querySelectorAll("[data-decide]").forEach(b=>b.onclick=async()=>{const reason=(prompt("Required reason for this decision:")||"").trim();if(reason.length<3)return alert("Enter at least 3 characters.");const {error}=await db.rpc("cashier_set_order_status",{p_order_id:b.dataset.id,p_status:b.dataset.decide,p_reason:reason});if(error)alert(error.message);await queue();});
++    document.querySelectorAll("[data-cancel]").forEach(b=>b.onclick=async()=>{const reason=(prompt("Why should this accepted order be cancelled?")||"").trim();if(reason.length<3)return alert("Enter at least 3 characters.");const {error}=await db.rpc("request_manager_approval",{p_action_type:"cancel_accepted_order",p_entity_id:b.dataset.cancel,p_reason:reason,p_old_value:{status:"accepted"},p_new_value:{status:"rejected"}});if(error)alert(error.message);else alert("Cancellation request sent to a manager.");});
++  }
++  async function approvals(){
++    const {data,error}=await db.rpc("get_manager_approvals");if(error){$("#approvals").innerHTML='<p role="alert">'+esc(error.message)+'</p>';return;}
++    const rows=Array.isArray(data)?data:[];
++    $("#approvals").innerHTML='<h2>Pending manager approvals</h2>'+rows.map(a=>'<article class="ticket"><strong>'+esc(a.action_type.replaceAll("_"," "))+'</strong><p>'+esc(a.reason)+'</p>'+(a.new_value?.price?'Requested price: GH₵ '+Number(a.new_value.price).toFixed(2):'')+'<div class="actions"><button data-approval="true" data-id="'+esc(a.id)+'">Approve</button><button data-approval="false" data-id="'+esc(a.id)+'">Reject</button></div></article>').join("")||'<p class="muted">No pending requests.</p>';
++    document.querySelectorAll("[data-approval]").forEach(b=>b.onclick=async()=>{const {error}=await db.rpc("decide_manager_approval",{p_approval_id:b.dataset.id,p_approve:b.dataset.approval==="true"});if(error)alert(error.message);else{await approvals();await queue();}});
++  }
++  $("#login-form").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const {error}=await db.auth.signInWithPassword({email:f.get("email"),password:f.get("password")});$("#message").textContent=error?.message||"";if(!error)await start();};
++  $("#signout").onclick=async()=>{await db.auth.signOut();await start();};start();
++})();
+diff --git a/supabase/migrations/20261026111958_kitchen_offers_reports_security.sql b/supabase/migrations/20261026111958_kitchen_offers_reports_security.sql
+new file mode 100644
+index 0000000..a9712eb
+--- /dev/null
++++ b/supabase/migrations/20261026111958_kitchen_offers_reports_security.sql
+@@ -0,0 +1,181 @@
++-- Additive restaurant operations features. Existing order and inventory rows are preserved.
++begin;
++
++-- Offer scheduling and targeting (starts_at/ends_at already exist).
++alter table public.offers
++  add column if not exists max_uses integer,
++  add column if not exists uses_count integer not null default 0,
++  add column if not exists days_of_week smallint[] not null default '{}',
++  add column if not exists starts_local_time time,
++  add column if not exists ends_local_time time,
++  add column if not exists menu_item_ids uuid[] not null default '{}',
++  add column if not exists event_name text;
++do $$ begin
++  if not exists (select 1 from pg_constraint where conname='offers_max_uses_nonnegative') then
++    alter table public.offers add constraint offers_max_uses_nonnegative check (max_uses is null or max_uses > 0);
++  end if;
++  if not exists (select 1 from pg_constraint where conname='offers_uses_count_nonnegative') then
++    alter table public.offers add constraint offers_uses_count_nonnegative check (uses_count >= 0);
++  end if;
++  if not exists (select 1 from pg_constraint where conname='offers_days_of_week_valid') then
++    alter table public.offers add constraint offers_days_of_week_valid check (days_of_week <@ array[0,1,2,3,4,5,6]::smallint[]);
++  end if;
++end $$;
++
++-- Reasons are retained with the order for review and audit.
++alter table public.orders add column if not exists status_reason text;
++alter table public.orders add column if not exists status_changed_at timestamptz not null default now();
++create table if not exists public.order_status_audit (
++  id bigint generated always as identity primary key,
++  order_id uuid not null references public.orders(id) on delete cascade,
++  actor_id uuid references auth.users(id) on delete set null,
++  old_status text,
++  new_status text not null,
++  reason text,
++  changed_at timestamptz not null default now()
++);
++create index if not exists order_status_audit_order_changed_idx on public.order_status_audit(order_id,changed_at desc);
++alter table public.order_status_audit enable row level security;
++revoke all on public.order_status_audit from public,anon,authenticated;
++
++-- Kitchen reads and status transitions are exposed through narrowly-scoped RPCs.
++create or replace function public.get_kitchen_queue()
++returns jsonb language plpgsql stable security definer set search_path=pg_catalog,public as $$
++declare v_result jsonb;
++begin
++  if auth.uid() is null or not exists (
++    select 1 from public.staff_profiles s where s.user_id=auth.uid() and s.role='kitchen'
++      and s.is_active and s.employment_status='active'
++  ) then raise exception 'Active kitchen access required'; end if;
++  select coalesce(jsonb_agg(jsonb_build_object(
++    'id',o.id,'order_number',o.order_number,'created_at',o.created_at,'requested_for',o.requested_for,
++    'estimated_ready_at',o.estimated_ready_at,'order_type',o.order_type,'status',o.status,
++    'customer_name',o.customer_name,'notes',o.notes,
++    'items',coalesce((select jsonb_agg(jsonb_build_object(
++      'name',coalesce(i.item_name,m.name),'quantity',i.quantity,'note',i.item_note,
++      'allergens',m.allergens,'station',m.category
++    ) order by i.created_at) from public.order_items i left join public.menu_items m on m.id=i.menu_item_id where i.order_id=o.id),'[]'::jsonb)
++  ) order by coalesce(o.requested_for,o.created_at),o.created_at), '[]'::jsonb) into v_result
++  from public.orders o where o.status in ('new','accepted','preparing','ready');
++  return v_result;
++end $$;
++revoke all on function public.get_kitchen_queue() from public,anon;
++grant execute on function public.get_kitchen_queue() to authenticated;
++
++create or replace function public.update_kitchen_order(p_order_id uuid,p_status text)
++returns void language plpgsql security definer set search_path=pg_catalog,public as $$
++declare v_old text;
++begin
++  if auth.uid() is null or not exists (
++    select 1 from public.staff_profiles s where s.user_id=auth.uid() and s.role='kitchen'
++      and s.is_active and s.employment_status='active'
++  ) then raise exception 'Active kitchen access required'; end if;
++  if p_status not in ('preparing','ready') then raise exception 'Unsupported kitchen status'; end if;
++  select status into v_old from public.orders where id=p_order_id for update;
++  if v_old is null or v_old not in ('accepted','preparing') then raise exception 'Order is not in the kitchen queue'; end if;
++  update public.orders set status=p_status,updated_at=now(),status_changed_at=now() where id=p_order_id;
++  insert into public.order_status_audit(order_id,actor_id,old_status,new_status)
++  values(p_order_id,auth.uid(),v_old,p_status);
++end $$;
++revoke all on function public.update_kitchen_order(uuid,text) from public,anon;
++grant execute on function public.update_kitchen_order(uuid,text) to authenticated;
++
++-- Stocktakes use a barcode identifier and append adjustments to the existing movement ledger.
++alter table public.inventory_items add column if not exists barcode text;
++create unique index if not exists inventory_items_barcode_uq on public.inventory_items(barcode) where barcode is not null and barcode<>'';
++create table if not exists public.inventory_stocktakes (
++  id uuid primary key default gen_random_uuid(),
++  started_by uuid references auth.users(id) on delete set null,
++  completed_by uuid references auth.users(id) on delete set null,
++  status text not null default 'open' check(status in ('open','completed')),
++  created_at timestamptz not null default now(),
++  completed_at timestamptz
++);
++create table if not exists public.inventory_stocktake_lines (
++  id uuid primary key default gen_random_uuid(),
++  stocktake_id uuid not null references public.inventory_stocktakes(id) on delete cascade,
++  item_id uuid not null references public.inventory_items(id) on delete restrict,
++  expected_quantity numeric(12,3) not null,
++  counted_quantity numeric(12,3) not null check(counted_quantity>=0),
++  created_at timestamptz not null default now(),
++  unique(stocktake_id,item_id)
++);
++alter table public.inventory_stocktakes enable row level security;
++alter table public.inventory_stocktake_lines enable row level security;
++revoke all on public.inventory_stocktakes,public.inventory_stocktake_lines from public,anon,authenticated;
++create or replace function public.record_inventory_stocktake(p_barcode text,p_counted numeric)
++returns jsonb language plpgsql security definer set search_path=pg_catalog,public as $$
++declare v_uid uuid:=auth.uid(); v_item public.inventory_items%rowtype; v_session uuid; v_delta numeric;
++begin
++  if v_uid is null or not public.is_current_user_admin() then raise exception 'Admin access required'; end if;
++  if p_counted is null or p_counted<0 or length(trim(coalesce(p_barcode,'')))=0 then raise exception 'Barcode and a nonnegative count are required'; end if;
++  select * into v_item from public.inventory_items where barcode=trim(p_barcode) and is_active for update;
++  if not found then raise exception 'No active inventory item matches this barcode'; end if;
++  insert into public.inventory_stocktakes(started_by) values(v_uid) returning id into v_session;
++  insert into public.inventory_stocktake_lines(stocktake_id,item_id,expected_quantity,counted_quantity)
++  values(v_session,v_item.id,v_item.quantity,p_counted);
++  v_delta:=p_counted-v_item.quantity;
++  if v_delta<>0 then perform public.record_inventory_movement(v_item.id,'adjustment',v_delta,v_item.unit_cost,'stocktake:'||v_session::text,'Barcode stocktake'); end if;
++  update public.inventory_stocktakes set completed_by=v_uid,status='completed',completed_at=now() where id=v_session;
++  return jsonb_build_object('stocktake_id',v_session,'item',v_item.name,'expected',v_item.quantity,'counted',p_counted,'difference',v_delta);
++end $$;
++revoke all on function public.record_inventory_stocktake(text,numeric) from public,anon;
++grant execute on function public.record_inventory_stocktake(text,numeric) to authenticated;
++
++-- Manager approval records for sensitive changes, with an explicit reason and immutable decision trail.
++create table if not exists public.manager_approvals (
++  id uuid primary key default gen_random_uuid(),
++  action_type text not null check(action_type in ('cancel_accepted_order','change_menu_price')),
++  entity_id uuid not null,
++  requested_by uuid not null references auth.users(id) on delete restrict,
++  approved_by uuid references auth.users(id) on delete set null,
++  reason text not null check(length(trim(reason)) between 3 and 500),
++  old_value jsonb not null default '{}'::jsonb,
++  new_value jsonb not null default '{}'::jsonb,
++  state text not null default 'pending' check(state in ('pending','approved','rejected')),
++  created_at timestamptz not null default now(),
++  decided_at timestamptz
++);
++alter table public.manager_approvals enable row level security;
++revoke all on public.manager_approvals from public,anon,authenticated;
++
++create or replace function public.get_sales_item_performance(p_from timestamptz,p_to timestamptz)
++returns table(item_name text,units_sold bigint,gross_sales numeric,estimated_food_cost numeric,estimated_food_profit numeric)
++language plpgsql stable security definer set search_path=pg_catalog,public as $$
++begin
++  if auth.uid() is null or not public.is_current_user_admin() then raise exception 'Admin access required'; end if;
++  if p_from is null or p_to is null or p_to<=p_from or p_to-p_from>interval '366 days' then raise exception 'Choose a valid date range (up to 366 days)'; end if;
++  return query
++  with totals as (
++    select oi.menu_item_id,coalesce(oi.item_name,m.name,'Deleted item') n,sum(oi.quantity)::bigint qty,
++      sum(oi.line_total)::numeric sales,
++      sum(oi.quantity*coalesce(rc.cost,0))::numeric food_cost
++    from public.order_items oi join public.orders o on o.id=oi.order_id
++    left join public.menu_items m on m.id=oi.menu_item_id
++    left join lateral (select sum(r.quantity_per_item*i.unit_cost) cost from public.menu_item_recipes r join public.inventory_items i on i.id=r.inventory_item_id where r.menu_item_id=oi.menu_item_id) rc on true
++    where o.status='completed' and o.completed_at>=p_from and o.completed_at<p_to
++    group by oi.menu_item_id,coalesce(oi.item_name,m.name,'Deleted item')
++  ) select n,qty,sales,food_cost,sales-food_cost from totals order by qty desc;
++end $$;
++revoke all on function public.get_sales_item_performance(timestamptz,timestamptz) from public,anon;
++grant execute on function public.get_sales_item_performance(timestamptz,timestamptz) to authenticated;
++
++create or replace function public.get_repeat_customer_rate(p_from timestamptz,p_to timestamptz)
++returns jsonb language plpgsql stable security definer set search_path=pg_catalog,public as $$
++declare v jsonb;
++begin
++  if auth.uid() is null or not public.is_current_user_admin() then raise exception 'Admin access required'; end if;
++  if p_from is null or p_to is null or p_to<=p_from or p_to-p_from>interval '366 days' then raise exception 'Choose a valid date range (up to 366 days)'; end if;
++  with customers as (
++    select coalesce(nullif(trim(customer_phone),''),nullif(trim(lower(customer_name)),''),id::text) key,count(*) orders
++    from public.orders where status='completed' and completed_at>=p_from and completed_at<p_to
++    group by 1
++  ) select jsonb_build_object('customers',count(*),'repeat_customers',count(*) filter(where orders>1),
++    'repeat_rate',case when count(*)=0 then 0 else round(100.0*count(*) filter(where orders>1)/count(*),1) end)
++    into v from customers;
++  return v;
++end $$;
++revoke all on function public.get_repeat_customer_rate(timestamptz,timestamptz) from public,anon;
++grant execute on function public.get_repeat_customer_rate(timestamptz,timestamptz) to authenticated;
++
++commit;
+diff --git a/supabase/migrations/20261026112253_order_approval_audit.sql b/supabase/migrations/20261026112253_order_approval_audit.sql
+new file mode 100644
+index 0000000..309e44f
+--- /dev/null
++++ b/supabase/migrations/20261026112253_order_approval_audit.sql
+@@ -0,0 +1,90 @@
++begin;
++
++create or replace function public.audit_order_status_change()
++returns trigger language plpgsql security definer set search_path=pg_catalog,public as $$
++begin
++  if new.status is distinct from old.status then
++    new.status_changed_at:=now();
++    insert into public.order_status_audit(order_id,actor_id,old_status,new_status,reason)
++    values(new.id,auth.uid(),old.status,new.status,new.status_reason);
++  end if;
++  return new;
++end $$;
++revoke all on function public.audit_order_status_change() from public,anon,authenticated;
++drop trigger if exists orders_status_audit_trigger on public.orders;
++create trigger orders_status_audit_trigger before update of status on public.orders
++for each row execute function public.audit_order_status_change();
++
++create or replace function public.request_manager_approval(
++  p_action_type text,p_entity_id uuid,p_reason text,p_old_value jsonb default '{}'::jsonb,p_new_value jsonb default '{}'::jsonb
++) returns uuid language plpgsql security definer set search_path=pg_catalog,public as $$
++declare v_id uuid;
++begin
++  if auth.uid() is null or not public.is_current_user_admin() then raise exception 'Authorised staff access required'; end if;
++  if p_action_type not in ('cancel_accepted_order','change_menu_price') then raise exception 'Unsupported approval action'; end if;
++  if length(trim(coalesce(p_reason,'')))<3 then raise exception 'A reason is required'; end if;
++  if p_action_type='cancel_accepted_order' and not exists(select 1 from public.orders where id=p_entity_id and status='accepted') then raise exception 'Only accepted orders can be queued for cancellation'; end if;
++  if p_action_type='change_menu_price' and not exists(select 1 from public.menu_items where id=p_entity_id) then raise exception 'Menu item not found'; end if;
++  insert into public.manager_approvals(action_type,entity_id,requested_by,reason,old_value,new_value)
++  values(p_action_type,p_entity_id,auth.uid(),left(trim(p_reason),500),coalesce(p_old_value,'{}'::jsonb),coalesce(p_new_value,'{}'::jsonb)) returning id into v_id;
++  return v_id;
++end $$;
++revoke all on function public.request_manager_approval(text,uuid,text,jsonb,jsonb) from public,anon;
++grant execute on function public.request_manager_approval(text,uuid,text,jsonb,jsonb) to authenticated;
++
++create or replace function public.get_manager_approvals()
++returns jsonb language plpgsql stable security definer set search_path=pg_catalog,public as $$
++declare v jsonb;
++begin
++  if auth.uid() is null or not public.is_current_user_admin() then raise exception 'Manager access required'; end if;
++  select coalesce(jsonb_agg(jsonb_build_object('id',a.id,'action_type',a.action_type,'entity_id',a.entity_id,
++    'requested_by',a.requested_by,'reason',a.reason,'old_value',a.old_value,'new_value',a.new_value,'created_at',a.created_at)
++    order by a.created_at),'[]'::jsonb) into v from public.manager_approvals a where a.state='pending';
++  return v;
++end $$;
++revoke all on function public.get_manager_approvals() from public,anon;
++grant execute on function public.get_manager_approvals() to authenticated;
++
++create or replace function public.decide_manager_approval(p_approval_id uuid,p_approve boolean)
++returns void language plpgsql security definer set search_path=pg_catalog,public as $$
++declare a public.manager_approvals%rowtype; v_price numeric;
++begin
++  if auth.uid() is null or not public.is_current_user_admin() then raise exception 'Manager access required'; end if;
++  select * into a from public.manager_approvals where id=p_approval_id and state='pending' for update;
++  if not found then raise exception 'Approval is no longer pending'; end if;
++  if a.requested_by=auth.uid() then raise exception 'A different manager must decide this request'; end if;
++  if p_approve and a.action_type='cancel_accepted_order' then
++    update public.orders set status='rejected',status_reason=a.reason,updated_at=now() where id=a.entity_id and status='accepted';
++    if not found then raise exception 'Order is no longer accepted'; end if;
++  elsif p_approve and a.action_type='change_menu_price' then
++    v_price:=(a.new_value->>'price')::numeric;
++    if v_price<=0 then raise exception 'Invalid requested price'; end if;
++    update public.menu_items set price=v_price,updated_at=now() where id=a.entity_id;
++    if not found then raise exception 'Menu item no longer exists'; end if;
++  end if;
++  update public.manager_approvals set state=case when p_approve then 'approved' else 'rejected' end,
++    approved_by=auth.uid(),decided_at=now() where id=p_approval_id;
++end $$;
++revoke all on function public.decide_manager_approval(uuid,boolean) from public,anon;
++grant execute on function public.decide_manager_approval(uuid,boolean) to authenticated;
++
++create or replace function public.get_sales_item_performance(p_from timestamptz,p_to timestamptz)
++returns table(item_name text,units_sold bigint,gross_sales numeric,estimated_food_cost numeric,estimated_food_profit numeric)
++language plpgsql stable security definer set search_path=pg_catalog,public as $$
++begin
++  if auth.uid() is null or not public.is_current_user_admin() then raise exception 'Admin access required'; end if;
++  if p_from is null or p_to is null or p_to<=p_from or p_to-p_from>interval '366 days' then raise exception 'Choose a valid date range (up to 366 days)'; end if;
++  return query
++  with totals as (
++    select oi.menu_item_id,coalesce(oi.item_name,m.name,'Deleted item') n,sum(oi.quantity)::bigint qty,
++      sum(oi.line_total)::numeric sales,sum(oi.quantity*coalesce(rc.cost,0))::numeric food_cost
++    from public.order_items oi join public.orders o on o.id=oi.order_id
++    left join public.menu_items m on m.id=oi.menu_item_id
++    left join lateral (select sum(r.quantity_per_item*i.unit_cost) cost from public.menu_item_recipes r join public.inventory_items i on i.id=r.inventory_item_id where r.menu_item_id=oi.menu_item_id) rc on true
++    where o.status='completed' and o.completed_at>=p_from and o.completed_at<p_to
++    group by oi.menu_item_id,coalesce(oi.item_name,m.name,'Deleted item')
++  ) select n,qty,sales,food_cost,sales-food_cost from totals order by qty desc;
++end $$;
++revoke all on function public.get_sales_item_performance(timestamptz,timestamptz) from public,anon;
++grant execute on function public.get_sales_item_performance(timestamptz,timestamptz) to authenticated;
++commit;
+diff --git a/supabase/migrations/20261026112418_staff_role_rpcs.sql b/supabase/migrations/20261026112418_staff_role_rpcs.sql
+new file mode 100644
+index 0000000..c16e5bc
+--- /dev/null
++++ b/supabase/migrations/20261026112418_staff_role_rpcs.sql
+@@ -0,0 +1,76 @@
++begin;
++create or replace function public.get_my_staff_role()
++returns text language sql stable security definer set search_path=pg_catalog,public as $$
++  select role from public.staff_profiles where user_id=auth.uid() and is_active and employment_status='active' limit 1
++$$;
++revoke all on function public.get_my_staff_role() from public,anon;
++grant execute on function public.get_my_staff_role() to authenticated;
++create or replace function public.get_cashier_queue()
++returns jsonb language plpgsql stable security definer set search_path=pg_catalog,public as $$
++declare v jsonb;
++begin
++  if auth.uid() is null or public.get_my_staff_role() not in ('cashier','manager','owner') then raise exception 'Active cashier access required'; end if;
++  select coalesce(jsonb_agg(jsonb_build_object('id',o.id,'order_number',o.order_number,'created_at',o.created_at,'customer_name',o.customer_name,'order_type',o.order_type,'delivery_address',o.delivery_address,'total',o.total,'status',o.status,'notes',o.notes,'items',coalesce((select jsonb_agg(jsonb_build_object('name',coalesce(i.item_name,m.name),'quantity',i.quantity,'price',i.line_total)) from public.order_items i left join public.menu_items m on m.id=i.menu_item_id where i.order_id=o.id),'[]'::jsonb)) order by o.created_at),'[]'::jsonb) into v from public.orders o where o.status in ('new','accepted','preparing','ready','out_for_delivery');
++  return v;
++end $$;
++revoke all on function public.get_cashier_queue() from public,anon;
++grant execute on function public.get_cashier_queue() to authenticated;
++create or replace function public.cashier_set_order_status(p_order_id uuid,p_status text,p_reason text default null)
++returns void language plpgsql security definer set search_path=pg_catalog,public as $$
++begin
++  if auth.uid() is null or public.get_my_staff_role() not in ('cashier','manager','owner') then raise exception 'Active cashier access required'; end if;
++  if p_status not in ('accepted','rejected') or length(trim(coalesce(p_reason,'')))<3 then raise exception 'Valid decision and reason required'; end if;
++  perform 1 from public.orders where id=p_order_id and status='new' for update;
++  if not found then raise exception 'Only new orders can be decided'; end if;
++  update public.orders set status=p_status,status_reason=left(trim(p_reason),500),updated_at=now() where id=p_order_id;
++end $$;
++revoke all on function public.cashier_set_order_status(uuid,text,text) from public,anon;
++grant execute on function public.cashier_set_order_status(uuid,text,text) to authenticated;
++create or replace function public.request_manager_approval(p_action_type text,p_entity_id uuid,p_reason text,p_old_value jsonb default '{}'::jsonb,p_new_value jsonb default '{}'::jsonb)
++returns uuid language plpgsql security definer set search_path=pg_catalog,public as $$
++declare v_id uuid; v_role text;
++begin
++  v_role:=public.get_my_staff_role();
++  if auth.uid() is null or (not public.is_current_user_admin() and v_role not in ('cashier','manager','owner')) then raise exception 'Authorised staff access required'; end if;
++  if p_action_type not in ('cancel_accepted_order','change_menu_price') or length(trim(coalesce(p_reason,'')))<3 then raise exception 'Valid action and reason required'; end if;
++  if p_action_type='cancel_accepted_order' and not exists(select 1 from public.orders where id=p_entity_id and status='accepted') then raise exception 'Only accepted orders can be queued for cancellation'; end if;
++  if p_action_type='change_menu_price' and not exists(select 1 from public.menu_items where id=p_entity_id) then raise exception 'Menu item not found'; end if;
++  insert into public.manager_approvals(action_type,entity_id,requested_by,reason,old_value,new_value) values(p_action_type,p_entity_id,auth.uid(),left(trim(p_reason),500),coalesce(p_old_value,'{}'::jsonb),coalesce(p_new_value,'{}'::jsonb)) returning id into v_id;
++  return v_id;
++end $$;
++revoke all on function public.request_manager_approval(text,uuid,text,jsonb,jsonb) from public,anon;
++grant execute on function public.request_manager_approval(text,uuid,text,jsonb,jsonb) to authenticated;
++create or replace function public.decide_manager_approval(p_approval_id uuid,p_approve boolean)
++returns void language plpgsql security definer set search_path=pg_catalog,public as $$
++declare a public.manager_approvals%rowtype; v_price numeric; v_role text;
++begin
++  v_role:=public.get_my_staff_role();
++  if auth.uid() is null or (not public.is_current_user_admin() and v_role not in ('manager','owner')) then raise exception 'Manager access required'; end if;
++  select * into a from public.manager_approvals where id=p_approval_id and state='pending' for update;
++  if not found then raise exception 'Approval is no longer pending'; end if;
++  if a.requested_by=auth.uid() then raise exception 'A different manager must decide this request'; end if;
++  if p_approve and a.action_type='cancel_accepted_order' then
++    update public.orders set status='rejected',status_reason=a.reason,updated_at=now() where id=a.entity_id and status='accepted';
++    if not found then raise exception 'Order is no longer accepted'; end if;
++  elsif p_approve and a.action_type='change_menu_price' then
++    v_price:=(a.new_value->>'price')::numeric;
++    if v_price<=0 then raise exception 'Invalid requested price'; end if;
++    update public.menu_items set price=v_price,updated_at=now() where id=a.entity_id;
++    if not found then raise exception 'Menu item no longer exists'; end if;
++  end if;
++  update public.manager_approvals set state=case when p_approve then 'approved' else 'rejected' end,approved_by=auth.uid(),decided_at=now() where id=p_approval_id;
++end $$;
++revoke all on function public.decide_manager_approval(uuid,boolean) from public,anon;
++grant execute on function public.decide_manager_approval(uuid,boolean) to authenticated;
++create or replace function public.get_manager_approvals()
++returns jsonb language plpgsql stable security definer set search_path=pg_catalog,public as $$
++declare v jsonb; v_role text;
++begin
++  v_role:=public.get_my_staff_role();
++  if auth.uid() is null or (not public.is_current_user_admin() and v_role not in ('manager','owner')) then raise exception 'Manager access required'; end if;
++  select coalesce(jsonb_agg(jsonb_build_object('id',a.id,'action_type',a.action_type,'entity_id',a.entity_id,'requested_by',a.requested_by,'reason',a.reason,'old_value',a.old_value,'new_value',a.new_value,'created_at',a.created_at) order by a.created_at),'[]'::jsonb) into v from public.manager_approvals a where a.state='pending';
++  return v;
++end $$;
++revoke all on function public.get_manager_approvals() from public,anon;
++grant execute on function public.get_manager_approvals() to authenticated;
++commit;
+diff --git a/supabase/migrations/20261026112948_backfill_order_status_clock.sql b/supabase/migrations/20261026112948_backfill_order_status_clock.sql
+new file mode 100644
+index 0000000..bdd3e1d
+--- /dev/null
++++ b/supabase/migrations/20261026112948_backfill_order_status_clock.sql
+@@ -0,0 +1,4 @@
++-- Backfill only the newly introduced status clock; no order status or customer/order data changes.
++update public.orders
++set status_changed_at = coalesce(updated_at, created_at)
++where status_changed_at > coalesce(updated_at, created_at);
+diff --git a/supabase/migrations/20261026113012_include_zero_sale_items.sql b/supabase/migrations/20261026113012_include_zero_sale_items.sql
+new file mode 100644
+index 0000000..909b131
+--- /dev/null
++++ b/supabase/migrations/20261026113012_include_zero_sale_items.sql
+@@ -0,0 +1,22 @@
++create or replace function public.get_sales_item_performance(p_from timestamptz,p_to timestamptz)
++returns table(item_name text,units_sold bigint,gross_sales numeric,estimated_food_cost numeric,estimated_food_profit numeric)
++language plpgsql stable security definer set search_path=pg_catalog,public as $$
++begin
++  if auth.uid() is null or not public.is_current_user_admin() then raise exception 'Admin access required'; end if;
++  if p_from is null or p_to is null or p_to<=p_from or p_to-p_from>interval '366 days' then raise exception 'Choose a valid date range (up to 366 days)'; end if;
++  return query
++  with totals as (
++    select oi.menu_item_id,coalesce(oi.item_name,m.name,'Deleted item') n,sum(oi.quantity)::bigint qty,
++      sum(oi.line_total)::numeric sales,sum(oi.quantity*coalesce(rc.cost,0))::numeric food_cost
++    from public.order_items oi join public.orders o on o.id=oi.order_id
++    left join public.menu_items m on m.id=oi.menu_item_id
++    left join lateral (select sum(r.quantity_per_item*i.unit_cost) cost from public.menu_item_recipes r join public.inventory_items i on i.id=r.inventory_item_id where r.menu_item_id=oi.menu_item_id) rc on true
++    where o.status='completed' and o.completed_at>=p_from and o.completed_at<p_to
++    group by oi.menu_item_id,coalesce(oi.item_name,m.name,'Deleted item')
++  )
++  select coalesce(m.name,t.n),coalesce(t.qty,0),coalesce(t.sales,0),coalesce(t.food_cost,0),coalesce(t.sales,0)-coalesce(t.food_cost,0)
++  from public.menu_items m full join totals t on t.menu_item_id=m.id
++  order by coalesce(t.qty,0) desc,coalesce(m.name,t.n);
++end $$;
++revoke all on function public.get_sales_item_performance(timestamptz,timestamptz) from public,anon;
++grant execute on function public.get_sales_item_performance(timestamptz,timestamptz) to authenticated;
+diff --git a/supabase/migrations/20261026113103_fix_kitchen_queue_rpc.sql b/supabase/migrations/20261026113103_fix_kitchen_queue_rpc.sql
+new file mode 100644
+index 0000000..1ae446c
+--- /dev/null
++++ b/supabase/migrations/20261026113103_fix_kitchen_queue_rpc.sql
+@@ -0,0 +1,62 @@
++create or replace function public.get_kitchen_queue()
++returns jsonb language plpgsql stable security definer set search_path=pg_catalog,public as $$
++declare v_result jsonb;
++begin
++  if auth.uid() is null or not exists (
++    select 1 from public.staff_profiles s where s.user_id=auth.uid() and s.role='kitchen'
++      and s.is_active and s.employment_status='active'
++  ) then raise exception 'Active kitchen access required'; end if;
++  select coalesce(jsonb_agg(jsonb_build_object(
++    'id',o.id,'order_number',o.order_number,'created_at',o.created_at,'requested_for',o.requested_for,
++    'estimated_ready_at',o.estimated_ready_at,'order_type',o.order_type,'status',o.status,
++    'customer_name',o.customer_name,'notes',o.notes,
++    'items',coalesce((select jsonb_agg(jsonb_build_object(
++      'name',coalesce(i.item_name,m.name),'quantity',i.quantity,'note',i.item_note,
++      'allergens',m.allergens,'station',m.category
++    ) order by i.id) from public.order_items i left join public.menu_items m on m.id=i.menu_item_id where i.order_id=o.id),'[]'::jsonb)
++  ) order by coalesce(o.requested_for,o.created_at),o.created_at), '[]'::jsonb) into v_result
++  from public.orders o where o.status in ('new','accepted','preparing','ready');
++  return v_result;
++end $$;
++revoke all on function public.get_kitchen_queue() from public,anon;
++grant execute on function public.get_kitchen_queue() to authenticated;
++
++create or replace function public.update_kitchen_order(p_order_id uuid,p_status text)
++returns void language plpgsql security definer set search_path=pg_catalog,public as $$
++declare v_old text;
++begin
++  if auth.uid() is null or not exists (
++    select 1 from public.staff_profiles s where s.user_id=auth.uid() and s.role='kitchen'
++      and s.is_active and s.employment_status='active'
++  ) then raise exception 'Active kitchen access required'; end if;
++  if p_status not in ('preparing','ready') then raise exception 'Unsupported kitchen status'; end if;
++  select status into v_old from public.orders where id=p_order_id for update;
++  if v_old is null or v_old not in ('accepted','preparing') then raise exception 'Order is not in the kitchen queue'; end if;
++  update public.orders set status=p_status,status_reason=null,updated_at=now(),status_changed_at=now() where id=p_order_id;
++end $$;
++revoke all on function public.update_kitchen_order(uuid,text) from public,anon;
++grant execute on function public.update_kitchen_order(uuid,text) to authenticated;
++
++create or replace function public.decide_manager_approval(p_approval_id uuid,p_approve boolean)
++returns void language plpgsql security definer set search_path=pg_catalog,public as $$
++declare a public.manager_approvals%rowtype; v_price numeric; v_old_price numeric; v_role text;
++begin
++  v_role:=public.get_my_staff_role();
++  if auth.uid() is null or (not public.is_current_user_admin() and v_role not in ('manager','owner')) then raise exception 'Manager access required'; end if;
++  select * into a from public.manager_approvals where id=p_approval_id and state='pending' for update;
++  if not found then raise exception 'Approval is no longer pending'; end if;
++  if a.requested_by=auth.uid() then raise exception 'A different manager must decide this request'; end if;
++  if p_approve and a.action_type='cancel_accepted_order' then
++    update public.orders set status='rejected',status_reason=a.reason,updated_at=now() where id=a.entity_id and status='accepted';
++    if not found then raise exception 'Order is no longer accepted'; end if;
++  elsif p_approve and a.action_type='change_menu_price' then
++    v_price:=(a.new_value->>'price')::numeric;
++    select price into v_old_price from public.menu_items where id=a.entity_id for update;
++    if not found then raise exception 'Menu item no longer exists'; end if;
++    if v_price<=0 or v_old_price is distinct from (a.old_value->>'price')::numeric then raise exception 'Menu price changed after this request; create a new request'; end if;
++    update public.menu_items set price=v_price,updated_at=now() where id=a.entity_id;
++  end if;
++  update public.manager_approvals set state=case when p_approve then 'approved' else 'rejected' end,approved_by=auth.uid(),decided_at=now() where id=p_approval_id;
++end $$;
++revoke all on function public.decide_manager_approval(uuid,boolean) from public,anon;
++grant execute on function public.decide_manager_approval(uuid,boolean) to authenticated;
+-- 
+2.51.1
+
