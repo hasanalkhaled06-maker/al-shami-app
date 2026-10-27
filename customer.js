@@ -2601,6 +2601,9 @@
   }
 
   function findOfferMenuItem(offer) {
+    const linkedItems = new Set((Array.isArray(offer.menu_item_ids) ? offer.menu_item_ids : []).map(String));
+    const linkedMatch = products.find(item => linkedItems.has(String(item.id)) && item.is_available !== false);
+    if (linkedMatch) return linkedMatch;
     const text = normalizeMenuSearch([offer.title, offer.details].filter(Boolean).join(" "));
     if (!text) return null;
     const aliases = [
