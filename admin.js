@@ -2352,6 +2352,7 @@ Status: ${order.status}`;
             ${esc(offer.details || "")} ·
             ${offer.starts_at ? "Starts " + esc(offerDateInputValue(offer.starts_at)) : "Start date not set"} ·
             ${offer.ends_at ? "Ends " + esc(offerDateInputValue(offer.ends_at)) : "End date not set"} ·
+            ${offer.price != null ? "Price " + esc(money(Number(offer.price))) : "Price not set"} ·
             ${offer.is_active ? "Active" : "Inactive"}
           </small>
         </div>
@@ -2379,6 +2380,7 @@ Status: ${order.status}`;
           form.elements.id.value = offer.id;
           form.elements.title.value = offer.title;
           form.elements.details.value = offer.details || "";
+          form.elements.price.value = offer.price == null ? "" : String(offer.price);
           form.elements.starts_at.value = offerDateInputValue(offer.starts_at);
           form.elements.ends_at.value = offerDateInputValue(offer.ends_at);
           const includedItems = new Set((offer.menu_item_ids || []).map(String));
@@ -2447,6 +2449,13 @@ Status: ${order.status}`;
 
     const form = event.currentTarget;
 
+    const rawPrice = String(form.elements.price.value || "").trim();
+    const offerPrice = Number(rawPrice);
+    if (!rawPrice || !Number.isFinite(offerPrice) || offerPrice <= 0) {
+      status("Enter an offer price greater than zero.", "#offer-message", true);
+      form.elements.price.focus();
+      return;
+    }
     const startsOn = String(form.elements.starts_at.value || "").trim();
     const endsOn = String(form.elements.ends_at.value || "").trim();
     if (startsOn && endsOn && endsOn < startsOn) {
@@ -2457,6 +2466,7 @@ Status: ${order.status}`;
     const data = {
       title: form.elements.title.value.trim(),
       details: form.elements.details.value.trim() || null,
+      price: Math.round(offerPrice * 100) / 100,
       is_active: form.elements.is_active.checked,
       starts_at: startsOn ? new Date(startsOn + "T00:00:00").toISOString() : null,
       ends_at: endsOn ? new Date(endsOn + "T23:59:59").toISOString() : null,
