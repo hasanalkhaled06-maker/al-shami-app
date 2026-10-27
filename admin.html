@@ -124,6 +124,12 @@
   .delete-order-btn{background:#8d1723!important;color:#fff!important;border:1px solid #70111b!important}
   .delete-order-btn:hover{background:#b62a36!important}
   .delete-order-btn:disabled{opacity:.6;cursor:wait}
+  .order-card.is-new.is-overdue{border-color:#bd3d35;box-shadow:0 0 0 2px rgba(189,61,53,.14)}
+  .order-wait-badge{display:inline-flex;align-items:center;margin-inline-start:6px;padding:3px 8px;border-radius:999px;background:#eef3f7;color:#36536a;font-size:.82em;font-weight:800;white-space:nowrap}
+  .order-wait-badge.is-overdue{background:#fde7e4;color:#a52720}
+  .order-quick-action{min-height:42px;font-weight:800}
+  #order-results-count{margin:8px 0 0;font-weight:700}
+  @media(max-width:560px){#tab-orders .section-heading{gap:8px}#tab-orders .section-heading>*{min-width:0;max-width:100%}#tab-orders #order-search{flex:1 1 100%}}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="app-refresh.css?v=light-premium-20261023b">
@@ -342,7 +348,7 @@
           
         </div>
 
-        <select id="order-filter">
+        <select id="order-filter" aria-label="Filter orders by status">
           <option value="all">All orders</option>
           <option value="new">New</option>
           <option value="accepted">Accepted</option>
@@ -350,6 +356,11 @@
           <option value="ready">Ready</option>
           <option value="out_for_delivery">Out for delivery</option>
           <option value="rejected">Rejected</option>
+        </select>
+        <select id="order-type-filter" aria-label="Filter orders by type">
+          <option value="all">All order types</option>
+          <option value="delivery">Delivery</option>
+          <option value="pickup">Pickup</option>
         </select>
       </div>
 
@@ -360,10 +371,12 @@
         <p id="receipt-confirm-message" class="status-message" role="status"></p>
       </form>
 
-      <div class="section-heading" aria-label="Search and export orders">
+      <div class="section-heading" aria-label="Search, filter and export orders">
         <input id="order-search" type="search" placeholder="Search orders…" aria-label="Search orders" autocomplete="off">
+        <button id="clear-order-filters" class="btn btn-light" type="button">Clear filters</button>
         <button id="export-orders" class="btn btn-light" type="button">Export CSV</button>
       </div>
+      <p id="order-results-count" class="muted" role="status" aria-live="polite">Orders will appear here.</p>
 
       <div id="orders-list" class="orders-list">
         <p class="muted">Sign in to load orders.</p>
@@ -604,7 +617,7 @@
 
 <script src="config.js"></script>
 <script src="order-workflow.js?v=order-flow-guard-20261026a"></script>
-<script src="admin.js?v=staff-user-roles-20261026d"></script>
+<script src="admin.js?v=cashier-order-ux-20261027a"></script>
 <script src="admin-operations.js?v=radical-ui-20261023a"></script>
 <script src="admin-delivery-ops.js?v=operations-settings-20261025c"></script>
 <script src="pwa.js"></script>
