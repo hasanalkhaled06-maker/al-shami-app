@@ -601,6 +601,25 @@
     }
   }
 
+  async function refreshCustomerSessionOnResume() {
+    if (!db || document.visibilityState === "hidden") return;
+    try {
+      // Installed PWAs can be suspended in the background. Refresh the saved
+      // Supabase session when the customer returns to the app.
+      const { data, error } = await db.auth.getSession();
+      if (error) throw error;
+      applyAuthState(data.session);
+    } catch (error) {
+      // Do not force a sign-in screen for a temporary network interruption.
+      console.warn("Customer session restore on resume failed:", error);
+    }
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") void refreshCustomerSessionOnResume();
+  });
+  window.addEventListener("pageshow", () => void refreshCustomerSessionOnResume());
+
   $("#customer-auth-open")?.addEventListener("click", showAuthDialog);
   document.addEventListener("click", event => {
     const trigger = event.target?.closest?.("#customer-auth-open");
