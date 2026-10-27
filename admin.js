@@ -109,6 +109,7 @@
   let incomingRingTimer = null;
   let incomingDecisionInProgress = false;
 
+  const NEW_ORDER_ATTENTION_MS = 5 * 60 * 1000;
   const money = value => "GH₵ " + Number(value || 0).toFixed(2);
 
   const esc = value =>
@@ -985,6 +986,14 @@
   };
 
   $("#order-filter").onchange = renderOrders;
+  $("#order-type-filter")?.addEventListener("change", renderOrders);
+  $("#clear-order-filters")?.addEventListener("click", () => {
+    if ($("#order-filter")) $("#order-filter").value = "all";
+    if ($("#order-type-filter")) $("#order-type-filter").value = "all";
+    if ($("#order-search")) $("#order-search").value = "";
+    renderOrders();
+    $("#order-search")?.focus();
+  });
   $("#order-search")?.addEventListener("input", renderOrders);
   $("#history-search")?.addEventListener("input", renderHistory);
   $("#export-orders")?.addEventListener("click", exportVisibleOrders);
@@ -1417,10 +1426,12 @@
 
   function visibleOrders() {
     const filter = $("#order-filter")?.value || "all";
+    const typeFilter = $("#order-type-filter")?.value || "all";
     const query = String($("#order-search")?.value || "").trim().toLowerCase();
 
     return orders.filter(order => {
       const matchesStatus = filter === "all" || order.status === filter;
+      const matchesType = typeFilter === "all" || order.order_type === typeFilter;
       const searchable = [
         order.order_number,
         order.id,
@@ -1431,9 +1442,53 @@
         order.status,
         ...(order.order_items || []).map(item => item.item_name || item.menu_items?.name || "")
       ].join(" ").toLowerCase();
-      return matchesStatus && (!query || searchable.includes(query));
+      return matchesStatus && matchesType && (!query || searchable.includes(query));
     });
   }
+
+  function compareQueuePriority(a, b) {
+    const aIsNew = a.status === "new", bIsNew = b.status === "new";
+    if (aIsNew !== bIsNew) return aIsNew ? -1 : 1;
+    const aCreated = Date.parse(a.created_at || "") || 0;
+    const bCreated = Date.parse(b.created_at || "") || 0;
+    return aIsNew ? aCreated - bCreated : bCreated - aCreated;
+  }
+
+  function formatOrderAge(elapsedMs) {
+    const minutes = Math.floor(Math.max(0, elapsedMs) / 60000);
+    if (minutes < 60) return minutes + "m";
+    return Math.floor(minutes / 60) + "h " + (minutes % 60) + "m";
+  }
+
+  function updateOrderWaitBadges() {
+    const now = Date.now();
+    document.querySelectorAll("[data-order-created-at]").forEach(badge => {
+      const createdAt = Date.parse(badge.dataset.orderCreatedAt || "");
+      if (!Number.isFinite(createdAt)) {
+        badge.textContent = "Time unavailable";
+        return;
+      }
+      const elapsedMs = Math.max(0, now - createdAt);
+      const isNew = badge.closest(".order-card")?.classList.contains("is-new");
+      const overdue = Boolean(isNew && elapsedMs >= NEW_ORDER_ATTENTION_MS);
+      const ageText = formatOrderAge(elapsedMs);
+      badge.textContent = (isNew ? "Waiting " : "Age ") + ageText;
+      badge.classList.toggle("is-overdue", overdue);
+      badge.closest(".order-card")?.classList.toggle("is-overdue", overdue);
+      badge.setAttribute("aria-label", overdue ? "Waiting " + ageText + "; needs attention" : (isNew ? "Waiting " : "Order age ") + ageText);
+    });
+  }
+
+  function primaryOrderAction(order) {
+    const allowed = (window.AL_SHAMI_ORDER_WORKFLOW?.nextStatuses(order) || []).filter(value =>
+      accessMode === "owner" ||
+      (currentRole === "cashier" && ["accepted", "rejected"].includes(value)) ||
+      (currentRole === "kitchen" && ["preparing", "ready"].includes(value))
+    );
+    return ["accepted", "preparing", "ready", "out_for_delivery", "completed", "rejected"].find(value => allowed.includes(value)) || "";
+  }
+
+  window.setInterval(updateOrderWaitBadges, 15000);
 
   function exportVisibleOrders() {
     const selected = visibleOrders();
@@ -1478,7 +1533,10 @@
     const selectedOrderFilter = $("#order-filter")?.value || "all";
     const filteredOrders = visibleOrders().filter(order =>
       order.status !== "completed" && (order.status !== "rejected" || selectedOrderFilter === "rejected")
-    );
+    ).sort(compareQueuePriority);
+    const activeOrderCount = orders.filter(order => !["completed", "rejected"].includes(order.status)).length;
+    const resultsCount = $("#order-results-count");
+    if (resultsCount) resultsCount.textContent = "Showing " + filteredOrders.length + " " + (filteredOrders.length === 1 ? "order" : "orders") + " · " + activeOrderCount + " active overall";
 
     $("#orders-list").innerHTML = filteredOrders.length
       ? filteredOrders.map(order => `
@@ -1495,6 +1553,7 @@
                 ${new Date(order.created_at).toLocaleString()}
                 · ${esc(order.customer_name)}
                 · ${esc(order.customer_phone)}
+                · <span class="order-wait-badge" data-order-created-at="${esc(order.created_at)}"></span>
               </div>
             </div>
 
@@ -1559,6 +1618,7 @@
                 `).join("")}
               </select>
 
+              ${primaryOrderAction(order) ? `<button class="btn btn-primary order-quick-action" data-quick-order="${esc(order.id)}" data-quick-status="${esc(primaryOrderAction(order))}" type="button">${esc(window.AL_SHAMI_ORDER_WORKFLOW.actionLabel(primaryOrderAction(order)))}</button>` : ""}
               <button class="btn btn-light" data-copy="${order.id}">
                 Copy details
               </button>
@@ -1569,6 +1629,7 @@
       `).join("")
       : '<p class="muted">No orders in this view.</p>';
 
+    updateOrderWaitBadges();
     $("#orders-list")
       .querySelectorAll("[data-status]")
       .forEach(select => {
@@ -1585,6 +1646,18 @@
           });
         };
       });
+
+    $("#orders-list").querySelectorAll("[data-quick-order]").forEach(button => {
+      button.onclick = () => {
+        const nextStatus = button.dataset.quickStatus;
+        if (!nextStatus) return;
+        if (nextStatus === "rejected" && !window.confirm("Reject this new order? The customer will be notified.")) return;
+        button.disabled = true;
+        void updateStatus(button.dataset.quickOrder, nextStatus).finally(() => {
+          if (button.isConnected) button.disabled = false;
+        });
+      };
+    });
 
     $("#orders-list")
       .querySelectorAll("[data-copy]")
