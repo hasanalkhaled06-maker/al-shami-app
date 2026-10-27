@@ -17,8 +17,8 @@
           auth: {
             // Keep management sessions isolated from customer and rider sessions.
             storageKey: "al-shami-admin-auth-v1",
-            // Each cashier/admin must choose and authenticate their own account at startup.
-            persistSession: false,
+            // Keep the signed-in cashier account on this device until explicit sign-out.
+            persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true
           }
@@ -28,9 +28,9 @@
   const ownerDb = ready
     ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {
         auth: {
-          // Owner access is re-entered on each unlock and never persisted on a shared laptop.
+          // Keep owner access isolated from cashier and customer sessions, and restore it on this device.
           storageKey: "al-shami-owner-auth-v1",
-          persistSession: false,
+          persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: false
         }
@@ -76,7 +76,6 @@
 
   let currentUser = null;
   let currentRole = null;
-  let ownerLockTimer = null;
   let recoveryReturnToDashboard = false;
   let orders = [];
   let products = [];
@@ -603,23 +602,7 @@
       }
       showAdminHome();
     }
-    if (mode !== "owner") {
-      clearTimeout(ownerLockTimer);
-      ownerLockTimer = null;
-    } else {
-      refreshOwnerLockTimer();
-    }
   }
-
-  function refreshOwnerLockTimer() {
-    if (accessMode !== "owner") return;
-    clearTimeout(ownerLockTimer);
-    ownerLockTimer = setTimeout(() => $("#lock-admin")?.click(), 10 * 60 * 1000);
-  }
-
-  ["pointerdown", "keydown", "touchstart"].forEach(eventName => {
-    document.addEventListener(eventName, refreshOwnerLockTimer, { passive: true });
-  });
 
   async function showDashboard() {
     const authorized = await isAdmin();
@@ -684,10 +667,8 @@
   async function start() {
     if (!selectedDb) {
       setConnection("Setup required");
-
       $("#login-message").textContent =
         "Check the Supabase URL and public key in config.js.";
-
       return;
     }
 
@@ -700,34 +681,34 @@
         }
       }
 
-      if (isDeviceSetupComplete()) {
-        await Promise.allSettled([staffDb.auth.signOut(), ownerDb.auth.signOut()]);
-        selectedDb = staffDb;
-        currentUser = null;
-        currentRole = null;
-        setConnection("Choose a user");
-        showUserPicker();
-        return;
+      // Restore the last signed-in role first. The two profiles use isolated
+      // storage keys, so an owner session cannot be mistaken for a cashier.
+      const { data: ownerData, error: ownerError } = await ownerDb.auth.getSession();
+      if (ownerError) throw ownerError;
+      if (ownerData.session) {
+        selectedDb = ownerDb;
+        currentUser = ownerData.session.user;
+        currentRole = "owner";
+        await showDashboard();
+        if (accessMode === "owner") return;
       }
 
-      const { data, error } = await staffDb.auth.getSession();
-
-      if (error) throw error;
-
-      if (data.session) {
-        currentUser = data.session.user;
-        if (new URLSearchParams(window.location.search).get("password_recovery") === "1") {
-          showPasswordRecoverySet();
-          return;
-        }
-        const existingAdmin = await isAdmin();
-        if (existingAdmin) {
-          await staffDb.auth.signOut();
-          currentUser = null;
-          setConnection("Owner password required");
-          return;
-        }
+      const { data: staffData, error: staffError } = await staffDb.auth.getSession();
+      if (staffError) throw staffError;
+      if (staffData.session) {
+        selectedDb = staffDb;
+        currentUser = staffData.session.user;
+        currentRole = null;
         await showDashboard();
+        if (accessMode === "staff") return;
+      }
+
+      selectedDb = staffDb;
+      currentUser = null;
+      currentRole = null;
+      if (isDeviceSetupComplete()) {
+        setConnection("Choose a user");
+        showUserPicker();
       } else {
         setConnection("Ready to sign in");
       }
