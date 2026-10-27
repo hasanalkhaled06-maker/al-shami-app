@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v133";
+const CACHE_NAME = CACHE_PREFIX + "v134";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -20,6 +20,7 @@ const SHELL_FILES = [
   "./style.css?v=radical-ui-20261023a",
   "./style.css?v=offers-3d-20261027a",
   "./style.css?v=offers-sticky-20261027b",
+  "./style.css?v=offer-price-20261027a",
   "./dark-theme.css?v=shami-wordmark-cleanup-20261023q",
   "./style.css?v=modern-ui-20261023a",
   "./config.js",
@@ -38,6 +39,7 @@ const SHELL_FILES = [
   "./customer.js?v=offers-3d-20261027a",
   "./customer.js?v=offers-top-20261027b",
   "./customer.js?v=offers-sticky-20261027c",
+  "./customer.js?v=offer-price-20261027d",
   "./customer-features.js?v=account-settings-20261025c",
   "./customer-features.js?v=customer-points-20261025a",
   "./customer-features.js?v=delivery-complete-20261025a",
@@ -50,6 +52,7 @@ const SHELL_FILES = [
   "./admin.js?v=login-persistence-20261027a",
   "./admin.js?v=usability-batch1-20261027a",
   "./admin.js?v=offers-admin-20261027a",
+  "./admin.js?v=offer-price-20261027b",
   "./order-workflow.js?v=order-flow-guard-20261026a",
   "./admin-operations.js",
   "./admin-operations.js?v=radical-ui-20261023a",
