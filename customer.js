@@ -2649,7 +2649,7 @@
       "أضفنا " + product.name + " إلى السلة.",
       "Yɛde " + product.name + " aka wo basket ho."
     );
-    $("#checkout-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    $(".checkout-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function renderOffers() {
