@@ -498,6 +498,15 @@
         <p id="offer-message" class="status-message full"></p>
       </form>
 
+      <hr>
+      <h3>Restaurant announcement</h3>
+      <p class="muted">Send a short update to customers who enabled promotions and device notifications.</p>
+      <form id="customer-announcement-form" class="form-grid admin-form">
+        <label>Announcement title<input name="title" required maxlength="100" placeholder="New this week"></label>
+        <label>Message<input name="body" required maxlength="300" placeholder="Tell customers what changed"></label>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">Send announcement</button></div>
+        <p id="customer-announcement-message" class="status-message full" role="status"></p>
+      </form>
       <div id="offers-list" class="admin-menu-list"></div>
     </section>
 
@@ -617,7 +626,7 @@
 
 <script src="config.js"></script>
 <script src="order-workflow.js?v=order-flow-guard-20261026a"></script>
-<script src="admin.js?v=cashier-order-ux-20261027a"></script>
+<script src="admin.js?v=push-notifications-20261027a"></script>
 <script src="admin-operations.js?v=radical-ui-20261023a"></script>
 <script src="admin-delivery-ops.js?v=operations-settings-20261025c"></script>
 <script src="pwa.js"></script>
