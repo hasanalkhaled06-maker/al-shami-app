@@ -2389,6 +2389,11 @@ Status: ${order.status}`;
           });
           form.elements.is_active.checked = offer.is_active;
           form.dataset.offerWasActive = offer.is_active ? "true" : "false";
+          form.dataset.offerEditing = "true";
+          $("#offer-form-title").textContent = "Edit offer: " + offer.title;
+          form.querySelector('button[type="submit"]').textContent = "Update offer";
+          status("Offer loaded. Change the fields, then tap Update offer.", "#offer-message");
+          form.scrollIntoView({ behavior: "smooth", block: "start" });
         };
       });
 
@@ -2498,13 +2503,23 @@ Status: ${order.status}`;
     form.elements.id.value = "";
     form.elements.is_active.checked = true;
     delete form.dataset.offerWasActive;
+    delete form.dataset.offerEditing;
+    $("#offer-form-title").textContent = "Create an offer";
+    form.querySelector('button[type="submit"]').textContent = "Save offer";
 
     await loadOffers();
   };
 
   $("#cancel-offer").onclick = () => {
-    $("#offer-form").reset();
-    $("#offer-form").elements.id.value = "";
+    const form = $("#offer-form");
+    form.reset();
+    form.elements.id.value = "";
+    delete form.dataset.offerWasActive;
+    delete form.dataset.offerEditing;
+    $("#offer-form-title").textContent = "Create an offer";
+    form.querySelector('button[type="submit"]').textContent = "Save offer";
+    $("#offer-message").textContent = "";
+    $("#offer-message").className = "status-message full";
   };
 
   let deliveryZones = [];
