@@ -117,7 +117,7 @@ Deno.serve(async (req: Request) => {
           adminHeaders,
         );
         profile = Array.isArray(profiles) ? profiles[0] : null;
-        if (!profile?.user_id || profile.is_active !== true || profile.employment_status !== "active" || !["cashier", "kitchen"].includes(String(profile.role))) {
+        if (!profile?.user_id || profile.is_active !== true || profile.employment_status !== "active" || String(profile.role) !== "cashier") {
           return json({ error: "Incorrect username or password, or this user is inactive." }, 401, origin);
         }
         role = String(profile.role);
@@ -211,7 +211,7 @@ Deno.serve(async (req: Request) => {
         });
         await requestJson(`${rest}/staff_profiles`, { ...adminHeaders, Prefer: "return=minimal" }, {
           method: "POST",
-          body: JSON.stringify({ user_id: userId, full_name: fullName, email, role, is_active: true, employment_status: "active", position_title: role === "cashier" ? "Cashier" : "Kitchen" }),
+          body: JSON.stringify({ user_id: userId, full_name: fullName, email, role, is_active: true, employment_status: "active", position_title: "Cashier" }),
         });
       } catch (error) {
         await fetch(`${auth}/admin/users/${encodeURIComponent(userId)}`, { method: "DELETE", headers: adminHeaders });
