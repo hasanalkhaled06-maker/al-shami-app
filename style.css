@@ -370,3 +370,30 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .customer-rider-google-maps:hover{background:#f7edda}
 .customer-rider-google-maps[hidden]{display:none!important}
 @media(max-width:600px){.customer-rider-eta{align-items:stretch;padding:10px}.customer-rider-eta-main{flex-basis:100%}.customer-rider-google-maps{width:100%;box-sizing:border-box}}
+
+
+/* Animated 3D offer cards for the customer menu */
+.offer-wall{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin:2px 0 24px;perspective:900px}
+.offer-float-card{position:relative;overflow:hidden;padding:17px 18px 15px;border:1px solid #9be1b1;border-radius:20px;background:radial-gradient(circle at 92% 0%,rgba(225,255,233,.28),transparent 38%),linear-gradient(145deg,#138244 0%,#08703a 54%,#075b32 100%);color:#fff;box-shadow:0 12px 24px rgba(7,91,50,.24),inset 0 1px rgba(255,255,255,.22);transform-style:preserve-3d;animation:offer3DShake 3.8s ease-in-out infinite}
+.offer-float-card::after{content:"";position:absolute;right:-36px;top:-52px;width:138px;height:138px;border:1px solid rgba(255,255,255,.18);border-radius:50%;box-shadow:0 0 0 13px rgba(255,255,255,.035),0 0 0 26px rgba(255,255,255,.025);pointer-events:none}
+.offer-badge{display:inline-flex;align-items:center;min-height:23px;padding:4px 9px;border:1px solid rgba(255,255,255,.38);border-radius:99px;background:rgba(255,255,255,.12);color:#f8e6a8;font-size:9px;font-weight:900;letter-spacing:.12em}
+.offer-card-title{position:relative;z-index:1;margin:9px 0 4px;color:#fff;font-size:clamp(17px,4vw,21px);font-weight:900;line-height:1.3;text-shadow:0 2px 5px rgba(0,0,0,.17)}
+.offer-card-summary{position:relative;z-index:1;margin:0;color:#effff3;font-size:13px;line-height:1.5}
+.offer-card-dates{position:relative;z-index:1;margin:10px 0 13px;color:#d7f6df;font-size:11px;font-weight:750;line-height:1.5}
+.offer-card-actions{position:relative;z-index:2;display:flex;gap:9px;flex-wrap:wrap}
+.offer-card-actions button{display:inline-flex;align-items:center;justify-content:center;flex:1 1 125px;min-height:43px;padding:9px 12px;border:1px solid rgba(255,255,255,.65);border-radius:12px;font:inherit;font-size:12px;font-weight:900;cursor:pointer;transition:transform .16s ease,filter .16s ease,box-shadow .16s ease}
+.offer-card-actions button:hover{transform:translateY(-2px);filter:brightness(1.06)}
+.offer-details-button{background:#fff;color:#126338;box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.offer-add-button{background:linear-gradient(120deg,#f6dc94,#e8bb58);color:#3d2c0b;box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.offer-feedback{position:relative;z-index:1;margin:8px 0 0;color:#e8ffe9;font-size:11px;line-height:1.45}
+.offer-feedback:empty{display:none}
+.offer-details-backdrop{position:fixed;inset:0;z-index:30000;display:grid;place-items:center;padding:18px;background:rgba(23,10,12,.68);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.offer-details-backdrop[hidden]{display:none!important}
+.offer-details-panel{position:relative;box-sizing:border-box;width:min(460px,100%);padding:27px 23px 22px;border:1px solid #d9eddf;border-radius:22px;background:#fffdf8;color:#302629;box-shadow:0 24px 70px rgba(0,0,0,.32)}
+.offer-details-panel h2{margin:0 34px 12px 0;color:#0c7139;font-size:22px;line-height:1.3}
+.offer-details-panel p{margin:0 0 13px;line-height:1.6;overflow-wrap:anywhere}
+.offer-details-panel .offer-details-dates{padding:11px 12px;border-radius:11px;background:#eff8f1;color:#24613a;font-size:12px;font-weight:750}
+.offer-details-close{position:absolute;top:10px;right:11px;width:38px;height:38px;border:1px solid #e4ddd5;border-radius:50%;background:#fff;color:#54202a;font-size:25px;line-height:1;cursor:pointer}
+@keyframes offer3DShake{0%,100%{transform:rotateX(0) rotateY(0) rotateZ(0);box-shadow:0 12px 24px rgba(7,91,50,.24),inset 0 1px rgba(255,255,255,.22)}25%{transform:rotateX(.7deg) rotateY(-1deg) rotateZ(-.25deg);box-shadow:0 14px 26px rgba(7,91,50,.27),inset 0 1px rgba(255,255,255,.22)}50%{transform:rotateX(-.6deg) rotateY(1deg) rotateZ(.2deg)}75%{transform:rotateX(.5deg) rotateY(-.5deg) rotateZ(-.15deg)}}
+@media(max-width:480px){.offer-wall{grid-template-columns:1fr;gap:10px}.offer-float-card{padding:15px;border-radius:17px}.offer-card-actions button{flex-basis:115px}}
+@media(prefers-reduced-motion:reduce){.offer-float-card{animation:none!important}}
