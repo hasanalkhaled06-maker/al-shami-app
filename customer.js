@@ -2380,10 +2380,24 @@
     });
   }
 
+  function getCartEntry(id) {
+    const key = String(id);
+    if (key.startsWith("offer:")) {
+      const offerId = key.slice(6);
+      const offer = offers.find(item => String(item.id) === offerId);
+      const price = Number(offer?.price);
+      if (!offer || !Number.isFinite(price) || price <= 0) return null;
+      return { type: "offer", id: key, offer, name: offer.title || tr("offer"), price };
+    }
+    const product = products.find(item => String(item.id) === key && item.is_available !== false);
+    if (!product) return null;
+    return { type: "product", id: key, product, name: product.name || "Menu item", price: Number(product.price || 0) };
+  }
+
   function getCartRows() {
     return Object.entries(cart).filter(([id, quantity]) =>
-      Number(quantity) > 0 &&
-      products.some(product => String(product.id) === String(id) && product.is_available !== false)
+      Number.isInteger(Number(quantity)) && Number(quantity) > 0 && Number(quantity) <= 50 &&
+      Boolean(getCartEntry(id))
     );
   }
 
@@ -2404,8 +2418,8 @@
 
   function calculateSubtotal(rows = getCartRows()) {
     return rows.reduce((sum, [id, quantity]) => {
-      const product = products.find(item => String(item.id) === String(id));
-      return sum + Number(product?.price || 0) * Number(quantity || 0);
+      const item = getCartEntry(id);
+      return sum + Number(item?.price || 0) * Number(quantity || 0);
     }, 0);
   }
 
@@ -2429,27 +2443,27 @@
 
     cartItems.innerHTML = rows.length
       ? rows.map(([id, quantity]) => {
-          const product = products.find(item => String(item.id) === String(id));
+          const item = getCartEntry(id);
 
           return `
             <div class="cart-row">
               <div class="cart-name">
-                <strong>${escapeHTML(product.name)}</strong>
-                <small>${money(product.price)} each</small>
+                <strong>${escapeHTML(item.name)}</strong>
+                <small>${money(item.price)} each</small>
               </div>
               <label class="cart-item-note">${escapeHTML(localized("Note for this item (optional)", "ملاحظة لهالصنف (اختياري)", "Note for this item (optional)"))}
                 <textarea data-item-note="${escapeHTML(id)}" maxlength="500" rows="2">${escapeHTML(cartItemNotes[id] || "")}</textarea>
               </label>
-              <div class="qty-controls" aria-label="Quantity controls for ${escapeHTML(product.name)}">
+              <div class="qty-controls" aria-label="Quantity controls for ${escapeHTML(item.name)}">
                 <button type="button" data-dec="${escapeHTML(id)}"
-                  aria-label="${lang === "ar" ? "إنقاص كمية " : lang === "tw" ? "Te dodow so " : "Decrease quantity of "}${escapeHTML(product.name)}">−</button>
+                  aria-label="${lang === "ar" ? "إنقاص كمية " : lang === "tw" ? "Te dodow so " : "Decrease quantity of "}${escapeHTML(item.name)}">−</button>
                 <strong aria-label="${localized("Quantity ", "الكمية ", "Dodow ")}${Number(quantity)}">${Number(quantity)}</strong>
                 <button type="button" data-inc="${escapeHTML(id)}"
-                  aria-label="${lang === "ar" ? "زيادة كمية " : lang === "tw" ? "Ma dodow nyin " : "Increase quantity of "}${escapeHTML(product.name)}">+</button>
+                  aria-label="${lang === "ar" ? "زيادة كمية " : lang === "tw" ? "Ma dodow nyin " : "Increase quantity of "}${escapeHTML(item.name)}">+</button>
                 <button type="button" class="btn-remove-item" data-remove="${escapeHTML(id)}"
-                  aria-label="${tr("remove")} ${escapeHTML(product.name)}">${tr("remove")}</button>
+                  aria-label="${tr("remove")} ${escapeHTML(item.name)}">${tr("remove")}</button>
               </div>
-              <strong>${money(Number(product.price) * Number(quantity))}</strong>
+              <strong>${money(Number(item.price) * Number(quantity))}</strong>
             </div>
           `;
         }).join("")
@@ -2503,7 +2517,7 @@
         const id = button.dataset.dec;
         cart[id] = Number(cart[id] || 0) - 1;
 
-        const product = products.find(item => String(item.id) === String(id));
+        const item = getCartEntry(id);
         const removed = cart[id] <= 0;
         if (removed) {
           delete cart[id];
@@ -2512,31 +2526,31 @@
         }
         persistCart();
         renderCart();
-        if (product) announceCartChange(removed ? "cartRemoved" : "cartQuantity", product.name, removed ? undefined : cart[id]);
+        if (item) announceCartChange(removed ? "cartRemoved" : "cartQuantity", item.name, removed ? undefined : cart[id]);
       });
     });
 
     cartItems.querySelectorAll("[data-inc]").forEach(button => {
       button.addEventListener("click", () => {
         const id = button.dataset.inc;
-        const product = products.find(item => String(item.id) === String(id));
+        const item = getCartEntry(id);
         cart[id] = Math.min(50, Number(cart[id] || 0) + 1);
         persistCart();
         renderCart();
-        if (product) announceCartChange("cartQuantity", product.name, cart[id]);
+        if (item) announceCartChange("cartQuantity", item.name, cart[id]);
       });
     });
 
     cartItems.querySelectorAll("[data-remove]").forEach(button => {
       button.addEventListener("click", () => {
         const id = button.dataset.remove;
-        const product = products.find(item => String(item.id) === String(id));
+        const item = getCartEntry(id);
         delete cart[id];
         delete cartItemNotes[id];
         persistCartItemNotes();
         persistCart();
         renderCart();
-        if (product) announceCartChange("cartRemoved", product.name);
+        if (item) announceCartChange("cartRemoved", item.name);
       });
     });
   }
@@ -2574,6 +2588,9 @@
     const details = document.createElement("p");
     details.id = "offer-details-copy";
 
+    const price = document.createElement("p");
+    price.id = "offer-details-price";
+    price.className = "offer-details-price";
     const dates = document.createElement("p");
     dates.id = "offer-details-dates";
     dates.className = "offer-details-dates";
@@ -2582,7 +2599,7 @@
     dialog.addEventListener("click", event => {
       if (event.target === dialog) dialog.hidden = true;
     });
-    panel.append(close, title, details, dates);
+    panel.append(close, title, details, price, dates);
     dialog.append(panel);
     document.body.append(dialog);
     return dialog;
@@ -2592,6 +2609,9 @@
     const dialog = ensureOfferDetailsDialog();
     $("#offer-details-title").textContent = offer.title || tr("offer");
     $("#offer-details-copy").textContent = offer.details || localized("Ask our team for offer details.", "اسأل فريقنا عن تفاصيل العرض.", "Bisa yɛn adwumayɛfoɔ no ma wɔmfa offer no ho nsɛm mma wo.");
+    $("#offer-details-price").textContent = Number(offer.price) > 0
+      ? localized("Offer price: ", "سعر العرض: ", "Offer price: ") + money(offer.price)
+      : localized("Price not set yet", "السعر غير محدد بعد", "Price not set yet");
     $("#offer-details-dates").textContent =
       localized("Starts: ", "تاريخ البدء: ", "Ɛhyɛ ase: ") + offerDate(offer.starts_at, localized("Not set", "غير محدد", "Nni hɔ")) +
       " · " + localized("Ends: ", "تاريخ الانتهاء: ", "Ɛba awiei: ") + offerDate(offer.ends_at, localized("Not set", "غير محدد", "Nni hɔ"));
@@ -2599,61 +2619,27 @@
     window.requestAnimationFrame(() => $(".offer-details-close")?.focus());
   }
 
-  function findOfferMenuItem(offer) {
-    const linkedItems = new Set((Array.isArray(offer.menu_item_ids) ? offer.menu_item_ids : []).map(String));
-    const linkedMatch = products.find(item => linkedItems.has(String(item.id)) && item.is_available !== false);
-    if (linkedMatch) return linkedMatch;
-    const text = normalizeMenuSearch([offer.title, offer.details].filter(Boolean).join(" "));
-    if (!text) return null;
-    const aliases = [
-      { tokens: ["shawarma", "شاورما"], aliases: ["shawarma", "شاورما"] },
-      { tokens: ["pizza", "بيتزا"], aliases: ["pizza", "بيتزا"] },
-      { tokens: ["burger", "برغر", "برجر"], aliases: ["burger", "برغر", "برجر"] },
-      { tokens: ["chicken", "دجاج"], aliases: ["chicken", "دجاج"] },
-      { tokens: ["chips", "fries", "بطاطا", "شيبس"], aliases: ["chips", "fries", "بطاطا", "شيبس"] }
-    ];
-    const scores = products.filter(item => item.is_available !== false).map(item => {
-      const name = normalizeMenuSearch([item.name, item.category].filter(Boolean).join(" "));
-      const categoryName = normalizeMenuSearch(item.category || "");
-      let score = 0;
-      for (const group of aliases) {
-        const offerMatches = group.aliases.some(token => text.includes(normalizeMenuSearch(token)));
-        const itemMatches = group.aliases.some(token => name.includes(normalizeMenuSearch(token)));
-        if (offerMatches && itemMatches) {
-          score += 2;
-          if (categoryName === normalizeMenuSearch(group.tokens[0])) score += 1;
-        }
-      }
-      const nameWords = name.split(/\s+/).filter(word => word.length >= 4);
-      for (const word of nameWords) if (text.includes(word)) score += 1;
-      return { item, score };
-    }).filter(row => row.score > 0).sort((a, b) => b.score - a.score);
-    if (!scores.length || (scores[1] && scores[0].score === scores[1].score)) return null;
-    return scores[0].item;
-  }
-
   function addOfferItemToCart(offer, card) {
-    const product = findOfferMenuItem(offer);
     const feedback = card.querySelector(".offer-feedback");
-    if (!product) {
+    const price = Number(offer.price);
+    if (!Number.isFinite(price) || price <= 0) {
       if (feedback) feedback.textContent = localized(
-        "We couldn't match this offer to one menu item. Choose the items from the menu.",
-        "ما قدرنا نربط العرض بصنف واحد بوضوح. اختَر أصنافه من القائمة.",
-        "Yɛantumi anhu menu adeɛ baako a ɛne offer yi hyia. Paw nneɛma no wɔ menu no mu."
+        "The restaurant has not set a price for this offer yet.",
+        "المطعم لم يحدد سعر هذا العرض بعد.",
+        "The restaurant has not set a price for this offer yet."
       );
-      $("#menu")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
 
-    const id = String(product.id);
+    const id = "offer:" + String(offer.id);
     cart[id] = Math.min(50, Number(cart[id] || 0) + 1);
     persistCart();
     renderCart();
-    announceCartChange("cartQuantity", product.name, cart[id]);
+    announceCartChange("cartAdded", offer.title || tr("offer"), cart[id]);
     if (feedback) feedback.textContent = localized(
-      product.name + " added to your basket.",
-      "أضفنا " + product.name + " إلى السلة.",
-      "Yɛde " + product.name + " aka wo basket ho."
+      "Offer added to your basket.",
+      "أضفنا العرض إلى سلتك.",
+      "Offer added to your basket."
     );
     $(".checkout-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -2684,6 +2670,14 @@
       summary.className = "offer-card-summary";
       summary.textContent = offer.details || localized("Limited-time offer", "عرض لفترة محدودة", "Offer a ɛwɔ bere tiawa mu");
 
+      const price = document.createElement("p");
+      price.className = "offer-card-price";
+      const hasPrice = Number.isFinite(Number(offer.price)) && Number(offer.price) > 0;
+      price.classList.toggle("is-unset", !hasPrice);
+      price.textContent = hasPrice
+        ? localized("Offer price: ", "سعر العرض: ", "Offer price: ") + money(offer.price)
+        : localized("Price not set yet", "السعر غير محدد بعد", "Price not set yet");
+
       const dates = document.createElement("p");
       dates.className = "offer-card-dates";
       dates.textContent =
@@ -2702,7 +2696,10 @@
       const addButton = document.createElement("button");
       addButton.type = "button";
       addButton.className = "offer-add-button";
-      addButton.textContent = localized("Add to basket", "أضف للسلة", "Fa ka basket ho");
+      addButton.textContent = hasPrice
+        ? localized("Add to basket", "أضف للسلة", "Fa ka basket ho")
+        : localized("Price not set", "السعر غير محدد", "Price not set");
+      addButton.disabled = !hasPrice;
       addButton.addEventListener("click", () => addOfferItemToCart(offer, card));
 
       const feedback = document.createElement("p");
@@ -2711,7 +2708,7 @@
       feedback.setAttribute("aria-live", "polite");
 
       actions.append(detailsButton, addButton);
-      card.append(badge, heading, summary, dates, actions, feedback);
+      card.append(badge, heading, summary, price, dates, actions, feedback);
       wall.append(card);
     });
 
@@ -2823,7 +2820,7 @@
       );
       cart = Object.fromEntries(Object.entries(cart).filter(([id, quantity]) =>
         Number.isInteger(Number(quantity)) && Number(quantity) > 0 && Number(quantity) <= 50 &&
-        products.some(product => String(product.id) === String(id) && product.is_available !== false)
+        Boolean(getCartEntry(id))
       ));
       persistCart();
       deliveryFee = Math.max(0, Number(settingsResult.data?.delivery_fee || 0));
@@ -2864,7 +2861,7 @@
 
   function offersCatalogSignature(items) {
     return JSON.stringify((items || []).map(offer => [
-      offer.id, offer.title, offer.details, offer.starts_at, offer.ends_at
+      offer.id, offer.title, offer.details, offer.price, offer.starts_at, offer.ends_at
     ]));
   }
 
@@ -2898,8 +2895,6 @@
       const menuChanged = menuCatalogSignature(nextProducts) !== menuCatalogSignature(products);
       const offersChanged = offersCatalogSignature(nextOffers) !== offersCatalogSignature(offers);
       if (!menuChanged && !offersChanged) return;
-      const hasNewOffer = nextOffers.some(next => !offers.some(current => String(current.id) === String(next.id)));
-
       if (menuChanged) {
         products = nextProducts;
         menuFeatureDetailsAvailable = true;
@@ -2915,6 +2910,7 @@
       if (offersChanged) {
         offers = nextOffers;
         renderOffers();
+        renderCart();
       }
     } catch (error) {
       console.warn("Customer menu/offers refresh failed; keeping the last loaded catalog.", error);
@@ -3301,7 +3297,16 @@
         ? (deliveryZone ? Number(deliveryZone.delivery_fee) : deliveryFee)
         : 0;
       const submittedTotal = subtotal + selectedDeliveryFee;
-      const itemPreparationMinutes = rows.map(([id]) => Number(products.find(product => String(product.id) === String(id))?.prep_minutes || 0));
+      const itemPreparationMinutes = rows.map(([id]) => {
+        const item = getCartEntry(id);
+        if (item?.type === "offer") {
+          const includedIds = new Set((item.offer.menu_item_ids || []).map(String));
+          return Math.max(0, ...products
+            .filter(product => includedIds.has(String(product.id)))
+            .map(product => Number(product.prep_minutes || 0)));
+        }
+        return Number(item?.product?.prep_minutes || 0);
+      });
       const maxPreparationMinutes = itemPreparationMinutes.length ? Math.max(...itemPreparationMinutes) : 0;
       const configuredPreparationMinutes = maxPreparationMinutes || Number(defaultPrepMinutes || 0);
       const configuredTravelMinutes = orderType === "pickup" ? 0 : Number(deliveryZone?.estimated_delivery_minutes || defaultDeliveryMinutes || 0);
@@ -3316,8 +3321,9 @@
         localized("Name: ", "الاسم: ", "Din: ") + customerName,
         localized("Phone: ", "الهاتف: ", "Telefon: ") + normalizedPhone,
         ...rows.map(([id, quantity]) => {
-          const product = products.find(item => String(item.id) === String(id));
-          return `${quantity} × ${product?.name || "Item"}${cartItemNotes[id] ? " — " + cartItemNotes[id] : ""}`;
+          const item = getCartEntry(id);
+          const lineTotal = Number(item?.price || 0) * Number(quantity || 0);
+          return `${quantity} × ${item?.name || "Item"} · ${money(lineTotal)}${cartItemNotes[id] ? " — " + cartItemNotes[id] : ""}`;
         }),
         ...(orderType === "delivery" ? [localized("Delivery address: ", "عنوان التوصيل: ", "Delivery address: ") + address] : []),
         ...(deliveryZone ? [localized("Delivery zone: ", "منطقة التوصيل: ", "Delivery zone: ") + deliveryZone.name] : []),
@@ -3332,11 +3338,14 @@
       ].join("\n");
       if (!window.confirm(localized("Review your order before sending:\n\n", "راجع طلبك قبل الإرسال:\n\n", "Hwɛ wo order no ansa na woasoma:\n\n") + orderSummary)) return;
 
-      const submittedItems = rows.map(([product_id, quantity]) => ({
-        product_id,
-        quantity: Number(quantity),
-        item_note: String(cartItemNotes[product_id] || "").trim() || null
-      }));
+      const submittedItems = rows.map(([id, quantity]) => {
+        const item = getCartEntry(id);
+        const item_note = String(cartItemNotes[id] || "").trim() || null;
+        if (item?.type === "offer") {
+          return { offer_id: item.offer.id, expected_price: item.price, quantity: Number(quantity), item_note };
+        }
+        return { product_id: item.product.id, quantity: Number(quantity), item_note };
+      });
 
       submitting = true;
 
@@ -3351,8 +3360,10 @@
         const pickupNote = orderType === "pickup" ? String(formData.get("pickup_instructions") || "").trim() : "";
         const itemNotesForLegacy = submittedItems.map(item => {
           if (!item.item_note) return "";
-          const product = products.find(row => String(row.id) === String(item.product_id));
-          return (product?.name || "Item") + ": " + item.item_note;
+          const name = item.offer_id
+            ? (offers.find(offer => String(offer.id) === String(item.offer_id))?.title || "Offer")
+            : (products.find(row => String(row.id) === String(item.product_id))?.name || "Item");
+          return name + ": " + item.item_note;
         }).filter(Boolean);
         const orderNotes = [
           generalNotes,
@@ -3376,6 +3387,9 @@
         };
         let { data, error } = await db.rpc("place_order_with_rewards", rpcArgs);
         if (error?.code === "PGRST202") {
+          if (submittedItems.some(item => item.offer_id)) {
+            throw new Error(localized("Offer orders require the latest ordering update. Refresh the app and try again.", "طلبات العروض تحتاج تحديث نظام الطلبات. حدّث التطبيق وحاول مرة ثانية.", "Offer orders require the latest ordering update. Refresh the app and try again."));
+          }
           if (rpcArgs.p_points_to_redeem > 0 || rpcArgs.p_redeem_stamp_reward || rpcArgs.p_referral_code) {
             throw new Error(localized("Apply the optional rewards database upgrade before using points or a referral code.", "لازم تطبيق تحديث المكافآت على قاعدة البيانات قبل استخدام النقاط أو رمز الإحالة.", "Apply the optional rewards database upgrade before using points or a referral code."));
           }
@@ -3386,6 +3400,9 @@
           ({ data, error } = await db.rpc("place_order_with_options", legacyArgs));
         }
         if (error?.code === "PGRST202") {
+          if (submittedItems.some(item => item.offer_id)) {
+            throw new Error(localized("Offer orders require the latest ordering update. Refresh the app and try again.", "طلبات العروض تحتاج تحديث نظام الطلبات. حدّث التطبيق وحاول مرة ثانية.", "Offer orders require the latest ordering update. Refresh the app and try again."));
+          }
           if (deliveryZoneLookupAvailable && activeDeliveryZones.length) {
             throw new Error(localized("Apply the optional database upgrade before accepting zone-priced orders.", "قبل قبول طلبات برسوم حسب المنطقة، لازم تطبيق تحديث قاعدة البيانات.", "Apply the optional database upgrade before accepting zone-priced orders."));
           }
@@ -3474,9 +3491,11 @@
         const message = (typeof navigator !== "undefined" && navigator.onLine === false) ||
           /failed to fetch|networkerror|network request failed|fetch failed/i.test(detail)
           ? localized("We couldn't connect to the restaurant. Check your internet and try again. Your order has not been confirmed.", "ما قدرنا نتصل بالمطعم. تأكد من الإنترنت وحاول مرة ثانية. طلبك لم يُؤكَّد.", "Yentumi anka adidibea no ho. Hwɛ internet na san sɔ hwɛ. Wɔansi wo order so dua.")
-          : /unavailable/i.test(detail)
-            ? localized("One of your selected items is no longer available. Review your basket and try again.", "في صنف من طلبك صار غير متوفر. راجع السلة وحاول من جديد.", "Aduan bi a woapaw no nni hɔ bio. Hwɛ wo basket no na san sɔ bio.")
-            : tr("orderError");
+          : /offer price changed/i.test(detail)
+            ? localized("The offer price changed. Review your basket before placing the order.", "تغيّر سعر العرض. راجع السلة قبل إرسال الطلب.", "The offer price changed. Review your basket before placing the order.")
+            : /unavailable/i.test(detail)
+              ? localized("One of your selected items is no longer available. Review your basket and try again.", "في صنف من طلبك صار غير متوفر. راجع السلة وحاول من جديد.", "Aduan bi a woapaw no nni hɔ bio. Hwɛ wo basket no na san sɔ bio.")
+              : tr("orderError");
         showCheckoutMessage(message, true);
       } finally {
         submitting = false;
