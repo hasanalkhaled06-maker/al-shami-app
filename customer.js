@@ -2933,6 +2933,18 @@
 
   window.AL_SHAMI_OPEN_ACTIVE_ORDERS = openCustomerActiveOrders;
 
+  const notificationDestination = new URLSearchParams(window.location.search).get("open");
+  if (notificationDestination === "orders") {
+    window.setTimeout(() => {
+      if (typeof window.AL_SHAMI_OPEN_ACTIVE_ORDERS === "function") {
+        window.AL_SHAMI_OPEN_ACTIVE_ORDERS();
+      }
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState(null, "", cleanUrl);
+    }, 350);
+  }
+
+
   if (document.body.classList.contains("customer-home-page")) {
     $(".customer-card-order")?.addEventListener("click", event => {
       event.preventDefault();
