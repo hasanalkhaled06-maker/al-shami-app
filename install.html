@@ -20,7 +20,7 @@
     .lead{margin:14px auto 22px;max-width:390px;color:#665b5e;font-size:16px;line-height:1.55}
     button,a.action{width:100%;min-height:56px;border:0;border-radius:16px;display:flex;align-items:center;justify-content:center;padding:14px 18px;font:inherit;font-weight:800;text-decoration:none;cursor:pointer}
     #primary{background:linear-gradient(135deg,#8d1723,#641622);color:#fff;box-shadow:0 12px 26px #64162232}
-    #primary[disabled]{cursor:wait;opacity:.65}
+    #primary.is-disabled{pointer-events:none;cursor:wait;opacity:.65}
     .secondary{margin-top:12px;background:#e8f1f7;color:#294f69}
     .status{min-height:48px;margin:18px 0 0;padding:12px 14px;border-radius:14px;background:#f4eee4;color:#5e5355;font-size:14px;line-height:1.45}
     .steps{margin:18px 0 0;padding:0;list-style:none;text-align:left;color:#655b5d;font-size:14px;line-height:1.55}
@@ -35,8 +35,8 @@
     <p class="eyebrow">Customer app · تطبيق الزبائن</p>
     <h1>Install AL SHAMI</h1>
     <p class="lead">Install the customer ordering app on this Android phone.<br><span class="ar">ثبّت تطبيق طلبات الزبائن على هاتف أندرويد.</span></p>
-    <button id="primary" type="button" disabled>Preparing installation…</button>
-    <a class="action secondary" href="./index.html">Open customer app · فتح تطبيق الزبائن</a>
+    <a id="primary" class="action is-disabled" role="button" aria-disabled="true">Preparing installation…</a>
+    <a id="secondary" class="action secondary" href="./index.html">Open customer app · فتح تطبيق الزبائن</a>
     <div id="status" class="status" role="status" aria-live="polite">Checking this phone and browser…</div>
     <ol id="steps" class="steps" hidden>
       <li data-step="1">In Chrome, tap the three dots <strong>⋮</strong>.</li>
@@ -47,39 +47,62 @@
     (() => {
       "use strict";
       const button = document.getElementById("primary");
+      const secondary = document.getElementById("secondary");
       const status = document.getElementById("status");
       const steps = document.getElementById("steps");
       const ua = navigator.userAgent || "";
       const isAndroid = /Android/i.test(ua);
       const isChrome = /Chrome\//i.test(ua) && !/(EdgA|OPR|SamsungBrowser)\//i.test(ua);
       const standalone = window.matchMedia("(display-mode: standalone)").matches;
-      const chromeIntent = "intent://alshamiapp.xyz/install.html#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=https%3A%2F%2Falshamiapp.xyz%2Finstall.html;end";
+      const installUrl = "https://alshamiapp.xyz/install.html?v=customer-pwa-20261027b";
+      const chromeIntent = "intent://alshamiapp.xyz/install.html?v=customer-pwa-20261027b#Intent;scheme=https;package=com.android.chrome;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;S.browser_fallback_url=https%3A%2F%2Falshamiapp.xyz%2Finstall.html%3Fv%3Dcustomer-pwa-20261027b;end";
       let installEvent = null;
 
+      const setButtonDisabled = disabled => {
+        button.classList.toggle("is-disabled", disabled);
+        button.setAttribute("aria-disabled", String(disabled));
+        if (disabled) button.removeAttribute("href");
+      };
+
       const setOpenChrome = () => {
-        button.disabled = false;
+        setButtonDisabled(false);
         button.textContent = "Open in Google Chrome · افتح في كروم";
+        button.href = chromeIntent;
         status.textContent = "This page is not open in Google Chrome. Open it in Chrome first, then install the customer app.";
-        button.onclick = () => { window.location.href = chromeIntent; };
+        button.onclick = null;
+        secondary.textContent = "Copy installation link · نسخ رابط التثبيت";
+        secondary.href = "#";
+        secondary.onclick = async event => {
+          event.preventDefault();
+          try {
+            await navigator.clipboard.writeText(installUrl);
+            status.textContent = "Link copied. Open Google Chrome, paste the link in the address bar, then open it.";
+          } catch (error) {
+            status.textContent = installUrl;
+          }
+        };
       };
 
       const setChromeHelp = () => {
-        button.disabled = false;
+        setButtonDisabled(false);
         button.textContent = "Show installation steps · عرض خطوات التثبيت";
+        button.href = "#";
         status.textContent = "Chrome has not offered installation yet. Use Install app from the Chrome menu.";
-        button.onclick = () => { steps.hidden = !steps.hidden; };
+        button.onclick = event => { event.preventDefault(); steps.hidden = !steps.hidden; };
       };
 
       window.addEventListener("beforeinstallprompt", event => {
         event.preventDefault();
         installEvent = event;
         steps.hidden = true;
-        button.disabled = false;
+        setButtonDisabled(false);
         button.textContent = "Install customer app · تثبيت تطبيق الزبائن";
+        button.href = "#";
         status.textContent = "The customer app is ready to install.";
-        button.onclick = async () => {
+        button.onclick = async event => {
+          event.preventDefault();
           if (!installEvent) return;
-          button.disabled = true;
+          setButtonDisabled(true);
           await installEvent.prompt();
           const choice = await installEvent.userChoice.catch(() => null);
           installEvent = null;
@@ -88,21 +111,22 @@
       });
 
       window.addEventListener("appinstalled", () => {
-        button.disabled = true;
+        setButtonDisabled(true);
         button.textContent = "Installed · تم التثبيت";
         status.textContent = "AL SHAMI Customer App was installed successfully.";
         steps.hidden = true;
       });
 
       if (standalone) {
-        button.disabled = true;
+        setButtonDisabled(true);
         button.textContent = "Already installed · التطبيق مثبت";
         status.textContent = "The installed AL SHAMI Customer App is already open.";
       } else if (!isAndroid) {
-        button.disabled = false;
+        setButtonDisabled(false);
         button.textContent = "Open customer app · فتح تطبيق الزبائن";
+        button.href = "./index.html";
         status.textContent = "Direct PWA installation on this page is prepared for Android phones using Google Chrome.";
-        button.onclick = () => { window.location.href = "./index.html"; };
+        button.onclick = null;
       } else if (!isChrome) {
         setOpenChrome();
       } else {
