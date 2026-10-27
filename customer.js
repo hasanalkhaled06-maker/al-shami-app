@@ -1345,7 +1345,7 @@
   function trackingDate(value) {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "";
-    return date.toLocaleString(lang === "ar" ? "ar" : (lang === "tw" ? "ak-GH" : "en-GH"), { dateStyle:"medium", timeStyle:"short" });
+    return date.toLocaleString(lang === "ar" ? "ar" : (lang === "tw" ? "ak-GH" : "en-GH"), { dateStyle:"medium", timeStyle:"short", timeZone:"Africa/Accra" });
   }
 
   function setHomeCurrentOrdersVisible(visible) {

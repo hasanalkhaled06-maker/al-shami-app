@@ -94,7 +94,7 @@
     .success-card .success-subtitle{color:#665a5b;font-size:12px}
     .success-progress{position:relative;overflow:hidden;height:4px;margin:13px 0 11px;border-radius:99px;background:#f0e5d9}
     .success-progress span{position:absolute;top:0;left:0;width:30%;height:100%;border-radius:99px;background:linear-gradient(90deg,#8d1723,#d7b36a,#8d1723);animation:successProgressSweep 1.7s ease-in-out infinite}
-    .success-details{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+    .success-details{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px}.success-copy-reference{min-height:34px;padding:6px 10px;border:1px solid #dfc9a0;border-radius:9px;background:#fff;color:#5a1b22;font:700 12px system-ui,sans-serif;cursor:pointer}.success-copy-reference[hidden]{display:none!important}#success-copy-status{flex-basis:100%;font-size:12px;color:#24613a}
     #success-order-number,#success-order-total{margin:0;padding:7px 10px;border:1px solid #f0e4e1;border-radius:9px;background:#fff8f6;color:#5a1b22;font-size:12px;font-weight:800;overflow-wrap:anywhere}
     #success-order-total{background:#fbf6eb;border-color:#eee0c3;color:#3e3030}
     .success-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
@@ -631,6 +631,8 @@
       <div class="success-progress" aria-hidden="true"><span></span></div>
       <div class="success-details">
         <p id="success-order-number"></p>
+        <button id="success-copy-reference" class="success-copy-reference" type="button" hidden>Copy order number</button>
+        <span id="success-copy-status" role="status" aria-live="polite"></span>
         <p id="success-order-total"></p>
       </div>
       <div class="success-actions">
@@ -649,6 +651,8 @@
       const statusLabel = document.getElementById("success-status-label");
       const number = document.getElementById("success-order-number");
       const total = document.getElementById("success-order-total");
+      const copyReferenceButton = document.getElementById("success-copy-reference");
+      const copyStatus = document.getElementById("success-copy-status");
       const whatsapp = document.getElementById("success-whatsapp");
       let previouslyFocused = null;
 
@@ -711,6 +715,12 @@
           ? "Chat with AL SHAMI on WhatsApp" : (lang === "ar" ? "تواصل معنا عبر واتساب" : "Chat with AL SHAMI on WhatsApp");
         const orderNumber = item.orderNumber;
         number.textContent = orderNumber && orderNumber !== "received" ? `${(panelText[lang] || panelText.en).waiting[0] && (lang === "ar" ? "رقم الطلب:" : "Order number:")} ${orderNumber}` : "";
+        if (copyReferenceButton) {
+          copyReferenceButton.hidden = !orderNumber || String(orderNumber) === "received";
+          copyReferenceButton.textContent = lang === "ar" ? "نسخ رقم الطلب" : "Copy order number";
+          copyReferenceButton.setAttribute("aria-label", (lang === "ar" ? "نسخ رقم الطلب " : "Copy order number ") + String(orderNumber || ""));
+        }
+        if (copyStatus) copyStatus.textContent = "";
         total.textContent = item.total !== undefined && item.total !== null && Number.isFinite(Number(item.total))
           ? `${lang === "ar" ? "المجموع:" : "Order total:"} GH₵ ${Number(item.total).toFixed(2)}`
           : "";
@@ -747,6 +757,29 @@
           if (orderCard) window.setTimeout(() => orderCard.classList.remove("tracked-card-highlight"), 1800);
         });
       });
+      copyReferenceButton?.addEventListener("click", async () => {
+        const reference = String(activeSuccessOrderNumber || "").trim();
+        if (!reference || reference === "received") return;
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(reference);
+          } else {
+            const field = document.createElement("textarea");
+            field.value = reference;
+            field.setAttribute("readonly", "");
+            field.style.position = "fixed";
+            field.style.opacity = "0";
+            document.body.appendChild(field);
+            field.select();
+            const copied = document.execCommand("copy");
+            field.remove();
+            if (!copied) throw new Error("Clipboard copy is unavailable.");
+          }
+          if (copyStatus) copyStatus.textContent = (document.getElementById("language")?.value || "en") === "ar" ? "تم نسخ رقم الطلب." : "Order number copied.";
+        } catch (error) {
+          if (copyStatus) copyStatus.textContent = (document.getElementById("language")?.value || "en") === "ar" ? "تعذّر النسخ؛ دوّن الرقم الظاهر." : "Copy failed. Please note the number above.";
+        }
+      });
       closeButton.addEventListener("click", closePanel);
       document.addEventListener("keydown", event => {
         if (!panel.hidden && event.key === "Escape") closePanel();
@@ -757,7 +790,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
-  <script src="customer.js?v=login-persistence-20261027a"></script>
+  <script src="customer.js?v=usability-batch1-20261027a"></script>
   <script src="customer-features.js?v=push-notifications-20261027a"></script>
   <script src="pwa.js"></script>
 </body>

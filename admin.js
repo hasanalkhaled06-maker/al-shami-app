@@ -1441,6 +1441,17 @@
     return Math.floor(minutes / 60) + "h " + (minutes % 60) + "m";
   }
 
+  function formatGhanaDateTime(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+    return new Intl.DateTimeFormat("en-GH", {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: "Africa/Accra"
+    }).format(date);
+  }
+
+
   function updateOrderWaitBadges() {
     const now = Date.now();
     document.querySelectorAll("[data-order-created-at]").forEach(badge => {
@@ -1509,6 +1520,38 @@
     toast("Exported " + selected.length + " visible orders.");
   }
 
+  function printOrderReceipt(order) {
+    const popup = window.open("", "_blank", "popup,width=440,height=760");
+    if (!popup) {
+      toast("Allow pop-ups to print the order receipt.");
+      return;
+    }
+    const rows = (order.order_items || []).map(item => {
+      const name = item.item_name || item.menu_items?.name || "Menu item";
+      const amount = Number(item.unit_price) * Number(item.quantity);
+      return "<tr><td>" + Number(item.quantity) + " × " + esc(name) +
+        (item.item_note ? "<small>" + esc(item.item_note) + "</small>" : "") +
+        "</td><td>" + money(amount) + "</td></tr>";
+    }).join("");
+    const type = order.order_type === "delivery" ? "Delivery" : "Pickup";
+    const statusLabel = window.AL_SHAMI_ORDER_WORKFLOW?.label(order.status) || order.status;
+    popup.document.open();
+    popup.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AL SHAMI Order #${esc(order.order_number || order.id.slice(0,8))}</title><style>
+      *{box-sizing:border-box}body{margin:0;padding:24px;color:#21191a;font:14px/1.45 Arial,sans-serif}.receipt{max-width:390px;margin:auto}.brand{text-align:center;border-bottom:2px solid #641622;padding-bottom:14px}.brand h1{margin:0;color:#641622;font-size:24px}.brand p{margin:4px 0;color:#5c5555}.meta{display:grid;gap:5px;padding:13px 0;border-bottom:1px solid #ddd}.meta strong{color:#641622}table{width:100%;border-collapse:collapse;margin:12px 0}td{padding:9px 2px;border-bottom:1px solid #e7e2dc;vertical-align:top}td:last-child{text-align:right;white-space:nowrap}td small{display:block;color:#655;font-size:12px}.totals{border-top:2px solid #641622;padding-top:9px}.totals div{display:flex;justify-content:space-between;padding:3px 0}.totals .grand{font-size:18px;font-weight:800}.foot{margin-top:18px;text-align:center;color:#655;font-size:12px}@media print{body{padding:0}.receipt{max-width:none}}
+    </style></head><body><main class="receipt"><header class="brand"><h1>AL SHAMI RESTAURANT</h1><p>Darkuman Circle Station, Accra</p><strong>ORDER RECEIPT</strong></header><section class="meta"><div>Order: <strong>#${esc(order.order_number || order.id.slice(0,8))}</strong></div><div>Received: ${esc(formatGhanaDateTime(order.created_at))}</div><div>Customer: ${esc(order.customer_name || "—")}</div><div>Phone: ${esc(order.customer_phone || "—")}</div><div>Type: ${type}</div><div>Status: ${esc(statusLabel)}</div>${order.delivery_address ? "<div>Address: " + esc(order.delivery_address) + "</div>" : ""}${order.notes ? "<div>Notes: " + esc(order.notes) + "</div>" : ""}</section><table><tbody>${rows}</tbody></table><section class="totals"><div><span>Subtotal</span><span>${money(order.subtotal)}</span></div><div><span>Delivery</span><span>${money(order.delivery_fee)}</span></div><div class="grand"><span>Total</span><span>${money(order.total)}</span></div></section><footer class="foot">Cash payment at ${type === "Delivery" ? "delivery" : "pickup"}. Thank you for choosing AL SHAMI.</footer></main></body></html>`);
+    popup.document.close();
+    popup.addEventListener("afterprint", () => popup.close(), { once: true });
+    popup.focus();
+    window.setTimeout(() => popup.print(), 250);
+  }
+
+  document.addEventListener("click", event => {
+    const button = event.target instanceof Element ? event.target.closest("[data-print-order]") : null;
+    if (!button) return;
+    const order = orders.find(item => String(item.id) === String(button.dataset.printOrder));
+    if (order) printOrderReceipt(order);
+  });
+
   function renderOrders() {
     const selectedOrderFilter = $("#order-filter")?.value || "all";
     const filteredOrders = visibleOrders().filter(order =>
@@ -1530,9 +1573,9 @@
               )}</h3>
 
               <div class="order-meta">
-                ${new Date(order.created_at).toLocaleString()}
+                ${formatGhanaDateTime(order.created_at)}
                 · ${esc(order.customer_name)}
-                · ${esc(order.customer_phone)}
+                · ${esc(order.customer_phone)}${order.updated_at ? " · Updated " + esc(formatGhanaDateTime(order.updated_at)) : ""}
                 · <span class="order-wait-badge" data-order-created-at="${esc(order.created_at)}"></span>
               </div>
             </div>
@@ -1550,8 +1593,8 @@
             ${order.notes
               ? "<br>Notes: " + esc(order.notes)
               : ""}
-            ${order.requested_for ? "<br>Scheduled: " + esc(new Date(order.requested_for).toLocaleString()) : ""}
-            ${order.estimated_ready_at ? "<br>Estimated ready/delivery: " + esc(new Date(order.estimated_ready_at).toLocaleString()) : ""}
+            ${order.requested_for ? "<br>Scheduled: " + esc(formatGhanaDateTime(order.requested_for)) : ""}
+            ${order.estimated_ready_at ? "<br>Estimated ready/delivery: " + esc(formatGhanaDateTime(order.estimated_ready_at)) : ""}
             ${order.delivery_zone_id ? "<br>Zone: " + esc(deliveryZones.find(zone => zone.id === order.delivery_zone_id)?.name || "") : ""}
             ${deliveryMapLink(order) ? "<br>" + deliveryMapLink(order) : ""}
           </p>
@@ -1602,6 +1645,7 @@
               <button class="btn btn-light" data-copy="${order.id}">
                 Copy details
               </button>
+              <button class="btn btn-light" data-print-order="${esc(order.id)}" type="button">Print receipt</button>
               ${accessMode === "owner" ? `<button class="btn delete-order-btn" data-delete-order="${order.id}" type="button">Delete order</button>` : ""}
             </div>
           </div>
@@ -1685,10 +1729,10 @@ Status: ${order.status}`;
     });
     list.innerHTML = completed.length ? completed.map(order => `
       <article class="order-card">
-        <div class="order-header"><div><h3>Order #${esc(order.order_number || order.id.slice(0, 8))}</h3><div class="order-meta">${new Date(order.created_at).toLocaleString()} · ${esc(order.customer_name)} · ${esc(order.customer_phone)}</div></div><span class="order-status">${esc(order.status === "rejected" ? "Rejected" : "Completed")}</span></div>
+        <div class="order-header"><div><h3>Order #${esc(order.order_number || order.id.slice(0, 8))}</h3><div class="order-meta">${formatGhanaDateTime(order.created_at)} · ${esc(order.customer_name)} · ${esc(order.customer_phone)}${order.updated_at ? " · Updated " + esc(formatGhanaDateTime(order.updated_at)) : ""}</div></div><span class="order-status">${esc(order.status === "rejected" ? "Rejected" : "Completed")}</span></div>
         <p><strong>${order.order_type === "delivery" ? "Delivery" : "Pickup"}</strong>${order.delivery_address ? " · " + esc(order.delivery_address) : ""}${order.notes ? "<br>Notes: " + esc(order.notes) : ""}</p>
         <ul class="order-lines">${(order.order_items || []).map(item => `<li><span>${Number(item.quantity)} × ${esc(item.item_name || item.menu_items?.name || "Menu item")}</span><strong>${money(Number(item.unit_price) * Number(item.quantity))}</strong></li>`).join("")}</ul>
-        <div class="order-footer"><div><strong>${money(order.total)}</strong><div class="order-meta">Subtotal ${money(order.subtotal)} · Delivery ${money(order.delivery_fee)}</div></div><div class="order-actions"><button class="btn btn-light" data-history-copy="${order.id}">Copy details</button><button class="btn delete-order-btn" data-delete-order="${order.id}" type="button">Delete order</button></div></div>
+        <div class="order-footer"><div><strong>${money(order.total)}</strong><div class="order-meta">Subtotal ${money(order.subtotal)} · Delivery ${money(order.delivery_fee)}</div></div><div class="order-actions"><button class="btn btn-light" data-history-copy="${order.id}">Copy details</button><button class="btn btn-light" data-print-order="${esc(order.id)}" type="button">Print receipt</button><button class="btn delete-order-btn" data-delete-order="${order.id}" type="button">Delete order</button></div></div>
       </article>`).join("") : '<p class="muted">No completed or rejected orders in history yet.</p>';
     list.querySelectorAll("[data-history-copy]").forEach(button => {
       button.onclick = async () => {
@@ -1812,7 +1856,7 @@ Status: ${order.status}`;
       field("Customer", order.customer_name) +
       field("Phone", order.customer_phone) +
       field("Order type", order.order_type === "delivery" ? "Delivery" : "Pickup") +
-      field("Time received", new Date(order.created_at).toLocaleString()) +
+      field("Time received", formatGhanaDateTime(order.created_at)) +
       (order.delivery_address ? field("Delivery address", order.delivery_address) : "") +
       '</div>' + (deliveryMapLink(order) ? '<p class="incoming-order-note">' + deliveryMapLink(order) + '</p>' : '') +
       '<ul class="incoming-order-items">' + (items || "<li>No item details loaded yet.</li>") + "</ul>" +
@@ -2539,7 +2583,7 @@ Status: ${order.status}`;
       <article class="admin-menu-row">
         <div class="grow">
           <strong>Order #${esc(review.orders?.order_number || review.order_id)} · ${"★".repeat(Number(review.rating || 0))}</strong>
-          <small>${esc(review.orders?.customer_name || "Customer")} · ${esc(review.status)} · ${esc(new Date(review.created_at).toLocaleString())}</small>
+          <small>${esc(review.orders?.customer_name || "Customer")} · ${esc(review.status)} · ${esc(formatGhanaDateTime(review.created_at))}</small>
           ${review.review_text ? `<p>${esc(review.review_text)}</p>` : ""}
         </div>
       </article>
