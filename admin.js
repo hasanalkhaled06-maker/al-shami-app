@@ -1482,8 +1482,7 @@
   function primaryOrderAction(order) {
     const allowed = (window.AL_SHAMI_ORDER_WORKFLOW?.nextStatuses(order) || []).filter(value =>
       accessMode === "owner" ||
-      (currentRole === "cashier" && ["accepted", "rejected"].includes(value)) ||
-      (currentRole === "kitchen" && ["preparing", "ready"].includes(value))
+      (currentRole === "cashier" && ["accepted", "rejected", "preparing", "ready"].includes(value))
     );
     return ["accepted", "preparing", "ready", "out_for_delivery", "completed", "rejected"].find(value => allowed.includes(value)) || "";
   }
@@ -1612,7 +1611,7 @@
                 aria-label="Next action for order ${esc(order.order_number || order.id.slice(0, 8))}">
                 <option value="">Choose next step…</option>
                 ${(window.AL_SHAMI_ORDER_WORKFLOW?.nextStatuses(order) || [])
-                  .filter(value => accessMode === "owner" || (currentRole === "cashier" && ["accepted","rejected"].includes(value)) || (currentRole === "kitchen" && ["preparing","ready"].includes(value)))
+                  .filter(value => accessMode === "owner" || (currentRole === "cashier" && ["accepted","rejected","preparing","ready"].includes(value)))
                   .map(value => `
                   <option value="${value}">${esc(window.AL_SHAMI_ORDER_WORKFLOW.actionLabel(value))}</option>
                 `).join("")}
@@ -1964,18 +1963,13 @@ Status: ${order.status}`;
           p_status: newStatus
         }));
       } else {
-        if (currentRole === "cashier" && ["accepted", "rejected"].includes(newStatus)) {
-          const reason = newStatus === "rejected" ? window.prompt("Reason for rejecting this order:") : "Accepted by staff";
+        if (currentRole === "cashier" && ["accepted", "rejected", "preparing", "ready"].includes(newStatus)) {
+          const reason = newStatus === "rejected" ? window.prompt("Reason for rejecting this order:") : (newStatus === "accepted" ? "Accepted by staff" : "Status updated by cashier");
           if (reason === null) return false;
           ({ error } = await db.rpc("cashier_set_order_status", {
             p_order_id: id,
             p_status: newStatus,
             p_reason: reason
-          }));
-        } else if (currentRole === "kitchen" && ["preparing", "ready"].includes(newStatus)) {
-          ({ error } = await db.rpc("update_kitchen_order", {
-            p_order_id: id,
-            p_status: newStatus
           }));
         } else {
           throw new Error("Ask the owner to complete this order step.");
