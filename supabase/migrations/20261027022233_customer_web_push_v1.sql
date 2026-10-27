@@ -27,6 +27,6 @@ create table if not exists public.customer_push_vapid_keys (
 alter table public.customer_push_vapid_keys enable row level security;
 revoke all on table public.customer_push_vapid_keys from public, anon, authenticated;
 grant select, insert, update, delete on table public.customer_push_vapid_keys to service_role;
-create policy "Only server manages VAPID key"
+create policy "Only server manages push signing keys"
   on public.customer_push_vapid_keys for all to service_role
   using (true) with check (true);
