@@ -37,8 +37,8 @@ test("invalid types, statuses, and skipped stages are rejected", () => {
   assert.equal(workflow.canTransition(makeOrder("pickup", "ready"), "out_for_delivery"), false);
 });
 
-test("cashier workflow exposes clear stage labels", () => {
-  assert.equal(workflow.label("accepted"), "Accepted · waiting for kitchen");
-  assert.equal(workflow.label("ready"), "Ready for pickup / rider");
+test("cashier controls the customer-facing order stages", () => {
+  assert.equal(workflow.actionLabel("accepted"), "Accept order");
+  assert.equal(workflow.label("preparing"), "Being prepared");
   assert.equal(workflow.actionLabel("ready"), "Mark ready");
 });
