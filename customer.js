@@ -872,6 +872,11 @@
   let approvedMenuReviewsByItem = new Map();
   let offers = [];
   let popularityByMenuItem = new Map();
+  const CUSTOMER_CATALOG_REFRESH_INTERVAL_MS = 30000;
+  let customerCatalogRefreshTimer = null;
+  let customerCatalogRefreshInProgress = false;
+  let customerCatalogLastRefreshAt = 0;
+  let customerCatalogNoticeTimer = null;
   let cart = {};
   let category = "All";
   let sortMode = "default";
@@ -2663,6 +2668,8 @@
       renderMenu();
       renderCart();
       renderOffers();
+      customerCatalogLastRefreshAt = Date.now();
+      startCustomerCatalogRefresh();
       showAppStatus("");
       if (retryButton) retryButton.hidden = true;
     } catch (error) {
@@ -2680,6 +2687,124 @@
       if (retryButton) retryButton.disabled = false;
     }
   }
+
+
+  function menuCatalogSignature(items) {
+    return JSON.stringify((items || []).map(item => [
+      item.id, item.name, item.category, item.description, item.price, item.image_url,
+      item.is_available, item.sort_order, item.prep_minutes, item.ingredients,
+      item.portion_info, item.spice_level, item.allergens
+    ]));
+  }
+
+  function offersCatalogSignature(items) {
+    return JSON.stringify((items || []).map(offer => [
+      offer.id, offer.title, offer.details, offer.starts_at, offer.ends_at
+    ]));
+  }
+
+  function showCatalogRefreshNotice(menuChanged, hasNewOffer) {
+    const offersContainer = $("#active-offers");
+    if (!offersContainer) return;
+    let notice = $("#catalog-refresh-status");
+    if (!notice) {
+      notice = document.createElement("div");
+      notice.id = "catalog-refresh-status";
+      notice.className = "app-message info";
+      notice.setAttribute("role", "status");
+      notice.setAttribute("aria-live", "polite");
+      notice.setAttribute("aria-atomic", "true");
+      offersContainer.insertAdjacentElement("afterend", notice);
+    }
+    notice.textContent = menuChanged
+      ? localized(
+          "The menu or offers changed. Please review your cart before placing the order.",
+          "تحدّث المنيو أو العروض؛ راجع سلتك قبل تأكيد الطلب.",
+          "Menu an offers no ayɛ foforo. San hwɛ wo cart ansa na woasi order no."
+        )
+      : hasNewOffer
+        ? localized("A new offer is available.", "في عرض جديد متاح.", "Offer foforo aba.")
+        : localized("The offers were updated.", "تحدّثت العروض المتاحة.", "Wɔayɛ offers no foforo.");
+    notice.hidden = false;
+    if (customerCatalogNoticeTimer) window.clearTimeout(customerCatalogNoticeTimer);
+    customerCatalogNoticeTimer = window.setTimeout(() => {
+      notice.hidden = true;
+      customerCatalogNoticeTimer = null;
+    }, 6500);
+  }
+
+  async function refreshCustomerCatalog() {
+    if (!db || !authSession?.user || menuLoading || customerCatalogRefreshInProgress) return;
+    if (document.visibilityState === "hidden" || navigator.onLine === false) return;
+    if (Date.now() - customerCatalogLastRefreshAt < 8000) return;
+
+    customerCatalogRefreshInProgress = true;
+    customerCatalogLastRefreshAt = Date.now();
+    try {
+      const [menuResult, offerResult] = await Promise.all([
+        db.from("menu_items")
+          .select("id,name,category,description,price,image_url,is_available,sort_order,prep_minutes,ingredients,portion_info,spice_level,allergens")
+          .order("sort_order")
+          .order("name"),
+        db.from("offers")
+          .select("*")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+      ]);
+      if (menuResult.error) throw menuResult.error;
+      if (offerResult.error) throw offerResult.error;
+
+      const nextProducts = menuResult.data || [];
+      const now = Date.now();
+      const nextOffers = (offerResult.data || []).filter(offer =>
+        (!offer.starts_at || new Date(offer.starts_at).getTime() <= now) &&
+        (!offer.ends_at || new Date(offer.ends_at).getTime() >= now)
+      );
+      const menuChanged = menuCatalogSignature(nextProducts) !== menuCatalogSignature(products);
+      const offersChanged = offersCatalogSignature(nextOffers) !== offersCatalogSignature(offers);
+      if (!menuChanged && !offersChanged) return;
+      const hasNewOffer = nextOffers.some(next => !offers.some(current => String(current.id) === String(next.id)));
+
+      if (menuChanged) {
+        products = nextProducts;
+        menuFeatureDetailsAvailable = true;
+        cart = Object.fromEntries(Object.entries(cart).filter(([id, quantity]) =>
+          Number.isInteger(Number(quantity)) && Number(quantity) > 0 && Number(quantity) <= 50 &&
+          products.some(product => String(product.id) === String(id) && product.is_available !== false)
+        ));
+        persistCart();
+        renderCategories();
+        renderMenu();
+        renderCart();
+      }
+      if (offersChanged) {
+        offers = nextOffers;
+        renderOffers();
+      }
+      showCatalogRefreshNotice(menuChanged, hasNewOffer);
+    } catch (error) {
+      console.warn("Customer menu/offers refresh failed; keeping the last loaded catalog.", error);
+    } finally {
+      customerCatalogRefreshInProgress = false;
+    }
+  }
+
+  function startCustomerCatalogRefresh() {
+    if (customerCatalogRefreshTimer) return;
+    customerCatalogRefreshTimer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refreshCustomerCatalog();
+    }, CUSTOMER_CATALOG_REFRESH_INTERVAL_MS);
+  }
+
+  function refreshCustomerCatalogWhenActive() {
+    if (document.visibilityState === "visible") void refreshCustomerCatalog();
+  }
+
+  window.addEventListener("focus", refreshCustomerCatalogWhenActive);
+  window.addEventListener("pageshow", refreshCustomerCatalogWhenActive);
+  window.addEventListener("online", refreshCustomerCatalogWhenActive);
+  document.addEventListener("visibilitychange", refreshCustomerCatalogWhenActive);
+
 
   // Let customers copy the pickup confirmation code with one tap.
   document.addEventListener("click", async event => {
