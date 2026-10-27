@@ -75,9 +75,9 @@ Never put the Supabase service-role key in browser JavaScript.
 - Cash reconciliation uses order status as the cash-sale signal because the current ordering flow is cash-only; mark orders Completed only after cash is collected.
 - The operations summary is not a complete net-profit calculation; ingredient costs are reflected only where recipes and stock costs are configured, and payroll/overhead still need accurate recording.
 - Loyalty rules are disabled until the restaurant configures stamps and points in **Settings**. Points are store credit for order discounts only; there is no cash-out.
-- The customer’s alert-category preferences are saved, but customer push delivery is not configured.
+- Customer web-push subscription and delivery paths are implemented, and the `customer-push` Edge Function is deployed. Delivery has not yet been verified end to end on a real subscribed customer device.
 - Online payments and phone OTP login are deferred until payment/SMS providers are configured.
-- Push notifications while the app is fully closed are not included. PWA updates require internet access and the app must be opened/foregrounded to check for updates; offline mode does not submit orders.
+- Push delivery while the app is fully closed depends on browser/OS support and the customer's device permission. PWA updates need internet and are checked when the app opens or returns to the foreground; offline mode does not submit orders.
 
 ## Testing
 
@@ -90,4 +90,4 @@ Before using this system for daily restaurant operations:
 5. Verify database permissions and errors.
 6. Confirm existing customer orders continue to work.
 
-Do not rely on the new module for live accounting until these tests pass.
+Run `node --test tests/*.test.cjs` for the automated logic and static checks. These do not replace the browser/device flow below. Do not rely on the new module for live accounting until the cash and permission tests pass.

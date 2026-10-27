@@ -22,6 +22,12 @@ Good foundations already exist: server-calculated prices, menu availability chec
 - Removed the unused “Continue without an account” button and its show/hide code. Repository-wide search found no click handler or anonymous sign-in path, and the mandatory authentication gate hid the control whenever it could otherwise appear. Added a regression test to prevent the unsupported control from returning.
 - No database policies, functions, indexes, migrations or data were changed. The unused light-theme file and advisor-reported unused indexes were retained because their deletion is not proven safe for rollback or representative production traffic.
 
+## Review update — 27 October 2026
+
+- Read-only inspection of the current production RPC definitions confirmed that both administrator and cashier status changes call `al_shami_order_transition_allowed` and update `orders.updated_at`. No database changes were made during this review.
+- Supabase lists `customer-push` as ACTIVE (version 1); the customer subscription UI and administrator order/offer calls are present in the current repository. Actual delivery to a subscribed phone has not been tested, so push delivery is implemented but not yet accepted as end-to-end verified.
+- The cashier's order-stage permission is checked server-side. Broader operations permissions still need a role-by-role review; the earlier blanket statement that no staff permissions are enforced was too broad.
+
 ## Findings requiring follow-up
 
 | Priority | Finding | Recommended next step |
@@ -31,7 +37,7 @@ Good foundations already exist: server-calculated prices, menu availability chec
 | **P1** | Public `get_public_menu_popularity()` exposes exact order counts by menu item. | Decide whether public popularity sorting is worth revealing exact aggregate sales. Prefer a coarse rank/band or safe ordering. |
 | **P1** | History exposes hard deletion through `delete_order_for_admin`. | Prefer archive/void with a reason and immutable audit history. Do not delete historical orders or change DB grants until an additive migration and recovery plan are reviewed. |
 | **P1** | Customer checkout requires sign-in. | Test account-required vs guest checkout with real customers; treat it as a business decision. Keep phone checks and server-side totals either way. |
-| **P1** | Order status values are validated, but transitions are not enforced server-side. | The admin status selector can jump from a new order straight to out-for-delivery or move statuses backward; rider assignment/tracking can activate prematurely. Add a database trigger or admin-authorized status RPC for valid transitions; keep completion behind the receipt-code path. Test existing statuses and concurrency before applying a migration. |
+| **P2** | Order transition UX and concurrency need a full acceptance test. | The current `admin_transition_order_status` and `cashier_set_order_status` RPCs enforce `al_shami_order_transition_allowed`; the old finding that no server-side check existed is superseded. Test every valid/invalid transition, concurrent updates and receipt-code completion before considering any database change. |
 | **P1** | No full browser end-to-end order-flow test exists. | Test submit → admin acceptance → preparation → delivery/pickup handoff code → history using test accounts, never live customer orders. |
 | **P1** | Rider GPS is foreground-only on iOS. | Show location freshness; test real iPhone behavior. Native/background location is a separate phase. |
 | **P2** | CSS files are large and the cascade relies heavily on `!important`. | Consolidate components gradually with screenshot checks at 320 px, 390 px, tablet and desktop widths. |
@@ -41,7 +47,7 @@ Good foundations already exist: server-calculated prices, menu availability chec
 | **P2** | Menu and offers have multiple permissive read policies. | Consolidate only after confirming intended anon/customer/admin access. |
 | **P2** | 21 database indexes were reported unused. | Do not delete based on this signal alone; observe a representative workload and inspect query plans first. |
 | **P2** | Phone recovery UI mentions SMS although the setup guide says no SMS provider is configured. | Configure/test a provider or make the working email reset route primary. |
-| **P2** | Staff role labels do not yet provide separate database-enforced permissions. | Keep operations management-only; design role-specific grants/policies before granting staff accounts. |
+| **P2** | Staff-role enforcement is partial. | The cashier order-status RPC checks cashier/manager/owner role, but this does not establish least-privilege permissions across every operations module. Review each role-to-action path and test non-admin denial before expanding staff access. |
 | **P3** | GPS table has RLS enabled but no policies. | This can be safe with direct table grants revoked and scoped RPC-only access; add a test proving direct access is denied. |
 
 ## Do not delete these items blindly
