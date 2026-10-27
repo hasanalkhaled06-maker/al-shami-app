@@ -2542,34 +2542,174 @@
     });
   }
 
+  function offerDate(value, fallback) {
+    if (!value || !Number.isFinite(new Date(value).getTime())) return fallback;
+    return new Date(value).toLocaleDateString();
+  }
+
+  function ensureOfferDetailsDialog() {
+    let dialog = $("#offer-details-dialog");
+    if (dialog) return dialog;
+
+    dialog = document.createElement("div");
+    dialog.id = "offer-details-dialog";
+    dialog.className = "offer-details-backdrop";
+    dialog.hidden = true;
+    dialog.setAttribute("role", "presentation");
+
+    const panel = document.createElement("section");
+    panel.className = "offer-details-panel";
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-modal", "true");
+    panel.setAttribute("aria-labelledby", "offer-details-title");
+
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "offer-details-close";
+    close.setAttribute("aria-label", localized("Close", "إغلاق", "To mu"));
+    close.textContent = "×";
+
+    const title = document.createElement("h2");
+    title.id = "offer-details-title";
+
+    const details = document.createElement("p");
+    details.id = "offer-details-copy";
+
+    const dates = document.createElement("p");
+    dates.id = "offer-details-dates";
+    dates.className = "offer-details-dates";
+
+    close.addEventListener("click", () => { dialog.hidden = true; });
+    dialog.addEventListener("click", event => {
+      if (event.target === dialog) dialog.hidden = true;
+    });
+    panel.append(close, title, details, dates);
+    dialog.append(panel);
+    document.body.append(dialog);
+    return dialog;
+  }
+
+  function showOfferDetails(offer) {
+    const dialog = ensureOfferDetailsDialog();
+    $("#offer-details-title").textContent = offer.title || tr("offer");
+    $("#offer-details-copy").textContent = offer.details || localized("Ask our team for offer details.", "اسأل فريقنا عن تفاصيل العرض.", "Bisa yɛn adwumayɛfoɔ no ma wɔmfa offer no ho nsɛm mma wo.");
+    $("#offer-details-dates").textContent =
+      localized("Starts: ", "تاريخ البدء: ", "Ɛhyɛ ase: ") + offerDate(offer.starts_at, localized("Not set", "غير محدد", "Nni hɔ")) +
+      " · " + localized("Ends: ", "تاريخ الانتهاء: ", "Ɛba awiei: ") + offerDate(offer.ends_at, localized("Not set", "غير محدد", "Nni hɔ"));
+    dialog.hidden = false;
+    window.requestAnimationFrame(() => $(".offer-details-close")?.focus());
+  }
+
+  function findOfferMenuItem(offer) {
+    const text = normalizeMenuSearch([offer.title, offer.details].filter(Boolean).join(" "));
+    if (!text) return null;
+    const aliases = [
+      { tokens: ["shawarma", "شاورما"], aliases: ["shawarma", "شاورما"] },
+      { tokens: ["pizza", "بيتزا"], aliases: ["pizza", "بيتزا"] },
+      { tokens: ["burger", "برغر", "برجر"], aliases: ["burger", "برغر", "برجر"] },
+      { tokens: ["chicken", "دجاج"], aliases: ["chicken", "دجاج"] },
+      { tokens: ["chips", "fries", "بطاطا", "شيبس"], aliases: ["chips", "fries", "بطاطا", "شيبس"] }
+    ];
+    const scores = products.filter(item => item.is_available !== false).map(item => {
+      const name = normalizeMenuSearch([item.name, item.category].filter(Boolean).join(" "));
+      let score = 0;
+      for (const group of aliases) {
+        const offerMatches = group.aliases.some(token => text.includes(normalizeMenuSearch(token)));
+        const itemMatches = group.aliases.some(token => name.includes(normalizeMenuSearch(token)));
+        if (offerMatches && itemMatches) score += 2;
+      }
+      const nameWords = name.split(/\s+/).filter(word => word.length >= 4);
+      for (const word of nameWords) if (text.includes(word)) score += 1;
+      return { item, score };
+    }).filter(row => row.score > 0).sort((a, b) => b.score - a.score);
+    if (!scores.length || (scores[1] && scores[0].score === scores[1].score)) return null;
+    return scores[0].item;
+  }
+
+  function addOfferItemToCart(offer, card) {
+    const product = findOfferMenuItem(offer);
+    const feedback = card.querySelector(".offer-feedback");
+    if (!product) {
+      if (feedback) feedback.textContent = localized(
+        "We couldn't match this offer to one menu item. Choose the items from the menu.",
+        "ما قدرنا نربط العرض بصنف واحد بوضوح. اختَر أصنافه من القائمة.",
+        "Yɛantumi anhu menu adeɛ baako a ɛne offer yi hyia. Paw nneɛma no wɔ menu no mu."
+      );
+      $("#menu")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    const id = String(product.id);
+    cart[id] = Math.min(50, Number(cart[id] || 0) + 1);
+    persistCart();
+    renderCart();
+    announceCartChange("cartQuantity", product.name, cart[id]);
+    if (feedback) feedback.textContent = localized(
+      product.name + " added to your basket.",
+      "أضفنا " + product.name + " إلى السلة.",
+      "Yɛde " + product.name + " aka wo basket ho."
+    );
+    $("#checkout-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   function renderOffers() {
     const container = $("#active-offers");
     if (!container) return;
-
     container.replaceChildren();
-    if (!offers.length) return;
+    if (!offers.length || isHistoryPage) return;
 
-    const section = document.createElement("section");
-    section.className = "notice";
+    const wall = document.createElement("section");
+    wall.className = "offer-wall";
+    wall.setAttribute("aria-label", localized("Current offers", "العروض الحالية", "Offers a ɛwɔ hɔ seesei"));
 
-    const heading = document.createElement("strong");
-    heading.textContent = tr("offer");
+    offers.forEach(offer => {
+      const card = document.createElement("article");
+      card.className = "offer-float-card";
 
-    const details = document.createElement("span");
-    details.textContent = offers.map(offer => {
-      const dates = [];
-      if (offer.starts_at && Number.isFinite(new Date(offer.starts_at).getTime())) {
-        dates.push(localized("Starts ", "يبدأ ", "Ɛhyɛ ase ") + new Date(offer.starts_at).toLocaleDateString());
-      }
-      if (offer.ends_at && Number.isFinite(new Date(offer.ends_at).getTime())) {
-        dates.push(localized("Ends ", "ينتهي ", "Ɛba awiei ") + new Date(offer.ends_at).toLocaleDateString());
-      }
-      const dateInfo = dates.length ? " (" + dates.join(" · ") + ")" : "";
-      return `${offer.title || ""}${offer.details ? " — " + offer.details : ""}${dateInfo}`;
-    }).join(" · ");
+      const badge = document.createElement("span");
+      badge.className = "offer-badge";
+      badge.textContent = localized("SPECIAL OFFER", "عرض خاص", "OFFER TITIRE");
 
-    section.append(heading, details);
-    container.append(section);
+      const heading = document.createElement("h2");
+      heading.className = "offer-card-title";
+      heading.textContent = offer.title || tr("offer");
+
+      const summary = document.createElement("p");
+      summary.className = "offer-card-summary";
+      summary.textContent = offer.details || localized("Limited-time offer", "عرض لفترة محدودة", "Offer a ɛwɔ bere tiawa mu");
+
+      const dates = document.createElement("p");
+      dates.className = "offer-card-dates";
+      dates.textContent =
+        localized("Starts ", "يبدأ ", "Ɛhyɛ ase ") + offerDate(offer.starts_at, localized("Not set", "غير محدد", "Nni hɔ")) +
+        " · " + localized("Ends ", "ينتهي ", "Ɛba awiei ") + offerDate(offer.ends_at, localized("Not set", "غير محدد", "Nni hɔ"));
+
+      const actions = document.createElement("div");
+      actions.className = "offer-card-actions";
+
+      const detailsButton = document.createElement("button");
+      detailsButton.type = "button";
+      detailsButton.className = "offer-details-button";
+      detailsButton.textContent = localized("Offer details", "تفاصيل العرض", "Offer no ho nsɛm");
+      detailsButton.addEventListener("click", () => showOfferDetails(offer));
+
+      const addButton = document.createElement("button");
+      addButton.type = "button";
+      addButton.className = "offer-add-button";
+      addButton.textContent = localized("Add to basket", "أضف للسلة", "Fa ka basket ho");
+      addButton.addEventListener("click", () => addOfferItemToCart(offer, card));
+
+      const feedback = document.createElement("p");
+      feedback.className = "offer-feedback";
+      feedback.setAttribute("role", "status");
+      feedback.setAttribute("aria-live", "polite");
+
+      actions.append(detailsButton, addButton);
+      card.append(badge, heading, summary, dates, actions, feedback);
+      wall.append(card);
+    });
+
+    container.append(wall);
   }
 
   async function loadMenuAndSettings() {
