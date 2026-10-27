@@ -337,7 +337,6 @@
       pushStatus.textContent=pushText("failed");
     }finally{
       await refreshPushControl();
-      pushToggle.disabled=false;
     }
   });
   void refreshPushControl();
