@@ -373,7 +373,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
 
 /* Animated 3D offer cards for the customer menu */
-.offer-wall{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin:2px 0 24px;perspective:900px}
+.offer-wall{position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:950;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin:2px 0 24px;perspective:900px;pointer-events:none}.offer-float-card{pointer-events:auto}
 .offer-float-card{position:relative;overflow:hidden;padding:17px 18px 15px;border:1px solid #9be1b1;border-radius:20px;background:radial-gradient(circle at 92% 0%,rgba(225,255,233,.28),transparent 38%),linear-gradient(145deg,#138244 0%,#08703a 54%,#075b32 100%);color:#fff;box-shadow:0 12px 24px rgba(7,91,50,.24),inset 0 1px rgba(255,255,255,.22);transform-style:preserve-3d;animation:offer3DShake 3.8s ease-in-out infinite}
 .offer-float-card::after{content:"";position:absolute;right:-36px;top:-52px;width:138px;height:138px;border:1px solid rgba(255,255,255,.18);border-radius:50%;box-shadow:0 0 0 13px rgba(255,255,255,.035),0 0 0 26px rgba(255,255,255,.025);pointer-events:none}
 .offer-badge{display:inline-flex;align-items:center;min-height:23px;padding:4px 9px;border:1px solid rgba(255,255,255,.38);border-radius:99px;background:rgba(255,255,255,.12);color:#f8e6a8;font-size:9px;font-weight:900;letter-spacing:.12em}
