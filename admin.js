@@ -349,7 +349,7 @@
         const owner = user.role === "owner";
         const active = Boolean(user.is_active);
         const statusLabel = active ? "Active" : "Disabled";
-        const roleLabel = owner ? "Administration" : user.role === "kitchen" ? "Kitchen" : "Cashier";
+        const roleLabel = owner ? "Administration" : user.role === "cashier" ? "Cashier" : "Inactive legacy role";
         const actions = owner
           ? '<span class="muted">Owner account</span>'
           : '<div class="user-access-actions">' +
@@ -636,7 +636,7 @@
       accessMode = "owner";
     } else {
       const role = await currentStaffRole();
-      if (!["cashier", "kitchen"].includes(role)) {
+      if (role !== "cashier") {
         await selectedDb.auth.signOut();
         currentUser = null;
         $("#login-message").textContent = "This account is not enabled for active order access.";
