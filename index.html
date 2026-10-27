@@ -17,12 +17,18 @@
   <title>AL SHAMI RESTAURANT &amp; FAST FOOD</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/al-shami-customer.svg?v=icon-20261024" type="image/svg+xml">
+  <link rel="icon" sizes="192x192" href="icons/al-shami-pwa-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css?v=radical-ui-20261023a">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
+    .pwa-install-banner{position:fixed;z-index:10001;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);transform:translateX(-50%);width:min(680px,calc(100% - 24px));padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #d8e2e9;border-radius:14px;background:#f4f8fb;color:#29475b;font-size:14px;box-shadow:0 12px 34px #1b252d30}
+    .pwa-install-banner[hidden]{display:none!important}
+    .pwa-install-banner .btn{flex:0 0 auto}
+    @media(max-width:480px){.pwa-install-banner{padding:10px 12px;font-size:12px}.pwa-install-banner .btn{padding:9px 11px}}
+
 
     .customer-auth{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(25,10,12,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
     .customer-auth[hidden]{display:none!important}
@@ -283,6 +289,11 @@
       </label>
     </div>
   </header>
+
+  <div id="pwa-install-banner" class="pwa-install-banner" hidden>
+    <span>Install AL SHAMI on this device for quick access.</span>
+    <button id="pwa-install-button" class="btn btn-light" type="button">Install app</button>
+  </div>
 
   
     <section id="customer-auth" class="customer-auth" aria-labelledby="customer-auth-title" hidden>
