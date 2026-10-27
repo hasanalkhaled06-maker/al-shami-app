@@ -69,7 +69,7 @@ async function appServer() {
           rows = await rest(tableUrl("customer_push_vapid_keys", { on_conflict: "id" }), {
             method: "POST",
             headers: { Prefer: "resolution=ignore-duplicates,return=representation" },
-            body: JSON.stringify({ id: true, public_key: exported.publicKey, private_key: exported.privateKey, subject })
+            body: JSON.stringify({ id: true, public_key: JSON.stringify(exported.publicKey), private_key: JSON.stringify(exported.privateKey), subject })
           });
         } catch { rows = []; }
         if (!Array.isArray(rows) || !rows.length) {
@@ -78,7 +78,7 @@ async function appServer() {
       }
       if (!Array.isArray(rows) || !rows.length) throw new Error("VAPID key could not be initialized.");
       const row = rows[0];
-      const exported = { publicKey: row.public_key, privateKey: row.private_key };
+      const exported = { publicKey: typeof row.public_key === "string" ? JSON.parse(row.public_key) : row.public_key, privateKey: typeof row.private_key === "string" ? JSON.parse(row.private_key) : row.private_key };
       const keys = await webpush.importVapidKeys(exported, { extractable: false });
       const server = await webpush.ApplicationServer.new({ contactInformation: row.subject, vapidKeys: keys });
       return { server, publicKey: await webpush.exportApplicationServerKey(keys), exported };
@@ -109,7 +109,7 @@ const orderMessages: Record<string, Record<string, (n: string) => { title: strin
   },
   tw: {
     accepted: n => ({ title: "Yɛagye order no", body: "AL SHAMI agye wo order #" + n + "." }),
-    preparing: n => ({ title: "Yɛreyɛ wo order", body: "Yɛreyɛ wo order #" + n +." }),
+    preparing: n => ({ title: "Yɛreyɛ wo order", body: "Yɛreyɛ wo order #" + n + "." }),
     ready: n => ({ title: "Wo order ayɛ krado", body: "Wo order #" + n + " ayɛ krado." }),
     out_for_delivery: n => ({ title: "Wo order reba", body: "Wo order #" + n + " wɔ kwan so reba wo nkyɛn." }),
     rejected: n => ({ title: "Order no ho nsɛm", body: "Yɛantumi annye order #" + n + ". Frɛ AL SHAMI." }),
