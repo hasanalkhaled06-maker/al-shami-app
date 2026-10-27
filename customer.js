@@ -2615,11 +2615,15 @@
     ];
     const scores = products.filter(item => item.is_available !== false).map(item => {
       const name = normalizeMenuSearch([item.name, item.category].filter(Boolean).join(" "));
+      const categoryName = normalizeMenuSearch(item.category || "");
       let score = 0;
       for (const group of aliases) {
         const offerMatches = group.aliases.some(token => text.includes(normalizeMenuSearch(token)));
         const itemMatches = group.aliases.some(token => name.includes(normalizeMenuSearch(token)));
-        if (offerMatches && itemMatches) score += 2;
+        if (offerMatches && itemMatches) {
+          score += 2;
+          if (categoryName === normalizeMenuSearch(group.tokens[0])) score += 1;
+        }
       }
       const nameWords = name.split(/\s+/).filter(word => word.length >= 4);
       for (const word of nameWords) if (text.includes(word)) score += 1;
