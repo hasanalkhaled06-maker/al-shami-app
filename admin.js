@@ -1924,6 +1924,16 @@ Status: ${order.status}`;
         console.warn("Receipt was confirmed, but its SMS notification failed:", smsError);
       }
 
+
+      try {
+        const { error: pushError } = await db.functions.invoke("customer-push", {
+          body: { action: "order-status", orderNumber, status: "completed" }
+        });
+        if (pushError) throw pushError;
+      } catch (pushError) {
+        console.warn("Receipt was confirmed, but the customer push notification failed:", pushError);
+      }
+
       if (message) {
         message.textContent = receiptSmsFailed
           ? "Receipt confirmed and moved to History, but the customer SMS could not be sent."
@@ -1987,6 +1997,20 @@ Status: ${order.status}`;
         } catch (smsError) {
           smsFailed = true;
           console.warn("Order status saved, but customer SMS failed:", smsError);
+        }
+      }
+
+
+      let pushFailed = false;
+      if (previousStatus !== newStatus && smsStatuses.includes(newStatus)) {
+        try {
+          const { error: pushError } = await db.functions.invoke("customer-push", {
+            body: { action: "order-status", orderId: id, status: newStatus }
+          });
+          if (pushError) throw pushError;
+        } catch (pushError) {
+          pushFailed = true;
+          console.warn("Order status saved, but customer push notification failed:", pushError);
         }
       }
 
@@ -2314,6 +2338,7 @@ Status: ${order.status}`;
           form.elements.title.value = offer.title;
           form.elements.details.value = offer.details || "";
           form.elements.is_active.checked = offer.is_active;
+          form.dataset.offerWasActive = offer.is_active ? "true" : "false";
         };
       });
 
@@ -2333,11 +2358,41 @@ Status: ${order.status}`;
           if (error) {
             toast(error.message);
           } else {
+            if (!offer.is_active) {
+              try { await db.functions.invoke("customer-push", { body: { action: "offer", offerId: offer.id } }); }
+              catch (pushError) { console.warn("Offer activated, but customer push notification failed:", pushError); }
+            }
             await loadOffers();
           }
         };
       });
   }
+
+  $("#customer-announcement-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (accessMode !== "owner") return;
+    const form = event.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
+    const message = $("#customer-announcement-message");
+    button.disabled = true;
+    message.textContent = "Sending announcement…";
+    message.className = "status-message";
+    try {
+      const { data, error } = await db.functions.invoke("customer-push", {
+        body: { action: "announcement", title: form.elements.title.value.trim(), body: form.elements.body.value.trim() }
+      });
+      if (error) throw new Error(data?.error || error.message);
+      if (data?.error) throw new Error(data.error);
+      message.textContent = data?.sent ? "Announcement sent to " + data.sent + " device(s)." : "No customer devices have enabled promotion notifications yet.";
+      message.className = "status-message success";
+      form.reset();
+    } catch (error) {
+      message.textContent = error.message || "Could not send announcement.";
+      message.className = "status-message error";
+    } finally {
+      button.disabled = false;
+    }
+  });
 
   $("#offer-form").onsubmit = async event => {
     event.preventDefault();
@@ -2352,20 +2407,29 @@ Status: ${order.status}`;
 
     const id = form.elements.id.value;
 
+    const wasActive = id ? form.dataset.offerWasActive === "true" : false;
     const result = id
-      ? await db.from("offers").update(data).eq("id", id)
-      : await db.from("offers").insert(data);
+      ? await db.from("offers").update(data).eq("id", id).select("id").maybeSingle()
+      : await db.from("offers").insert(data).select("id").single();
 
     if (result.error) {
       status(result.error.message, "#offer-message", true);
       return;
     }
 
+    if (data.is_active && (!id || !wasActive) && result.data?.id) {
+      try {
+        await db.functions.invoke("customer-push", { body: { action: "offer", offerId: result.data.id } });
+      } catch (pushError) {
+        console.warn("Offer saved, but customer push notification failed:", pushError);
+      }
+    }
     status("Offer saved.", "#offer-message");
 
     form.reset();
     form.elements.id.value = "";
     form.elements.is_active.checked = true;
+    delete form.dataset.offerWasActive;
 
     await loadOffers();
   };
