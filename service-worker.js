@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v124";
+const CACHE_NAME = CACHE_PREFIX + "v125";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -30,13 +30,16 @@ const SHELL_FILES = [
   "./customer.js?v=customer-points-20261025a",
   "./customer.js?v=delivery-complete-20261025a",
   "./customer.js?v=catalog-refresh-20261027a",
+  "./customer.js?v=push-notifications-20261027a",
   "./customer-features.js?v=account-settings-20261025c",
   "./customer-features.js?v=customer-points-20261025a",
   "./customer-features.js?v=delivery-complete-20261025a",
+  "./customer-features.js?v=push-notifications-20261027a",
   "./admin-delivery-ops.js?v=operations-settings-20261025c",
   "./rider-ops.js?v=delivery-ops-20261025b",
   "./admin.js",
   "./admin.js?v=staff-user-roles-20261026d",
+  "./admin.js?v=push-notifications-20261027a",
   "./order-workflow.js?v=order-flow-guard-20261026a",
   "./admin-operations.js",
   "./admin-operations.js?v=radical-ui-20261023a",
@@ -83,17 +86,51 @@ self.addEventListener("activate", event => {
   })());
 });
 
+// Push notifications belong to the customer app. Never route customers into admin or rider pages.
+
+self.addEventListener("push", event => {
+  event.waitUntil((async () => {
+    let data = {};
+    try { data = event.data ? event.data.json() : {}; } catch { data = {}; }
+    const title = String(data.title || "AL SHAMI");
+    const options = {
+      body: String(data.body || "You have an update from AL SHAMI."),
+      icon: "./icons/al-shami-pwa-192.png",
+      badge: "./icons/al-shami-pwa-192.png",
+      tag: String(data.tag || "al-shami-update"),
+      renotify: true,
+      data: { url: String(data.url || "./index.html") }
+    };
+    await self.registration.showNotification(title, options);
+  })());
+});
+
 self.addEventListener("notificationclick", event => {
   event.notification.close();
-  const targetUrl = new URL("./admin.html", self.registration.scope).href;
+  let targetUrl;
+  try {
+    const candidate = new URL(event.notification.data?.url || "./index.html", self.registration.scope);
+    targetUrl = candidate.origin === self.location.origin && candidate.pathname.startsWith(new URL(self.registration.scope).pathname)
+      ? candidate.href
+      : new URL("./index.html", self.registration.scope).href;
+  } catch {
+    targetUrl = new URL("./index.html", self.registration.scope).href;
+  }
   event.waitUntil((async () => {
     const openClients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    const appClient = openClients.find(client => client.url.startsWith(self.registration.scope));
-    if (appClient) {
-      if (appClient.url !== targetUrl && typeof appClient.navigate === "function") {
-        await appClient.navigate(targetUrl);
+    const customerClient = openClients.find(client => {
+      try {
+        const url = new URL(client.url);
+        return url.origin === self.location.origin &&
+          !/\/(admin|rider|history|install)\.html$/i.test(url.pathname) &&
+          (url.pathname.endsWith("/") || url.pathname.endsWith("/index.html"));
+      } catch { return false; }
+    });
+    if (customerClient) {
+      if (customerClient.url !== targetUrl && typeof customerClient.navigate === "function") {
+        await customerClient.navigate(targetUrl);
       }
-      return appClient.focus();
+      return customerClient.focus();
     }
     return self.clients.openWindow(targetUrl);
   })());
