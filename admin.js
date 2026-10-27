@@ -2170,6 +2170,7 @@ Status: ${order.status}`;
       if (field) field.disabled = !menuFeatureColumnsAvailable;
     });
     products = data || [];
+    refreshOfferProductOptions();
 
     $("#stat-menu").textContent = products.length;
 
@@ -2313,6 +2314,26 @@ Status: ${order.status}`;
 
   $("#cancel-product").onclick = resetProduct;
 
+  function refreshOfferProductOptions() {
+    const select = $("#offer-menu-items");
+    if (!select) return;
+    const selectedIds = new Set(Array.from(select.selectedOptions || []).map(option => option.value));
+    select.replaceChildren();
+    products.forEach(product => {
+      const option = document.createElement("option");
+      option.value = String(product.id);
+      option.textContent = String(product.name || "Menu item") + " · " + money(product.price);
+      option.selected = selectedIds.has(option.value);
+      select.append(option);
+    });
+  }
+
+  function offerDateInputValue(value) {
+    if (!value || !Number.isFinite(new Date(value).getTime())) return "";
+    const date = new Date(value);
+    return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0");
+  }
+
   async function loadOffers() {
     const { data, error } = await db
       .from("offers")
@@ -2329,6 +2350,8 @@ Status: ${order.status}`;
           <strong>${esc(offer.title)}</strong>
           <small>
             ${esc(offer.details || "")} ·
+            ${offer.starts_at ? "Starts " + esc(offerDateInputValue(offer.starts_at)) : "Start date not set"} ·
+            ${offer.ends_at ? "Ends " + esc(offerDateInputValue(offer.ends_at)) : "End date not set"} ·
             ${offer.is_active ? "Active" : "Inactive"}
           </small>
         </div>
@@ -2356,6 +2379,12 @@ Status: ${order.status}`;
           form.elements.id.value = offer.id;
           form.elements.title.value = offer.title;
           form.elements.details.value = offer.details || "";
+          form.elements.starts_at.value = offerDateInputValue(offer.starts_at);
+          form.elements.ends_at.value = offerDateInputValue(offer.ends_at);
+          const includedItems = new Set((offer.menu_item_ids || []).map(String));
+          Array.from(form.elements.menu_item_ids.options).forEach(option => {
+            option.selected = includedItems.has(option.value);
+          });
           form.elements.is_active.checked = offer.is_active;
           form.dataset.offerWasActive = offer.is_active ? "true" : "false";
         };
@@ -2418,10 +2447,20 @@ Status: ${order.status}`;
 
     const form = event.currentTarget;
 
+    const startsOn = String(form.elements.starts_at.value || "").trim();
+    const endsOn = String(form.elements.ends_at.value || "").trim();
+    if (startsOn && endsOn && endsOn < startsOn) {
+      status("The offer end date must be on or after its start date.", "#offer-message", true);
+      return;
+    }
+    const selectedMenuItems = Array.from(form.elements.menu_item_ids.selectedOptions || []).map(option => option.value);
     const data = {
       title: form.elements.title.value.trim(),
       details: form.elements.details.value.trim() || null,
-      is_active: form.elements.is_active.checked
+      is_active: form.elements.is_active.checked,
+      starts_at: startsOn ? new Date(startsOn + "T00:00:00").toISOString() : null,
+      ends_at: endsOn ? new Date(endsOn + "T23:59:59").toISOString() : null,
+      menu_item_ids: selectedMenuItems
     };
 
     const id = form.elements.id.value;
