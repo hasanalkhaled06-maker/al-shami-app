@@ -35,7 +35,7 @@
   }
   if(!document.querySelector("#customer-settings-dialog")){
     const overlay=document.createElement("div");overlay.className="customer-settings-overlay";overlay.id="customer-settings-dialog";overlay.hidden=true;
-    overlay.innerHTML='<section class="customer-settings-dialog" role="dialog" aria-modal="true" aria-labelledby="customer-settings-title"><header><h2 id="customer-settings-title">Account, rewards & alerts</h2><button id="customer-settings-close" class="btn btn-light" type="button" aria-label="Close account settings">Close</button></header><p id="customer-feature-status" class="customer-feature-note" role="status">Sign in to view rewards and save alert preferences.</p><div id="customer-rewards-summary" hidden></div><hr><h3>Alerts you want to receive</h3><div class="feature-row" id="customer-notification-options"><label><input type="checkbox" data-pref="order_updates" checked> Order updates</label><label><input type="checkbox" data-pref="rider_tracking" checked> Rider tracking</label><label><input type="checkbox" data-pref="promotions"> Promotions</label></div></section>';
+    overlay.innerHTML='<section class="customer-settings-dialog" role="dialog" aria-modal="true" aria-labelledby="customer-settings-title"><header><h2 id="customer-settings-title">Account, rewards & alerts</h2><button id="customer-settings-close" class="btn btn-light" type="button" aria-label="Close account settings">Close</button></header><p id="customer-feature-status" class="customer-feature-note" role="status">Sign in to view rewards and save alert preferences.</p><div id="customer-rewards-summary" hidden></div><hr><h3>Alerts you want to receive</h3><div class="feature-row" id="customer-notification-options"><label><input type="checkbox" data-pref="order_updates" checked> Order updates</label><label><input type="checkbox" data-pref="rider_tracking" checked> Rider tracking</label><label><input type="checkbox" data-pref="promotions"> Promotions</label></div><hr><h3>Notifications on this device</h3><p id="customer-push-status" class="customer-feature-note" role="status">Enable notifications to receive updates from AL SHAMI.</p><button id="customer-push-toggle" class="btn btn-light" type="button">Enable notifications</button></section>';
     document.body.append(overlay);
   }
   const completionModal=document.createElement("div");
@@ -247,6 +247,7 @@
       db.from("customer_notification_preferences").select("order_updates,rider_tracking,promotions").eq("customer_user_id",session.user.id).maybeSingle()
     ]);
     if(prefs&&!prefsError)options?.querySelectorAll("[data-pref]").forEach(el=>el.checked=Boolean(prefs[el.dataset.pref]));
+    await refreshPushControl();
     if(rewardError){loyaltySettings=null;window.AL_SHAMI_LOYALTY_SETTINGS=null;refreshPointDisplays();if(status)status.textContent="Rewards are available after the optional database migration is applied.";return;}
     loyaltySettings={enabled:Boolean(rewards.enabled),points:Number(rewards.points||0),pointsPerGhs:Number(rewards.points_per_ghs||0),pointsPerGhsRedeemed:Math.max(1,Number(rewards.points_per_ghs_redeemed||100))};
     window.AL_SHAMI_LOYALTY_SETTINGS=loyaltySettings;
@@ -260,6 +261,87 @@
     }
     if(status)status.textContent=prefsError?"Alert preferences will save after the optional database migration is applied.":"Your reward balance and alert choices.";
   }
+
+  const pushStatus=document.querySelector("#customer-push-status");
+  const pushToggle=document.querySelector("#customer-push-toggle");
+  const pushText=(key)=>{
+    const lang=String(document.querySelector("#language")?.value||"en").toLowerCase();
+    const words={
+      en:{enable:"Enable notifications",disable:"Turn off on this device",enabled:"Notifications are enabled on this device.",disabled:"Notifications are off on this device.",unsupported:"This browser does not support push notifications.",signin:"Sign in to enable notifications.",ios:"On iPhone or iPad, add AL SHAMI to the Home Screen first, then open it there to enable notifications.",denied:"Notifications are blocked in browser settings. Allow them there, then try again.",failed:"Could not update notifications. Check your connection and try again.",ready:"Enable notifications for order updates and restaurant news."},
+      ar:{enable:"تفعيل الإشعارات",disable:"إيقاف الإشعارات على هذا الجهاز",enabled:"الإشعارات مفعّلة على هذا الجهاز.",disabled:"الإشعارات متوقفة على هذا الجهاز.",unsupported:"هذا المتصفح لا يدعم الإشعارات.",signin:"سجّل الدخول أولاً لتفعيل الإشعارات.",ios:"على iPhone أو iPad، أضف AL SHAMI إلى الشاشة الرئيسية وافتحه منها لتفعيل الإشعارات.",denied:"الإشعارات محظورة من إعدادات المتصفح. اسمح بها ثم حاول مجدداً.",failed:"تعذّر تحديث الإشعارات. تحقق من الإنترنت وحاول مجدداً.",ready:"فعّل الإشعارات لتصلك تحديثات الطلب وأخبار المطعم."},
+      tw:{enable:"Ma notifications",disable:"Gyae notifications wɔ saa device yi so",enabled:"Notifications yɛ active wɔ saa device yi so.",disabled:"Notifications nni hɔ wɔ saa device yi so.",unsupported:"Browser yi ntumi nnya push notifications.",signin:"Sign in ansa na woama notifications ayɛ active.",ios:"Wɔ iPhone anaa iPad so, fa AL SHAMI to Home Screen na bue fi hɔ ansa.",denied:"Browser settings ablock notifications. Ma kwan wɔ settings mu na san sɔ hwɛ.",failed:"Yentumi nsakra notifications. Hwɛ internet na san sɔ hwɛ.",ready:"Ma notifications active na woanya order updates ne restaurant news."}
+    };
+    return (words[lang]||words.en)[key];
+  };
+  function isIosDevice(){
+    return /iPad|iPhone|iPod/.test(navigator.userAgent)||((navigator.platform==="MacIntel")&&navigator.maxTouchPoints>1);
+  }
+  function isInstalledCustomerPwa(){
+    return Boolean(navigator.standalone)||window.matchMedia("(display-mode: standalone)").matches;
+  }
+  async function invokeCustomerPush(body){
+    const {data,error}=await db.functions.invoke("customer-push",{body});
+    if(error)throw new Error(data?.error||error.message||"Notification request failed.");
+    if(data?.error)throw new Error(data.error);
+    return data||{};
+  }
+  async function refreshPushControl(){
+    if(!pushToggle||!pushStatus)return;
+    pushToggle.disabled=false;
+    if(!("Notification" in window)||!navigator.serviceWorker||!("PushManager" in window)){
+      pushToggle.disabled=true;pushStatus.textContent=pushText("unsupported");return;
+    }
+    if(isIosDevice()&&!isInstalledCustomerPwa()){
+      pushToggle.disabled=true;pushStatus.textContent=pushText("ios");return;
+    }
+    if(Notification.permission==="denied"){
+      pushToggle.disabled=true;pushStatus.textContent=pushText("denied");return;
+    }
+    try{
+      const registration=await navigator.serviceWorker.ready;
+      const subscription=await registration.pushManager.getSubscription();
+      pushToggle.dataset.subscribed=subscription?"true":"false";
+      pushToggle.textContent=pushText(subscription?"disable":"enable");
+      pushStatus.textContent=pushText(subscription?"enabled":"ready");
+    }catch(error){
+      pushToggle.disabled=true;pushStatus.textContent=pushText("unsupported");
+    }
+  }
+  pushToggle?.addEventListener("click",async()=>{
+    pushToggle.disabled=true;
+    try{
+      const {data:{session}}=await db.auth.getSession();
+      if(!session?.user){pushStatus.textContent=pushText("signin");return;}
+      const registration=await navigator.serviceWorker.ready;
+      const existing=await registration.pushManager.getSubscription();
+      if(existing){
+        await invokeCustomerPush({action:"unsubscribe",endpoint:existing.endpoint});
+        await existing.unsubscribe();
+        pushStatus.textContent=pushText("disabled");
+      }else{
+        let permission=Notification.permission;
+        if(permission==="default")permission=await Notification.requestPermission();
+        if(permission!=="granted"){
+          pushStatus.textContent=pushText("denied");return;
+        }
+        const {publicKey}=await invokeCustomerPush({action:"public-key"});
+        if(!publicKey)throw new Error("Push key is unavailable.");
+        const applicationServerKey=Uint8Array.from(atob(publicKey.replace(/-/g,"+").replace(/_/g,"/")+"===".slice((publicKey.length+3)%4)),c=>c.charCodeAt(0));
+        const subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey});
+        const language=String(document.querySelector("#language")?.value||"en").toLowerCase();
+        await invokeCustomerPush({action:"subscribe",subscription:subscription.toJSON(),language});
+        pushStatus.textContent=pushText("enabled");
+      }
+    }catch(error){
+      console.error("Could not change customer push notifications:",error);
+      pushStatus.textContent=pushText("failed");
+    }finally{
+      await refreshPushControl();
+      pushToggle.disabled=false;
+    }
+  });
+  void refreshPushControl();
+
   options?.addEventListener("change",async()=>{
     const {data:{session}}=await db.auth.getSession();if(!session?.user)return;
     const row={customer_user_id:session.user.id,updated_at:new Date().toISOString()};
