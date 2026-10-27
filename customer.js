@@ -895,7 +895,6 @@
   let customerCatalogRefreshTimer = null;
   let customerCatalogRefreshInProgress = false;
   let customerCatalogLastRefreshAt = 0;
-  let customerCatalogNoticeTimer = null;
   let cart = {};
   let category = "All";
   let sortMode = "default";
@@ -2675,7 +2674,7 @@
 
       const badge = document.createElement("span");
       badge.className = "offer-badge";
-      badge.textContent = localized("SPECIAL OFFER", "عرض خاص", "OFFER TITIRE");
+      badge.textContent = localized("TODAY’S OFFER", "عرض اليوم", "NNƐ OFFER");
 
       const heading = document.createElement("h2");
       heading.className = "offer-card-title";
@@ -2869,36 +2868,6 @@
     ]));
   }
 
-  function showCatalogRefreshNotice(menuChanged, hasNewOffer) {
-    const offersContainer = $("#active-offers");
-    if (!offersContainer) return;
-    let notice = $("#catalog-refresh-status");
-    if (!notice) {
-      notice = document.createElement("div");
-      notice.id = "catalog-refresh-status";
-      notice.className = "app-message info";
-      notice.setAttribute("role", "status");
-      notice.setAttribute("aria-live", "polite");
-      notice.setAttribute("aria-atomic", "true");
-      offersContainer.insertAdjacentElement("afterend", notice);
-    }
-    notice.textContent = menuChanged
-      ? localized(
-          "The menu or offers changed. Please review your cart before placing the order.",
-          "تحدّث المنيو أو العروض؛ راجع سلتك قبل تأكيد الطلب.",
-          "Menu an offers no ayɛ foforo. San hwɛ wo cart ansa na woasi order no."
-        )
-      : hasNewOffer
-        ? localized("A new offer is available.", "في عرض جديد متاح.", "Offer foforo aba.")
-        : localized("The offers were updated.", "تحدّثت العروض المتاحة.", "Wɔayɛ offers no foforo.");
-    notice.hidden = false;
-    if (customerCatalogNoticeTimer) window.clearTimeout(customerCatalogNoticeTimer);
-    customerCatalogNoticeTimer = window.setTimeout(() => {
-      notice.hidden = true;
-      customerCatalogNoticeTimer = null;
-    }, 6500);
-  }
-
   async function refreshCustomerCatalog() {
     if (!db || !authSession?.user || menuLoading || customerCatalogRefreshInProgress) return;
     if (document.visibilityState === "hidden" || navigator.onLine === false) return;
@@ -2947,7 +2916,6 @@
         offers = nextOffers;
         renderOffers();
       }
-      showCatalogRefreshNotice(menuChanged, hasNewOffer);
     } catch (error) {
       console.warn("Customer menu/offers refresh failed; keeping the last loaded catalog.", error);
     } finally {
