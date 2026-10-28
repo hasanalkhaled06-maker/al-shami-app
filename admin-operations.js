@@ -250,7 +250,7 @@
 
       <section id="ops-inventory">
         <div class="ops-stock-toolbar">
-          <div><h3>Stock</h3><p class="ops-note">Choose a category. If it has one item, its daily sheet opens automatically; if it has several, choose the item.</p></div>
+          <div><h3>Stock</h3><p class="ops-note">Choose a category to view its items. Open an item for its daily sheet, or delete it from the list.</p></div>
           <button class="btn btn-primary" id="ops-add-item-btn" type="button">＋ Add item</button>
         </div>
         <div id="ops-inventory-categories" class="ops-stock-category-grid" aria-label="Stock categories"></div>
@@ -878,9 +878,8 @@
       const categoryItems = stockItems.filter(item =>
         stockCategoryKey(item.category) === stockCategoryKey(selectedStockCategory)
       );
-      selectedStockItem = categoryItems.length === 1 ? categoryItems[0] : null;
+      selectedStockItem = null;
       renderInventory();
-      if (selectedStockItem) loadMovements().catch(showError);
       return;
     }
     if (event.target.closest("#ops-add-item-btn")) {
