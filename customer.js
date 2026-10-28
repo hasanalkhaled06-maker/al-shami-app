@@ -235,7 +235,10 @@
     const confirm = $("#delivery-map-confirm");
     if (confirm) confirm.disabled = !pendingDeliveryLocation;
     const searchInput = $("#delivery-map-search-input");
-    if (searchInput) {\n      searchInput.placeholder = tr("mapSearchPlaceholder");\n      searchInput.value = String(checkoutForm?.elements?.delivery_address?.value || "").trim();\n    }
+    if (searchInput) {
+      searchInput.placeholder = tr("mapSearchPlaceholder");
+      searchInput.value = String(checkoutForm?.elements?.delivery_address?.value || "").trim();
+    }
     const results = $("#delivery-map-search-results");
     if (results) {
       results.hidden = true;
