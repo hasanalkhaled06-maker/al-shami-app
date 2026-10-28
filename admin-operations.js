@@ -100,6 +100,9 @@
       .ops-form .wide {
         grid-column: 1/-1;
       }
+      .ops-staff-filters { display:grid; grid-template-columns:minmax(220px,2fr) repeat(2,minmax(150px,1fr)); gap:10px; margin:12px 0 6px; }
+      .ops-staff-filters label { display:grid; gap:5px; font-size:12px; font-weight:700; }
+      .ops-staff-filters input,.ops-staff-filters select { width:100%; min-height:40px; padding:8px 10px; border:1px solid #d8d5ca; border-radius:8px; font:inherit; }
       .ops-note { font-size: 12px; color: #766d6c; }
       #ops-subtabs {
         display: grid !important;
@@ -163,7 +166,7 @@
       .ops-stock-sheet .stock-sheet-save { min-height:36px; padding:6px 12px; border:0; border-radius:5px; background:#386b3f; color:#fff; font-weight:700; cursor:pointer; }
       .ops-stock-entry { margin:14px 0; padding:14px; border:1px solid #eadfd6; border-radius:14px; background:#fffaf5; }
       .ops-stock-empty { padding:18px; border:1px dashed #d9cbc0; border-radius:12px; color:#766d6c; text-align:center; }
-      @media(max-width:760px) { .ops-stock-category-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ops-stock-item-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ops-stock-toolbar { align-items:flex-start; flex-direction:column; } }
+      @media(max-width:760px) { .ops-stock-category-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ops-stock-item-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ops-stock-toolbar { align-items:flex-start; flex-direction:column; } .ops-staff-filters { grid-template-columns:1fr; } }
       @media(max-width:390px) { .ops-stock-item-grid { grid-template-columns:1fr; } .ops-stock-item-entry { grid-template-columns:minmax(0,1fr) auto; } .ops-stock-delete { min-width:68px; padding:8px; } }
 
       @media(max-width:760px) {
@@ -472,9 +475,28 @@
           <div class="ops-stat"><small>Active employees</small><strong id="ops-staff-active">—</strong></div>
           <div class="ops-stat"><small>Employment records needing review</small><strong id="ops-staff-review">—</strong></div>
         </div>
-        <label style="display:flex;gap:8px;align-items:center;margin:10px 0">Search employees
-          <input id="ops-staff-search" type="search" placeholder="Name, phone, ID or position" style="max-width:420px">
-        </label>
+        <div class="ops-staff-filters">
+          <label>Search employees
+            <input id="ops-staff-search" type="search" placeholder="Name, phone, ID or position" autocomplete="off">
+          </label>
+          <label>Employment status
+            <select id="ops-staff-status">
+              <option value="all">All records</option>
+              <option value="active">Active</option>
+              <option value="on_leave">On leave</option>
+              <option value="suspended">Suspended</option>
+              <option value="terminated">Terminated</option>
+              <option value="inactive">Inactive / archived</option>
+            </select>
+          </label>
+          <label>Record date
+            <select id="ops-staff-date-sort">
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+            </select>
+          </label>
+        </div>
+        <p id="ops-staff-results-count" class="ops-note" aria-live="polite"></p>
         <div id="ops-staff-list" class="ops-table-wrap"></div>
       </section>
 
@@ -699,6 +721,8 @@
     $("#ops-staff-form").addEventListener("submit", addStaff);
     $("#ops-staff-cancel").addEventListener("click", resetStaffForm);
     $("#ops-staff-search").addEventListener("input", () => { void renderStaffList().catch(showError); });
+    $("#ops-staff-status").addEventListener("change", () => { void renderStaffList().catch(showError); });
+    $("#ops-staff-date-sort").addEventListener("change", () => { void renderStaffList().catch(showError); });
     $("#ops-expense-form").addEventListener("submit", addExpense);
     $("#ops-shift-open-form").addEventListener("submit", openShift);
     $("#ops-purchase-form").addEventListener("submit", createPurchaseOrder);
@@ -1279,12 +1303,34 @@
     await renderStaffList();
   }
 
+  function staffMatchesStatus(person, filter) {
+    if (filter === "active") return person.employment_status === "active" && Boolean(person.is_active);
+    if (filter === "inactive") return !person.is_active;
+    if (filter === "all") return true;
+    return person.employment_status === filter;
+  }
+
   async function renderStaffList() {
     const query = String($("#ops-staff-search")?.value || "").trim().toLowerCase();
-    const people = staffCache.filter(person => !query || [
-      person.full_name, person.phone, person.id_number, person.position_title,
-      person.department, person.role, person.email
-    ].some(value => String(value || "").toLowerCase().includes(query)));
+    const statusFilter = $("#ops-staff-status")?.value || "all";
+    const dateSort = $("#ops-staff-date-sort")?.value === "oldest" ? "oldest" : "newest";
+    const people = staffCache
+      .filter(person => staffMatchesStatus(person, statusFilter))
+      .filter(person => !query || [
+        person.full_name, person.phone, person.id_number, person.position_title,
+        person.department, person.role, person.email
+      ].some(value => String(value || "").toLowerCase().includes(query)))
+      .sort((a, b) => {
+        const aDate = Date.parse(a.created_at || "") || 0;
+        const bDate = Date.parse(b.created_at || "") || 0;
+        const difference = dateSort === "oldest" ? aDate - bDate : bDate - aDate;
+        return difference || String(a.full_name || "").localeCompare(String(b.full_name || ""));
+      });
+    $("#ops-staff-results-count").textContent = "Showing " + people.length + " of " + staffCache.length + " employee records.";
+    if (!people.length) {
+      $("#ops-staff-list").innerHTML = '<p class="ops-stock-empty">No employee records match these filters.</p>';
+      return;
+    }
 
     const rows = await Promise.all(people.map(async person => {
       const photoUrl = await staffSignedUrl(person.photo_path);
@@ -1305,6 +1351,7 @@
         person.phone || "—",
         person.id_type ? person.id_type + ": " + (person.id_number || "number not entered") : (person.id_number || "—"),
         person.start_date || "—",
+        person.created_at ? new Date(person.created_at).toLocaleDateString() : "—",
         person.salary_amount == null ? "—" : money(person.salary_amount) + " / " + (person.salary_frequency || "monthly"),
         statusLabels[person.employment_status] || person.employment_status || "Active",
         {kind:"html",value:files},
@@ -1312,7 +1359,7 @@
       ];
     }));
     $("#ops-staff-list").innerHTML = table(
-      ["Photo","Employee","Position","Phone","Identity","Start date","Salary","Status","Documents","Actions"],
+      ["Photo","Employee","Position","Phone","Identity","Start date","Record saved","Salary","Status","Documents","Actions"],
       rows
     );
     $("#ops-staff-list").querySelectorAll("[data-edit-staff]").forEach(button => {
