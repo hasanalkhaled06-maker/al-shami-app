@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.rider-login]
 verify_jwt = false
+
+[functions.rider-account]
+verify_jwt = true
