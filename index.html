@@ -535,7 +535,7 @@
             <input id="delivery-latitude" name="delivery_latitude" type="hidden">
             <input id="delivery-longitude" name="delivery_longitude" type="hidden">
             <p id="delivery-location-status" class="delivery-location-status" role="status" aria-live="polite" data-i18n="locationNotSelected">Choose a map pin before sending a delivery order.</p>
-            <small id="address-help" class="field-help" data-i18n="addressHint">Include your house or building number, street, neighbourhood, and a nearby landmark (for example, a shop or station).</small>
+            <small id="address-help" class="field-help" data-i18n="addressHint">The map fills the nearby address. Add your house number or a landmark if needed.</small>
           </div>
 
           <div id="pickup-instructions-field" class="full hidden">
@@ -581,11 +581,11 @@
           </div>
           <button id="delivery-map-close" class="btn btn-light delivery-map-close" type="button" aria-label="Close map">×</button>
         </header>
-        <p class="delivery-map-help" data-i18n="mapHelp">Use the address above to search, or choose your current location. Check the pin, then confirm it.</p>
+        <p class="delivery-map-help" data-i18n="mapHelp">Use your current location or search a nearby landmark. Confirm the pin; the address fills in automatically.</p>
         <div id="delivery-map-search-container" class="delivery-map-search-container">
           <form id="delivery-map-search-form" class="delivery-map-search-form" role="search">
             <label for="delivery-map-search-input" class="visually-hidden" data-i18n="mapSearchPlaceholder">Search for a place or address</label>
-            <input id="delivery-map-search-input" type="search" maxlength="180" autocomplete="off" placeholder="Search your address or nearby landmark">
+            <input id="delivery-map-search-input" type="search" maxlength="180" autocomplete="off" placeholder="Search a nearby landmark">
             <button id="delivery-map-search-button" class="btn btn-primary" type="submit" data-i18n="mapSearchButton">Find</button>
           </form>
           <div id="delivery-map-search-results" class="delivery-map-search-results" role="list" aria-label="Search results" hidden></div>
