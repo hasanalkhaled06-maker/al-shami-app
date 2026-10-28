@@ -41,6 +41,7 @@
   let lastReportRows = [];
   let stockItems = [];
   let selectedStockCategory = "";
+  let stockSearchQuery = "";
   let selectedStockItem = null;
 
   function addStyles() {
@@ -135,6 +136,7 @@
       .ops-stock-category strong { font-size:13px; }
       .ops-stock-category small { color:#766d6c; font-size:11px; }
       .ops-stock-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:12px 0; }
+      .ops-stock-search { width:100%; max-width:460px; min-height:42px; margin:6px 0 12px; padding:9px 12px; border:1px solid #d8d5ca; border-radius:9px; font:inherit; }
       .ops-stock-item-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:12px 0; }
       .ops-stock-item-card { display:flex; flex-direction:column; gap:9px; min-height:96px; padding:14px; border:1px solid #eadfd6; border-radius:13px; background:#fff; color:#342326; text-align:left; }
       .ops-stock-item-card strong { font-size:14px; }
@@ -273,6 +275,7 @@
               <button class="btn btn-light" id="ops-cancel-item" type="button">Cancel</button>
             </div>
           </form>
+          <input id="ops-stock-search" class="ops-stock-search" type="search" placeholder="Search items in this category…" autocomplete="off" aria-label="Search stock items in this category" hidden>
           <div id="ops-stock-items"></div>
         </div>
         <section id="ops-stock-detail" hidden>
@@ -679,6 +682,13 @@
     $("#ops-movement-form").addEventListener("submit", saveStockSheetRow);
     $("#ops-movement-form").addEventListener("input", updateStockSheetPreview);
     $("#ops-inventory").addEventListener("click", onInventoryClick);
+    $("#ops-stock-search").addEventListener("input", event => {
+      stockSearchQuery = event.currentTarget.value;
+      renderInventory();
+      const search = $("#ops-stock-search");
+      search.focus();
+      search.setSelectionRange(search.value.length, search.value.length);
+    });
     $("#ops-supplier-form").addEventListener("submit", addSupplier);
     $("#ops-staff-form").addEventListener("submit", addStaff);
     $("#ops-staff-cancel").addEventListener("click", resetStaffForm);
@@ -794,7 +804,9 @@
 
   const stockCategoryDefaults = [
     {name:"Drinks", icon:"🥤"},
+    {name:"Juice", icon:"🧃"},
     {name:"Chicken", icon:"🍗"},
+    {name:"Ice Cream", icon:"🍦"},
     {name:"Disposable", icon:"🍽️"},
     {name:"Other", icon:"📦"}
   ];
@@ -846,11 +858,19 @@
     $("#ops-stock-detail").hidden = true;
     $("#ops-stock-catalog").hidden = false;
     const list = $("#ops-stock-items");
+    const search = $("#ops-stock-search");
+    search.hidden = !selectedStockCategory;
+    search.placeholder = selectedStockCategory ? "Search items in " + selectedStockCategory + "…" : "Search stock items…";
+    search.value = stockSearchQuery;
     if (!selectedStockCategory) {
       list.innerHTML = '<p class="ops-stock-empty">Choose a category to see its items.</p>';
       return;
     }
-    const items = stockItems.filter(item => stockCategoryKey(item.category) === stockCategoryKey(selectedStockCategory));
+    const query = stockSearchQuery.trim().toLowerCase();
+    const items = stockItems.filter(item =>
+      stockCategoryKey(item.category) === stockCategoryKey(selectedStockCategory) &&
+      (!query || String(item.name || "").toLowerCase().includes(query))
+    );
     list.innerHTML = '<h4>' + esc(selectedStockCategory) + '</h4>' +
       (items.length
         ? '<div class="ops-stock-item-grid">' + items.map(item =>
@@ -860,7 +880,7 @@
             '</span><small>Open daily sheet →</small></button><button class="ops-stock-delete" type="button" data-delete-stock-item="' +
             esc(item.id) + '" aria-label="Delete ' + esc(item.name) + '">Delete</button></div>'
           ).join("") + '</div>'
-        : '<p class="ops-stock-empty">No items in this category yet. Add the first one.</p>');
+        : '<p class="ops-stock-empty">' + (query ? "No items match your search." : "No items in this category yet. Add the first one.") + '</p>');
   }
 
   function onInventoryClick(event) {
@@ -873,6 +893,8 @@
     const categoryButton = event.target.closest("[data-stock-category]");
     if (categoryButton) {
       selectedStockCategory = categoryButton.dataset.stockCategory;
+      stockSearchQuery = "";
+      $("#ops-stock-search").value = "";
       $("#ops-item-form").hidden = true;
       const categoryItems = stockItems.filter(item =>
         stockCategoryKey(item.category) === stockCategoryKey(selectedStockCategory)
