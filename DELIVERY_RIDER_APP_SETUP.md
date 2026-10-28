@@ -29,7 +29,7 @@ The pre-existing order-visibility security migration and rider live-tracking mig
 3. In Supabase Authentication → Users, find the account and copy its Auth user UUID.
 4. Sign in to the AL SHAMI admin app and open **Operations → Employee management**. Create or edit the employee profile; set System role to **Delivery Rider**, employment status to **Active**, and paste the exact Auth UUID. Save the profile. This is the approval gate checked by the server.
 5. Keep the profile active. On the next accepted delivery order, the database assigns an eligible linked rider. Assignment is automatic and load-based; there is no manual assignment selector.
-6. Open the rider app at [alshamiapp.xyz/rider.html](https://alshamiapp.xyz/rider.html) or [GitHub Pages rider app](https://hasanalkhaled06-maker.github.io/al-shami-app/rider.html). Sign in with the rider's own credentials. In Safari, use Share → Add to Home Screen to install it separately.
+6. Open the rider app at [alshamiapp.xyz/rider.html](https://alshamiapp.xyz/rider.html) or [GitHub Pages rider app](https://hasanalkhaled06-maker.github.io/al-shami-app/rider.html). Sign in with the Auth user UUID linked to the employee profile and that Auth account's password. In Safari, use Share → Add to Home Screen to install it separately.
 
 ## How live tracking works
 
