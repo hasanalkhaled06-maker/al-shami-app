@@ -2,3 +2,6 @@ project_id = "rxjfvuxzseuybfmfyjvs"
 
 [functions.staff-users]
 verify_jwt = false
+
+[functions.rider-login]
+verify_jwt = false
