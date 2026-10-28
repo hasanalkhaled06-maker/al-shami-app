@@ -155,8 +155,7 @@
       .ops-stock-sheet { width:100%; min-width:980px; border-collapse:collapse; font-size:13px; }
       .ops-stock-sheet th { padding:10px; border:1px solid #d8d5ca; background:#eff2ed; color:#364236; text-align:left; white-space:nowrap; }
       .ops-stock-sheet td { padding:8px; border:1px solid #e3e1d9; white-space:nowrap; }
-      .ops-stock-sheet input { width:88px; min-height:38px; padding:6px 8px; border:1px solid #c8c9bd; border-radius:5px; font:inherit; }\n      .ops-stock-sheet input.stock-sheet-reference { width:175px; }
-      .ops-stock-sheet input:focus { outline:2px solid #719d70; outline-offset:1px; }
+      .ops-stock-sheet input { width:88px; min-height:38px; padding:6px 8px; border:1px solid #c8c9bd; border-radius:5px; font:inherit; }\n            .ops-stock-sheet input:focus { outline:2px solid #719d70; outline-offset:1px; }
       .ops-stock-sheet .stock-sheet-balance { color:#245d34; background:#eff7ec; font-weight:800; }
       .ops-stock-sheet .stock-sheet-save { min-height:36px; padding:6px 12px; border:0; border-radius:5px; background:#386b3f; color:#fff; font-weight:700; cursor:pointer; }
       .ops-stock-entry { margin:14px 0; padding:14px; border:1px solid #eadfd6; border-radius:14px; background:#fffaf5; }
@@ -283,11 +282,10 @@
           <p class="ops-note">Record stock deliveries here. The date and balance update automatically; menu usage stays in the movement history.</p>
           <form id="ops-movement-form">
             <div class="ops-stock-sheet-wrap"><table class="ops-stock-sheet">
-              <thead><tr><th>Date</th><th>Current balance</th><th>Reference / reason</th><th>Received</th><th>Sold</th><th>Balance after</th><th></th></tr></thead>
+              <thead><tr><th>Date</th><th>Current balance</th><th>Received</th><th>Sold</th><th>Balance after</th><th></th></tr></thead>
               <tbody><tr>
                 <td id="ops-stock-sheet-date">—</td>
                 <td id="ops-stock-sheet-current">—</td>
-                <td><input class="stock-sheet-reference" name="reference" type="text" maxlength="120" required placeholder="Invoice, supplier, reason" aria-label="Reference or reason"></td>
                 <td><input name="received" type="number" min="0" step="0.001" value="0" aria-label="Quantity received"></td>
                 <td><input name="sold" type="number" min="0" step="0.001" value="0" aria-label="Quantity sold"></td>
                 <td class="stock-sheet-balance" id="ops-stock-sheet-balance">—</td>
@@ -1028,7 +1026,6 @@
     const incoming = Number(form.elements.received.value) || 0;
     const sold = Number(form.elements.sold.value) || 0;
     const current = Number(selectedStockItem?.quantity || 0);
-    const reference = String(form.elements.reference.value || "").trim();
     if (!selectedStockItem || !Number.isFinite(incoming) || !Number.isFinite(sold) || incoming < 0 || sold < 0 || incoming + sold <= 0) {
       message("Enter a received or sold quantity greater than zero.", true);
       return;
@@ -1038,25 +1035,20 @@
       form.elements.sold.focus();
       return;
     }
-    if (!reference) {
-      message("Enter a reference or reason for this stock movement.", true);
-      form.elements.reference.focus();
-      return;
-    }
     const saveButton = form.querySelector('[type="submit"]');
     saveButton.disabled = true;
     try {
       if (incoming > 0) {
         const { error } = await db.rpc("record_inventory_movement", {
           p_item_id: selectedStockItem.id, p_movement_type: "purchase", p_quantity_change: incoming,
-          p_unit_cost: Number(selectedStockItem.unit_cost || 0), p_reference: reference, p_notes: null
+          p_unit_cost: Number(selectedStockItem.unit_cost || 0), p_reference: "Stock received", p_notes: null
         });
         if (error) throw error;
       }
       if (sold > 0) {
         const { error } = await db.rpc("record_inventory_movement", {
           p_item_id: selectedStockItem.id, p_movement_type: "usage", p_quantity_change: -sold,
-          p_unit_cost: Number(selectedStockItem.unit_cost || 0), p_reference: reference, p_notes: "Manual sold entry"
+          p_unit_cost: Number(selectedStockItem.unit_cost || 0), p_reference: "Sold", p_notes: "Manual sold entry"
         });
         if (error) throw error;
       }
