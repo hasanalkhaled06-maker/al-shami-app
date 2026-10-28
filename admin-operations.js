@@ -43,7 +43,6 @@
   let savedStockCategories = [];
   let selectedStockCategory = "";
   let stockSearchQuery = "";
-  let savedStockCategories = [];
   let selectedStockItem = null;
 
   function addStyles() {
