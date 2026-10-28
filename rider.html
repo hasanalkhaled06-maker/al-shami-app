@@ -40,16 +40,10 @@
       </div>
       <div class="eyebrow">PRIVATE RIDER ACCESS</div>
       <h1>Deliver with confidence.</h1>
-      <p id="rider-auth-hint" class="muted">Use the Auth user UUID linked to your active Delivery Rider profile.</p>
-      <div class="auth-mode-switch" role="group" aria-label="Account action">
-        <button id="show-signin" class="auth-mode-button is-active" type="button" aria-pressed="true">Sign in</button>
-        <button id="show-signup" class="auth-mode-button" type="button" aria-pressed="false">Create account</button>
-      </div>
+      <p id="rider-auth-hint" class="muted">Use the Rider UUID and password provided by AL SHAMI management.</p>
       <form id="login-form" class="login-form">
-        <label for="rider-name" id="rider-name-label" hidden>Full name</label>
-        <input id="rider-name" name="fullName" type="text" autocomplete="name" maxlength="100" placeholder="Your full name" hidden>
-        <label for="rider-identifier" id="rider-identifier-label">Rider Auth UUID</label>
-        <input id="rider-identifier" name="identifier" type="text" autocomplete="username" required placeholder="Paste your rider UUID">
+        <label for="rider-identifier">Rider UUID</label>
+        <input id="rider-identifier" name="identifier" type="text" autocomplete="username" required placeholder="Paste your rider UUID" inputmode="text" spellcheck="false">
         <label for="rider-password">Password</label>
         <input id="rider-password" name="password" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters">
         <button class="primary-button" type="submit" id="login-button">Sign in securely <span aria-hidden="true">→</span></button>
@@ -110,7 +104,7 @@
   </main>
 
   <script src="./config.js"></script>
-  <script src="./rider.js?v=uuid-password-login-20261028a"></script>
+  <script src="./rider.js?v=management-credentials-20261028b"></script>
   <script src="./rider-ops.js?v=delivery-ops-20261025b"></script>
   <script src="./pwa.js"></script>
 </body>
