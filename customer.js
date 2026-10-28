@@ -235,7 +235,7 @@
     const confirm = $("#delivery-map-confirm");
     if (confirm) confirm.disabled = !pendingDeliveryLocation;
     const searchInput = $("#delivery-map-search-input");
-    if (searchInput) searchInput.placeholder = tr("mapSearchPlaceholder");
+    if (searchInput) {\n      searchInput.placeholder = tr("mapSearchPlaceholder");\n      searchInput.value = String(checkoutForm?.elements?.delivery_address?.value || "").trim();\n    }
     const results = $("#delivery-map-search-results");
     if (results) {
       results.hidden = true;
@@ -291,7 +291,7 @@
     }
     const status = $("#delivery-location-status");
     if (status) {
-      status.textContent = tr("locationSelected") + ": " + lat.toFixed(6) + ", " + lng.toFixed(6);
+      status.textContent = tr("locationSelected");
       status.classList.add("has-location");
     }
     const clearButton = $("#clear-delivery-location");
@@ -999,21 +999,21 @@
       orderType: "Order type",
       address: "Delivery address / landmark",
       addressHint: "Include your house or building number, street, neighbourhood, and a nearby landmark (for example, a shop or station).",
-      chooseLocation: "Choose location on OpenStreetMap",
-      clearLocation: "Clear map pin",
-      locationNotSelected: "No map location selected yet. You can still enter your address manually.",
-      locationSelected: "Map location selected",
-      mapTitle: "Choose delivery location",
-      mapHelp: "Search for a place or tap the map to position the pin. Keep your house number or landmark in the address field.",
-      mapSearchPlaceholder: "Search for a place or address",
-      mapSearchButton: "Search",
-      mapSearchNoResults: "No matching places found. Try a nearby landmark or tap the map.",
-      mapSearchError: "Address search is temporarily unavailable. Tap the map to select the location.",
-      useCurrentLocation: "Use my current location",
-      confirmLocation: "Use this location",
+      chooseLocation: "Set delivery pin",
+      clearLocation: "Change delivery pin",
+      locationNotSelected: "Choose a map pin before placing a delivery order.",
+      locationSelected: "Delivery location added",
+      mapTitle: "Set delivery location",
+      mapHelp: "Use the address above to search, or choose your current location. Check the pin, then confirm it.",
+      mapSearchPlaceholder: "Search your address or nearby landmark",
+      mapSearchButton: "Find",
+      mapSearchNoResults: "No match found. Try a nearby landmark or move the pin.",
+      mapSearchError: "Search is unavailable. You can move the pin on the map.",
+      useCurrentLocation: "Use my location",
+      confirmLocation: "Confirm location",
       cancel: "Cancel",
-      mapsNotConfigured: "The map is not ready yet. Please enter your delivery address manually for now.",
-      mapsLoadError: "The map library could not load. Check your connection or enter the address manually.",
+      mapsNotConfigured: "The map is unavailable. Please try again or contact the restaurant to place your order.",
+      mapsLoadError: "The map could not load. Please try again or contact the restaurant to place your order.",
       copyAddress: "Copy address",
       notes: "Notes (optional)",
       pickupInstructions: "Pickup instructions (optional)",
@@ -1098,21 +1098,21 @@
       orderType: "نوع الطلب",
       address: "عنوان التوصيل / علامة مميزة",
       addressHint: "اكتب رقم البيت أو المبنى والشارع والحي وعلامة قريبة مثل محل أو محطة.",
-      chooseLocation: "حدد موقعك على الخريطة",
-      clearLocation: "إزالة موقع الخريطة",
-      locationNotSelected: "ما حددت موقعك على الخريطة لسه. فيك تكتب عنوانك يدوياً.",
-      locationSelected: "تم تحديد موقع التوصيل",
+      chooseLocation: "حدد موقع التوصيل",
+      clearLocation: "تغيير الموقع",
+      locationNotSelected: "حدد موقع التوصيل على الخريطة قبل إرسال الطلب.",
+      locationSelected: "تم تحديد الموقع",
       mapTitle: "حدد موقع التوصيل",
-      mapHelp: "ابحث عن مكان أو اضغط على الخريطة لتحريك الدبوس. اكتب رقم البيت أو علامة مميزة بحقل العنوان.",
-      mapSearchPlaceholder: "ابحث عن مكان أو عنوان",
+      mapHelp: "ابحث بعنوانك المكتوب فوق، أو استخدم موقعك الحالي. تأكد من الدبوس ثم اضغط تأكيد.",
+      mapSearchPlaceholder: "ابحث بعنوانك أو بمعلم قريب",
       mapSearchButton: "بحث",
-      mapSearchNoResults: "ما لقينا نتائج مناسبة. جرّب معلماً قريباً أو اضغط على الخريطة.",
-      mapSearchError: "البحث عن العنوان غير متاح مؤقتاً. اضغط على الخريطة لتحديد الموقع.",
+      mapSearchNoResults: "ما لقينا المكان. جرّب معلماً قريباً أو حرّك الدبوس.",
+      mapSearchError: "البحث غير متاح حالياً. فيك تحرّك الدبوس على الخريطة.",
       useCurrentLocation: "استخدم موقعي الحالي",
-      confirmLocation: "اعتماد هالموقع",
+      confirmLocation: "تأكيد الموقع",
       cancel: "إلغاء",
-      mapsNotConfigured: "الخريطة مو جاهزة حالياً. اكتب عنوان التوصيل يدوياً مؤقتاً.",
-      mapsLoadError: "ما قدرنا نحمل خرائط Google. تأكد من مفتاح API والخدمات المفعّلة، أو اكتب العنوان يدوياً.",
+      mapsNotConfigured: "الخريطة غير متاحة حالياً. جرّب مرة ثانية أو تواصل مع المطعم لإرسال طلبك.",
+      mapsLoadError: "ما قدرنا نحمّل الخريطة. جرّب مرة ثانية أو تواصل مع المطعم لإرسال طلبك.",
       copyAddress: "نسخ العنوان",
       notes: "ملاحظات (اختياري)",
       pickupInstructions: "تعليمات الاستلام (اختياري)",
@@ -1197,21 +1197,21 @@
       orderType: "Ɔkwan a wopɛ sɛ wunya aduan no",
       address: "Beae a wɔde bɛbrɛ wo / agyiraehyɛde",
       addressHint: "Kyerɛw fie nɔma, kwan, mpɔtam ne beae bi a ɛda hɔ pefee te sɛ sotɔɔ anaa gyinabea.",
-      chooseLocation: "Paw beae wɔ map no so",
-      clearLocation: "Yi beae no fi map no so",
-      locationNotSelected: "Wonpaw beae bi wɔ map no so. Wubetumi akyerɛw wo address.",
-      locationSelected: "Wɔapaw beae a wɔde bɛbrɛ wo",
-      mapTitle: "Paw beae a wɔde bɛbrɛ wo",
-      mapHelp: "Hwehwɛ beae bi anaa mia map no so na fa pin no to hɔ. Kyerɛw fie nɔma anaa agyiraehyɛde wɔ address field no mu.",
-      mapSearchPlaceholder: "Hwehwɛ beae anaa address",
+      chooseLocation: "Paw delivery beae",
+      clearLocation: "Sesa delivery beae",
+      locationNotSelected: "Paw delivery beae wɔ map no so ansa na woahyɛ order.",
+      locationSelected: "Wɔde delivery beae no aka ho",
+      mapTitle: "Paw delivery beae",
+      mapHelp: "Fa address a woakyerɛw wɔ atifi hwehwɛ, anaa paw beae a wowɔ seesei. Hwɛ pin no na si so dua.",
+      mapSearchPlaceholder: "Hwehwɛ wo address anaa agyiraehyɛde a ɛbɛn",
       mapSearchButton: "Hwehwɛ",
-      mapSearchNoResults: "Yenhu beae a ɛfata. Sɔ agyiraehyɛde a ɛbɛn no hwɛ anaa mia map no so.",
-      mapSearchError: "Address search no nni hɔ seesei. Mia map no so na paw beae no.",
-      useCurrentLocation: "Fa me baabi a mewɔ seesei",
-      confirmLocation: "Fa beae yi di dwuma",
+      mapSearchNoResults: "Yenhu beae no. Sɔ agyiraehyɛde a ɛbɛn no hwɛ anaa sesa pin no.",
+      mapSearchError: "Hwehwɛde no nni hɔ. Wubetumi asesa pin no wɔ map no so.",
+      useCurrentLocation: "Fa me beae a mewɔ",
+      confirmLocation: "Si beae no so dua",
       cancel: "Twa mu",
-      mapsNotConfigured: "Map no nnya mmra. Kyerɛw wo address wɔ ase ha seesei.",
-      mapsLoadError: "Map no antumi amma. Hwɛ internet anaa kyerɛw wo address wɔ ase ha.",
+      mapsNotConfigured: "Map no nni hɔ seesei. San sɔ hwɛ anaa frɛ adidibea no ma wɔmmoa wo.",
+      mapsLoadError: "Map no antumi amma. San sɔ hwɛ anaa frɛ adidibea no ma wɔmmoa wo.",
       copyAddress: "Kɔpi address",
       notes: "Nsɛm foforo (wopɛ a)",
       pickupInstructions: "Akwan a yɛmfa nkyerɛ wo wɔ restaurant no (wopɛ a)",
@@ -3234,7 +3234,7 @@
 
       if (orderType === "delivery" && (deliveryLatitude === null || deliveryLongitude === null)) {
         showCheckoutMessage(
-          localized("Please select and confirm your delivery location on the map before placing the order. Map location is required for delivery.", "اختار موقع التوصيل من الخريطة وثبّته قبل إرسال الطلب. تحديد الموقع إلزامي للتوصيل.", "Paw wo delivery beae wɔ map no so na si so dua ansa na woahyɛ order. Ɛsɛ sɛ wopaw beae ma delivery."),
+          localized("Set the delivery pin on the map before placing your order.", "حدد موقع التوصيل على الخريطة قبل إرسال الطلب.", "Paw delivery beae wɔ map no so ansa na woahyɛ order."),
           true
         );
         $("#choose-delivery-location")?.focus();
