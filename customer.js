@@ -1395,6 +1395,18 @@
     return names[value] || String(status || "Unknown").replace(/_/g, " ");
   }
 
+  function rejectionReasonText(reason) {
+    const value = String(reason || "").trim();
+    if (!value) return "";
+    const known = {
+      "Out of stock": localized("Out of stock", "نفد من المخزون", "Stock no nni"),
+      "Outside delivery area": localized("Outside delivery area", "الموقع خارج نطاق التوصيل", "Beae no wɔ delivery area no akyi"),
+      "Restaurant temporarily unavailable": localized("Restaurant temporarily unavailable", "المطعم غير متاح مؤقتاً", "Restaurant no nni hɔ seesei"),
+      "Could not reach customer": localized("Could not reach customer", "تعذّر التواصل مع الزبون", "Yentumi anka customer no ho")
+    };
+    return known[value] || value;
+  }
+
   function trackingDate(value) {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "";
@@ -2018,8 +2030,11 @@
         const active = status === "new" ? 0 : status === "accepted" ? 1 : status === "preparing" ? 2 :
           status === "ready" ? 3 : status === "out_for_delivery" ? 4 :
           status === "completed" ? (isDelivery ? 5 : 4) : -1;
+        const rejectionReason = status === "rejected" ? rejectionReasonText(order.status_reason) : "";
         const timeline = status === "rejected"
-          ? '<p class="tracked-rejected">' + escapeHTML(trackingStatusText(status)) + "</p>"
+          ? '<p class="tracked-rejected">' + escapeHTML(trackingStatusText(status)) + "</p>" +
+            (rejectionReason ? '<p class="tracked-rejection-reason"><strong>' +
+              escapeHTML(localized("Reason:", "السبب:", "Nea nti a:")) + "</strong> " + escapeHTML(rejectionReason) + "</p>" : "")
           : '<ol class="tracked-steps ' + (isDelivery ? "is-delivery" : "is-pickup") + '">' + steps.map((key,i) =>
               '<li class="' + (active >= 0 && i < active ? "is-complete " : "") + (active === i ? "is-current" : "") + '"><span>' + escapeHTML(tr(key)) + "</span></li>"
             ).join("") + "</ol>";

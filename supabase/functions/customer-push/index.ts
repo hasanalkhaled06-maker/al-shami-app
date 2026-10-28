@@ -90,13 +90,13 @@ function language(value: unknown) {
   const lang = String(value || "en").toLowerCase();
   return lang === "ar" || lang === "tw" ? lang : "en";
 }
-const orderMessages: Record<string, Record<string, (n: string) => { title: string; body: string }>> = {
+const orderMessages: Record<string, Record<string, (n: string, reason?: string) => { title: string; body: string }>> = {
   en: {
     accepted: n => ({ title: "Order accepted", body: "Your AL SHAMI order #" + n + " has been accepted." }),
     preparing: n => ({ title: "Order being prepared", body: "We are preparing your order #" + n + "." }),
     ready: n => ({ title: "Order ready", body: "Your order #" + n + " is ready." }),
     out_for_delivery: n => ({ title: "Order on the way", body: "Your order #" + n + " is on the way." }),
-    rejected: n => ({ title: "Order update", body: "We could not accept order #" + n + ". Please contact AL SHAMI." }),
+    rejected: (n, reason) => ({ title: "Order rejected", body: "We could not accept order #" + n + "." + (reason ? " Reason: " + reason.slice(0, 120) : " Please contact AL SHAMI.") }),
     completed: n => ({ title: "Order received", body: "Order #" + n + " was confirmed as received. Thank you!" })
   },
   ar: {
@@ -104,7 +104,7 @@ const orderMessages: Record<string, Record<string, (n: string) => { title: strin
     preparing: n => ({ title: "طلبك قيد التحضير", body: "نحضّر طلبك رقم " + n + " الآن." }),
     ready: n => ({ title: "طلبك جاهز", body: "طلبك رقم " + n + " أصبح جاهزاً." }),
     out_for_delivery: n => ({ title: "طلبك في الطريق", body: "طلبك رقم " + n + " في طريقه إليك." }),
-    rejected: n => ({ title: "تحديث الطلب", body: "تعذّر قبول طلبك رقم " + n + ". يرجى التواصل مع المطعم." }),
+    rejected: (n, reason) => ({ title: "تم رفض الطلب", body: "تعذّر قبول طلبك رقم " + n + "." + (reason ? " السبب: " + reason.slice(0, 120) : " يرجى التواصل مع المطعم.") }),
     completed: n => ({ title: "تم استلام الطلب", body: "تم تأكيد استلام الطلب رقم " + n + ". شكراً لك!" })
   },
   tw: {
@@ -112,7 +112,7 @@ const orderMessages: Record<string, Record<string, (n: string) => { title: strin
     preparing: n => ({ title: "Yɛreyɛ wo order", body: "Yɛreyɛ wo order #" + n + "." }),
     ready: n => ({ title: "Wo order ayɛ krado", body: "Wo order #" + n + " ayɛ krado." }),
     out_for_delivery: n => ({ title: "Wo order reba", body: "Wo order #" + n + " wɔ kwan so reba wo nkyɛn." }),
-    rejected: n => ({ title: "Order no ho nsɛm", body: "Yɛantumi annye order #" + n + ". Frɛ AL SHAMI." }),
+    rejected: (n, reason) => ({ title: "Order no ho nsɛm", body: "Yɛantumi annye order #" + n + "." + (reason ? " Nea nti a: " + reason.slice(0, 120) : " Frɛ AL SHAMI.") }),
     completed: n => ({ title: "Wo nsa aka order no", body: "Yɛagye sɛ wo nsa aka order #" + n + ". Medaase!" })
   }
 };
@@ -166,16 +166,19 @@ async function customerRowsForOrder(order: any) {
 async function sendOrderStatus(orderId: string | null, orderNumber: number | null, status: string) {
   const permitted = ["accepted", "preparing", "ready", "out_for_delivery", "rejected", "completed"];
   if (!permitted.includes(status)) throw new Error("Unsupported order status.");
-  const params: Record<string, string> = { select: "id,order_number,customer_user_id,status", status: "eq." + status, limit: "1" };
+  const params: Record<string, string> = { select: "id,order_number,customer_user_id,status,status_reason", limit: "1" };
   if (orderId) params.id = "eq." + orderId;
   else if (orderNumber) params.order_number = "eq." + orderNumber;
   else throw new Error("Provide an order ID or number.");
   const orders = await rest(tableUrl("orders", params));
-  if (!Array.isArray(orders) || orders.length !== 1) throw new Error("Order not found at the requested status.");
+  if (!Array.isArray(orders) || orders.length !== 1) throw new Error("Order not found.");
   const order = orders[0];
+  if (String(order.status || "").toLowerCase() !== status) throw new Error("Order status changed before notification could be sent.");
   const { rows } = await customerRowsForOrder(order);
   const result = await sendToRows(rows, (row: any) => {
-    const message = (orderMessages[language(row.language)] || orderMessages.en)[status](String(order.order_number));
+    const message = (orderMessages[language(row.language)] || orderMessages.en)[status](
+      String(order.order_number), status === "rejected" ? String(order.status_reason || "").trim() : ""
+    );
     return { ...message, url: "./index.html?open=orders", tag: "al-shami-order-" + order.id, orderId: order.id, icon: "./icons/al-shami-pwa-192.png" };
   });
   return result;

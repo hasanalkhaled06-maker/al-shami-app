@@ -170,6 +170,46 @@
     }, 5000);
   }
 
+  const rejectionDialog = $("#order-rejection-dialog");
+  const rejectionForm = $("#order-rejection-form");
+  const rejectionSelect = $("#order-reason-select");
+  const rejectionOther = $("#order-reason-other");
+
+  function requestRejectionReason() {
+    if (!rejectionDialog || !rejectionForm || !rejectionSelect || !rejectionOther) {
+      const answer = window.prompt("Why are you rejecting this order? Examples: Out of stock, outside delivery area, restaurant temporarily unavailable.");
+      return Promise.resolve(answer == null ? null : answer.trim());
+    }
+    rejectionForm.reset();
+    rejectionOther.hidden = true;
+    rejectionOther.required = false;
+    return new Promise(resolve => {
+      const onClose = () => {
+        rejectionDialog.removeEventListener("close", onClose);
+        resolve(rejectionDialog.returnValue === "confirm" ? String(rejectionSelect.value === "other" ? rejectionOther.value : rejectionSelect.value).trim() : null);
+      };
+      rejectionDialog.addEventListener("close", onClose);
+      rejectionDialog.showModal();
+    });
+  }
+
+  rejectionSelect?.addEventListener("change", () => {
+    const useOther = rejectionSelect.value === "other";
+    rejectionOther.hidden = !useOther;
+    rejectionOther.required = useOther;
+    if (useOther) rejectionOther.focus();
+  });
+  rejectionForm?.addEventListener("submit", event => {
+    event.preventDefault();
+    const value = rejectionSelect?.value === "other" ? rejectionOther?.value.trim() : rejectionSelect?.value;
+    if (!value || value.length < 3) {
+      toast("Choose a rejection reason or enter at least 3 characters.");
+      return;
+    }
+    rejectionDialog.close("confirm");
+  });
+  $("#cancel-order-rejection")?.addEventListener("click", () => rejectionDialog?.close("cancel"));
+
   function status(message, selector = "#product-message", isError = false) {
     const element = $(selector);
     if (!element) return;
@@ -1980,29 +2020,44 @@ Status: ${order.status}`;
     try {
       const previousStatus = orders.find(item => item.id === id)?.status;
       let error;
+      let rejectionReason = null;
+      if (newStatus === "rejected") {
+        rejectionReason = await requestRejectionReason();
+        if (rejectionReason === null) return false;
+        if (rejectionReason.length < 3) {
+          toast("Please enter a rejection reason of at least 3 characters.");
+          return false;
+        }
+      }
+
       if (accessMode === "owner") {
-        ({ error } = await db.rpc("admin_transition_order_status", {
-          p_order_id: id,
-          p_status: newStatus
-        }));
-      } else {
-        if (currentRole === "cashier" && ["accepted", "rejected", "preparing", "ready"].includes(newStatus)) {
-          const reason = newStatus === "rejected" ? window.prompt("Reason for rejecting this order:") : (newStatus === "accepted" ? "Accepted by staff" : "Status updated by cashier");
-          if (reason === null) return false;
-          ({ error } = await db.rpc("cashier_set_order_status", {
+        if (newStatus === "rejected") {
+          ({ error } = await db.rpc("admin_reject_order", {
             p_order_id: id,
-            p_status: newStatus,
-            p_reason: reason
+            p_reason: rejectionReason
           }));
         } else {
-          throw new Error("Ask the owner to complete this order step.");
+          ({ error } = await db.rpc("admin_transition_order_status", {
+            p_order_id: id,
+            p_status: newStatus
+          }));
         }
+      } else if (currentRole === "cashier" && ["accepted", "rejected", "preparing", "ready"].includes(newStatus)) {
+        ({ error } = await db.rpc("cashier_set_order_status", {
+          p_order_id: id,
+          p_status: newStatus,
+          p_reason: rejectionReason || (newStatus === "accepted" ? "Accepted by staff" : "Status updated by cashier")
+        }));
+      } else {
+        throw new Error("Ask the owner to complete this order step.");
       }
 
       if (error) throw error;
 
       let smsSent = false;
       let smsFailed = false;
+      let pushSent = false;
+      let pushFailed = false;
       const smsStatuses = ["accepted", "preparing", "ready", "out_for_delivery", "rejected"];
       if (previousStatus !== newStatus && smsStatuses.includes(newStatus)) {
         try {
@@ -2015,36 +2070,43 @@ Status: ${order.status}`;
           smsFailed = true;
           console.warn("Order status saved, but customer SMS failed:", smsError);
         }
-      }
 
-
-      let pushFailed = false;
-      if (previousStatus !== newStatus && smsStatuses.includes(newStatus)) {
         try {
           const { error: pushError } = await db.functions.invoke("customer-push", {
             body: { action: "order-status", orderId: id, status: newStatus }
           });
           if (pushError) throw pushError;
+          pushSent = true;
         } catch (pushError) {
           pushFailed = true;
           console.warn("Order status saved, but customer push notification failed:", pushError);
         }
       }
 
-      toast(
-        smsFailed
+      if (newStatus === "rejected") {
+        toast(smsFailed && pushFailed
+          ? "Order rejected with reason saved. SMS and push notification failed."
+          : smsFailed
+            ? "Order rejected with reason saved; push notification sent, but SMS failed."
+            : pushFailed
+              ? "Order rejected with reason saved; SMS sent, but push notification failed."
+              : smsSent || pushSent
+                ? "Order rejected and the customer was notified with the reason."
+                : "Order rejected with reason saved. The customer will see it in order tracking.");
+      } else {
+        toast(smsFailed
           ? "Order status updated, but the customer SMS could not be sent."
           : smsSent
             ? "Order status updated and customer SMS sent."
-            : "Order status updated."
-      );
+            : "Order status updated.");
+      }
       await loadOrders();
       if (!options.fromIncomingDialog && id === activeIncomingOrderId && ["accepted","rejected"].includes(newStatus)) {
         incomingOrderQueue.splice(0, incomingOrderQueue.length, ...incomingOrderQueue.filter(itemId => itemId !== id));
         closeIncomingOrderDialog();
         showNextIncomingOrder();
       }
-      return { ok: true, smsSent, smsFailed };
+      return { ok: true, smsSent, smsFailed, pushSent, pushFailed };
     } catch (error) {
       console.error("Status update failed:", error);
       toast("Could not update status: " + (error.message || "Unknown error"));

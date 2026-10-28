@@ -22,12 +22,12 @@ function canonicalGhanaPhone(value: unknown): string | null {
   return null;
 }
 
-const messages: Record<string, (number: string) => string> = {
+const messages: Record<string, (number: string, reason?: string) => string> = {
   accepted: n => `AL SHAMI: Your order #${n} has been accepted and will be prepared shortly.`,
   preparing: n => `AL SHAMI: We are preparing your order #${n}.`,
   ready: n => `AL SHAMI: Your order #${n} is ready. Please contact us about delivery or pickup.`,
   out_for_delivery: n => `AL SHAMI: Your order #${n} is on the way to you.`,
-  rejected: n => `AL SHAMI: Sorry, we could not accept order #${n}. Please contact the restaurant.`,
+  rejected: (n, reason) => `AL SHAMI: Sorry, we could not accept order #${n}.${reason ? " Reason: " + reason.slice(0, 120) : " Please contact the restaurant."}`,
   completed: n => `AL SHAMI: Order #${n} has been confirmed as received. Thank you!`
 };
 
@@ -100,8 +100,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const orderUrl = new URL(`${supabaseUrl}/rest/v1/orders`);
-    orderUrl.searchParams.set("select", "order_number,customer_phone,status");
-    orderUrl.searchParams.set("status", `eq.${status}`);
+    orderUrl.searchParams.set("select", "order_number,customer_phone,status,status_reason");
     if (orderId) {
       if (!/^[0-9a-f-]{36}$/i.test(orderId)) return json({ error: "Invalid order ID." }, 400);
       orderUrl.searchParams.set("id", `eq.${orderId}`);
@@ -114,10 +113,13 @@ Deno.serve(async (req: Request) => {
     if (!orderResponse.ok) return json({ error: "Could not verify the order status." }, 502);
     const orders = await orderResponse.json();
     if (!Array.isArray(orders) || orders.length !== 1) {
-      return json({ error: "Order not found at the requested status." }, 404);
+      return json({ error: "Order not found." }, 404);
     }
 
     const order = orders[0];
+    if (String(order.status || "").toLowerCase() !== status) {
+      return json({ error: "Order status changed before notification could be sent." }, 409);
+    }
     const phone = canonicalGhanaPhone(order.customer_phone);
     if (!phone) return json({ error: "The customer's Ghana phone number is invalid." }, 400);
 
@@ -131,7 +133,9 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         sender,
-        message: messages[status](String(order.order_number)),
+        message: messages[status](
+          String(order.order_number), status === "rejected" ? String(order.status_reason || "").trim() : ""
+        ),
         recipients: [phone]
       })
     });
