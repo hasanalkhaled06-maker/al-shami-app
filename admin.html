@@ -283,7 +283,7 @@
           </span>
           <span class="home-card-title">Settings</span>
           
-          <span class="home-card-bottom"><strong>5 settings areas</strong><span class="home-card-arrow" aria-hidden="true">↗</span></span>
+          <span class="home-card-bottom"><strong>Restaurant tools</strong><span class="home-card-arrow" aria-hidden="true">↗</span></span>
         </button>
 
 
@@ -324,7 +324,7 @@
         </button>
         <button class="settings-hub-card settings-link-operations" type="button" data-settings-nav="operations">
           <span class="settings-hub-icon" aria-hidden="true">▦</span>
-          <span class="settings-hub-title">Operations</span>
+          <span class="settings-hub-title">Stock &amp; operations</span>
           
           <span class="settings-hub-arrow" aria-hidden="true">↗</span>
         </button>
@@ -543,7 +543,7 @@
 
     <section id="tab-settings" class="panel hidden">
       <h2>Restaurant settings</h2>
-      <p class="muted">Set delivery fees and minimum order amount.</p>
+      <p class="muted">Set the delivery fee and minimum order.</p>
 
       <form id="settings-form" class="form-grid admin-form">
         <label>
@@ -556,6 +556,9 @@
           <input name="minimum_order" type="number" min="0" step="0.01" required>
         </label>
 
+        <details class="admin-advanced-section" id="schedule-settings-details" hidden>
+          <summary>Order timing (optional)</summary>
+          <div class="admin-advanced-section-content" id="schedule-settings-fields">
         <label class="checkbox-label">
           <input name="allow_scheduled_orders" type="checkbox">
           Allow scheduled orders
@@ -564,6 +567,8 @@
         <label>Schedule window (days)<input name="schedule_max_days" type="number" min="1" max="60" step="1" value="14"></label>
         <label>Default preparation time (minutes)<input name="default_prep_minutes" type="number" min="1" max="360" step="1"></label>
         <label>Default delivery travel time (minutes)<input name="default_delivery_minutes" type="number" min="1" max="360" step="1"></label>
+          </div>
+        </details>
 
         <div class="form-actions">
           <button class="btn btn-primary" type="submit">Save settings</button>
@@ -592,24 +597,20 @@
         </div>
       </details>
 
-      <hr>
+      <details class="admin-advanced-section" id="customer-feedback-details">
+        <summary>Customer feedback</summary>
+        <div class="admin-advanced-section-content">
       <h3>Customer reviews</h3>
       <p class="muted">Review submissions stay hidden from customers until approved. Photo links must use HTTPS.</p>
       <div id="menu-reviews-list" class="admin-menu-list"><p class="muted">Reviews will appear after the optional database upgrade is applied.</p></div>
 
-      <hr>
       <h3>Restaurant and service ratings</h3>
       <p class="muted">Ratings customers submit after confirming delivery or pickup will appear here.</p>
       <div id="customer-service-reviews-list" class="admin-menu-list"><p class="muted">Service ratings become available after the customer service review setup is applied.</p></div>
 
-      <hr>
-      <h3>Security</h3>
-      <p class="muted">
-        Never put your Supabase service-role key in browser code.
-        Database permissions must be configured before accepting real orders.
-      </p>
 
-
+        </div>
+      </details>
     </section>
 
     <section id="tab-users" class="panel hidden" aria-labelledby="users-title">
@@ -680,7 +681,7 @@
 
 <script src="config.js"></script>
 <script src="order-workflow.js?v=order-flow-guard-20261026a"></script>
-<script src="admin.js?v=order-rejection-20261028a"></script>
+<script src="admin.js?v=settings-clean-20261028a"></script>
 <script src="admin-operations.js?v=inventory-sold-20261028a"></script>
 <script src="admin-delivery-ops.js?v=operations-settings-20261025c"></script>
 <script src="pwa.js?v=install-prompt-20261027a"></script>

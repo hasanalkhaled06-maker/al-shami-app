@@ -2731,6 +2731,8 @@ Status: ${order.status}`;
     $("#settings-form").elements.minimum_order.value =
       data.minimum_order;
     scheduleSettingsAvailable = Object.prototype.hasOwnProperty.call(data, "allow_scheduled_orders");
+    const scheduleDetails = $("#schedule-settings-details");
+    if (scheduleDetails) scheduleDetails.hidden = !scheduleSettingsAvailable;
     ["allow_scheduled_orders", "schedule_min_notice_minutes", "schedule_max_days", "default_prep_minutes", "default_delivery_minutes"].forEach(name => {
       const field = $("#settings-form").elements[name];
       if (field) field.disabled = !scheduleSettingsAvailable;
