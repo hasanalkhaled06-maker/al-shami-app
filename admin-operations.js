@@ -831,6 +831,7 @@
       $("#ops-stock-current").textContent = stockQty(currentItem.quantity) + " " + currentItem.unit;
       const low = Number(currentItem.reorder_level || 0) > 0 && Number(currentItem.quantity) <= Number(currentItem.reorder_level);
       $("#ops-stock-low-label").textContent = low ? "Low stock · reorder at " + stockQty(currentItem.reorder_level) + " " + currentItem.unit : "";
+      updateStockSheetPreview();
       return;
     }
 
@@ -875,10 +876,6 @@
     if (event.target.closest("#ops-stock-back")) {
       selectedStockItem = null;
       renderInventory();
-      return;
-    }
-    if (event.target.closest("#ops-cancel-movement")) {
-      $("#ops-movement-form").reset();
       return;
     }
     const itemButton = event.target.closest("[data-stock-item]");
