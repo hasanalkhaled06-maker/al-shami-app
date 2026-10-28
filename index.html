@@ -260,7 +260,7 @@
     @media(max-width:520px){.delivery-map-modal{padding:7px;padding-bottom:calc(7px + env(safe-area-inset-bottom))}.delivery-map-dialog{max-height:calc(100dvh - 14px - env(safe-area-inset-bottom));border-radius:17px;padding:14px}.delivery-map-canvas{height:42vh;min-height:250px}.delivery-map-selection{text-align:left}.delivery-map-toolbar{align-items:stretch}.delivery-map-toolbar .btn{width:100%}.delivery-map-search-form{grid-template-columns:1fr}.delivery-map-search-form .btn{width:100%}}
 
   </style>
-  <link rel="stylesheet" href="app-refresh.css?v=light-premium-20261023b">
+  <link rel="stylesheet" href="app-refresh.css?v=clear-flow-20261028a">
   <link rel="stylesheet" href="dark-theme.css?v=modern-wine-gold-20261024a">
 </head>
 
@@ -529,12 +529,12 @@
             <label for="delivery-address-input"><span data-i18n="address">Delivery address / landmark</span></label>
             <input id="delivery-address-input" name="delivery_address" maxlength="250" autocomplete="street-address" aria-describedby="address-help" placeholder="House number, street, landmark">
             <div class="delivery-location-controls">
-              <button id="choose-delivery-location" class="btn btn-light" type="button" data-i18n="chooseLocation">Required: choose delivery location on map</button>
-              <button id="clear-delivery-location" class="btn btn-light" type="button" data-i18n="clearLocation" hidden>Clear location</button>
+              <button id="choose-delivery-location" class="btn btn-light" type="button" data-i18n="chooseLocation">Set delivery pin</button>
+              <button id="clear-delivery-location" class="btn btn-light" type="button" data-i18n="clearLocation" hidden>Change pin</button>
             </div>
             <input id="delivery-latitude" name="delivery_latitude" type="hidden">
             <input id="delivery-longitude" name="delivery_longitude" type="hidden">
-            <p id="delivery-location-status" class="delivery-location-status" role="status" aria-live="polite" data-i18n="locationNotSelected">Required for delivery: select and confirm a pin on the map. Address text alone is not enough.</p>
+            <p id="delivery-location-status" class="delivery-location-status" role="status" aria-live="polite" data-i18n="locationNotSelected">Choose a map pin before sending a delivery order.</p>
             <small id="address-help" class="field-help" data-i18n="addressHint">Include your house or building number, street, neighbourhood, and a nearby landmark (for example, a shop or station).</small>
           </div>
 
@@ -572,28 +572,28 @@
         <header class="delivery-map-header">
           <div>
             <p class="eyebrow">AL SHAMI · DELIVERY</p>
-            <h2 id="delivery-map-title" data-i18n="mapTitle">Choose delivery location</h2>
+            <h2 id="delivery-map-title" data-i18n="mapTitle">Set delivery location</h2>
           </div>
           <button id="delivery-map-close" class="btn btn-light delivery-map-close" type="button" aria-label="Close map">×</button>
         </header>
-        <p class="delivery-map-help" data-i18n="mapHelp">Search for a place or tap the map to position the pin. Keep your house number or landmark in the address field.</p>
+        <p class="delivery-map-help" data-i18n="mapHelp">Use the address above to search, or choose your current location. Check the pin, then confirm it.</p>
         <div id="delivery-map-search-container" class="delivery-map-search-container">
           <form id="delivery-map-search-form" class="delivery-map-search-form" role="search">
             <label for="delivery-map-search-input" class="visually-hidden" data-i18n="mapSearchPlaceholder">Search for a place or address</label>
-            <input id="delivery-map-search-input" type="search" maxlength="180" autocomplete="off" placeholder="Search for a place or address">
-            <button id="delivery-map-search-button" class="btn btn-primary" type="submit" data-i18n="mapSearchButton">Search</button>
+            <input id="delivery-map-search-input" type="search" maxlength="180" autocomplete="off" placeholder="Search your address or nearby landmark">
+            <button id="delivery-map-search-button" class="btn btn-primary" type="submit" data-i18n="mapSearchButton">Find</button>
           </form>
           <div id="delivery-map-search-results" class="delivery-map-search-results" role="list" aria-label="Search results" hidden></div>
         </div>
         <div class="delivery-map-toolbar">
-          <button id="delivery-map-use-current" class="btn btn-light" type="button" data-i18n="useCurrentLocation">Use my current location</button>
+          <button id="delivery-map-use-current" class="btn btn-light" type="button" data-i18n="useCurrentLocation">Use my location</button>
           <span id="delivery-map-selection" class="delivery-map-selection" role="status" aria-live="polite"></span>
         </div>
         <div id="delivery-map-canvas" class="delivery-map-canvas" aria-label="OpenStreetMap for selecting delivery location"></div>
         <p id="delivery-map-message" class="delivery-map-message" role="status" aria-live="polite" hidden></p>
         <footer class="delivery-map-footer">
           <button id="delivery-map-cancel" class="btn btn-light" type="button" data-i18n="cancel">Cancel</button>
-          <button id="delivery-map-confirm" class="btn btn-primary" type="button" data-i18n="confirmLocation" disabled>Use this location</button>
+          <button id="delivery-map-confirm" class="btn btn-primary" type="button" data-i18n="confirmLocation" disabled>Confirm location</button>
         </footer>
       </section>
     </div>
@@ -792,7 +792,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
-  <script src="customer.js?v=offer-price-20261027d"></script>
+  <script src="customer.js?v=clear-flow-20261028a"></script>
   <script src="customer-features.js?v=push-notifications-20261027a"></script>
   <script src="pwa.js?v=install-prompt-20261027a"></script>
 </body>
