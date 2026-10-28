@@ -993,9 +993,11 @@
       }
       form.reset();
       message("Stock row saved with today's date.");
-      await Promise.all([loadInventory(), loadMovements()]);
+      await loadInventory();
+      await loadMovements();
     } catch (error) {
-      await Promise.all([loadInventory(), loadMovements()]);
+      await loadInventory();
+      await loadMovements();
       showError(error);
     } finally {
       saveButton.disabled = false;
