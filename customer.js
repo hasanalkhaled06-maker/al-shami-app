@@ -70,10 +70,9 @@
     node.hidden = !message;
   }
 
-  function locationLabel(lat, lng, address = "") {
-    const coordinates = Number(lat).toFixed(6) + ", " + Number(lng).toFixed(6);
+  function locationLabel() {
     const node = $("#delivery-map-selection");
-    if (node) node.textContent = address ? address + " · " + coordinates : coordinates;
+    if (node) node.textContent = tr("locationSelected");
   }
 
   function setPendingDeliveryLocation(lat, lng, address = "") {
@@ -222,6 +221,27 @@
     }
   }
 
+  async function reverseGeocodeDeliveryLocation(lat, lng) {
+    const wait = Math.max(0, 1100 - (Date.now() - lastGeocodingRequestAt));
+    if (wait > 0) await new Promise(resolve => window.setTimeout(resolve, wait));
+    lastGeocodingRequestAt = Date.now();
+
+    const reverseUrl = new URL(String(cfg.GEOCODING_REVERSE_URL || "https://nominatim.openstreetmap.org/reverse"));
+    reverseUrl.searchParams.set("format", "jsonv2");
+    reverseUrl.searchParams.set("lat", String(lat));
+    reverseUrl.searchParams.set("lon", String(lng));
+    reverseUrl.searchParams.set("zoom", "18");
+    reverseUrl.searchParams.set("addressdetails", "1");
+    const response = await fetch(reverseUrl.toString(), {
+      method: "GET",
+      headers: { "Accept": "application/json" },
+      credentials: "omit"
+    });
+    if (!response.ok) throw new Error("Address lookup returned HTTP " + response.status);
+    const result = await response.json();
+    return String(result?.display_name || "").trim().slice(0, 250);
+  }
+
   async function openDeliveryMapPicker() {
     const modal = $("#delivery-map-modal");
     if (!modal) return;
@@ -235,7 +255,10 @@
     const confirm = $("#delivery-map-confirm");
     if (confirm) confirm.disabled = !pendingDeliveryLocation;
     const searchInput = $("#delivery-map-search-input");
-    if (searchInput) searchInput.placeholder = tr("mapSearchPlaceholder");
+    if (searchInput) {
+      searchInput.placeholder = tr("mapSearchPlaceholder");
+      searchInput.value = "";
+    }
     const results = $("#delivery-map-search-results");
     if (results) {
       results.hidden = true;
@@ -278,20 +301,45 @@
     if (confirm) confirm.disabled = true;
   }
 
-  function confirmDeliveryLocation() {
+  async function confirmDeliveryLocation() {
     if (!pendingDeliveryLocation) return;
     const lat = Number(pendingDeliveryLocation.lat);
     const lng = Number(pendingDeliveryLocation.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    const confirmButton = $("#delivery-map-confirm");
+    if (confirmButton) confirmButton.disabled = true;
+    setMapMessage(tr("findingAddress"));
+
+    let selectedAddress = String(pendingDeliveryLocation.address || "").trim();
+    if (!selectedAddress) {
+      try {
+        selectedAddress = await reverseGeocodeDeliveryLocation(lat, lng);
+      } catch (error) {
+        console.warn("Delivery pin address lookup failed:", error);
+      }
+    }
+
     if ($("#delivery-latitude")) $("#delivery-latitude").value = String(lat);
     if ($("#delivery-longitude")) $("#delivery-longitude").value = String(lng);
     const addressInput = checkoutForm?.elements?.delivery_address;
-    if (addressInput && pendingDeliveryLocation.address && !String(addressInput.value || "").trim()) {
-      addressInput.value = String(pendingDeliveryLocation.address).slice(0, 250);
+    if (addressInput) {
+      const existingAddress = String(addressInput.value || "").trim();
+      const mapAddress = selectedAddress || localized(
+        "Delivery location selected on map",
+        "تم تحديد موقع التوصيل على الخريطة",
+        "Wɔapaw delivery beae wɔ map no so"
+      );
+      const alreadyIncluded = existingAddress && (
+        mapAddress.toLowerCase().includes(existingAddress.toLowerCase()) ||
+        existingAddress.toLowerCase().includes(mapAddress.toLowerCase())
+      );
+      addressInput.value = (existingAddress && !alreadyIncluded
+        ? existingAddress + ", " + mapAddress
+        : mapAddress).slice(0, 250);
     }
     const status = $("#delivery-location-status");
     if (status) {
-      status.textContent = tr("locationSelected") + ": " + lat.toFixed(6) + ", " + lng.toFixed(6);
+      status.textContent = tr("locationConfirmed");
       status.classList.add("has-location");
     }
     const clearButton = $("#clear-delivery-location");
@@ -998,23 +1046,25 @@
       phone: "Phone number",
       orderType: "Order type",
       address: "Delivery address / landmark",
-      addressHint: "Include your house or building number, street, neighbourhood, and a nearby landmark (for example, a shop or station).",
-      chooseLocation: "Choose location on OpenStreetMap",
-      clearLocation: "Clear map pin",
-      locationNotSelected: "No map location selected yet. You can still enter your address manually.",
-      locationSelected: "Map location selected",
-      mapTitle: "Choose delivery location",
-      mapHelp: "Search for a place or tap the map to position the pin. Keep your house number or landmark in the address field.",
-      mapSearchPlaceholder: "Search for a place or address",
-      mapSearchButton: "Search",
-      mapSearchNoResults: "No matching places found. Try a nearby landmark or tap the map.",
-      mapSearchError: "Address search is temporarily unavailable. Tap the map to select the location.",
-      useCurrentLocation: "Use my current location",
-      confirmLocation: "Use this location",
+      addressHint: "The map fills the nearby address. Add your house number or a landmark if needed.",
+      chooseLocation: "Set delivery pin",
+      clearLocation: "Change delivery pin",
+      locationNotSelected: "Choose a map pin before placing a delivery order.",
+      locationSelected: "Pin selected",      locationConfirmed: "Address filled from map",
+      findingAddress: "Getting address from map…",
+      mapTitle: "Set delivery location",
+      mapHelp: "Use your current location or search a nearby landmark. Confirm the pin; the address fills in automatically.",
+      mapSearchPlaceholder: "Search a nearby landmark",
+      mapSearchButton: "Find",
+      mapSearchNoResults: "No match found. Try a nearby landmark or move the pin.",
+      mapSearchError: "Search is unavailable. You can move the pin on the map.",
+      useCurrentLocation: "Use my location",
+      confirmLocation: "Confirm location",
       cancel: "Cancel",
-      mapsNotConfigured: "The map is not ready yet. Please enter your delivery address manually for now.",
-      mapsLoadError: "The map library could not load. Check your connection or enter the address manually.",
+      mapsNotConfigured: "The map is unavailable. Please try again or contact the restaurant to place your order.",
+      mapsLoadError: "The map could not load. Please try again or contact the restaurant to place your order.",
       copyAddress: "Copy address",
+      moreOptions: "Optional details",
       notes: "Notes (optional)",
       pickupInstructions: "Pickup instructions (optional)",
       scheduleOrder: "Schedule this order",
@@ -1097,23 +1147,25 @@
       phone: "رقم الهاتف",
       orderType: "نوع الطلب",
       address: "عنوان التوصيل / علامة مميزة",
-      addressHint: "اكتب رقم البيت أو المبنى والشارع والحي وعلامة قريبة مثل محل أو محطة.",
-      chooseLocation: "حدد موقعك على الخريطة",
-      clearLocation: "إزالة موقع الخريطة",
-      locationNotSelected: "ما حددت موقعك على الخريطة لسه. فيك تكتب عنوانك يدوياً.",
-      locationSelected: "تم تحديد موقع التوصيل",
+      addressHint: "الخريطة بتعبّي العنوان القريب. أضف رقم البيت أو معلم قريب إذا لزم.",
+      chooseLocation: "حدد موقع التوصيل",
+      clearLocation: "تغيير الموقع",
+      locationNotSelected: "حدد موقع التوصيل على الخريطة قبل إرسال الطلب.",
+      locationSelected: "تم تثبيت الدبوس",      locationConfirmed: "تم تعبئة العنوان من الخريطة",
+      findingAddress: "عم نجيب العنوان من الخريطة…",
       mapTitle: "حدد موقع التوصيل",
-      mapHelp: "ابحث عن مكان أو اضغط على الخريطة لتحريك الدبوس. اكتب رقم البيت أو علامة مميزة بحقل العنوان.",
-      mapSearchPlaceholder: "ابحث عن مكان أو عنوان",
+      mapHelp: "استخدم موقعك الحالي أو ابحث عن معلم قريب. ثبّت الدبوس، والعنوان بيتعبّى تلقائياً.",
+      mapSearchPlaceholder: "ابحث عن معلم قريب",
       mapSearchButton: "بحث",
-      mapSearchNoResults: "ما لقينا نتائج مناسبة. جرّب معلماً قريباً أو اضغط على الخريطة.",
-      mapSearchError: "البحث عن العنوان غير متاح مؤقتاً. اضغط على الخريطة لتحديد الموقع.",
+      mapSearchNoResults: "ما لقينا المكان. جرّب معلماً قريباً أو حرّك الدبوس.",
+      mapSearchError: "البحث غير متاح حالياً. فيك تحرّك الدبوس على الخريطة.",
       useCurrentLocation: "استخدم موقعي الحالي",
-      confirmLocation: "اعتماد هالموقع",
+      confirmLocation: "تأكيد الموقع",
       cancel: "إلغاء",
-      mapsNotConfigured: "الخريطة مو جاهزة حالياً. اكتب عنوان التوصيل يدوياً مؤقتاً.",
-      mapsLoadError: "ما قدرنا نحمل خرائط Google. تأكد من مفتاح API والخدمات المفعّلة، أو اكتب العنوان يدوياً.",
+      mapsNotConfigured: "الخريطة غير متاحة حالياً. جرّب مرة ثانية أو تواصل مع المطعم لإرسال طلبك.",
+      mapsLoadError: "ما قدرنا نحمّل الخريطة. جرّب مرة ثانية أو تواصل مع المطعم لإرسال طلبك.",
       copyAddress: "نسخ العنوان",
+      moreOptions: "خيارات إضافية (اختياري)",
       notes: "ملاحظات (اختياري)",
       pickupInstructions: "تعليمات الاستلام (اختياري)",
       scheduleOrder: "جدولة الطلب",
@@ -1196,23 +1248,25 @@
       phone: "Telefon nɔma",
       orderType: "Ɔkwan a wopɛ sɛ wunya aduan no",
       address: "Beae a wɔde bɛbrɛ wo / agyiraehyɛde",
-      addressHint: "Kyerɛw fie nɔma, kwan, mpɔtam ne beae bi a ɛda hɔ pefee te sɛ sotɔɔ anaa gyinabea.",
-      chooseLocation: "Paw beae wɔ map no so",
-      clearLocation: "Yi beae no fi map no so",
-      locationNotSelected: "Wonpaw beae bi wɔ map no so. Wubetumi akyerɛw wo address.",
-      locationSelected: "Wɔapaw beae a wɔde bɛbrɛ wo",
-      mapTitle: "Paw beae a wɔde bɛbrɛ wo",
-      mapHelp: "Hwehwɛ beae bi anaa mia map no so na fa pin no to hɔ. Kyerɛw fie nɔma anaa agyiraehyɛde wɔ address field no mu.",
-      mapSearchPlaceholder: "Hwehwɛ beae anaa address",
+      addressHint: "Map no bɛkyerɛ address a ɛbɛn hɔ. Fa fie nɔma anaa agyiraehyɛde ka ho sɛ ɛho hia.",
+      chooseLocation: "Paw delivery beae",
+      clearLocation: "Sesa delivery beae",
+      locationNotSelected: "Paw delivery beae wɔ map no so ansa na woahyɛ order.",
+      locationSelected: "Wɔapaw pin no",      locationConfirmed: "Wɔde address no aba afi map no so",
+      findingAddress: "Yɛregye address no afi map no so…",
+      mapTitle: "Paw delivery beae",
+      mapHelp: "Fa wo beae a wowɔ seesei yɛ adwuma anaa hwehwɛ agyiraehyɛde a ɛbɛn. Si pin no so dua; address no bɛba ara kwa.",
+      mapSearchPlaceholder: "Hwehwɛ agyiraehyɛde a ɛbɛn",
       mapSearchButton: "Hwehwɛ",
-      mapSearchNoResults: "Yenhu beae a ɛfata. Sɔ agyiraehyɛde a ɛbɛn no hwɛ anaa mia map no so.",
-      mapSearchError: "Address search no nni hɔ seesei. Mia map no so na paw beae no.",
-      useCurrentLocation: "Fa me baabi a mewɔ seesei",
-      confirmLocation: "Fa beae yi di dwuma",
+      mapSearchNoResults: "Yenhu beae no. Sɔ agyiraehyɛde a ɛbɛn no hwɛ anaa sesa pin no.",
+      mapSearchError: "Hwehwɛde no nni hɔ. Wubetumi asesa pin no wɔ map no so.",
+      useCurrentLocation: "Fa me beae a mewɔ",
+      confirmLocation: "Si beae no so dua",
       cancel: "Twa mu",
-      mapsNotConfigured: "Map no nnya mmra. Kyerɛw wo address wɔ ase ha seesei.",
-      mapsLoadError: "Map no antumi amma. Hwɛ internet anaa kyerɛw wo address wɔ ase ha.",
+      mapsNotConfigured: "Map no nni hɔ seesei. San sɔ hwɛ anaa frɛ adidibea no ma wɔmmoa wo.",
+      mapsLoadError: "Map no antumi amma. San sɔ hwɛ anaa frɛ adidibea no ma wɔmmoa wo.",
       copyAddress: "Kɔpi address",
+      moreOptions: "Nsɛm foforo a wopɛ a",
       notes: "Nsɛm foforo (wopɛ a)",
       pickupInstructions: "Akwan a yɛmfa nkyerɛ wo wɔ restaurant no (wopɛ a)",
       scheduleOrder: "Hyɛ bere ma wo order",
@@ -3232,20 +3286,22 @@
       const deliveryLatitude = deliveryLatitudeRaw ? Number(deliveryLatitudeRaw) : null;
       const deliveryLongitude = deliveryLongitudeRaw ? Number(deliveryLongitudeRaw) : null;
 
+      if (orderType === "delivery" && !address) {
+        showCheckoutMessage(tr("addressError"), true);
+        formElement.elements.delivery_address.focus();
+        return;
+      }
+
       if (orderType === "delivery" && (deliveryLatitude === null || deliveryLongitude === null)) {
         showCheckoutMessage(
-          localized("Please select and confirm your delivery location on the map before placing the order. Map location is required for delivery.", "اختار موقع التوصيل من الخريطة وثبّته قبل إرسال الطلب. تحديد الموقع إلزامي للتوصيل.", "Paw wo delivery beae wɔ map no so na si so dua ansa na woahyɛ order. Ɛsɛ sɛ wopaw beae ma delivery."),
+          localized("Set the delivery pin on the map before placing your order.", "حدد موقع التوصيل على الخريطة قبل إرسال الطلب.", "Paw delivery beae wɔ map no so ansa na woahyɛ order."),
           true
         );
         $("#choose-delivery-location")?.focus();
         return;
       }
 
-      if (orderType === "delivery" && !address) {
-        showCheckoutMessage(tr("addressError"), true);
-        formElement.elements.delivery_address.focus();
-        return;
-      }
+
 
       if (orderType === "delivery" &&
           ((deliveryLatitude === null) !== (deliveryLongitude === null) ||

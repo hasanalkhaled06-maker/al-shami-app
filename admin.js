@@ -2554,6 +2554,8 @@ Status: ${order.status}`;
           if (field.type === "checkbox") field.checked = Boolean(value);
           else field.value = value == null ? "" : value;
         });
+        const zoneDetails = $("#delivery-zones-details");
+        if (zoneDetails) zoneDetails.open = true;
         form.scrollIntoView({ behavior: "smooth", block: "center" });
       };
     });

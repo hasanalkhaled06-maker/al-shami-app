@@ -656,3 +656,36 @@ body.rider-app{min-height:100vh;background:#f2f1ee!important;color:var(--shami-i
 .receipt-code-copy:active{transform:scale(.98)}
 .receipt-code-copy.is-copied{background:#286747;border-color:#286747}
 @media(max-width:420px){.receipt-code-row{align-items:stretch}.receipt-code-copy{width:100%}}
+
+
+/* Keep advanced order controls and delivery-zone setup out of the main workflow. */
+.admin-order-tools,.admin-receipt-tools,.admin-advanced-section{
+  margin:12px 0;padding:0;border:1px solid #e5ded8;border-radius:14px;background:#fff
+}
+.admin-order-tools>summary,.admin-receipt-tools>summary,.admin-advanced-section>summary{
+  min-height:48px;display:flex;align-items:center;gap:9px;padding:11px 15px;
+  color:#493a3c;font-weight:750;cursor:pointer;list-style-position:inside
+}
+.admin-order-tools[open]>summary,.admin-receipt-tools[open]>summary,.admin-advanced-section[open]>summary{
+  border-bottom:1px solid #eee8e3
+}
+.admin-order-tools-content,.admin-advanced-section-content{display:grid;gap:12px;padding:12px 15px 15px}
+.admin-order-tools-content .section-heading{margin:0}
+.admin-receipt-tools{margin:0}
+.admin-receipt-tools .section-heading{margin:0;padding:12px}
+.delivery-map-help{max-width:58ch;line-height:1.55}
+@media(max-width:600px){
+  .admin-order-heading{align-items:stretch;flex-direction:column}
+  .admin-order-heading>input{width:100%}
+  .admin-order-tools>summary,.admin-receipt-tools>summary,.admin-advanced-section>summary{min-height:46px}
+}
+
+.checkout-extra-options{
+  margin:12px 0;padding:0;border:1px solid #e5ded8;border-radius:12px;background:#fff
+}
+.checkout-extra-options>summary{
+  min-height:46px;display:flex;align-items:center;padding:10px 14px;color:#493a3c;
+  font-weight:700;cursor:pointer;list-style-position:inside
+}
+.checkout-extra-options[open]>summary{border-bottom:1px solid #eee8e3}
+.checkout-extra-options-content{display:grid;gap:12px;padding:12px 14px}

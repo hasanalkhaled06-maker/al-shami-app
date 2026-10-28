@@ -132,7 +132,7 @@
   @media(max-width:560px){#tab-orders .section-heading{gap:8px}#tab-orders .section-heading>*{min-width:0;max-width:100%}#tab-orders #order-search{flex:1 1 100%}}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="app-refresh.css?v=light-premium-20261023b">
+  <link rel="stylesheet" href="app-refresh.css?v=clear-flow-20261028a">
   <link rel="stylesheet" href="dark-theme.css?v=olive-sand-copper-20261026a">
 </head>
 
@@ -346,40 +346,46 @@
     </div>
 
     <section id="tab-orders" class="panel hidden">
-      <div class="section-heading">
-        <div>
-          <h2>Incoming orders</h2>
-          
-        </div>
-
-        <select id="order-filter" aria-label="Filter orders by status">
-          <option value="all">All orders</option>
-          <option value="new">New</option>
-          <option value="accepted">Accepted</option>
-          <option value="preparing">Preparing</option>
-          <option value="ready">Ready</option>
-          <option value="out_for_delivery">Out for delivery</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <select id="order-type-filter" aria-label="Filter orders by type">
-          <option value="all">All order types</option>
-          <option value="delivery">Delivery</option>
-          <option value="pickup">Pickup</option>
-        </select>
-      </div>
-
-      <form id="receipt-confirm-form" class="section-heading" aria-label="Confirm customer receipt" style="align-items:end;gap:10px;flex-wrap:wrap">
-        <label>Order number<input name="order_number" type="number" min="1" step="1" required placeholder="Order #"></label>
-        <label>Customer receipt code<input name="receipt_code" type="text" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="6-digit code" autocomplete="off"></label>
-        <button class="btn btn-primary" type="submit">Confirm receipt</button>
-        <p id="receipt-confirm-message" class="status-message" role="status"></p>
-      </form>
-
-      <div class="section-heading" aria-label="Search, filter and export orders">
+      <div class="section-heading admin-order-heading">
+        <div><h2>Incoming orders</h2></div>
         <input id="order-search" type="search" placeholder="Search orders…" aria-label="Search orders" autocomplete="off">
-        <button id="clear-order-filters" class="btn btn-light" type="button">Clear filters</button>
-        <button id="export-orders" class="btn btn-light" type="button">Export CSV</button>
       </div>
+      <details class="admin-order-tools">
+        <summary>Filters and other order tools</summary>
+        <div class="admin-order-tools-content">
+          <div class="section-heading" aria-label="Filter orders">
+            <select id="order-filter" aria-label="Filter orders by status">
+              <option value="all">All orders</option>
+              <option value="new">New</option>
+              <option value="accepted">Accepted</option>
+              <option value="preparing">Preparing</option>
+              <option value="ready">Ready</option>
+              <option value="out_for_delivery">Out for delivery</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <select id="order-type-filter" aria-label="Filter orders by type">
+              <option value="all">All order types</option>
+              <option value="delivery">Delivery</option>
+              <option value="pickup">Pickup</option>
+            </select>
+          </div>
+
+          <details class="admin-receipt-tools" id="admin-receipt-tools">
+            <summary>Confirm customer pickup or delivery</summary>
+            <form id="receipt-confirm-form" class="section-heading" aria-label="Confirm customer receipt" style="align-items:end;gap:10px;flex-wrap:wrap">
+              <label>Order number<input name="order_number" type="number" min="1" step="1" required placeholder="Order #"></label>
+              <label>Customer receipt code<input name="receipt_code" type="text" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="6-digit code" autocomplete="off"></label>
+              <button class="btn btn-primary" type="submit">Confirm receipt</button>
+              <p id="receipt-confirm-message" class="status-message" role="status"></p>
+            </form>
+          </details>
+
+          <div class="section-heading" aria-label="Order list tools">
+            <button id="clear-order-filters" class="btn btn-light" type="button">Clear filters</button>
+            <button id="export-orders" class="btn btn-light" type="button">Export CSV</button>
+          </div>
+        </div>
+      </details>
       <p id="order-results-count" class="muted" role="status" aria-live="polite">Orders will appear here.</p>
 
       <div id="orders-list" class="orders-list">
@@ -566,9 +572,10 @@
         <p id="settings-message" class="status-message full"></p>
       </form>
 
-      <hr>
-      <h3>Delivery zones</h3>
-      <p class="muted">Zones are circles around a centre point. Enter verified coordinates, radius, fee and travel-time estimate. Existing single delivery fee remains the fallback until zones are configured.</p>
+      <details class="admin-advanced-section" id="delivery-zones-details">
+        <summary>Delivery zones (optional)</summary>
+        <div class="admin-advanced-section-content">
+          <p class="muted">Use this only if delivery fees differ by area. For one flat fee, use the delivery fee above.</p>
       <form id="delivery-zone-form" class="form-grid admin-form">
         <input type="hidden" name="id">
         <label>Zone name<input name="name" maxlength="100" required placeholder="Darkuman"></label>
@@ -582,6 +589,8 @@
         <p id="delivery-zone-message" class="status-message full"></p>
       </form>
       <div id="delivery-zones-list" class="admin-menu-list"><p class="muted">Delivery zones become available after the optional database upgrade is applied.</p></div>
+        </div>
+      </details>
 
       <hr>
       <h3>Customer reviews</h3>
@@ -651,7 +660,7 @@
 
 <script src="config.js"></script>
 <script src="order-workflow.js?v=order-flow-guard-20261026a"></script>
-<script src="admin.js?v=offer-price-20261027c"></script>
+<script src="admin.js?v=clear-flow-20261028a"></script>
 <script src="admin-operations.js?v=radical-ui-20261023a"></script>
 <script src="admin-delivery-ops.js?v=operations-settings-20261025c"></script>
 <script src="pwa.js?v=install-prompt-20261027a"></script>
