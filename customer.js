@@ -3235,6 +3235,12 @@
       const deliveryLatitude = deliveryLatitudeRaw ? Number(deliveryLatitudeRaw) : null;
       const deliveryLongitude = deliveryLongitudeRaw ? Number(deliveryLongitudeRaw) : null;
 
+      if (orderType === "delivery" && !address) {
+        showCheckoutMessage(tr("addressError"), true);
+        formElement.elements.delivery_address.focus();
+        return;
+      }
+
       if (orderType === "delivery" && (deliveryLatitude === null || deliveryLongitude === null)) {
         showCheckoutMessage(
           localized("Set the delivery pin on the map before placing your order.", "حدد موقع التوصيل على الخريطة قبل إرسال الطلب.", "Paw delivery beae wɔ map no so ansa na woahyɛ order."),
@@ -3244,11 +3250,7 @@
         return;
       }
 
-      if (orderType === "delivery" && !address) {
-        showCheckoutMessage(tr("addressError"), true);
-        formElement.elements.delivery_address.focus();
-        return;
-      }
+
 
       if (orderType === "delivery" &&
           ((deliveryLatitude === null) !== (deliveryLongitude === null) ||
