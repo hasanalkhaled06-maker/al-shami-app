@@ -2016,7 +2016,9 @@
         const status = String(order.status || "").toLowerCase();
         const number = order.order_number ?? entry.orderNumber ?? "—";
         if (typeof window.AL_SHAMI_UPDATE_SUCCESS_STATUS === "function") {
-          window.AL_SHAMI_UPDATE_SUCCESS_STATUS({ orderNumber: number, status, orderType: order.order_type });
+          window.AL_SHAMI_UPDATE_SUCCESS_STATUS({
+            orderNumber: number, status, orderType: order.order_type, status_reason: order.status_reason
+          });
         }
         const updatedAt = order.updated_at ? trackingDate(order.updated_at) : "";
         const updatedAtHtml = updatedAt
@@ -2087,29 +2089,35 @@
             ? '<div class="receipt-code-note"><span class="receipt-code-label">' + escapeHTML(localized("Receipt code — show it to the cashier", "رمز تأكيد الاستلام — أعطه للكاشير عند الاستلام", "Code a ɛkyerɛ sɛ woagye aduan no — kyerɛ cashier no")) + '</span><div class="receipt-code-row"><strong class="receipt-code-value">' + escapeHTML(order.receipt_code) + '</strong><button type="button" class="receipt-code-copy" data-receipt-code="' + escapeHTML(order.receipt_code) + '">' + escapeHTML(localized("Copy code", "نسخ الرمز", "Kɔpi code no")) + '</button></div></div>'
             : "") + remove + "</article>";
       };
-      // A customer must continue seeing an order after it is accepted.
-      // "Ready" and "Out for delivery" remain current until the handoff is completed.
+      // Rejected orders are terminal, but keep them on the active orders page so customers
+      // see the rejection immediately. They also remain in the history page.
       const currentStatuses = new Set(["new", "accepted", "preparing", "ready", "out_for_delivery"]);
+      const rejectedResults = validResults.filter(result =>
+        !result.failed && String(result.order?.status || "").toLowerCase() === "rejected"
+      );
       const currentResults = validResults.filter(result =>
         result.failed || currentStatuses.has(String(result.order?.status || "").toLowerCase())
       );
       const pastResults = validResults.filter(result =>
-        !result.failed && !currentStatuses.has(String(result.order?.status || "").toLowerCase())
+        !result.failed &&
+        !currentStatuses.has(String(result.order?.status || "").toLowerCase()) &&
+        String(result.order?.status || "").toLowerCase() !== "rejected"
       );
-      setHomeCurrentOrdersVisible(currentResults.length > 0);
+      const activeViewResults = currentResults.concat(rejectedResults);
+      setHomeCurrentOrdersVisible(activeViewResults.length > 0);
 
       let visibleHtml = "";
       if (isHistoryPage) {
         const sections = [
           { title: tr("currentOrdersGroup"), results: currentResults },
-          { title: tr("pastOrdersGroup"), results: pastResults }
+          { title: tr("pastOrdersGroup"), results: pastResults.concat(rejectedResults) }
         ].filter(section => section.results.length > 0);
         visibleHtml = sections.map(section =>
           '<section class="customer-order-group"><h3>' + escapeHTML(section.title) + '</h3>' +
           section.results.map(renderResult).join("") + '</section>'
         ).join("");
       } else {
-        visibleHtml = currentResults.map(renderResult).join("");
+        visibleHtml = activeViewResults.map(renderResult).join("");
       }
       clearCustomerRiderMaps();
       list.innerHTML = visibleHtml || '<p class="muted tracked-empty">' + escapeHTML(tr("noTrackedOrders")) + '</p>';
