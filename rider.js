@@ -93,52 +93,7 @@
     loginMessage.className = "form-message" + (isError ? " error" : "");
   }
 
-  let authMode = "signin";
-  const nameInput = $("#rider-name");
-  const nameLabel = $("#rider-name-label");
   const identifierInput = $("#rider-identifier");
-  const identifierLabel = $("#rider-identifier-label");
-  const signInModeButton = $("#show-signin");
-  const signUpModeButton = $("#show-signup");
-
-  function setAuthMode(mode) {
-    authMode = mode === "signup" ? "signup" : "signin";
-    const isSignUp = authMode === "signup";
-    if (identifierInput) {
-      identifierInput.type = isSignUp ? "email" : "text";
-      identifierInput.autocomplete = isSignUp ? "email" : "username";
-      identifierInput.placeholder = isSignUp ? "rider@example.com" : "Paste your rider UUID";
-    }
-    if (identifierLabel) identifierLabel.textContent = isSignUp ? "Email address" : "Rider Auth UUID";
-    const authHint = $("#rider-auth-hint");
-    if (authHint) authHint.textContent = isSignUp
-      ? "Create your account with email and password. Management must approve it before you can see deliveries."
-      : "Use the Auth user UUID linked to your active Delivery Rider profile.";
-    if (nameInput) {
-      nameInput.hidden = !isSignUp;
-      nameInput.required = isSignUp;
-    }
-    if (nameLabel) nameLabel.hidden = !isSignUp;
-    if ($("#rider-password")) {
-      $("#rider-password").autocomplete = isSignUp ? "new-password" : "current-password";
-      $("#rider-password").placeholder = isSignUp ? "At least 8 characters" : "Your password";
-      $("#rider-password").minLength = isSignUp ? 8 : 1;
-    }
-    if (loginButton) loginButton.innerHTML = isSignUp
-      ? 'Request rider account <span aria-hidden="true">→</span>'
-      : 'Sign in securely <span aria-hidden="true">→</span>';
-    if (signInModeButton) {
-      signInModeButton.classList.toggle("is-active", !isSignUp);
-      signInModeButton.setAttribute("aria-pressed", String(!isSignUp));
-    }
-    if (signUpModeButton) {
-      signUpModeButton.classList.toggle("is-active", isSignUp);
-      signUpModeButton.setAttribute("aria-pressed", String(isSignUp));
-    }
-    setLoginMessage(isSignUp
-      ? "Create your account request. Restaurant management must approve and link it before you can see deliveries."
-      : "");
-  }
   function setSignedInView(state) {
     const view = typeof state === "boolean" ? (state ? "dashboard" : "login") : state;
     const signedIn = view !== "login";
@@ -532,8 +487,7 @@
       if (ordersNode) ordersNode.replaceChildren();
       return "signed_out";
     }
-    const email = currentSession.user.email || "";
-    $("#rider-name-suffix").textContent = email ? ", " + email.split("@")[0] : "";
+    $("#rider-name-suffix").textContent = "";
     return verifyRiderAccess();
   }
 
@@ -542,8 +496,8 @@
     if (loginButton) loginButton.disabled = true;
     setConnectionState(false, "Not configured");
   } else {
-    signInModeButton?.addEventListener("click", () => setAuthMode("signin"));
-    signUpModeButton?.addEventListener("click", () => setAuthMode("signup"));
+    $("#rider-password").autocomplete = "current-password";
+    $("#rider-password").minLength = 1;
 
     loginForm?.addEventListener("submit", async event => {
       event.preventDefault();
@@ -552,43 +506,6 @@
       const identifier = String(form.elements.identifier.value || "").trim();
       const password = String(form.elements.password.value || "");
       try {
-        if (authMode === "signup") {
-          const fullName = String(form.elements.fullName?.value || "").trim();
-          if (fullName.length < 2) throw new Error("Enter your full name.");
-          if (password.length < 8) throw new Error("Use a password with at least 8 characters.");
-          const email = identifier;
-          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid email address.");
-
-          setLoginMessage("Submitting your account request…");
-          const { data, error } = await db.auth.signUp({
-            email,
-            password,
-            options: {
-              data: {
-                full_name: fullName,
-                requested_role: "delivery_rider",
-                approval_status: "pending"
-              },
-              emailRedirectTo: window.location.origin + window.location.pathname
-            }
-          });
-          if (error) throw error;
-
-          // Never leave a newly registered account signed in before management
-          // links its Auth UUID to an active Delivery Rider staff profile.
-          if (data.session) {
-            await db.auth.signOut();
-          }
-          setAuthMode("signin");
-          form.reset();
-          setLoginMessage(
-            data.user?.identities?.length === 0
-              ? "If this email is eligible, an account confirmation message will be sent. If you already registered, sign in instead."
-              : "Account request submitted. Check your email for confirmation if requested. You must wait for AL SHAMI management to approve and link your account before you can access deliveries."
-          );
-          return;
-        }
-
         setLoginMessage("Signing in securely…");
         const { data: login, error } = await db.functions.invoke("rider-login", {
           body: { rider_uuid: identifier, password }
@@ -610,9 +527,7 @@
         setLoginMessage("Signed in. Checking rider approval…");
         await handleSession(sessionData.session);
       } catch (error) {
-        setLoginMessage(error?.message || (authMode === "signup"
-          ? "Could not submit account request. Check the details and try again."
-          : "Sign-in failed. Check your email and password."), true);
+        setLoginMessage(error?.message || "Sign-in failed. Check your rider UUID and password.", true);
       } finally {
         loginButton.disabled = false;
       }
