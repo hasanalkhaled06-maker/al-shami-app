@@ -329,9 +329,12 @@
         "تم تحديد موقع التوصيل على الخريطة",
         "Wɔapaw delivery beae wɔ map no so"
       );
-      const alreadyIncluded = existingAddress && mapAddress.toLowerCase().includes(existingAddress.toLowerCase());
+      const alreadyIncluded = existingAddress && (
+        mapAddress.toLowerCase().includes(existingAddress.toLowerCase()) ||
+        existingAddress.toLowerCase().includes(mapAddress.toLowerCase())
+      );
       addressInput.value = (existingAddress && !alreadyIncluded
-        ? mapAddress + ", " + existingAddress
+        ? existingAddress + ", " + mapAddress
         : mapAddress).slice(0, 250);
     }
     const status = $("#delivery-location-status");
