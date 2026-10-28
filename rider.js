@@ -96,12 +96,24 @@
   let authMode = "signin";
   const nameInput = $("#rider-name");
   const nameLabel = $("#rider-name-label");
+  const identifierInput = $("#rider-identifier");
+  const identifierLabel = $("#rider-identifier-label");
   const signInModeButton = $("#show-signin");
   const signUpModeButton = $("#show-signup");
 
   function setAuthMode(mode) {
     authMode = mode === "signup" ? "signup" : "signin";
     const isSignUp = authMode === "signup";
+    if (identifierInput) {
+      identifierInput.type = isSignUp ? "email" : "text";
+      identifierInput.autocomplete = isSignUp ? "email" : "username";
+      identifierInput.placeholder = isSignUp ? "rider@example.com" : "Paste your rider UUID";
+    }
+    if (identifierLabel) identifierLabel.textContent = isSignUp ? "Email address" : "Rider Auth UUID";
+    const authHint = $("#rider-auth-hint");
+    if (authHint) authHint.textContent = isSignUp
+      ? "Create your account with email and password. Management must approve it before you can see deliveries."
+      : "Use the Auth user UUID linked to your active Delivery Rider profile.";
     if (nameInput) {
       nameInput.hidden = !isSignUp;
       nameInput.required = isSignUp;
@@ -110,6 +122,7 @@
     if ($("#rider-password")) {
       $("#rider-password").autocomplete = isSignUp ? "new-password" : "current-password";
       $("#rider-password").placeholder = isSignUp ? "At least 8 characters" : "Your password";
+      $("#rider-password").minLength = isSignUp ? 8 : 1;
     }
     if (loginButton) loginButton.innerHTML = isSignUp
       ? 'Request rider account <span aria-hidden="true">→</span>'
@@ -536,14 +549,15 @@
       event.preventDefault();
       loginButton.disabled = true;
       const form = event.currentTarget;
-      const email = String(form.elements.email.value || "").trim();
+      const identifier = String(form.elements.identifier.value || "").trim();
       const password = String(form.elements.password.value || "");
       try {
         if (authMode === "signup") {
           const fullName = String(form.elements.fullName?.value || "").trim();
           if (fullName.length < 2) throw new Error("Enter your full name.");
           if (password.length < 8) throw new Error("Use a password with at least 8 characters.");
-          if (!email) throw new Error("Enter your email address.");
+          const email = identifier;
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid email address.");
 
           setLoginMessage("Submitting your account request…");
           const { data, error } = await db.auth.signUp({
@@ -575,11 +589,26 @@
           return;
         }
 
-        setLoginMessage("Signing in…");
-        const { data, error } = await db.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        setLoginMessage("Signing in securely…");
+        const { data: login, error } = await db.functions.invoke("rider-login", {
+          body: { rider_uuid: identifier, password }
+        });
+        if (error) {
+          let message = error.message || "Sign-in failed. Check your UUID and password.";
+          try {
+            const body = await error.context?.clone?.().json();
+            if (body?.error) message = body.error;
+          } catch (_) {}
+          throw new Error(message);
+        }
+        if (!login?.access_token || !login?.refresh_token) throw new Error("The sign-in response was incomplete. Try again.");
+        const { data: sessionData, error: sessionError } = await db.auth.setSession({
+          access_token: login.access_token,
+          refresh_token: login.refresh_token
+        });
+        if (sessionError) throw sessionError;
         setLoginMessage("Signed in. Checking rider approval…");
-        await handleSession(data.session);
+        await handleSession(sessionData.session);
       } catch (error) {
         setLoginMessage(error?.message || (authMode === "signup"
           ? "Could not submit account request. Check the details and try again."
