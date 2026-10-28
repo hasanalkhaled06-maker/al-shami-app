@@ -283,12 +283,13 @@
           <p class="ops-note">Record stock deliveries here. The date and balance update automatically; menu usage stays in the movement history.</p>
           <form id="ops-movement-form">
             <div class="ops-stock-sheet-wrap"><table class="ops-stock-sheet">
-              <thead><tr><th>Date</th><th>Current balance</th><th>Reference / reason</th><th>Received</th><th>Balance after</th><th></th></tr></thead>
+              <thead><tr><th>Date</th><th>Current balance</th><th>Reference / reason</th><th>Received</th><th>Sold</th><th>Balance after</th><th></th></tr></thead>
               <tbody><tr>
                 <td id="ops-stock-sheet-date">—</td>
                 <td id="ops-stock-sheet-current">—</td>
                 <td><input class="stock-sheet-reference" name="reference" type="text" maxlength="120" required placeholder="Invoice, supplier, reason" aria-label="Reference or reason"></td>
                 <td><input name="received" type="number" min="0" step="0.001" value="0" aria-label="Quantity received"></td>
+                <td><input name="sold" type="number" min="0" step="0.001" value="0" aria-label="Quantity sold"></td>
                 <td class="stock-sheet-balance" id="ops-stock-sheet-balance">—</td>
                 <td><button class="stock-sheet-save" type="submit">Save movement</button></td>
               </tr></tbody>
@@ -1004,8 +1005,9 @@
     const form = $("#ops-movement-form");
     if (!selectedStockItem || !form) return;
     const incoming = Number(form.elements.received.value) || 0;
+    const sold = Number(form.elements.sold.value) || 0;
     const current = Number(selectedStockItem.quantity || 0);
-    const balance = current + incoming;
+    const balance = current + incoming - sold;
     $("#ops-stock-sheet-date").textContent = stockSheetDate();
     $("#ops-stock-sheet-current").textContent = stockQty(current) + " " + selectedStockItem.unit;
     $("#ops-stock-sheet-balance").textContent = stockQty(balance) + " " + selectedStockItem.unit;
@@ -1023,11 +1025,17 @@
   async function saveStockSheetRow(event) {
     event.preventDefault();
     const form = event.currentTarget;
-    const incoming = Number(form.elements.received.value);
+    const incoming = Number(form.elements.received.value) || 0;
+    const sold = Number(form.elements.sold.value) || 0;
     const current = Number(selectedStockItem?.quantity || 0);
     const reference = String(form.elements.reference.value || "").trim();
-    if (!selectedStockItem || !Number.isFinite(incoming) || incoming <= 0) {
-      message("Enter a received quantity greater than zero.", true);
+    if (!selectedStockItem || !Number.isFinite(incoming) || !Number.isFinite(sold) || incoming < 0 || sold < 0 || incoming + sold <= 0) {
+      message("Enter a received or sold quantity greater than zero.", true);
+      return;
+    }
+    if (current + incoming - sold < 0) {
+      message("Sold quantity cannot be greater than the available stock.", true);
+      form.elements.sold.focus();
       return;
     }
     if (!reference) {
@@ -1035,22 +1043,25 @@
       form.elements.reference.focus();
       return;
     }
-    const quantityChange = incoming;
-    const movementType = "purchase";
     const saveButton = form.querySelector('[type="submit"]');
     saveButton.disabled = true;
     try {
-      const { error } = await db.rpc("record_inventory_movement", {
-        p_item_id: selectedStockItem.id,
-        p_movement_type: movementType,
-        p_quantity_change: quantityChange,
-        p_unit_cost: Number(selectedStockItem.unit_cost || 0),
-        p_reference: reference,
-        p_notes: null
-      });
-      if (error) throw error;
+      if (incoming > 0) {
+        const { error } = await db.rpc("record_inventory_movement", {
+          p_item_id: selectedStockItem.id, p_movement_type: "purchase", p_quantity_change: incoming,
+          p_unit_cost: Number(selectedStockItem.unit_cost || 0), p_reference: reference, p_notes: null
+        });
+        if (error) throw error;
+      }
+      if (sold > 0) {
+        const { error } = await db.rpc("record_inventory_movement", {
+          p_item_id: selectedStockItem.id, p_movement_type: "usage", p_quantity_change: -sold,
+          p_unit_cost: Number(selectedStockItem.unit_cost || 0), p_reference: reference, p_notes: "Manual sold entry"
+        });
+        if (error) throw error;
+      }
       form.reset();
-      message("Stock movement saved with today's date.");
+      message("Stock movement saved with today\'s date.");
       await loadInventory();
       await loadMovements();
     } catch (error) {
