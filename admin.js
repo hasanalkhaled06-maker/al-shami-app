@@ -757,10 +757,8 @@
         currentUser = ownerData.user;
         loginForm.reset();
         if (isDeviceSetupComplete()) {
-          await ownerDb.auth.signOut();
-          currentUser = null;
-          selectedDb = staffDb;
-          showUserPicker();
+          // Keep the owner's persisted session and enter the dashboard directly.
+          await showDashboard();
         } else {
           showOwnerUserBootstrap();
         }
