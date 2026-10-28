@@ -70,10 +70,9 @@
     node.hidden = !message;
   }
 
-  function locationLabel(lat, lng, address = "") {
-    const coordinates = Number(lat).toFixed(6) + ", " + Number(lng).toFixed(6);
+  function locationLabel() {
     const node = $("#delivery-map-selection");
-    if (node) node.textContent = address ? address + " · " + coordinates : coordinates;
+    if (node) node.textContent = tr("locationSelected");
   }
 
   function setPendingDeliveryLocation(lat, lng, address = "") {
