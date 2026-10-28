@@ -693,13 +693,17 @@
         }
       };
       let activeSuccessOrderNumber = null;
-      const applyStatus = statusValue => {
+      const applyStatus = (statusValue, reasonValue = "") => {
         const status = String(statusValue || "new").toLowerCase();
         const key = ["accepted","preparing","ready","out_for_delivery","completed","rejected"].includes(status) ? status : "waiting";
         const lang = document.getElementById("language")?.value || "en";
         const words = (panelText[lang] || panelText.en)[key] || panelText.en[key];
+        const reason = String(reasonValue || "").trim();
+        const reasonLabel = lang === "ar" ? "السبب" : lang === "tw" ? "Nea nti a" : "Reason";
         title.textContent = words[0];
-        description.textContent = words[1];
+        description.textContent = key === "rejected" && reason
+          ? words[1] + " " + reasonLabel + ": " + reason
+          : words[1];
         statusLabel.textContent = words[2];
         const icon = panel.querySelector(".success-icon span");
         if (icon) icon.textContent = words[3];
@@ -739,7 +743,7 @@
       window.AL_SHAMI_UPDATE_SUCCESS_STATUS = details => {
         if (!details || activeSuccessOrderNumber === null) return;
         if (String(details.orderNumber ?? "") !== activeSuccessOrderNumber) return;
-        applyStatus(details.status);
+        applyStatus(details.status, details.status_reason);
       };
 
       function closePanel() {
@@ -797,7 +801,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
-  <script src="customer.js?v=order-rejection-20261028a"></script>
+  <script src="customer.js?v=customer-rejection-visible-20261028a"></script>
   <script src="customer-features.js?v=push-notifications-20261027a"></script>
   <script src="pwa.js?v=install-prompt-20261027a"></script>
 </body>
