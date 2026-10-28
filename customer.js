@@ -1896,16 +1896,13 @@
         try {
           const { data, error } = await db.rpc("get_customer_order_tracking", { p_tracking_token: entry.token });
           if (error) return { entry, failed:true };
-          if (!data) return { entry, missing:true };
+          if (!data) return { entry, failed:true, unavailable:true };
           return { entry, order:data };
         } catch (_) { return { entry, failed:true }; }
       }));
-      const missingTokens = results.filter(result => result.missing).map(result => result.entry.token);
-      if (missingTokens.length) {
-        const missingSet = new Set(missingTokens);
-        saveTrackedOrders(readTrackedOrders().filter(row => !missingSet.has(row.token)));
-      }
-      const validResults = results.filter(result => !result.missing);
+      // An empty response can be temporary (for example during a short database or
+      // session hiccup). Keep the saved tracking token and show a retryable error.
+      const validResults = results;
       let trackedStatusesChanged = false;
       for (const result of validResults) {
         if (result.failed || !result.order) continue;
@@ -1932,8 +1929,7 @@
         }
       }
       if (trackedStatusesChanged) {
-        const missingSet = new Set(missingTokens);
-        saveTrackedOrders(entries.filter(entry => !missingSet.has(entry.token)));
+        saveTrackedOrders(entries);
       }
 
       trackedOrderRemovalTokens = new Map();
