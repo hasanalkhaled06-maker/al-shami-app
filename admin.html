@@ -656,11 +656,31 @@
   </section>
 </div>
 
+<dialog id="order-rejection-dialog" aria-labelledby="order-rejection-title">
+  <form id="order-rejection-form">
+    <h2 id="order-rejection-title">Why are you rejecting this order?</h2>
+    <label for="order-reason-select">Choose a reason</label>
+    <select id="order-reason-select" required>
+      <option value="">Choose one</option>
+      <option value="Out of stock">Out of stock</option>
+      <option value="Outside delivery area">Outside delivery area</option>
+      <option value="Restaurant temporarily unavailable">Restaurant temporarily unavailable</option>
+      <option value="Could not reach customer">Could not reach customer</option>
+      <option value="other">Other</option>
+    </select>
+    <input id="order-reason-other" type="text" maxlength="500" placeholder="Enter the reason" aria-label="Enter the reason" hidden>
+    <div>
+      <button id="cancel-order-rejection" type="button">Cancel</button>
+      <button type="submit">Reject order</button>
+    </div>
+  </form>
+</dialog>
+
 <div id="toast" class="toast hidden" role="status"></div>
 
 <script src="config.js"></script>
 <script src="order-workflow.js?v=order-flow-guard-20261026a"></script>
-<script src="admin.js?v=clear-flow-20261028a"></script>
+<script src="admin.js?v=order-rejection-20261028a"></script>
 <script src="admin-operations.js?v=radical-ui-20261023a"></script>
 <script src="admin-delivery-ops.js?v=operations-settings-20261025c"></script>
 <script src="pwa.js?v=install-prompt-20261027a"></script>
