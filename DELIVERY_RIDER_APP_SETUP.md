@@ -24,12 +24,11 @@ The pre-existing order-visibility security migration and rider live-tracking mig
 
 ## Set up a rider account
 
-1. On the rider app, choose **Create account**, enter the rider's full name, email, and a password of at least 8 characters. Complete email confirmation if Supabase requests it. Never share the administrator login with a rider.
-2. Account creation does not approve the rider or grant order access. Management must link the account to an active rider employee profile.
-3. In Supabase Authentication → Users, find the account and copy its Auth user UUID.
-4. Sign in to the AL SHAMI admin app and open **Operations → Employee management**. Create or edit the employee profile; set System role to **Delivery Rider**, employment status to **Active**, and paste the exact Auth UUID. Save the profile. This is the approval gate checked by the server.
-5. Keep the profile active. On the next accepted delivery order, the database assigns an eligible linked rider. Assignment is automatic and load-based; there is no manual assignment selector.
-6. Open the rider app at [alshamiapp.xyz/rider.html](https://alshamiapp.xyz/rider.html) or [GitHub Pages rider app](https://hasanalkhaled06-maker.github.io/al-shami-app/rider.html). Sign in with the Auth user UUID linked to the employee profile and that Auth account's password. In Safari, use Share → Add to Home Screen to install it separately.
+1. In the AL SHAMI admin app, open **Operations → Employee management** and create or edit the employee profile.
+2. Set **System role** to **Delivery Rider** and **Employment status** to **Active**.
+3. Enter a password of at least 8 characters in **Rider login password** and save. The management page creates the rider login and displays its generated UUID. It does not use the rider's or administrator's real email.
+4. Give the rider the generated UUID and the password you entered. The rider app at [alshamiapp.xyz/rider.html](https://alshamiapp.xyz/rider.html) or [GitHub Pages rider app](https://hasanalkhaled06-maker.github.io/al-shami-app/rider.html) signs in with those two values only. In Safari, use Share → Add to Home Screen to install it separately.
+5. Leave **Rider login password** blank when editing the employee if you want to keep the current login. Enter a new password to create a replacement login and display its new UUID.
 
 ## How live tracking works
 
