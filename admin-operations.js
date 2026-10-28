@@ -141,7 +141,12 @@
       .ops-stock-item-card span { color:#1c704c; font-size:18px; font-weight:900; }
       .ops-stock-item-card small { color:#625b56; font-size:11px; font-weight:800; }
       .ops-stock-item-card { cursor:pointer; }
+      .ops-stock-item-entry { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:stretch; margin:12px 0; }
       .ops-stock-item-card:hover { border-color:#9a2530; background:#fff8f5; }
+      .ops-stock-delete { min-width:76px; padding:10px 12px; border:1px solid #d7a4a0; border-radius:11px; background:#fff4f1; color:#9a2530; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
+      .ops-stock-delete:hover { background:#fce4e1; border-color:#9a2530; }
+      .ops-stock-delete:disabled { opacity:.55; cursor:wait; }
+      .ops-stock-detail-actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:12px; }
       .ops-stock-summary { display:flex; justify-content:space-between; align-items:center; gap:14px; margin:12px 0; padding:18px; border-radius:15px; background:linear-gradient(120deg,#f4f8f3,#fff); border:1px solid #dbe8dc; }
       .ops-stock-summary small { display:block; color:#68716a; }
       .ops-stock-summary strong { display:block; margin-top:4px; color:#1c704c; font-size:clamp(24px,5vw,38px); }
@@ -157,7 +162,7 @@
       .ops-stock-entry { margin:14px 0; padding:14px; border:1px solid #eadfd6; border-radius:14px; background:#fffaf5; }
       .ops-stock-empty { padding:18px; border:1px dashed #d9cbc0; border-radius:12px; color:#766d6c; text-align:center; }
       @media(max-width:760px) { .ops-stock-category-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ops-stock-item-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ops-stock-toolbar { align-items:flex-start; flex-direction:column; } }
-      @media(max-width:390px) { .ops-stock-item-grid { grid-template-columns:1fr; } }
+      @media(max-width:390px) { .ops-stock-item-grid { grid-template-columns:1fr; } .ops-stock-item-entry { grid-template-columns:minmax(0,1fr) auto; } .ops-stock-delete { min-width:68px; padding:8px; } }
 
       @media(max-width:760px) {
         #ops-subtabs { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
@@ -272,28 +277,25 @@
           <div id="ops-stock-items"></div>
         </div>
         <section id="ops-stock-detail" hidden>
-          <button class="btn btn-light" id="ops-stock-back" type="button">← Back to category</button>
+          <div class="ops-stock-detail-actions"><button class="btn btn-light" id="ops-stock-back" type="button">← Back to category</button><button class="ops-stock-delete" id="ops-stock-delete-detail" type="button" data-delete-stock-item="">Delete item</button></div>
           <h4 id="ops-stock-item-title"></h4>
           <div class="ops-stock-summary"><div><small>Current balance</small><strong id="ops-stock-current">—</strong></div><span id="ops-stock-low-label" class="ops-note"></span></div>
-          <p class="ops-note">Record one stock movement per row. Enter a delivery under Received, a kitchen issue under Issued / used, and spoilage under Waste. The date and balance update automatically.</p>
+          <p class="ops-note">Record stock deliveries here. The date and balance update automatically; menu usage stays in the movement history.</p>
           <form id="ops-movement-form">
             <div class="ops-stock-sheet-wrap"><table class="ops-stock-sheet">
-              <thead><tr><th>Date</th><th>Current balance</th><th>Reference / reason</th><th>Received</th><th>Issued / used</th><th>Waste</th><th>Adjustment (+ / −)</th><th>Balance after</th><th></th></tr></thead>
+              <thead><tr><th>Date</th><th>Current balance</th><th>Reference / reason</th><th>Received</th><th>Balance after</th><th></th></tr></thead>
               <tbody><tr>
                 <td id="ops-stock-sheet-date">—</td>
                 <td id="ops-stock-sheet-current">—</td>
                 <td><input class="stock-sheet-reference" name="reference" type="text" maxlength="120" required placeholder="Invoice, supplier, reason" aria-label="Reference or reason"></td>
                 <td><input name="received" type="number" min="0" step="0.001" value="0" aria-label="Quantity received"></td>
-                <td><input name="issued" type="number" min="0" step="0.001" value="0" aria-label="Quantity issued or used"></td>
-                <td><input name="waste" type="number" min="0" step="0.001" value="0" aria-label="Quantity wasted"></td>
-                <td><input name="adjustment" type="number" step="0.001" value="0" aria-label="Stock count adjustment, positive or negative"></td>
                 <td class="stock-sheet-balance" id="ops-stock-sheet-balance">—</td>
                 <td><button class="stock-sheet-save" type="submit">Save movement</button></td>
               </tr></tbody>
             </table></div>
           </form>
           <h4>Stock movement history</h4>
-          <p class="ops-note">Every saved delivery, issue, waste, or adjustment appears on its own line with the balance after that movement.</p>
+          <p class="ops-note">Each delivery or other recorded stock change appears with its quantity and running balance.</p>
           <div id="ops-movements-list" class="ops-table-wrap"></div>
         </section>
       </section>
@@ -833,6 +835,7 @@
       $("#ops-stock-catalog").hidden = true;
       $("#ops-stock-detail").hidden = false;
       $("#ops-stock-item-title").textContent = currentItem.name + " · " + currentItem.category;
+      $("#ops-stock-delete-detail").dataset.deleteStockItem = currentItem.id;
       $("#ops-stock-current").textContent = stockQty(currentItem.quantity) + " " + currentItem.unit;
       const low = Number(currentItem.reorder_level || 0) > 0 && Number(currentItem.quantity) <= Number(currentItem.reorder_level);
       $("#ops-stock-low-label").textContent = low ? "Low stock · reorder at " + stockQty(currentItem.reorder_level) + " " + currentItem.unit : "";
@@ -852,15 +855,22 @@
     list.innerHTML = '<h4>' + esc(selectedStockCategory) + '</h4>' +
       (items.length
         ? '<div class="ops-stock-item-grid">' + items.map(item =>
-            '<button class="ops-stock-item-card" type="button" data-stock-item="' + esc(item.id) +
+            '<div class="ops-stock-item-entry"><button class="ops-stock-item-card" type="button" data-stock-item="' + esc(item.id) +
             '" aria-label="Open daily stock sheet for ' + esc(item.name) + '"><strong>' +
             esc(item.name) + '</strong><span>' + esc(stockQty(item.quantity)) + ' ' + esc(item.unit) +
-            '</span><small>Open daily sheet →</small></button>'
+            '</span><small>Open daily sheet →</small></button><button class="ops-stock-delete" type="button" data-delete-stock-item="' +
+            esc(item.id) + '" aria-label="Delete ' + esc(item.name) + '">Delete</button></div>'
           ).join("") + '</div>'
         : '<p class="ops-stock-empty">No items in this category yet. Add the first one.</p>');
   }
 
   function onInventoryClick(event) {
+    const deleteButton = event.target.closest("[data-delete-stock-item]");
+    if (deleteButton) {
+      deleteStockItem(deleteButton.dataset.deleteStockItem, deleteButton).catch(showError);
+      return;
+    }
+
     const categoryButton = event.target.closest("[data-stock-category]");
     if (categoryButton) {
       selectedStockCategory = categoryButton.dataset.stockCategory;
@@ -895,6 +905,48 @@
       renderInventory();
       loadMovements().catch(showError);
       return;
+    }
+  }
+
+  async function deleteStockItem(itemId, button) {
+    const item = stockItems.find(stockItem => stockItem.id === itemId);
+    if (!item) return;
+
+    if (!confirm('Remove "' + item.name + '" from the active stock list? Its stock movement history will be kept.')) return;
+
+    button.disabled = true;
+    try {
+      const { data: recipeLinks, error: recipeError } = await db
+        .from("menu_item_recipes")
+        .select("menu_item_id")
+        .eq("inventory_item_id", itemId)
+        .limit(1);
+      if (recipeError) throw recipeError;
+      if (recipeLinks?.length) {
+        message('Remove "' + item.name + '" from its menu recipes before deleting it.', true);
+        return;
+      }
+
+      const { data: archivedItem, error } = await db
+        .from("inventory_items")
+        .update({ is_active: false })
+        .eq("id", itemId)
+        .eq("is_active", true)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      if (!archivedItem) throw new Error("The stock item is no longer active. Refresh the inventory and try again.");
+
+      if (selectedStockItem?.id === itemId) {
+        selectedStockItem = null;
+        selectedStockCategory = item.category;
+      }
+      message('"' + item.name + '" was removed from the active stock list. Its history was preserved.');
+      await loadInventory();
+    } catch (error) {
+      showError(error);
+    } finally {
+      button.disabled = false;
     }
   }
 
@@ -953,11 +1005,8 @@
     const form = $("#ops-movement-form");
     if (!selectedStockItem || !form) return;
     const incoming = Number(form.elements.received.value) || 0;
-    const issued = Number(form.elements.issued.value) || 0;
-    const waste = Number(form.elements.waste.value) || 0;
-    const adjustment = Number(form.elements.adjustment.value) || 0;
     const current = Number(selectedStockItem.quantity || 0);
-    const balance = current + incoming - issued - waste + adjustment;
+    const balance = current + incoming;
     $("#ops-stock-sheet-date").textContent = stockSheetDate();
     $("#ops-stock-sheet-current").textContent = stockQty(current) + " " + selectedStockItem.unit;
     $("#ops-stock-sheet-balance").textContent = stockQty(balance) + " " + selectedStockItem.unit;
@@ -976,17 +1025,10 @@
     event.preventDefault();
     const form = event.currentTarget;
     const incoming = Number(form.elements.received.value);
-    const issued = Number(form.elements.issued.value);
-    const waste = Number(form.elements.waste.value);
-    const adjustment = Number(form.elements.adjustment.value);
     const current = Number(selectedStockItem?.quantity || 0);
     const reference = String(form.elements.reference.value || "").trim();
-    const populated = [incoming > 0, issued > 0, waste > 0, adjustment !== 0].filter(Boolean).length;
-
-    if (!selectedStockItem || !Number.isFinite(incoming) || !Number.isFinite(issued) ||
-        !Number.isFinite(waste) || !Number.isFinite(adjustment) ||
-        incoming < 0 || issued < 0 || waste < 0 || populated !== 1) {
-      message("Enter a quantity in exactly one movement column.", true);
+    if (!selectedStockItem || !Number.isFinite(incoming) || incoming <= 0) {
+      message("Enter a received quantity greater than zero.", true);
       return;
     }
     if (!reference) {
@@ -994,19 +1036,8 @@
       form.elements.reference.focus();
       return;
     }
-    const quantityChange = incoming > 0 ? incoming
-      : issued > 0 ? -issued
-      : waste > 0 ? -waste
-      : adjustment;
-    if (current + quantityChange < 0) {
-      message("This movement cannot reduce the available stock below zero.", true);
-      return;
-    }
-
-    const movementType = incoming > 0 ? "purchase"
-      : issued > 0 ? "usage"
-      : waste > 0 ? "waste"
-      : "adjustment";
+    const quantityChange = incoming;
+    const movementType = "purchase";
     const saveButton = form.querySelector('[type="submit"]');
     saveButton.disabled = true;
     try {
@@ -1052,24 +1083,17 @@
       const balance = running + change;
       running = balance;
       const type = String(row.movement_type || "");
-      const received = type === "opening" || type === "purchase" ? change : 0;
-      const issued = type === "usage" ? Math.abs(change) : 0;
-      const waste = type === "waste" ? Math.abs(change) : 0;
-      const adjustment = type === "adjustment" ? change : 0;
       const reference = [row.reference, row.notes].filter(Boolean).join(" · ") ||
         ({opening:"Opening stock",purchase:"Stock received",usage:"Stock issued / used",waste:"Stock waste",adjustment:"Stock adjustment"}[type] || "Stock movement");
       return [
         dateLabel(row.created_at),
         reference,
-        received ? "+" + stockQty(received) + " " + item.unit : "—",
-        issued ? "−" + stockQty(issued) + " " + item.unit : "—",
-        waste ? "−" + stockQty(waste) + " " + item.unit : "—",
-        adjustment ? (adjustment > 0 ? "+" : "−") + stockQty(Math.abs(adjustment)) + " " + item.unit : "—",
+        (change > 0 ? "+" : change < 0 ? "−" : "") + stockQty(Math.abs(change)) + " " + item.unit,
         stockQty(balance) + " " + item.unit
       ];
     }).reverse();
     $("#ops-movements-list").innerHTML = rows.length
-      ? table(["Date","Reference / reason","Received","Issued / used","Waste","Adjustment","Balance after"], rows)
+      ? table(["Date","Reference / reason","Quantity change","Balance after"], rows)
       : '<p class="ops-stock-empty">No stock movements yet. Your first saved movement will appear here.</p>';
   }
 
