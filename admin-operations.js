@@ -139,6 +139,9 @@
       .ops-stock-item-card { display:flex; flex-direction:column; gap:9px; min-height:96px; padding:14px; border:1px solid #eadfd6; border-radius:13px; background:#fff; color:#342326; text-align:left; }
       .ops-stock-item-card strong { font-size:14px; }
       .ops-stock-item-card span { color:#1c704c; font-size:18px; font-weight:900; }
+      .ops-stock-item-card small { color:#625b56; font-size:11px; font-weight:800; }
+      .ops-stock-item-card { cursor:pointer; }
+      .ops-stock-item-card:hover { border-color:#9a2530; background:#fff8f5; }
       .ops-stock-summary { display:flex; justify-content:space-between; align-items:center; gap:14px; margin:12px 0; padding:18px; border-radius:15px; background:linear-gradient(120deg,#f4f8f3,#fff); border:1px solid #dbe8dc; }
       .ops-stock-summary small { display:block; color:#68716a; }
       .ops-stock-summary strong { display:block; margin-top:4px; color:#1c704c; font-size:clamp(24px,5vw,38px); }
@@ -242,7 +245,7 @@
 
       <section id="ops-inventory">
         <div class="ops-stock-toolbar">
-          <div><h3>Stock</h3><p class="ops-note">Choose a category, open an item, then record stock received or used.</p></div>
+          <div><h3>Stock</h3><p class="ops-note">Choose a category. If it has one item, its daily sheet opens automatically; if it has several, choose the item.</p></div>
           <button class="btn btn-primary" id="ops-add-item-btn" type="button">＋ Add item</button>
         </div>
         <div id="ops-inventory-categories" class="ops-stock-category-grid" aria-label="Stock categories"></div>
@@ -847,8 +850,10 @@
     list.innerHTML = '<h4>' + esc(selectedStockCategory) + '</h4>' +
       (items.length
         ? '<div class="ops-stock-item-grid">' + items.map(item =>
-            '<button class="ops-stock-item-card" type="button" data-stock-item="' + esc(item.id) + '"><strong>' +
-            esc(item.name) + '</strong><span>' + esc(stockQty(item.quantity)) + ' ' + esc(item.unit) + '</span></button>'
+            '<button class="ops-stock-item-card" type="button" data-stock-item="' + esc(item.id) +
+            '" aria-label="Open daily stock sheet for ' + esc(item.name) + '"><strong>' +
+            esc(item.name) + '</strong><span>' + esc(stockQty(item.quantity)) + ' ' + esc(item.unit) +
+            '</span><small>Open daily sheet →</small></button>'
           ).join("") + '</div>'
         : '<p class="ops-stock-empty">No items in this category yet. Add the first one.</p>');
   }
@@ -857,9 +862,13 @@
     const categoryButton = event.target.closest("[data-stock-category]");
     if (categoryButton) {
       selectedStockCategory = categoryButton.dataset.stockCategory;
-      selectedStockItem = null;
       $("#ops-item-form").hidden = true;
+      const categoryItems = stockItems.filter(item =>
+        stockCategoryKey(item.category) === stockCategoryKey(selectedStockCategory)
+      );
+      selectedStockItem = categoryItems.length === 1 ? categoryItems[0] : null;
       renderInventory();
+      if (selectedStockItem) loadMovements().catch(showError);
       return;
     }
     if (event.target.closest("#ops-add-item-btn")) {
