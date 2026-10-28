@@ -40,7 +40,9 @@
   let loading = false;
   let lastReportRows = [];
   let stockItems = [];
+  let savedStockCategories = [];
   let selectedStockCategory = "";
+  let stockSearchQuery = "";
   let selectedStockItem = null;
 
   function addStyles() {
@@ -135,6 +137,7 @@
       .ops-stock-category strong { font-size:13px; }
       .ops-stock-category small { color:#766d6c; font-size:11px; }
       .ops-stock-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:12px 0; }
+      .ops-stock-search { width:100%; max-width:460px; min-height:42px; margin:6px 0 12px; padding:9px 12px; border:1px solid #d8d5ca; border-radius:9px; font:inherit; }
       .ops-stock-item-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:12px 0; }
       .ops-stock-item-card { display:flex; flex-direction:column; gap:9px; min-height:96px; padding:14px; border:1px solid #eadfd6; border-radius:13px; background:#fff; color:#342326; text-align:left; }
       .ops-stock-item-card strong { font-size:14px; }
@@ -250,9 +253,13 @@
       <section id="ops-inventory">
         <div class="ops-stock-toolbar">
           <div><h3>Stock</h3><p class="ops-note">Choose a category to view its items. Open an item for its daily sheet, or delete it from the list.</p></div>
-          <button class="btn btn-primary" id="ops-add-item-btn" type="button">＋ Add item</button>
+          <div class="ops-stock-actions"><button class="btn btn-light" id="ops-add-group-btn" type="button">＋ Add group</button><button class="btn btn-primary" id="ops-add-item-btn" type="button">＋ Add item</button></div>
         </div>
         <div id="ops-inventory-categories" class="ops-stock-category-grid" aria-label="Stock categories"></div>
+        <form id="ops-stock-group-form" class="ops-form" hidden>
+          <label>Group name<input name="name" required maxlength="80" placeholder="e.g. Drinks, Juice, Chicken, Ice Cream"></label>
+          <div class="wide ops-stock-actions"><button class="btn btn-primary" type="submit">Save group</button><button class="btn btn-light" id="ops-cancel-group" type="button">Cancel</button></div>
+        </form>
         <div id="ops-stock-catalog">
           <form id="ops-item-form" class="ops-form" hidden>
             <label>Category
@@ -273,6 +280,7 @@
               <button class="btn btn-light" id="ops-cancel-item" type="button">Cancel</button>
             </div>
           </form>
+          <input id="ops-stock-search" class="ops-stock-search" type="search" placeholder="Search items in this category…" autocomplete="off" aria-label="Search stock items in this category" hidden>
           <div id="ops-stock-items"></div>
         </div>
         <section id="ops-stock-detail" hidden>
@@ -675,10 +683,18 @@
       if (btn.dataset.opstab === "recipes") loadRecipes();
     });
 
+    $("#ops-stock-group-form").addEventListener("submit", addStockGroup);
     $("#ops-item-form").addEventListener("submit", addInventoryItem);
     $("#ops-movement-form").addEventListener("submit", saveStockSheetRow);
     $("#ops-movement-form").addEventListener("input", updateStockSheetPreview);
     $("#ops-inventory").addEventListener("click", onInventoryClick);
+    $("#ops-stock-search").addEventListener("input", event => {
+      stockSearchQuery = event.currentTarget.value;
+      renderInventory();
+      const search = $("#ops-stock-search");
+      search.focus();
+      search.setSelectionRange(search.value.length, search.value.length);
+    });
     $("#ops-supplier-form").addEventListener("submit", addSupplier);
     $("#ops-staff-form").addEventListener("submit", addStaff);
     $("#ops-staff-cancel").addEventListener("click", resetStaffForm);
@@ -781,25 +797,28 @@
   }
 
   async function loadInventory() {
-    const { data, error } = await db
-      .from("inventory_items")
-      .select("id,name,category,unit,quantity,reorder_level,unit_cost,is_active")
-      .eq("is_active", true)
-      .order("name");
+    const [{ data: items, error: itemsError }, { data: settings, error: settingsError }] = await Promise.all([
+      db.from("inventory_items")
+        .select("id,name,category,unit,quantity,reorder_level,unit_cost,is_active")
+        .eq("is_active", true)
+        .order("name"),
+      db.from("restaurant_settings")
+        .select("stock_categories")
+        .eq("id", 1)
+        .single()
+    ]);
 
-    if (error) throw error;
-    stockItems = data || [];
+    if (itemsError) throw itemsError;
+    if (settingsError) throw settingsError;
+    stockItems = items || [];
+    savedStockCategories = Array.isArray(settings?.stock_categories) ? settings.stock_categories : [];
     renderInventory();
   }
 
-  const stockCategoryDefaults = [
-    {name:"Drinks", icon:"🥤"},
-    {name:"Chicken", icon:"🍗"},
-    {name:"Disposable", icon:"🍽️"},
-    {name:"Other", icon:"📦"}
-  ];
-  const stockCategoryIcon = name =>
-    stockCategoryDefaults.find(item => item.name.toLowerCase() === String(name).toLowerCase())?.icon || "📦";
+  const stockCategoryIcons = new Map([
+    ["drinks","🥤"],["juice","🧃"],["chicken","🍗"],["ice cream","🍦"],["disposable","🍽️"]
+  ]);
+  const stockCategoryIcon = name => stockCategoryIcons.get(String(name).trim().toLowerCase()) || "📦";
   const stockQty = value => Number(value || 0).toLocaleString(undefined,{maximumFractionDigits:3});
   const stockCategoryKey = value => String(value || "Other").trim().toLowerCase();
 
@@ -809,8 +828,15 @@
       Number(item.reorder_level || 0) > 0 && Number(item.quantity) <= Number(item.reorder_level)
     ).length;
 
-    const categoryNames = [...stockCategoryDefaults.map(item => item.name)];
-    const categorySeen = new Set(categoryNames.map(stockCategoryKey));
+    const categoryNames = [];
+    const categorySeen = new Set();
+    [...savedStockCategories, ...stockItems.map(item => item.category)].forEach(value => {
+      const name = String(value || "").trim();
+      if (name && !categorySeen.has(stockCategoryKey(name))) {
+        categoryNames.push(name);
+        categorySeen.add(stockCategoryKey(name));
+      }
+    });
     stockItems.forEach(item => {
       const name = String(item.category || "Other").trim() || "Other";
       if (!categorySeen.has(stockCategoryKey(name))) {
@@ -846,11 +872,19 @@
     $("#ops-stock-detail").hidden = true;
     $("#ops-stock-catalog").hidden = false;
     const list = $("#ops-stock-items");
+    const search = $("#ops-stock-search");
+    search.hidden = !selectedStockCategory;
+    search.placeholder = selectedStockCategory ? "Search items in " + selectedStockCategory + "…" : "Search stock items…";
+    search.value = stockSearchQuery;
     if (!selectedStockCategory) {
       list.innerHTML = '<p class="ops-stock-empty">Choose a category to see its items.</p>';
       return;
     }
-    const items = stockItems.filter(item => stockCategoryKey(item.category) === stockCategoryKey(selectedStockCategory));
+    const query = stockSearchQuery.trim().toLowerCase();
+    const items = stockItems.filter(item =>
+      stockCategoryKey(item.category) === stockCategoryKey(selectedStockCategory) &&
+      (!query || String(item.name || "").toLowerCase().includes(query))
+    );
     list.innerHTML = '<h4>' + esc(selectedStockCategory) + '</h4>' +
       (items.length
         ? '<div class="ops-stock-item-grid">' + items.map(item =>
@@ -860,7 +894,7 @@
             '</span><small>Open daily sheet →</small></button><button class="ops-stock-delete" type="button" data-delete-stock-item="' +
             esc(item.id) + '" aria-label="Delete ' + esc(item.name) + '">Delete</button></div>'
           ).join("") + '</div>'
-        : '<p class="ops-stock-empty">No items in this category yet. Add the first one.</p>');
+        : '<p class="ops-stock-empty">' + (query ? "No items match your search." : "No items in this category yet. Add the first one.") + '</p>');
   }
 
   function onInventoryClick(event) {
@@ -873,7 +907,10 @@
     const categoryButton = event.target.closest("[data-stock-category]");
     if (categoryButton) {
       selectedStockCategory = categoryButton.dataset.stockCategory;
+      stockSearchQuery = "";
+      $("#ops-stock-search").value = "";
       $("#ops-item-form").hidden = true;
+      $("#ops-stock-group-form").hidden = true;
       const categoryItems = stockItems.filter(item =>
         stockCategoryKey(item.category) === stockCategoryKey(selectedStockCategory)
       );
@@ -881,10 +918,23 @@
       renderInventory();
       return;
     }
+    if (event.target.closest("#ops-add-group-btn")) {
+      $("#ops-item-form").hidden = true;
+      $("#ops-stock-group-form").reset();
+      $("#ops-stock-group-form").hidden = false;
+      $("#ops-stock-group-form").elements.name.focus();
+      return;
+    }
     if (event.target.closest("#ops-add-item-btn")) {
+      $("#ops-stock-group-form").hidden = true;
       $("#ops-item-form").hidden = false;
       $("#ops-item-form").elements.category.value = selectedStockCategory;
       $("#ops-item-form").elements.name.focus();
+      return;
+    }
+    if (event.target.closest("#ops-cancel-group")) {
+      $("#ops-stock-group-form").reset();
+      $("#ops-stock-group-form").hidden = true;
       return;
     }
     if (event.target.closest("#ops-cancel-item")) {
@@ -903,6 +953,43 @@
       renderInventory();
       loadMovements().catch(showError);
       return;
+    }
+  }
+
+  async function ensureStockCategory(name) {
+    const key = stockCategoryKey(name);
+    if (savedStockCategories.some(category => stockCategoryKey(category) === key)) return;
+    const next = [...savedStockCategories, name];
+    const { data, error } = await db.from("restaurant_settings")
+      .update({ stock_categories: next })
+      .eq("id", 1)
+      .select("stock_categories")
+      .single();
+    if (error) throw error;
+    savedStockCategories = Array.isArray(data?.stock_categories) ? data.stock_categories : next;
+  }
+
+  async function addStockGroup(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const name = String(new FormData(form).get("name") || "").trim();
+    if (!name) return;
+    const key = stockCategoryKey(name);
+    const exists = [...savedStockCategories, ...stockItems.map(item => item.category)]
+      .some(category => stockCategoryKey(category) === key);
+    try {
+      if (!exists) await ensureStockCategory(name);
+      selectedStockCategory = [...savedStockCategories, ...stockItems.map(item => item.category)]
+        .find(category => stockCategoryKey(category) === key) || name;
+      selectedStockItem = null;
+      stockSearchQuery = "";
+      $("#ops-stock-search").value = "";
+      form.reset();
+      form.hidden = true;
+      renderInventory();
+      message(exists ? "That group already exists." : "Group added.");
+    } catch (error) {
+      showError(error);
     }
   }
 
@@ -986,7 +1073,9 @@
         if (movementError) throw new Error("Item was saved, but starting stock was not recorded: " + movementError.message);
       }
 
+      await ensureStockCategory(category);
       selectedStockCategory = category;
+      stockSearchQuery = "";
       selectedStockItem = null;
       form.reset();
       form.elements.unit.value = "pieces";
