@@ -280,25 +280,22 @@
           <div class="ops-stock-detail-actions"><button class="btn btn-light" id="ops-stock-back" type="button">← Back to category</button><button class="ops-stock-delete" id="ops-stock-delete-detail" type="button" data-delete-stock-item="">Delete item</button></div>
           <h4 id="ops-stock-item-title"></h4>
           <div class="ops-stock-summary"><div><small>Current balance</small><strong id="ops-stock-current">—</strong></div><span id="ops-stock-low-label" class="ops-note"></span></div>
-          <p class="ops-note">Record one stock movement per row. Enter a delivery under Received, a kitchen issue under Issued / used, and spoilage under Waste. The date and balance update automatically.</p>
+          <p class="ops-note">Record stock deliveries here. The date and balance update automatically; menu usage stays in the movement history.</p>
           <form id="ops-movement-form">
             <div class="ops-stock-sheet-wrap"><table class="ops-stock-sheet">
-              <thead><tr><th>Date</th><th>Current balance</th><th>Reference / reason</th><th>Received</th><th>Issued / used</th><th>Waste</th><th>Adjustment (+ / −)</th><th>Balance after</th><th></th></tr></thead>
+              <thead><tr><th>Date</th><th>Current balance</th><th>Reference / reason</th><th>Received</th><th>Balance after</th><th></th></tr></thead>
               <tbody><tr>
                 <td id="ops-stock-sheet-date">—</td>
                 <td id="ops-stock-sheet-current">—</td>
                 <td><input class="stock-sheet-reference" name="reference" type="text" maxlength="120" required placeholder="Invoice, supplier, reason" aria-label="Reference or reason"></td>
                 <td><input name="received" type="number" min="0" step="0.001" value="0" aria-label="Quantity received"></td>
-                <td><input name="issued" type="number" min="0" step="0.001" value="0" aria-label="Quantity issued or used"></td>
-                <td><input name="waste" type="number" min="0" step="0.001" value="0" aria-label="Quantity wasted"></td>
-                <td><input name="adjustment" type="number" step="0.001" value="0" aria-label="Stock count adjustment, positive or negative"></td>
                 <td class="stock-sheet-balance" id="ops-stock-sheet-balance">—</td>
                 <td><button class="stock-sheet-save" type="submit">Save movement</button></td>
               </tr></tbody>
             </table></div>
           </form>
           <h4>Stock movement history</h4>
-          <p class="ops-note">Every saved delivery, issue, waste, or adjustment appears on its own line with the balance after that movement.</p>
+          <p class="ops-note">Each delivery or other recorded stock change appears with its quantity and running balance.</p>
           <div id="ops-movements-list" class="ops-table-wrap"></div>
         </section>
       </section>
@@ -1008,11 +1005,8 @@
     const form = $("#ops-movement-form");
     if (!selectedStockItem || !form) return;
     const incoming = Number(form.elements.received.value) || 0;
-    const issued = Number(form.elements.issued.value) || 0;
-    const waste = Number(form.elements.waste.value) || 0;
-    const adjustment = Number(form.elements.adjustment.value) || 0;
     const current = Number(selectedStockItem.quantity || 0);
-    const balance = current + incoming - issued - waste + adjustment;
+    const balance = current + incoming;
     $("#ops-stock-sheet-date").textContent = stockSheetDate();
     $("#ops-stock-sheet-current").textContent = stockQty(current) + " " + selectedStockItem.unit;
     $("#ops-stock-sheet-balance").textContent = stockQty(balance) + " " + selectedStockItem.unit;
@@ -1031,17 +1025,10 @@
     event.preventDefault();
     const form = event.currentTarget;
     const incoming = Number(form.elements.received.value);
-    const issued = Number(form.elements.issued.value);
-    const waste = Number(form.elements.waste.value);
-    const adjustment = Number(form.elements.adjustment.value);
     const current = Number(selectedStockItem?.quantity || 0);
     const reference = String(form.elements.reference.value || "").trim();
-    const populated = [incoming > 0, issued > 0, waste > 0, adjustment !== 0].filter(Boolean).length;
-
-    if (!selectedStockItem || !Number.isFinite(incoming) || !Number.isFinite(issued) ||
-        !Number.isFinite(waste) || !Number.isFinite(adjustment) ||
-        incoming < 0 || issued < 0 || waste < 0 || populated !== 1) {
-      message("Enter a quantity in exactly one movement column.", true);
+    if (!selectedStockItem || !Number.isFinite(incoming) || incoming <= 0) {
+      message("Enter a received quantity greater than zero.", true);
       return;
     }
     if (!reference) {
@@ -1049,19 +1036,8 @@
       form.elements.reference.focus();
       return;
     }
-    const quantityChange = incoming > 0 ? incoming
-      : issued > 0 ? -issued
-      : waste > 0 ? -waste
-      : adjustment;
-    if (current + quantityChange < 0) {
-      message("This movement cannot reduce the available stock below zero.", true);
-      return;
-    }
-
-    const movementType = incoming > 0 ? "purchase"
-      : issued > 0 ? "usage"
-      : waste > 0 ? "waste"
-      : "adjustment";
+    const quantityChange = incoming;
+    const movementType = "purchase";
     const saveButton = form.querySelector('[type="submit"]');
     saveButton.disabled = true;
     try {
@@ -1107,24 +1083,17 @@
       const balance = running + change;
       running = balance;
       const type = String(row.movement_type || "");
-      const received = type === "opening" || type === "purchase" ? change : 0;
-      const issued = type === "usage" ? Math.abs(change) : 0;
-      const waste = type === "waste" ? Math.abs(change) : 0;
-      const adjustment = type === "adjustment" ? change : 0;
       const reference = [row.reference, row.notes].filter(Boolean).join(" · ") ||
         ({opening:"Opening stock",purchase:"Stock received",usage:"Stock issued / used",waste:"Stock waste",adjustment:"Stock adjustment"}[type] || "Stock movement");
       return [
         dateLabel(row.created_at),
         reference,
-        received ? "+" + stockQty(received) + " " + item.unit : "—",
-        issued ? "−" + stockQty(issued) + " " + item.unit : "—",
-        waste ? "−" + stockQty(waste) + " " + item.unit : "—",
-        adjustment ? (adjustment > 0 ? "+" : "−") + stockQty(Math.abs(adjustment)) + " " + item.unit : "—",
+        (change > 0 ? "+" : change < 0 ? "−" : "") + stockQty(Math.abs(change)) + " " + item.unit,
         stockQty(balance) + " " + item.unit
       ];
     }).reverse();
     $("#ops-movements-list").innerHTML = rows.length
-      ? table(["Date","Reference / reason","Received","Issued / used","Waste","Adjustment","Balance after"], rows)
+      ? table(["Date","Reference / reason","Quantity change","Balance after"], rows)
       : '<p class="ops-stock-empty">No stock movements yet. Your first saved movement will appear here.</p>';
   }
 
