@@ -143,6 +143,14 @@
       .ops-stock-summary small { display:block; color:#68716a; }
       .ops-stock-summary strong { display:block; margin-top:4px; color:#1c704c; font-size:clamp(24px,5vw,38px); }
       .ops-stock-actions { display:flex; gap:10px; flex-wrap:wrap; margin:12px 0; }
+      .ops-stock-sheet-wrap { overflow:auto; margin:12px 0 18px; border:1px solid #d8d5ca; border-radius:9px; background:#fff; }
+      .ops-stock-sheet { width:100%; min-width:760px; border-collapse:collapse; font-size:13px; }
+      .ops-stock-sheet th { padding:10px; border:1px solid #d8d5ca; background:#eff2ed; color:#364236; text-align:left; white-space:nowrap; }
+      .ops-stock-sheet td { padding:8px; border:1px solid #e3e1d9; white-space:nowrap; }
+      .ops-stock-sheet input { width:105px; min-height:38px; padding:6px 8px; border:1px solid #c8c9bd; border-radius:5px; font:inherit; }
+      .ops-stock-sheet input:focus { outline:2px solid #719d70; outline-offset:1px; }
+      .ops-stock-sheet .stock-sheet-balance { color:#245d34; background:#eff7ec; font-weight:800; }
+      .ops-stock-sheet .stock-sheet-save { min-height:36px; padding:6px 12px; border:0; border-radius:5px; background:#386b3f; color:#fff; font-weight:700; cursor:pointer; }
       .ops-stock-entry { margin:14px 0; padding:14px; border:1px solid #eadfd6; border-radius:14px; background:#fffaf5; }
       .ops-stock-empty { padding:18px; border:1px dashed #d9cbc0; border-radius:12px; color:#766d6c; text-align:center; }
       @media(max-width:760px) { .ops-stock-category-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ops-stock-item-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ops-stock-toolbar { align-items:flex-start; flex-direction:column; } }
@@ -264,27 +272,20 @@
           <button class="btn btn-light" id="ops-stock-back" type="button">← Back to category</button>
           <h4 id="ops-stock-item-title"></h4>
           <div class="ops-stock-summary"><div><small>Current balance</small><strong id="ops-stock-current">—</strong></div><span id="ops-stock-low-label" class="ops-note"></span></div>
-          <div class="ops-stock-actions">
-            <button class="btn btn-primary" type="button" data-stock-movement="purchase">＋ Add received stock</button>
-            <button class="btn btn-light" type="button" data-stock-movement="usage">− Record used / sold</button>
-          </div>
-          <form id="ops-movement-form" class="ops-form ops-stock-entry" hidden>
-            <input type="hidden" name="item_id">
-            <input type="hidden" name="movement_type">
-            <label class="wide" id="ops-stock-entry-label">Quantity
-              <input name="quantity_change" type="number" min="0.001" step="0.001" required placeholder="Enter quantity">
-            </label>
-            <label id="ops-stock-cost-field">Cost per unit (GH₵, optional)
-              <input name="unit_cost" type="number" min="0" step="0.01" value="0">
-            </label>
-            <label>Note (optional)
-              <input name="notes" maxlength="250" placeholder="Invoice or short note">
-            </label>
-            <p class="wide ops-note">Date is recorded automatically when you save.</p>
-            <div class="wide ops-stock-actions">
-              <button class="btn btn-primary" type="submit">Save entry</button>
-              <button class="btn btn-light" id="ops-cancel-movement" type="button">Cancel</button>
-            </div>
+          <p class="ops-note">Use one row per day: enter quantities received or used/sold. The remaining balance is calculated as you type; saving adds a dated stock record.</p>
+          <form id="ops-movement-form">
+            <div class="ops-stock-sheet-wrap"><table class="ops-stock-sheet">
+              <thead><tr><th>Date</th><th>Current balance</th><th>Received today</th><th>Used / sold today</th><th>Balance after entry</th><th>Note</th><th></th></tr></thead>
+              <tbody><tr>
+                <td id="ops-stock-sheet-date">—</td>
+                <td id="ops-stock-sheet-current">—</td>
+                <td><input name="received_today" type="number" min="0" step="0.001" value="0" aria-label="Quantity received today"></td>
+                <td><input name="used_today" type="number" min="0" step="0.001" value="0" aria-label="Quantity used or sold today"></td>
+                <td class="stock-sheet-balance" id="ops-stock-sheet-balance">—</td>
+                <td><input name="notes" type="text" maxlength="250" placeholder="Optional note" aria-label="Stock note"></td>
+                <td><button class="stock-sheet-save" type="submit">Save row</button></td>
+              </tr></tbody>
+            </table></div>
           </form>
           <h4>Daily stock balance</h4>
           <p class="ops-note">Each day shows the opening balance, stock added, stock used or sold, and the balance left at the end of the day.</p>
@@ -669,7 +670,8 @@
     });
 
     $("#ops-item-form").addEventListener("submit", addInventoryItem);
-    $("#ops-movement-form").addEventListener("submit", saveMovement);
+    $("#ops-movement-form").addEventListener("submit", saveStockSheetRow);
+    $("#ops-movement-form").addEventListener("input", updateStockSheetPreview);
     $("#ops-inventory").addEventListener("click", onInventoryClick);
     $("#ops-supplier-form").addEventListener("submit", addSupplier);
     $("#ops-staff-form").addEventListener("submit", addStaff);
@@ -856,7 +858,6 @@
       selectedStockCategory = categoryButton.dataset.stockCategory;
       selectedStockItem = null;
       $("#ops-item-form").hidden = true;
-      $("#ops-movement-form").hidden = true;
       renderInventory();
       return;
     }
@@ -873,34 +874,19 @@
     }
     if (event.target.closest("#ops-stock-back")) {
       selectedStockItem = null;
-      $("#ops-movement-form").hidden = true;
       renderInventory();
       return;
     }
     if (event.target.closest("#ops-cancel-movement")) {
       $("#ops-movement-form").reset();
-      $("#ops-movement-form").hidden = true;
       return;
     }
     const itemButton = event.target.closest("[data-stock-item]");
     if (itemButton) {
       selectedStockItem = stockItems.find(item => item.id === itemButton.dataset.stockItem) || null;
-      $("#ops-movement-form").hidden = true;
       renderInventory();
       loadMovements().catch(showError);
       return;
-    }
-    const movementButton = event.target.closest("[data-stock-movement]");
-    if (movementButton && selectedStockItem) {
-      const form = $("#ops-movement-form");
-      const kind = movementButton.dataset.stockMovement;
-      form.reset();
-      form.elements.item_id.value = selectedStockItem.id;
-      form.elements.movement_type.value = kind;
-      $("#ops-stock-entry-label").childNodes[0].textContent = kind === "purchase" ? "Quantity received " : "Quantity used / sold ";
-      $("#ops-stock-cost-field").hidden = kind !== "purchase";
-      form.hidden = false;
-      form.elements.quantity_change.focus();
     }
   }
 
@@ -955,35 +941,67 @@
     }
   }
 
-  async function saveMovement(event) {
+  function updateStockSheetPreview() {
+    const form = $("#ops-movement-form");
+    if (!selectedStockItem || !form) return;
+    const incoming = Number(form.elements.received_today.value) || 0;
+    const outgoing = Number(form.elements.used_today.value) || 0;
+    const current = Number(selectedStockItem.quantity || 0);
+    $("#ops-stock-sheet-date").textContent = stockSheetDate();
+    $("#ops-stock-sheet-current").textContent = stockQty(current) + " " + selectedStockItem.unit;
+    $("#ops-stock-sheet-balance").textContent = stockQty(current + incoming - outgoing) + " " + selectedStockItem.unit;
+    $("#ops-stock-sheet-balance").style.color = outgoing > current + incoming ? "#a32020" : "";
+  }
+
+  function stockSheetDate() {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone:"Africa/Accra", year:"numeric", month:"2-digit", day:"2-digit"
+    }).formatToParts(new Date());
+    const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+    return values.year + "-" + values.month + "-" + values.day;
+  }
+
+  async function saveStockSheetRow(event) {
     event.preventDefault();
     const form = event.currentTarget;
-    const data = new FormData(form);
-    const movementType = String(data.get("movement_type") || "");
-    const quantity = Number(data.get("quantity_change"));
-    if (!data.get("item_id") || !["purchase","usage"].includes(movementType) || !Number.isFinite(quantity) || quantity <= 0) {
-      message("Choose a stock item and enter a quantity greater than zero.", true);
+    const incoming = Number(form.elements.received_today.value);
+    const outgoing = Number(form.elements.used_today.value);
+    const current = Number(selectedStockItem?.quantity || 0);
+    const note = String(form.elements.notes.value || "").trim() || null;
+    if (!selectedStockItem || !Number.isFinite(incoming) || !Number.isFinite(outgoing) || incoming < 0 || outgoing < 0 || (!incoming && !outgoing)) {
+      message("Enter a received or used quantity greater than zero.", true);
+      return;
+    }
+    if (outgoing > current + incoming) {
+      message("Used / sold quantity cannot be greater than the available stock.", true);
       return;
     }
 
+    const saveButton = form.querySelector('[type="submit"]');
+    saveButton.disabled = true;
     try {
-      const { error } = await db.rpc("record_inventory_movement", {
-        p_item_id: data.get("item_id"),
-        p_movement_type: movementType,
-        p_quantity_change: movementType === "purchase" ? quantity : -quantity,
-        p_unit_cost: Number(data.get("unit_cost") || 0),
-        p_reference: null,
-        p_notes: String(data.get("notes") || "").trim() || null
-      });
-      if (error) throw error;
-
+      if (incoming > 0) {
+        const { error } = await db.rpc("record_inventory_movement", {
+          p_item_id:selectedStockItem.id, p_movement_type:"purchase", p_quantity_change:incoming,
+          p_unit_cost:Number(selectedStockItem.unit_cost || 0), p_reference:"Daily stock sheet — received", p_notes:note
+        });
+        if (error) throw error;
+      }
+      if (outgoing > 0) {
+        const { error } = await db.rpc("record_inventory_movement", {
+          p_item_id:selectedStockItem.id, p_movement_type:"usage", p_quantity_change:-outgoing,
+          p_unit_cost:Number(selectedStockItem.unit_cost || 0), p_reference:"Daily stock sheet — used/sold", p_notes:note
+        });
+        if (error) throw error;
+      }
       form.reset();
-      form.hidden = true;
-      message(movementType === "purchase" ? "Stock added." : "Stock used / sold.");
-      await loadInventory();
-      await loadMovements();
+      message("Stock row saved with today's date.");
+      await Promise.all([loadInventory(), loadMovements()]);
     } catch (error) {
+      await Promise.all([loadInventory(), loadMovements()]);
       showError(error);
+    } finally {
+      saveButton.disabled = false;
     }
   }
 
