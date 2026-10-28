@@ -334,7 +334,7 @@
 
       <section id="ops-staff" class="hidden">
         <h3>Employee management</h3>
-        <p class="ops-note">Private employee records. Photos, ID scans and contracts are stored in a private bucket and can only be accessed by authorised administrators. Staff records do not create login accounts or change account permissions. To enable delivery tracking, create the rider login separately in Supabase Authentication, then paste its Auth user UUID into this profile and choose the Delivery Rider role. <a href="./rider.html" target="_blank" rel="noopener noreferrer">Open Rider App ↗</a></p>
+        <p class="ops-note">Private employee records. Photos, ID scans and contracts are stored in a private bucket and can only be accessed by authorised administrators. For a Delivery Rider, enter a password below to create or replace the rider login. The system generates the UUID here; share that UUID and the password you set with the rider. The rider app does not ask for an email. <a href="./rider.html" target="_blank" rel="noopener noreferrer">Open Rider App ↗</a></p>
         <form id="ops-staff-form" class="ops-form" enctype="multipart/form-data">
           <input name="id" type="hidden">
           <label>Full name *
@@ -349,10 +349,13 @@
           <label>Email
             <input name="email" type="email" maxlength="150" autocomplete="email">
           </label>
-          <label>Auth user UUID (rider login)
-            <input name="user_id" type="text" maxlength="36" placeholder="UUID from Supabase Authentication" autocomplete="off" spellcheck="false">
+          <label>Rider login UUID
+            <input name="user_id" type="text" maxlength="36" placeholder="Generated after setting a rider password" autocomplete="off" spellcheck="false">
           </label>
-          <p class="ops-note wide">Only link the rider's own login UUID here. Do not enter an email address or password.</p>
+          <label>Rider login password (optional)
+            <input name="rider_password" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Set or replace rider password">
+          </label>
+          <p class="ops-note wide">Leave the password blank to keep the current rider login. Enter a password of at least 8 characters to create a new rider login and generate its UUID. The password is not saved in the employee record.</p>
           <label>Date of birth
             <input name="date_of_birth" type="date">
           </label>
@@ -1354,12 +1357,13 @@
         person.created_at ? new Date(person.created_at).toLocaleDateString() : "—",
         person.salary_amount == null ? "—" : money(person.salary_amount) + " / " + (person.salary_frequency || "monthly"),
         statusLabels[person.employment_status] || person.employment_status || "Active",
+        person.user_id || "Login not set",
         {kind:"html",value:files},
         {kind:"html",value:'<button type="button" class="btn btn-light" data-edit-staff="' + esc(person.id) + '">Open / edit</button>'}
       ];
     }));
     $("#ops-staff-list").innerHTML = table(
-      ["Photo","Employee","Position","Phone","Identity","Start date","Record saved","Salary","Status","Documents","Actions"],
+      ["Photo","Employee","Position","Phone","Identity","Start date","Record saved","Salary","Status","Rider login UUID","Documents","Actions"],
       rows
     );
     $("#ops-staff-list").querySelectorAll("[data-edit-staff]").forEach(button => {
@@ -1424,6 +1428,7 @@
     const data = new FormData(form);
     const staffId = String(data.get("id") || "").trim();
     const employmentStatus = String(data.get("employment_status") || "active");
+    const riderPassword = String(data.get("rider_password") || "");
     const payload = {
       full_name: String(data.get("full_name") || "").trim(),
       phone: staffText(data.get("phone")),
@@ -1456,6 +1461,14 @@
       message("Employee full name is required.", true);
       return;
     }
+    if (riderPassword && payload.role !== "delivery_rider") {
+      message("Set a rider password only when the System role is Delivery Rider.", true);
+      return;
+    }
+    if (riderPassword && (riderPassword.length < 8 || riderPassword.length > 128)) {
+      message("Rider password must be between 8 and 128 characters.", true);
+      return;
+    }
     if (payload.user_id && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.user_id)) {
       message("Auth user UUID must be a valid UUID from Supabase Authentication.", true);
       return;
@@ -1474,6 +1487,7 @@
     const originalLabel = saveButton.textContent;
     saveButton.textContent = "Saving…";
     let createdId = staffId;
+    let generatedRiderUuid = "";
     try {
       if (staffId) {
         const { error } = await db.from("staff_profiles").update(payload).eq("id", staffId);
@@ -1482,6 +1496,22 @@
         const { data: inserted, error } = await db.from("staff_profiles").insert(payload).select("id").single();
         if (error) throw error;
         createdId = inserted.id;
+      }
+
+      if (riderPassword) {
+        const { data: riderAccount, error: riderAccountError } = await db.functions.invoke("rider-account", {
+          body: { staff_profile_id: createdId, password: riderPassword }
+        });
+        if (riderAccountError) {
+          let detail = riderAccountError.message || "Could not create the rider login.";
+          try {
+            const body = await riderAccountError.context?.clone?.().json();
+            if (body?.error) detail = body.error;
+          } catch (_) {}
+          throw new Error(detail);
+        }
+        if (!riderAccount?.user_id) throw new Error("The rider login was created without returning its UUID.");
+        generatedRiderUuid = riderAccount.user_id;
       }
 
       const fileUpdates = {};
@@ -1497,7 +1527,9 @@
       }
 
       resetStaffForm();
-      message(staffId ? "Employee record updated." : "Employee record saved.");
+      message(generatedRiderUuid
+        ? "Employee saved. Rider login UUID: " + generatedRiderUuid + " — give the rider this UUID and the password you set."
+        : (staffId ? "Employee record updated." : "Employee record saved."));
       await loadStaff();
     } catch (error) {
       showError(error);
