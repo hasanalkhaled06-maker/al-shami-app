@@ -39,6 +39,9 @@
   let loaded = false;
   let loading = false;
   let lastReportRows = [];
+  let stockItems = [];
+  let selectedStockCategory = "";
+  let selectedStockItem = null;
 
   function addStyles() {
     if ($("#ops-styles")) return;
@@ -125,6 +128,26 @@
       .ops-shortcuts-note { color: #817576; font-size: 11px; line-height: 1.4; }
       .ops-shortcut-btn { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 44px; padding: 10px 12px; border: 1px solid #e2d4c7; border-radius: 10px; background: #fff; color: #5b111a; font-size: 12px; font-weight: 800; text-align: left; }
       .ops-shortcut-btn:hover { background: #f9edd7; border-color: #caa95d; }
+      .ops-stock-category-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:14px 0; }
+      .ops-stock-category { display:flex; flex-direction:column; align-items:flex-start; gap:7px; min-height:104px; padding:13px; border:1px solid #e7ddd4; border-radius:14px; background:#fff; color:#342326; text-align:left; }
+      .ops-stock-category.active { border-color:#9a2530; background:#fff4f1; box-shadow:0 0 0 2px rgba(154,37,48,.12); }
+      .ops-stock-category-icon { font-size:25px; }
+      .ops-stock-category strong { font-size:13px; }
+      .ops-stock-category small { color:#766d6c; font-size:11px; }
+      .ops-stock-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:12px 0; }
+      .ops-stock-item-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:12px 0; }
+      .ops-stock-item-card { display:flex; flex-direction:column; gap:9px; min-height:96px; padding:14px; border:1px solid #eadfd6; border-radius:13px; background:#fff; color:#342326; text-align:left; }
+      .ops-stock-item-card strong { font-size:14px; }
+      .ops-stock-item-card span { color:#1c704c; font-size:18px; font-weight:900; }
+      .ops-stock-summary { display:flex; justify-content:space-between; align-items:center; gap:14px; margin:12px 0; padding:18px; border-radius:15px; background:linear-gradient(120deg,#f4f8f3,#fff); border:1px solid #dbe8dc; }
+      .ops-stock-summary small { display:block; color:#68716a; }
+      .ops-stock-summary strong { display:block; margin-top:4px; color:#1c704c; font-size:clamp(24px,5vw,38px); }
+      .ops-stock-actions { display:flex; gap:10px; flex-wrap:wrap; margin:12px 0; }
+      .ops-stock-entry { margin:14px 0; padding:14px; border:1px solid #eadfd6; border-radius:14px; background:#fffaf5; }
+      .ops-stock-empty { padding:18px; border:1px dashed #d9cbc0; border-radius:12px; color:#766d6c; text-align:center; }
+      @media(max-width:760px) { .ops-stock-category-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ops-stock-item-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .ops-stock-toolbar { align-items:flex-start; flex-direction:column; } }
+      @media(max-width:390px) { .ops-stock-item-grid { grid-template-columns:1fr; } }
+
       @media(max-width:760px) {
         #ops-subtabs { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
         #ops-subtabs .ops-tool-tile { min-height: 124px; padding: 12px; }
@@ -210,65 +233,63 @@
       <div id="ops-message" class="status-message" role="status"></div>
 
       <section id="ops-inventory">
-        <h3>Inventory</h3>
-
-        <form id="ops-item-form" class="ops-form">
-          <label>Item name
-            <input name="name" required maxlength="120">
-          </label>
-          <label>Unit
-            <input name="unit" required value="kg" maxlength="20">
-          </label>
-          <label>Opening quantity
-            <input name="quantity" type="number" min="0" step="0.001" required value="0">
-          </label>
-          <label>Reorder level
-            <input name="reorder_level" type="number" min="0" step="0.001" required value="0">
-          </label>
-          <label>Unit cost (GH₵)
-            <input name="unit_cost" type="number" min="0" step="0.01" required value="0">
-          </label>
-          <label>Supplier (optional)
-            <select name="supplier_id" id="ops-item-supplier">
-              <option value="">No supplier selected</option>
-            </select>
-          </label>
-          <label>Notes
-            <input name="notes" maxlength="250">
-          </label>
-          <button class="btn btn-primary" type="submit">Add stock item</button>
-        </form>
-
-        <form id="ops-movement-form" class="ops-form">
-          <label>Stock item
-            <select name="item_id" id="ops-item-select" required></select>
-          </label>
-          <label>Movement
-            <select name="movement_type">
-              <option value="purchase">Purchase / add stock</option>
-              <option value="usage">Usage / reduce stock</option>
-              <option value="waste">Waste / reduce stock</option>
-              <option value="adjustment">Adjustment (signed quantity)</option>
-            </select>
-          </label>
-          <label>Quantity change
-            <input name="quantity_change" type="number" step="0.001" required placeholder="Negative to reduce">
-          </label>
-          <label>Unit cost (GH₵)
-            <input name="unit_cost" type="number" min="0" step="0.01" value="0">
-          </label>
-          <label>Reference
-            <input name="reference" maxlength="100" placeholder="Receipt / invoice">
-          </label>
-          <label>Notes
-            <input name="notes" maxlength="250">
-          </label>
-          <button class="btn btn-primary" type="submit">Save stock movement</button>
-        </form>
-
-        <div id="ops-inventory-list" class="ops-table-wrap"></div>
-        <h3>Recent stock movements</h3>
-        <div id="ops-movements-list" class="ops-table-wrap"></div>
+        <div class="ops-stock-toolbar">
+          <div><h3>Stock</h3><p class="ops-note">Choose a category, open an item, then record stock received or used.</p></div>
+          <button class="btn btn-primary" id="ops-add-item-btn" type="button">＋ Add item</button>
+        </div>
+        <div id="ops-inventory-categories" class="ops-stock-category-grid" aria-label="Stock categories"></div>
+        <div id="ops-stock-catalog">
+          <form id="ops-item-form" class="ops-form" hidden>
+            <label>Category
+              <input name="category" id="ops-stock-category-input" list="ops-stock-category-options" required maxlength="80" placeholder="Drinks, Chicken, Disposable…">
+              <datalist id="ops-stock-category-options"></datalist>
+            </label>
+            <label>Item name
+              <input name="name" required maxlength="120" placeholder="Coca-Cola">
+            </label>
+            <label>Unit
+              <input name="unit" required maxlength="20" value="pieces" placeholder="bottles, kg, packs">
+            </label>
+            <label>Starting stock
+              <input name="quantity" type="number" min="0" step="0.001" required value="0">
+            </label>
+            <div class="wide ops-stock-actions">
+              <button class="btn btn-primary" type="submit">Save item</button>
+              <button class="btn btn-light" id="ops-cancel-item" type="button">Cancel</button>
+            </div>
+          </form>
+          <div id="ops-stock-items"></div>
+        </div>
+        <section id="ops-stock-detail" hidden>
+          <button class="btn btn-light" id="ops-stock-back" type="button">← Back to category</button>
+          <h4 id="ops-stock-item-title"></h4>
+          <div class="ops-stock-summary"><div><small>Current balance</small><strong id="ops-stock-current">—</strong></div><span id="ops-stock-low-label" class="ops-note"></span></div>
+          <div class="ops-stock-actions">
+            <button class="btn btn-primary" type="button" data-stock-movement="purchase">＋ Add received stock</button>
+            <button class="btn btn-light" type="button" data-stock-movement="usage">− Record used / sold</button>
+          </div>
+          <form id="ops-movement-form" class="ops-form ops-stock-entry" hidden>
+            <input type="hidden" name="item_id">
+            <input type="hidden" name="movement_type">
+            <label class="wide" id="ops-stock-entry-label">Quantity
+              <input name="quantity_change" type="number" min="0.001" step="0.001" required placeholder="Enter quantity">
+            </label>
+            <label id="ops-stock-cost-field">Cost per unit (GH₵, optional)
+              <input name="unit_cost" type="number" min="0" step="0.01" value="0">
+            </label>
+            <label>Note (optional)
+              <input name="notes" maxlength="250" placeholder="Invoice or short note">
+            </label>
+            <p class="wide ops-note">Date is recorded automatically when you save.</p>
+            <div class="wide ops-stock-actions">
+              <button class="btn btn-primary" type="submit">Save entry</button>
+              <button class="btn btn-light" id="ops-cancel-movement" type="button">Cancel</button>
+            </div>
+          </form>
+          <h4>Daily stock balance</h4>
+          <p class="ops-note">Each day shows the opening balance, stock added, stock used or sold, and the balance left at the end of the day.</p>
+          <div id="ops-movements-list" class="ops-table-wrap"></div>
+        </section>
       </section>
 
       <section id="ops-suppliers" class="hidden">
@@ -649,6 +670,7 @@
 
     $("#ops-item-form").addEventListener("submit", addInventoryItem);
     $("#ops-movement-form").addEventListener("submit", saveMovement);
+    $("#ops-inventory").addEventListener("click", onInventoryClick);
     $("#ops-supplier-form").addEventListener("submit", addSupplier);
     $("#ops-staff-form").addEventListener("submit", addStaff);
     $("#ops-staff-cancel").addEventListener("click", resetStaffForm);
@@ -753,88 +775,179 @@
   async function loadInventory() {
     const { data, error } = await db
       .from("inventory_items")
-      .select("*, suppliers(name)")
+      .select("id,name,category,unit,quantity,reorder_level,unit_cost,is_active")
       .eq("is_active", true)
       .order("name");
 
     if (error) throw error;
+    stockItems = data || [];
+    renderInventory();
+  }
 
-    const items = data || [];
+  const stockCategoryDefaults = [
+    {name:"Drinks", icon:"🥤"},
+    {name:"Chicken", icon:"🍗"},
+    {name:"Disposable", icon:"🍽️"},
+    {name:"Other", icon:"📦"}
+  ];
+  const stockCategoryIcon = name =>
+    stockCategoryDefaults.find(item => item.name.toLowerCase() === String(name).toLowerCase())?.icon || "📦";
+  const stockQty = value => Number(value || 0).toLocaleString(undefined,{maximumFractionDigits:3});
+  const stockCategoryKey = value => String(value || "Other").trim().toLowerCase();
 
-    $("#ops-stock-count").textContent = items.length;
-    $("#ops-low-count").textContent = items.filter(item =>
-      Number(item.quantity) <= Number(item.reorder_level)
+  function renderInventory() {
+    $("#ops-stock-count").textContent = stockItems.length;
+    $("#ops-low-count").textContent = stockItems.filter(item =>
+      Number(item.reorder_level || 0) > 0 && Number(item.quantity) <= Number(item.reorder_level)
     ).length;
 
-    $("#ops-item-select").innerHTML = items.length
-      ? items.map(item => `
-          <option value="${esc(item.id)}">
-            ${esc(item.name)} (${esc(item.quantity)} ${esc(item.unit)})
-          </option>
-        `).join("")
-      : '<option value="">Add an inventory item first</option>';
+    const categoryNames = [...stockCategoryDefaults.map(item => item.name)];
+    const categorySeen = new Set(categoryNames.map(stockCategoryKey));
+    stockItems.forEach(item => {
+      const name = String(item.category || "Other").trim() || "Other";
+      if (!categorySeen.has(stockCategoryKey(name))) {
+        categoryNames.push(name);
+        categorySeen.add(stockCategoryKey(name));
+      }
+    });
+    $("#ops-stock-category-options").innerHTML = categoryNames.map(name =>
+      '<option value="' + esc(name) + '"></option>'
+    ).join("");
+    $("#ops-inventory-categories").innerHTML = categoryNames.map(name => {
+      const count = stockItems.filter(item => stockCategoryKey(item.category) === stockCategoryKey(name)).length;
+      return '<button class="ops-stock-category' + (stockCategoryKey(name) === stockCategoryKey(selectedStockCategory) ? ' active' : '') +
+        '" type="button" data-stock-category="' + esc(name) + '"><span class="ops-stock-category-icon" aria-hidden="true">' +
+        stockCategoryIcon(name) + '</span><strong>' + esc(name) + '</strong><small>' + count + ' item' + (count === 1 ? '' : 's') + '</small></button>';
+    }).join("");
 
-    $("#ops-inventory-list").innerHTML = table(
-      ["Item", "Quantity", "Reorder at", "Unit cost", "Stock value", "Supplier"],
-      items.map(item => [
-        item.name,
-        `${item.quantity} ${item.unit}`,
-        item.reorder_level,
-        money(item.unit_cost),
-        money(Number(item.quantity) * Number(item.unit_cost)),
-        item.suppliers?.name || "—"
-      ])
-    );
+    const currentItem = selectedStockItem && stockItems.find(item => item.id === selectedStockItem.id);
+    if (currentItem) {
+      selectedStockItem = currentItem;
+      $("#ops-stock-catalog").hidden = true;
+      $("#ops-stock-detail").hidden = false;
+      $("#ops-stock-item-title").textContent = currentItem.name + " · " + currentItem.category;
+      $("#ops-stock-current").textContent = stockQty(currentItem.quantity) + " " + currentItem.unit;
+      const low = Number(currentItem.reorder_level || 0) > 0 && Number(currentItem.quantity) <= Number(currentItem.reorder_level);
+      $("#ops-stock-low-label").textContent = low ? "Low stock · reorder at " + stockQty(currentItem.reorder_level) + " " + currentItem.unit : "";
+      return;
+    }
+
+    selectedStockItem = null;
+    $("#ops-stock-detail").hidden = true;
+    $("#ops-stock-catalog").hidden = false;
+    const list = $("#ops-stock-items");
+    if (!selectedStockCategory) {
+      list.innerHTML = '<p class="ops-stock-empty">Choose a category to see its items.</p>';
+      return;
+    }
+    const items = stockItems.filter(item => stockCategoryKey(item.category) === stockCategoryKey(selectedStockCategory));
+    list.innerHTML = '<h4>' + esc(selectedStockCategory) + '</h4>' +
+      (items.length
+        ? '<div class="ops-stock-item-grid">' + items.map(item =>
+            '<button class="ops-stock-item-card" type="button" data-stock-item="' + esc(item.id) + '"><strong>' +
+            esc(item.name) + '</strong><span>' + esc(stockQty(item.quantity)) + ' ' + esc(item.unit) + '</span></button>'
+          ).join("") + '</div>'
+        : '<p class="ops-stock-empty">No items in this category yet. Add the first one.</p>');
+  }
+
+  function onInventoryClick(event) {
+    const categoryButton = event.target.closest("[data-stock-category]");
+    if (categoryButton) {
+      selectedStockCategory = categoryButton.dataset.stockCategory;
+      selectedStockItem = null;
+      $("#ops-item-form").hidden = true;
+      $("#ops-movement-form").hidden = true;
+      renderInventory();
+      return;
+    }
+    if (event.target.closest("#ops-add-item-btn")) {
+      $("#ops-item-form").hidden = false;
+      $("#ops-item-form").elements.category.value = selectedStockCategory;
+      $("#ops-item-form").elements.name.focus();
+      return;
+    }
+    if (event.target.closest("#ops-cancel-item")) {
+      $("#ops-item-form").reset();
+      $("#ops-item-form").hidden = true;
+      return;
+    }
+    if (event.target.closest("#ops-stock-back")) {
+      selectedStockItem = null;
+      $("#ops-movement-form").hidden = true;
+      renderInventory();
+      return;
+    }
+    if (event.target.closest("#ops-cancel-movement")) {
+      $("#ops-movement-form").reset();
+      $("#ops-movement-form").hidden = true;
+      return;
+    }
+    const itemButton = event.target.closest("[data-stock-item]");
+    if (itemButton) {
+      selectedStockItem = stockItems.find(item => item.id === itemButton.dataset.stockItem) || null;
+      $("#ops-movement-form").hidden = true;
+      renderInventory();
+      loadMovements().catch(showError);
+      return;
+    }
+    const movementButton = event.target.closest("[data-stock-movement]");
+    if (movementButton && selectedStockItem) {
+      const form = $("#ops-movement-form");
+      const kind = movementButton.dataset.stockMovement;
+      form.reset();
+      form.elements.item_id.value = selectedStockItem.id;
+      form.elements.movement_type.value = kind;
+      $("#ops-stock-entry-label").childNodes[0].textContent = kind === "purchase" ? "Quantity received " : "Quantity used / sold ";
+      $("#ops-stock-cost-field").hidden = kind !== "purchase";
+      form.hidden = false;
+      form.elements.quantity_change.focus();
+    }
   }
 
   async function addInventoryItem(event) {
     event.preventDefault();
-
     const form = event.currentTarget;
     const data = new FormData(form);
     const openingQuantity = Number(data.get("quantity"));
+    const category = String(data.get("category") || "").trim();
+    const name = String(data.get("name") || "").trim();
+    const unit = String(data.get("unit") || "").trim();
+
+    if (!category || !name || !unit || !Number.isFinite(openingQuantity) || openingQuantity < 0) {
+      message("Enter a category, item name, unit and valid starting stock.", true);
+      return;
+    }
 
     try {
-      const { data: item, error } = await db
-        .from("inventory_items")
-        .insert({
-          name: String(data.get("name")).trim(),
-          unit: String(data.get("unit")).trim(),
-          quantity: 0,
-          reorder_level: Number(data.get("reorder_level")),
-          unit_cost: Number(data.get("unit_cost")),
-          supplier_id: String(data.get("supplier_id") || "").trim() || null,
-          notes: String(data.get("notes") || "").trim() || null
-        })
-        .select()
-        .single();
-
+      const { data: item, error } = await db.from("inventory_items").insert({
+        name,
+        category,
+        unit,
+        quantity: 0,
+        reorder_level: 0,
+        unit_cost: 0,
+        supplier_id: null
+      }).select().single();
       if (error) throw error;
 
       if (openingQuantity > 0) {
-        const { error: movementError } = await db.rpc(
-          "record_inventory_movement",
-          {
-            p_item_id: item.id,
-            p_movement_type: "opening",
-            p_quantity_change: openingQuantity,
-            p_unit_cost: Number(data.get("unit_cost")),
-            p_reference: "Opening stock",
-            p_notes: "Initial quantity"
-          }
-        );
-
-        if (movementError) {
-          throw new Error(
-            "Item was created, but opening stock was not recorded: " +
-            movementError.message
-          );
-        }
+        const { error: movementError } = await db.rpc("record_inventory_movement", {
+          p_item_id: item.id,
+          p_movement_type: "opening",
+          p_quantity_change: openingQuantity,
+          p_unit_cost: 0,
+          p_reference: "Opening stock",
+          p_notes: "Initial quantity"
+        });
+        if (movementError) throw new Error("Item was saved, but starting stock was not recorded: " + movementError.message);
       }
 
+      selectedStockCategory = category;
+      selectedStockItem = null;
       form.reset();
-      form.elements.unit.value = "kg";
-      message("Inventory item saved.");
+      form.elements.unit.value = "pieces";
+      form.hidden = true;
+      message("Stock item saved.");
       await loadInventory();
       await loadMovements();
     } catch (error) {
@@ -844,22 +957,12 @@
 
   async function saveMovement(event) {
     event.preventDefault();
-
     const form = event.currentTarget;
     const data = new FormData(form);
-
     const movementType = String(data.get("movement_type") || "");
-    const quantityChange = Number(data.get("quantity_change"));
-    if (!Number.isFinite(quantityChange) || quantityChange === 0) {
-      message("Enter a quantity change other than zero.", true);
-      return;
-    }
-    if (["purchase"].includes(movementType) && quantityChange < 0) {
-      message("Purchases must add stock. Enter a positive quantity.", true);
-      return;
-    }
-    if (["usage", "waste"].includes(movementType) && quantityChange > 0) {
-      message("Usage and waste must reduce stock. Enter a negative quantity.", true);
+    const quantity = Number(data.get("quantity_change"));
+    if (!data.get("item_id") || !["purchase","usage"].includes(movementType) || !Number.isFinite(quantity) || quantity <= 0) {
+      message("Choose a stock item and enter a quantity greater than zero.", true);
       return;
     }
 
@@ -867,16 +970,16 @@
       const { error } = await db.rpc("record_inventory_movement", {
         p_item_id: data.get("item_id"),
         p_movement_type: movementType,
-        p_quantity_change: quantityChange,
+        p_quantity_change: movementType === "purchase" ? quantity : -quantity,
         p_unit_cost: Number(data.get("unit_cost") || 0),
-        p_reference: String(data.get("reference") || "").trim() || null,
+        p_reference: null,
         p_notes: String(data.get("notes") || "").trim() || null
       });
-
       if (error) throw error;
 
       form.reset();
-      message("Stock movement recorded.");
+      form.hidden = true;
+      message(movementType === "purchase" ? "Stock added." : "Stock used / sold.");
       await loadInventory();
       await loadMovements();
     } catch (error) {
@@ -885,24 +988,45 @@
   }
 
   async function loadMovements() {
-    const { data, error } = await db
-      .from("inventory_movements")
-      .select("id,movement_type,quantity_change,unit_cost,reference,notes,created_at,inventory_items(name,unit)")
-      .order("created_at", { ascending: false })
-      .limit(50);
+    if (!selectedStockItem) return;
+    const item = selectedStockItem;
+    const { data, error } = await db.from("inventory_movements")
+      .select("id,movement_type,quantity_change,created_at")
+      .eq("item_id", item.id)
+      .order("created_at", { ascending: true });
     if (error) throw error;
-    $("#ops-movements-list").innerHTML = table(
-      ["Date", "Item", "Movement", "Quantity", "Unit cost", "Reference", "Notes"],
-      (data || []).map(row => [
-        new Date(row.created_at).toLocaleString(),
-        row.inventory_items?.name || "Unknown item",
-        row.movement_type,
-        `${row.quantity_change} ${row.inventory_items?.unit || ""}`,
-        money(row.unit_cost),
-        row.reference || "—",
-        row.notes || "—"
-      ])
-    );
+
+    const movements = data || [];
+    const totalChange = movements.reduce((sum, row) => sum + Number(row.quantity_change || 0), 0);
+    let running = Number(item.quantity || 0) - totalChange;
+    const days = new Map();
+    for (const row of movements) {
+      const dateKey = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Africa/Accra", year: "numeric", month: "2-digit", day: "2-digit"
+      }).format(new Date(row.created_at));
+      if (!days.has(dateKey)) days.set(dateKey, {date:dateKey, opening:running, added:0, used:0, balance:running});
+      const day = days.get(dateKey);
+      const change = Number(row.quantity_change || 0);
+      if (change > 0) day.added += change;
+      if (change < 0) day.used += Math.abs(change);
+      running += change;
+      day.balance = running;
+    }
+
+    const dateLabel = dateKey => {
+      const [year,month,day] = dateKey.split("-").map(Number);
+      return new Intl.DateTimeFormat(undefined, {timeZone:"Africa/Accra",day:"numeric",month:"short",year:"numeric"})
+        .format(new Date(Date.UTC(year,month-1,day,12)));
+    };
+    const rows = [...days.values()].reverse().map(day => [
+      dateLabel(day.date), stockQty(day.opening) + " " + item.unit,
+      "+" + stockQty(day.added) + " " + item.unit,
+      "−" + stockQty(day.used) + " " + item.unit,
+      stockQty(day.balance) + " " + item.unit
+    ]);
+    $("#ops-movements-list").innerHTML = rows.length
+      ? table(["Date","Opening balance","Added","Used / sold","Balance left"], rows)
+      : '<p class="ops-stock-empty">No stock entries yet. Your first entry will appear here with today’s date.</p>';
   }
 
   async function loadSuppliers() {
