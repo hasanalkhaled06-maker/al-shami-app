@@ -552,13 +552,18 @@
             </div>
           </div>
 
-          <label class="full">
-            <span data-i18n="notes">Notes (optional)</span>
-            <textarea name="notes" rows="2" maxlength="500" placeholder="No onions, call on arrival…"></textarea>
-          </label>
         </div>
 
-        <label class="remember-customer"><input id="remember-customer" type="checkbox"> Remember my name and phone on this device</label>
+        <details class="checkout-extra-options">
+          <summary data-i18n="moreOptions">Optional details</summary>
+          <div class="checkout-extra-options-content">
+            <label class="full">
+              <span data-i18n="notes">Notes (optional)</span>
+              <textarea name="notes" rows="2" maxlength="500" placeholder="No onions, call on arrival…"></textarea>
+            </label>
+            <label class="remember-customer"><input id="remember-customer" type="checkbox"> Remember my name and phone on this device</label>
+          </div>
+        </details>
         <p class="muted small" data-i18n="paymentNote">Payment: Cash on delivery or cash at pickup.</p>
         <p id="minimum-order-note" class="muted small" hidden></p>
         <button id="place-order" class="btn btn-primary btn-wide" type="submit" data-i18n="send">Place order</button>
