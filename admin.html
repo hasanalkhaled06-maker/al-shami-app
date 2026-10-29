@@ -543,12 +543,13 @@
 
     <section id="tab-settings" class="panel hidden">
       <h2>Restaurant settings</h2>
-      <p class="muted">Set the delivery fee and minimum order.</p>
+      <p class="muted">Active distance zones set the delivery fee shown to customers. The single fee below is used only when no zones are active; pickup is free.</p>
 
       <form id="settings-form" class="form-grid admin-form">
         <label>
-          Delivery fee (GH₵)
+          Fallback delivery fee (GH₵)
           <input name="delivery_fee" type="number" min="0" step="0.01" required>
+          <small class="field-help">Used only when no active delivery zones are configured.</small>
         </label>
 
         <label>
@@ -577,10 +578,11 @@
         <p id="settings-message" class="status-message full"></p>
       </form>
 
-      <details class="admin-advanced-section" id="delivery-zones-details">
-        <summary>Delivery zones (optional)</summary>
+      <details class="admin-advanced-section" id="delivery-zones-details" open>
+        <summary>Delivery pricing by distance</summary>
         <div class="admin-advanced-section-content">
-          <p class="muted">Use this only if delivery fees differ by area. For one flat fee, use the delivery fee above.</p>
+          <p class="muted">The app matches the customer’s pinned location to the smallest active radius below. The fee is based on straight-line distance from the restaurant location.</p>
+      <div id="delivery-zones-list" class="admin-menu-list"><p class="muted">Loading saved delivery zones…</p></div>
       <form id="delivery-zone-form" class="form-grid admin-form">
         <input type="hidden" name="id">
         <label>Zone name<input name="name" maxlength="100" required placeholder="Darkuman"></label>
@@ -593,7 +595,6 @@
         <div class="form-actions"><button class="btn btn-primary" type="submit">Save zone</button><button id="cancel-delivery-zone" class="btn btn-light" type="button">Clear</button></div>
         <p id="delivery-zone-message" class="status-message full"></p>
       </form>
-      <div id="delivery-zones-list" class="admin-menu-list"><p class="muted">Delivery zones become available after the optional database upgrade is applied.</p></div>
         </div>
       </details>
 
