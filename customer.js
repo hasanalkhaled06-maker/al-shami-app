@@ -3328,6 +3328,84 @@
     showCheckoutMessage("");
   });
 
+  function confirmOrderReview(summary) {
+    return new Promise(resolve => {
+      const previousFocus = document.activeElement;
+      const overlay = document.createElement("div");
+      overlay.id = "order-review-overlay";
+      overlay.className = "order-review-overlay";
+      const dialog = document.createElement("section");
+      dialog.className = "order-review-dialog";
+      dialog.setAttribute("role", "dialog");
+      dialog.setAttribute("aria-modal", "true");
+      dialog.setAttribute("aria-labelledby", "order-review-title");
+      dialog.setAttribute("aria-describedby", "order-review-summary");
+
+      const brand = document.createElement("div");
+      brand.className = "order-review-brand";
+      brand.innerHTML = '<span class="order-review-brand-mark" aria-hidden="true">✦</span><span>AL SHAMI</span>';
+      const title = document.createElement("h2");
+      title.id = "order-review-title";
+      title.textContent = localized("Review your order", "راجع طلبك", "Hwɛ wo order no");
+      const intro = document.createElement("p");
+      intro.className = "order-review-intro";
+      intro.textContent = localized(
+        "Check the items, delivery details and total before sending.",
+        "تأكد من الأصناف ومعلومات التوصيل والإجمالي قبل إرسال الطلب.",
+        "Hwɛ nneɛma, delivery nsɛm ne ne nyinaa ansa na woasoma."
+      );
+      const summaryBox = document.createElement("div");
+      summaryBox.id = "order-review-summary";
+      summaryBox.className = "order-review-summary";
+      summaryBox.textContent = summary;
+      const actions = document.createElement("div");
+      actions.className = "order-review-actions";
+      const cancel = document.createElement("button");
+      cancel.type = "button";
+      cancel.className = "order-review-cancel";
+      cancel.textContent = localized("Go back", "رجوع للتعديل", "San kɔ nsakrae");
+      const confirm = document.createElement("button");
+      confirm.type = "button";
+      confirm.className = "order-review-confirm";
+      confirm.textContent = localized("Confirm and send order", "تأكيد وإرسال الطلب", "Gye tom na soma order");
+      actions.append(cancel, confirm);
+      dialog.append(brand, title, intro, summaryBox, actions);
+      overlay.append(dialog);
+      document.body.append(overlay);
+
+      let finished = false;
+      const finish = accepted => {
+        if (finished) return;
+        finished = true;
+        document.removeEventListener("keydown", onKeydown);
+        overlay.remove();
+        if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+        resolve(accepted);
+      };
+      const onKeydown = event => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          finish(false);
+        } else if (event.key === "Tab") {
+          if (event.shiftKey && document.activeElement === cancel) {
+            event.preventDefault();
+            confirm.focus();
+          } else if (!event.shiftKey && document.activeElement === confirm) {
+            event.preventDefault();
+            cancel.focus();
+          }
+        }
+      };
+      cancel.addEventListener("click", () => finish(false));
+      confirm.addEventListener("click", () => finish(true));
+      overlay.addEventListener("click", event => {
+        if (event.target === overlay) finish(false);
+      });
+      document.addEventListener("keydown", onKeydown);
+      cancel.focus();
+    });
+  }
+
   if (checkoutForm) {
     checkoutForm.addEventListener("submit", async event => {
       event.preventDefault();
@@ -3483,7 +3561,7 @@
         ...(Number.isFinite(estimatedOrderMinutes) ? [localized("Estimated ready/delivery: ", "الوقت التقريبي للجهوزية/الوصول: ", "Estimated ready/delivery: ") + new Date((requestedForDate ? requestedForDate.getTime() : Date.now()) + estimatedOrderMinutes * 60000).toLocaleString()] : []),
         localized("Total: ", "الإجمالي: ", "Ne nyinaa: ") + money(submittedTotal)
       ].join("\n");
-      if (!window.confirm(localized("Review your order before sending:\n\n", "راجع طلبك قبل الإرسال:\n\n", "Hwɛ wo order no ansa na woasoma:\n\n") + orderSummary)) return;
+      if (!await confirmOrderReview(orderSummary)) return;
 
       const submittedItems = rows.map(([id, quantity]) => {
         const item = getCartEntry(id);
