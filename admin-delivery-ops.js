@@ -10,7 +10,7 @@
   const css=document.createElement("style");
   css.textContent=".delivery-ops-card{margin:18px 0;padding:18px;border:1px solid #e1d8d5;border-radius:14px;background:#fff}.delivery-ops-card h3{margin:0 0 12px}.delivery-ops-card .form-grid{margin:12px 0}.delivery-ops-card input[type=number]{max-width:180px}.delivery-ops-alert{border-left:4px solid #b42318;padding:10px;margin:8px 0;background:#fff5f4}.delivery-report-table{width:100%;border-collapse:collapse;margin-top:12px}.delivery-report-table th,.delivery-report-table td{padding:8px;border-bottom:1px solid #e8e1de;text-align:left}";
   document.head.append(css);
-  let settingsLoaded=false;
+  let settingsLoaded=false,settingsLoading=false,settingsDeniedForUser="";
   function mountSettings(){
     const host=$("#tab-settings");if(!host)return;
     if($("#loyalty-settings-area")){void loadSettings();return;}
@@ -26,13 +26,26 @@
     void loadSettings();
   }
   async function loadSettings(){
-    if(settingsLoaded)return;
-    const {data,error}=await db.from("customer_loyalty_settings").select("*").eq("id",1).maybeSingle();
-    if(error||!data)return;
-    $("#loyalty-enabled").checked=data.enabled;$("#stamps-goal").value=data.stamps_per_reward;
-    $("#points-per-ghs").value=data.points_per_ghs;$("#points-redemption").value=data.points_per_ghs_redeemed;
-    $("#referral-bonus").value=data.referral_bonus_points;$("#stamp-reward-ghs").value=data.stamp_reward_ghs;
-    settingsLoaded=true;
+    if(settingsLoaded||settingsLoading)return;
+    settingsLoading=true;
+    try{
+      const {data:sessionData,error:sessionError}=await db.auth.getSession();
+      const user=sessionData?.session?.user;
+      if(sessionError||!user)return;
+      if(settingsDeniedForUser&&settingsDeniedForUser!==user.id)settingsDeniedForUser="";
+      if(settingsDeniedForUser===user.id)return;
+      const {data:isAdmin,error:adminError}=await db.rpc("is_current_user_admin");
+      if(adminError)return;
+      if(!isAdmin){settingsDeniedForUser=user.id;return;}
+      const {data,error}=await db.from("customer_loyalty_settings").select("*").eq("id",1).maybeSingle();
+      if(error||!data)return;
+      $("#loyalty-enabled").checked=data.enabled;$("#stamps-goal").value=data.stamps_per_reward;
+      $("#points-per-ghs").value=data.points_per_ghs;$("#points-redemption").value=data.points_per_ghs_redeemed;
+      $("#referral-bonus").value=data.referral_bonus_points;$("#stamp-reward-ghs").value=data.stamp_reward_ghs;
+      settingsLoaded=true;
+    }finally{
+      settingsLoading=false;
+    }
   }
   function mountOperations(){
     const host=$("#ops-reports");if(!host||$("#delivery-ops-feature"))return;

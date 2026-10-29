@@ -234,3 +234,19 @@ test("customer order status automatically refreshes every five seconds while vis
     assert.ok(loadsCustomerScript, page + " must load the customer app script");
   }
 });
+
+
+test("admin loyalty settings are loaded only after an authenticated admin check", () => {
+  const operations = source("admin-delivery-ops.js");
+  const loader = operations.match(/async function loadSettings\(\)\s*\{[\s\S]*?\n  \}/);
+  assert.ok(loader, "admin delivery operations must define loadSettings");
+  const body = loader[0];
+  const sessionCheck = body.indexOf("db.auth.getSession()");
+  const adminCheck = body.indexOf('db.rpc("is_current_user_admin")');
+  const settingsRead = body.indexOf('db.from("customer_loyalty_settings")');
+  assert.ok(sessionCheck >= 0 && adminCheck >= 0 && settingsRead >= 0,
+    "settings reads must check session and admin access");
+  assert.ok(sessionCheck < settingsRead && adminCheck < settingsRead,
+    "settings must not be queried before the authentication checks");
+  assert.match(body, /settingsLoading/, "duplicate in-flight reads must be blocked");
+});
