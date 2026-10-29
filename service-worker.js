@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v148";
+const CACHE_NAME = CACHE_PREFIX + "v149";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -69,11 +69,14 @@ const SHELL_FILES = [
   "./admin-operations.js?v=inventory-delete-20261028b",
   "./admin-operations.js?v=inventory-sold-20261028a",
   "./admin-operations.js?v=stock-sheet-no-reference-20261028a",
+  "./admin-operations.js?v=rider-admin-credentials-20261028b",
   "./rider.html",
   "./rider.js",
   "./rider.js?v=auto-location-out-20261024a",
+  "./rider.js?v=whatsapp-location-share-20261029a",
   "./rider.css",
   "./rider.css?v=radical-ui-20261023a",
+  "./dark-theme.css?v=rider-action-text-white-20261029a",
   "./rider.webmanifest",
   "./icons/al-shami-rider.svg",
   "./pwa.js",
