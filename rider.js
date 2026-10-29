@@ -149,6 +149,15 @@
     return "https://www.google.com/maps/search/?api=1&query=" +
       encodeURIComponent(String(order.delivery_address || "") + ", Accra, Ghana");
   }
+  function whatsappDeliveryLink(order, orderNumber) {
+    const address = String(order.delivery_address || "").trim();
+    const message = [
+      "AL SHAMI delivery handover — Order #" + orderNumber,
+      address ? "Delivery address: " + address : "",
+      "Destination on Google Maps: " + destinationLink(order)
+    ].filter(Boolean).join("\n");
+    return "https://wa.me/?text=" + encodeURIComponent(message);
+  }
   function renderEmptyState(message, detail = "") {
     if (!ordersNode) return;
     ordersNode.innerHTML = '<div class="empty-state"><span class="empty-icon" aria-hidden="true">⌖</span><strong>' +
@@ -189,6 +198,7 @@
       const lng = Number(order.delivery_longitude);
       const mapAvailable = Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
       const navLabel = mapAvailable ? "Open directions in Google Maps" : "Find address in Google Maps";
+      const whatsappLink = whatsappDeliveryLink(order, orderNumber);
       return '<article class="delivery-card" data-delivery-order="' + escapeHtml(order.id) + '">' +
         '<div class="delivery-card-head">' +
           '<div><h3 class="order-number">Order #' + escapeHtml(orderNumber) + '</h3>' +
@@ -213,6 +223,8 @@
           '</section>' +
           '<div class="delivery-actions"><a class="navigation-button" target="_blank" rel="noopener noreferrer" href="' + escapeHtml(destinationLink(order)) + '">' +
             '<span aria-hidden="true">↗</span> ' + escapeHtml(navLabel) + '</a>' +
+            '<a class="navigation-button secondary" target="_blank" rel="noopener noreferrer" href="' + escapeHtml(whatsappLink) + '">' +
+            '<span aria-hidden="true">⌖</span> Share location on WhatsApp</a>' +
             (order.customer_phone ? '<a class="navigation-button secondary" href="tel:' + escapeHtml(order.customer_phone) + '"><span aria-hidden="true">☎</span> Call customer</a>' : '') +
           '</div>' +
         '</div>' +
