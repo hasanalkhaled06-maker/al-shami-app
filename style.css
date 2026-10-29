@@ -455,3 +455,7 @@ html body.customer-home-page #active-offers .offer-float-card :is(.offer-card-ti
 .inline-receipt-message.error{color:#a52a35}
 .inline-receipt-message.success{color:#17623d;font-weight:800}
 @media(max-width:520px){.inline-receipt-confirm{align-items:stretch}.inline-receipt-confirm label,.inline-receipt-confirm .btn{width:100%}}
+
+
+/* Keep receipt digits intact while the live order poll refreshes the list. */
+.inline-receipt-confirm input{font-variant-numeric:tabular-nums}
