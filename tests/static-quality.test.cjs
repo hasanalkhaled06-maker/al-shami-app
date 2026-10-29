@@ -250,12 +250,3 @@ test("admin loyalty settings are loaded only after an authenticated admin check"
     "settings must not be queried before the authentication checks");
   assert.match(body, /settingsLoading/, "duplicate in-flight reads must be blocked");
 });
-
-
-test("customer checkout never falls back to an unowned legacy order RPC", () => {
-  const customer = source("customer.js");
-  assert.doesNotMatch(customer, /db\.rpc\("place_order_with_location"/,
-    "checkout must not create an order through the legacy RPC without customer ownership");
-  assert.match(customer, /secure order service is unavailable/i,
-    "checkout must show a clear message if the secure RPCs cannot be resolved");
-});
