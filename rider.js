@@ -174,7 +174,7 @@
     $("#active-count").textContent = String(activeOrders.length);
     const locationButton = $("#location-toggle");
     const canShareLocation = activeOrders.some(order =>
-      order.order_type === "delivery" && String(order.status || "").toLowerCase() === "out_for_delivery"
+      String(order.status || "").toLowerCase() === "out_for_delivery"
     );
     if (locationButton) {
       locationButton.disabled = !canShareLocation || !db || sharingLocation;
@@ -203,7 +203,7 @@
       const mapAvailable = Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
       const navLabel = mapAvailable ? "Open directions in Google Maps" : "Find address in Google Maps";
       const whatsappLink = whatsappDeliveryLink(order, orderNumber);
-      const receiptPanel = order.order_type === "delivery" && String(order.status || "").toLowerCase() === "out_for_delivery"
+      const receiptPanel = String(order.status || "").toLowerCase() === "out_for_delivery"
         ? '<form class="rider-receipt-form" data-rider-receipt-form data-order-id="' + escapeHtml(order.id) + '">' +
             '<strong>Confirm handover</strong>' +
             '<p>Ask the customer for their 6-digit receipt code, then enter it here to complete delivery.</p>' +
@@ -259,7 +259,7 @@
     const button = form.querySelector('button[type="submit"]');
     const message = form.querySelector("[data-rider-receipt-message]");
     const code = String(input?.value || "").trim();
-    if (!order || order.order_type !== "delivery" || String(order.status).toLowerCase() !== "out_for_delivery") {
+    if (!order || String(order.status).toLowerCase() !== "out_for_delivery") {
       if (message) { message.textContent = "This delivery is not ready for handover confirmation."; message.className = "rider-receipt-message error"; }
       return;
     }
@@ -375,7 +375,7 @@
 
   function hasOutForDeliveryOrder() {
     return orders.some(order =>
-      order.order_type === "delivery" && String(order.status || "").toLowerCase() === "out_for_delivery"
+      String(order.status || "").toLowerCase() === "out_for_delivery"
     );
   }
 
