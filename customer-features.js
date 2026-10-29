@@ -239,6 +239,16 @@
     if(event.key==="Escape"&&!completionModal.hidden)closeCompletionModal();
   });
 
+  function loadStatusText(key){
+    const lang=String(document.querySelector("#language")?.value||"en").toLowerCase();
+    const messages={
+      en:{rewardsError:"Rewards could not load right now. Cash orders are still available. Try again later.",preferencesError:"Saved alert choices could not load. You can still place orders."},
+      ar:{rewardsError:"تعذّر تحميل المكافآت الآن. ما زال بإمكانك طلب وجبات نقداً. حاول مرة أخرى لاحقاً.",preferencesError:"تعذّر تحميل خيارات التنبيهات المحفوظة. ما زال بإمكانك تقديم الطلبات."},
+      tw:{rewardsError:"Yɛantumi annya wo rewards seesei. Wubetumi akɔ so de cash a order. San sɔ bio akyiri.",preferencesError:"Yɛantumi annya alert choices a woasie. Wubetumi akɔ so de order."}
+    };
+    return (messages[lang]||messages.en)[key];
+  }
+
   async function load(){
     const {data:{session}}=await db.auth.getSession();
     if(!session?.user){if(status)status.textContent="Sign in to view rewards and set alert choices.";return;}
@@ -248,7 +258,7 @@
     ]);
     if(prefs&&!prefsError)options?.querySelectorAll("[data-pref]").forEach(el=>el.checked=Boolean(prefs[el.dataset.pref]));
     await refreshPushControl();
-    if(rewardError){loyaltySettings=null;window.AL_SHAMI_LOYALTY_SETTINGS=null;refreshPointDisplays();if(status)status.textContent="Rewards are available after the optional database migration is applied.";return;}
+    if(rewardError){loyaltySettings=null;window.AL_SHAMI_LOYALTY_SETTINGS=null;refreshPointDisplays();if(status)status.textContent=loadStatusText("rewardsError");return;}
     loyaltySettings={enabled:Boolean(rewards.enabled),points:Number(rewards.points||0),pointsPerGhs:Number(rewards.points_per_ghs||0),pointsPerGhsRedeemed:Math.max(1,Number(rewards.points_per_ghs_redeemed||100))};
     window.AL_SHAMI_LOYALTY_SETTINGS=loyaltySettings;
     window.dispatchEvent(new Event("alshami:loyalty-settings"));
@@ -259,7 +269,7 @@
         ? '<p><strong>'+Number(rewards.points||0)+'</strong> points · <strong>'+Number(rewards.stamps||0)+' / '+Number(rewards.stamps_per_reward||10)+'</strong> stamps toward a reward ('+Number(rewards.stamp_reward_ghs||0)+' GH₵ checkout discount)</p><p>Your referral code: <strong>'+String(rewards.referral_code||"")+'</strong></p><p class="customer-feature-note">Points become store credit for order discounts only; there is no cash withdrawal. They’re earned after completed orders.</p>'
         : '<p>Loyalty is awaiting restaurant setup. Your referral code: <strong>'+String(rewards.referral_code||"")+'</strong></p>';
     }
-    if(status)status.textContent=prefsError?"Alert preferences will save after the optional database migration is applied.":"Your reward balance and alert choices.";
+    if(status)status.textContent=prefsError?loadStatusText("preferencesError"):"Your reward balance and alert choices.";
   }
 
   const pushStatus=document.querySelector("#customer-push-status");

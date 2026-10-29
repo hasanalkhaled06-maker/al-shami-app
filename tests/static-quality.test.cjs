@@ -250,3 +250,16 @@ test("admin loyalty settings are loaded only after an authenticated admin check"
     "settings must not be queried before the authentication checks");
   assert.match(body, /settingsLoading/, "duplicate in-flight reads must be blocked");
 });
+
+
+test("customer reward failures are described without assuming a missing migration", () => {
+  const features = source("customer-features.js");
+  const html = source("index.html");
+  const worker = source("service-worker.js");
+  assert.doesNotMatch(features, /optional database migration is applied/);
+  assert.match(features, /Cash orders are still available/);
+  assert.match(features, /ما زال بإمكانك طلب وجبات نقداً/);
+  assert.match(html, /customer-features\.js\?v=customer-feature-recovery-20261029a/);
+  assert.match(worker, /customer-features\.js\?v=customer-feature-recovery-20261029a/);
+  assert.match(worker, /CACHE_NAME = CACHE_PREFIX \+ "v151"/);
+});
