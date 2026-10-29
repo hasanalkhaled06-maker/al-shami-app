@@ -14,7 +14,7 @@
   <link rel="manifest" href="admin.webmanifest">
   <link rel="icon" href="icons/al-shami-admin.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-admin.png">
-  <link rel="stylesheet" href="style.css?v=rider-handover-20261029a">
+  <link rel="stylesheet" href="style.css?v=rider-handover-20261030a">
   <style>
   .incoming-order-overlay[hidden]{display:none!important}
   .incoming-order-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:clamp(10px,3vw,28px);background:rgba(16,7,8,.94);color:#211416;overflow-y:auto}
@@ -370,15 +370,7 @@
             </select>
           </div>
 
-          <details class="admin-receipt-tools" id="admin-receipt-tools">
-            <summary>Confirm customer pickup or delivery</summary>
-            <form id="receipt-confirm-form" class="section-heading" aria-label="Confirm customer receipt" style="align-items:end;gap:10px;flex-wrap:wrap">
-              <label>Order number<input name="order_number" type="number" min="1" step="1" required placeholder="Order #"></label>
-              <label>Customer receipt code<input name="receipt_code" type="text" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" required placeholder="6-digit code" autocomplete="off"></label>
-              <button class="btn btn-primary" type="submit">Confirm receipt</button>
-              <p id="receipt-confirm-message" class="status-message" role="status"></p>
-            </form>
-          </details>
+          
 
           <div class="section-heading" aria-label="Order list tools">
             <button id="clear-order-filters" class="btn btn-light" type="button">Clear filters</button>
@@ -682,7 +674,7 @@
 
 <script src="config.js"></script>
 <script src="order-workflow.js?v=order-flow-guard-20261026a"></script>
-<script src="admin.js?v=rider-handover-20261029a"></script>
+<script src="admin.js?v=rider-handover-20261030a"></script>
 <script src="admin-operations.js?v=rider-admin-credentials-20261028b"></script>
 <script src="admin-delivery-ops.js?v=operations-settings-20261029a"></script>
 <script src="pwa.js?v=install-prompt-20261027a"></script>
