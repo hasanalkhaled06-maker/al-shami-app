@@ -242,8 +242,8 @@
   function loadStatusText(key){
     const lang=String(document.querySelector("#language")?.value||"en").toLowerCase();
     const messages={
-      en:{rewardsError:"Rewards could not load right now. Cash orders are still available. Try again later.",preferencesError:"Saved alert choices could not load. You can still place orders."},
-      ar:{rewardsError:"تعذّر تحميل المكافآت الآن. ما زال بإمكانك طلب وجبات نقداً. حاول مرة أخرى لاحقاً.",preferencesError:"تعذّر تحميل خيارات التنبيهات المحفوظة. ما زال بإمكانك تقديم الطلبات."},
+      en:{rewardsError:"Rewards could not load right now. Cash orders are still available. Try again later.",preferencesError:"Saved alert choices could not load. You can still place orders.",preferencesSaveError:"Could not save alert choices. Check your connection and try again."},
+      ar:{rewardsError:"تعذّر تحميل المكافآت الآن. ما زال بإمكانك طلب وجبات نقداً. حاول مرة أخرى لاحقاً.",preferencesError:"تعذّر تحميل خيارات التنبيهات المحفوظة. ما زال بإمكانك تقديم الطلبات.",preferencesSaveError:"تعذّر حفظ خيارات التنبيهات. تحقق من الاتصال وحاول مرة أخرى."},
       tw:{rewardsError:"Yɛantumi annya wo rewards seesei. Wubetumi akɔ so de cash a order. San sɔ bio akyiri.",preferencesError:"Yɛantumi annya alert choices a woasie. Wubetumi akɔ so de order."}
     };
     return (messages[lang]||messages.en)[key];
@@ -356,7 +356,7 @@
     const row={customer_user_id:session.user.id,updated_at:new Date().toISOString()};
     options.querySelectorAll("[data-pref]").forEach(el=>row[el.dataset.pref]=el.checked);
     const {error}=await db.from("customer_notification_preferences").upsert(row,{onConflict:"customer_user_id"});
-    if(status)status.textContent=error?"Could not save alert choices. Apply the optional database migration and try again.":"Alert choices saved.";
+    if(status)status.textContent=error?loadStatusText("preferencesSaveError"):"Alert choices saved.";
   });
   db.auth.onAuthStateChange(()=>{setTimeout(()=>void load(),0);});
   void load();

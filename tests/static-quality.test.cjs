@@ -256,7 +256,7 @@ test("customer reward failures are described without assuming a missing migratio
   const features = source("customer-features.js");
   const html = source("index.html");
   const worker = source("service-worker.js");
-  assert.doesNotMatch(features, /optional database migration is applied/);
+  assert.doesNotMatch(features, /optional database migration/i);
   assert.match(features, /Cash orders are still available/);
   assert.match(features, /ما زال بإمكانك طلب وجبات نقداً/);
   assert.match(html, /customer-features\.js\?v=customer-feature-recovery-20261029a/);
