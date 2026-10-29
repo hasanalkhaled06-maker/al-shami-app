@@ -19,7 +19,7 @@
   <link rel="icon" href="icons/al-shami-customer.svg?v=icon-20261024" type="image/svg+xml">
   <link rel="icon" sizes="192x192" href="icons/al-shami-pwa-192.png?v=customer-pwa-20261027c">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-customer.png?v=customer-pwa-20261027c">
-  <link rel="stylesheet" href="style.css?v=offer-text-white-20261029a">
+  <link rel="stylesheet" href="style.css?v=delivery-breakdown-20261029a">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -72,9 +72,10 @@
     body.auth-required{overflow:hidden}
     .site-contact-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
     .site-contact-links a{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border:1px solid rgba(141,23,35,.2);border-radius:10px;color:#8d1723;text-decoration:none;font-weight:700}
-    .cart-cost-breakdown{display:grid;gap:7px;margin:12px 0;padding:12px 0;border-top:1px solid #e8e8e8}
-    .cart-cost-line{display:flex;justify-content:space-between;gap:16px;font-size:.95rem}
-    .cart-cost-line.total{font-size:1.1rem;font-weight:800}
+    .cart-cost-breakdown{display:grid;gap:10px;margin:16px 0;padding:15px 16px;border:1px solid #dbe8dd;border-radius:14px;background:#f7fbf7;box-shadow:0 4px 12px rgba(25,73,42,.05)}
+    .cart-cost-breakdown h3{margin:0;color:#314d39;font-size:1rem}
+    .cart-cost-line{display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:.98rem}
+    .cart-cost-line.total{margin-top:2px;padding-top:11px;border-top:1px solid #d6e4d8;font-size:1.14rem;font-weight:900;color:#135d35}
     .product-image img{width:100%;height:100%;object-fit:cover}
     .product-card button:disabled{opacity:.55;cursor:not-allowed}
     .app-message{padding:12px 14px;border-radius:10px;margin:10px 0;line-height:1.45}
@@ -491,6 +492,7 @@
       <p id="cart-announcement" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
 
       <div class="cart-cost-breakdown" aria-live="polite">
+        <h3 data-i18n="orderSummary">Order summary</h3>
         <div class="cart-cost-line">
           <span data-i18n="subtotal">Subtotal</span>
           <strong id="cart-subtotal">GH₵ 0.00</strong>
@@ -801,7 +803,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
-  <script src="customer.js?v=offer-window-20261029a"></script>
+  <script src="customer.js?v=delivery-breakdown-20261029a"></script>
   <script src="customer-features.js?v=customer-feature-recovery-20261029a"></script>
   <script src="pwa.js?v=install-prompt-20261027a"></script>
 </body>
