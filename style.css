@@ -400,3 +400,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 @keyframes offer3DShake{0%,100%{transform:rotateX(0) rotateY(0) rotateZ(0);box-shadow:0 12px 24px rgba(7,91,50,.24),inset 0 1px rgba(255,255,255,.22)}25%{transform:rotateX(.7deg) rotateY(-1deg) rotateZ(-.25deg);box-shadow:0 14px 26px rgba(7,91,50,.27),inset 0 1px rgba(255,255,255,.22)}50%{transform:rotateX(-.6deg) rotateY(1deg) rotateZ(.2deg)}75%{transform:rotateX(.5deg) rotateY(-.5deg) rotateZ(-.15deg)}}
 @media(max-width:480px){.offer-wall{grid-template-columns:1fr;gap:10px}.offer-float-card{padding:15px;border-radius:17px}.offer-card-actions button{flex-basis:115px}}
 @media(prefers-reduced-motion:reduce){.offer-float-card{animation:none!important}}
+
+/* Keep offer copy readable on the green offer card across customer themes. */
+html body.customer-home-page #active-offers .offer-float-card :is(.offer-card-title,.offer-card-summary,.offer-card-dates,.offer-card-price,.offer-feedback){
+  color:#fff!important;
+}
