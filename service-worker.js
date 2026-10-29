@@ -53,7 +53,6 @@ const SHELL_FILES = [
   "./customer.js?v=delivery-breakdown-20261029a",
   "./customer.js?v=receipt-code-inline-20261029a",
   "./customer.js?v=order-review-20261029a",
-  "./admin.js?v=receipt-code-inline-20261029a",
   "./customer-features.js?v=account-settings-20261025c",
   "./customer-features.js?v=customer-points-20261025a",
   "./customer-features.js?v=delivery-complete-20261025a",
