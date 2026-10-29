@@ -161,3 +161,16 @@ a{color:inherit}
 .approval-panel.is-error .approval-status-dot{background:#bd3434}
 .approval-refresh-button{width:100%;margin:4px 0 8px}
 .approval-refresh-button:disabled{opacity:.7}
+
+
+/* Secure rider-side handover confirmation. */
+.rider-receipt-form{display:grid;gap:10px;margin-top:16px;padding:16px;border:1px solid #d9c99f;border-radius:17px;background:linear-gradient(145deg,#fffdf5,#eef6ef);box-shadow:0 8px 18px rgba(16,62,39,.1)}
+.rider-receipt-form>strong{color:#075b32;font-size:17px}
+.rider-receipt-form>p{margin:0;color:#5b6d63;font-size:14px;line-height:1.45}
+.rider-receipt-form label{display:grid;gap:6px;color:#29483a;font-size:13px;font-weight:800}
+.rider-receipt-form input{width:100%;min-height:48px;padding:10px 13px;border:1px solid #b8cdbd;border-radius:12px;background:#fff;color:#203a31;font-size:18px;letter-spacing:.2em}
+.rider-receipt-form .receipt-complete-button{justify-content:center;min-height:50px;border:1px solid #075b32;border-radius:13px;color:#fff;background:linear-gradient(180deg,#21864b,#075b32);box-shadow:0 4px 0 #064423;font-weight:800}
+.rider-receipt-form .receipt-complete-button:disabled{opacity:.65;box-shadow:none}
+.rider-receipt-message{min-height:1.25em}
+.rider-receipt-message.error{color:#ad2d35;font-weight:700}
+.rider-receipt-message.success{color:#17623d;font-weight:800}
