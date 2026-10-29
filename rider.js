@@ -166,6 +166,10 @@
 
   function renderOrders() {
     if (!ordersNode) return;
+    const enteredReceiptCodes = new Map(
+      Array.from(ordersNode.querySelectorAll("[data-rider-receipt-code]"))
+        .map(input => [input.dataset.riderReceiptCode, input.value])
+    );
     const activeOrders = Array.isArray(orders) ? orders : [];
     $("#active-count").textContent = String(activeOrders.length);
     const locationButton = $("#location-toggle");
@@ -199,6 +203,15 @@
       const mapAvailable = Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
       const navLabel = mapAvailable ? "Open directions in Google Maps" : "Find address in Google Maps";
       const whatsappLink = whatsappDeliveryLink(order, orderNumber);
+      const receiptPanel = order.order_type === "delivery" && String(order.status || "").toLowerCase() === "out_for_delivery"
+        ? '<form class="rider-receipt-form" data-rider-receipt-form data-order-id="' + escapeHtml(order.id) + '">' +
+            '<strong>Confirm handover</strong>' +
+            '<p>Ask the customer for their 6-digit receipt code, then enter it here to complete delivery.</p>' +
+            '<label>Customer receipt code<input type="text" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="one-time-code" required data-rider-receipt-code="' + escapeHtml(order.id) + '" placeholder="6-digit code" aria-label="Customer receipt code for order ' + escapeHtml(orderNumber) + '"></label>' +
+            '<button class="navigation-button receipt-complete-button" type="submit">Verify code &amp; complete delivery</button>' +
+            '<p class="rider-receipt-message" data-rider-receipt-message="' + escapeHtml(order.id) + '" role="status" aria-live="polite"></p>' +
+          '</form>'
+        : "";
       return '<article class="delivery-card" data-delivery-order="' + escapeHtml(order.id) + '">' +
         '<div class="delivery-card-head">' +
           '<div><h3 class="order-number">Order #' + escapeHtml(orderNumber) + '</h3>' +
@@ -227,10 +240,78 @@
             '<span aria-hidden="true">⌖</span> Share location on WhatsApp</a>' +
             (order.customer_phone ? '<a class="navigation-button secondary" href="tel:' + escapeHtml(order.customer_phone) + '"><span aria-hidden="true">☎</span> Call customer</a>' : '') +
           '</div>' +
+          receiptPanel +
         '</div>' +
       '</article>';
     }).join("");
+    ordersNode.querySelectorAll("[data-rider-receipt-code]").forEach(input => {
+      input.value = enteredReceiptCodes.get(input.dataset.riderReceiptCode) || "";
+    });
   }
+
+  ordersNode?.addEventListener("submit", async event => {
+    const form = event.target instanceof Element ? event.target.closest("[data-rider-receipt-form]") : null;
+    if (!form) return;
+    event.preventDefault();
+    const orderId = form.dataset.orderId;
+    const order = orders.find(item => String(item.id) === String(orderId));
+    const input = form.querySelector("[data-rider-receipt-code]");
+    const button = form.querySelector('button[type="submit"]');
+    const message = form.querySelector("[data-rider-receipt-message]");
+    const code = String(input?.value || "").trim();
+    if (!order || order.order_type !== "delivery" || String(order.status).toLowerCase() !== "out_for_delivery") {
+      if (message) { message.textContent = "This delivery is not ready for handover confirmation."; message.className = "rider-receipt-message error"; }
+      return;
+    }
+    if (!/^[0-9]{6}$/.test(code)) {
+      if (message) { message.textContent = "Enter the customer's 6-digit code."; message.className = "rider-receipt-message error"; }
+      input?.focus();
+      return;
+    }
+    if (!button || !currentSession?.user) return;
+    button.disabled = true;
+    if (message) { message.textContent = "Verifying code…"; message.className = "rider-receipt-message"; }
+    try {
+      const orderNumber = Number(order.order_number);
+      const { error } = await db.rpc("confirm_customer_receipt", {
+        p_order_number: orderNumber,
+        p_receipt_code: code
+      });
+      if (error) throw error;
+
+      let smsFailed = false;
+      try {
+        const { error: smsError } = await db.functions.invoke("notify-order-status", {
+          body: { orderNumber, status: "completed" }
+        });
+        if (smsError) throw smsError;
+      } catch (notifyError) {
+        smsFailed = true;
+        console.warn("Delivery completed, but customer SMS failed:", notifyError);
+      }
+      try {
+        const { error: pushError } = await db.functions.invoke("customer-push", {
+          body: { action: "order-status", orderNumber, status: "completed" }
+        });
+        if (pushError) throw pushError;
+      } catch (notifyError) {
+        console.warn("Delivery completed, but customer push notification failed:", notifyError);
+      }
+
+      if (message) {
+        message.textContent = smsFailed
+          ? "Code verified. Delivery completed; SMS could not be sent."
+          : "Code verified. Delivery completed. The order is now in customer and admin history.";
+        message.className = "rider-receipt-message success";
+      }
+      input.disabled = true;
+      await refreshOrders({ quiet: true });
+    } catch (error) {
+      console.error("Could not confirm customer receipt:", error);
+      if (message) { message.textContent = error.message || "Could not verify the code. Check it and try again."; message.className = "rider-receipt-message error"; }
+      button.disabled = false;
+    }
+  });
 
   async function refreshOrders(options = {}) {
     if (!db || !currentSession?.user) return "error";
