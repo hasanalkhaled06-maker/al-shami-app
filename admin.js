@@ -1591,6 +1591,10 @@
   });
 
   function renderOrders() {
+    const enteredReceiptCodes = new Map(
+      Array.from($("#orders-list")?.querySelectorAll("[data-receipt-code-input]") || [])
+        .map(input => [input.dataset.receiptCodeInput, input.value])
+    );
     const selectedOrderFilter = $("#order-filter")?.value || "all";
     const filteredOrders = visibleOrders().filter(order =>
       order.status !== "completed" && (order.status !== "rejected" || selectedOrderFilter === "rejected")
@@ -1700,6 +1704,9 @@
       `).join("")
       : '<p class="muted">No orders in this view.</p>';
 
+    $("#orders-list")?.querySelectorAll("[data-receipt-code-input]").forEach(input => {
+      input.value = enteredReceiptCodes.get(input.dataset.receiptCodeInput) || "";
+    });
     updateOrderWaitBadges();
     $("#orders-list")
       .querySelectorAll("[data-status]")
