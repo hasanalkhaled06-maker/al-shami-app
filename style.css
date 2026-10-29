@@ -444,3 +444,14 @@ html body.customer-home-page #active-offers .offer-float-card :is(.offer-card-ti
   .order-review-actions button{min-height:48px}
 }
 @media(prefers-reduced-motion:reduce){#order-review-overlay,.order-review-dialog{animation:none!important}.order-review-actions button{transition:none}}
+
+
+/* Inline 6-digit receipt confirmation on eligible order cards. */
+.inline-receipt-confirm{display:flex;align-items:end;gap:9px;flex-wrap:wrap;width:100%;padding:12px;border:1px solid #d8e6dc;border-radius:14px;background:linear-gradient(145deg,#fffdf6,#eef6ef);box-shadow:0 4px 12px rgba(14,72,42,.08)}
+.inline-receipt-confirm label{display:grid;gap:5px;min-width:min(190px,100%);color:#365849;font-size:12px;font-weight:800}
+.inline-receipt-confirm input{width:100%;min-height:42px;padding:9px 12px;border:1px solid #bdd4c3;border-radius:10px;background:#fff;color:#203a31;font-size:16px;letter-spacing:.15em}
+.inline-receipt-confirm .btn{min-height:42px}
+.inline-receipt-message{flex-basis:100%;min-height:1.2em;color:#52675c;font-size:12px}
+.inline-receipt-message.error{color:#a52a35}
+.inline-receipt-message.success{color:#17623d;font-weight:800}
+@media(max-width:520px){.inline-receipt-confirm{align-items:stretch}.inline-receipt-confirm label,.inline-receipt-confirm .btn{width:100%}}
