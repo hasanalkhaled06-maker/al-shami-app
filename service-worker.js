@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v156";
+const CACHE_NAME = CACHE_PREFIX + "v157";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -24,8 +24,8 @@ const SHELL_FILES = [
   "./style.css?v=offer-price-20261027a",
   "./style.css?v=offer-text-white-20261029a",
   "./style.css?v=delivery-breakdown-20261029a",
-  "./style.css?v=receipt-code-inline-20261029a",
-  "./admin.js?v=receipt-code-inline-20261029a",
+  "./style.css?v=rider-handover-20261029a",
+  "./admin.js?v=rider-handover-20261029a",
   "./style.css?v=order-review-20261029a",
   "./dark-theme.css?v=shami-wordmark-cleanup-20261023q",
   "./style.css?v=modern-ui-20261023a",
@@ -83,9 +83,11 @@ const SHELL_FILES = [
   "./admin-operations.js?v=rider-admin-credentials-20261028b",
   "./rider.html",
   "./rider.js",
+  "./rider.js?v=rider-handover-20261029a",
   "./rider.js?v=auto-location-out-20261024a",
   "./rider.js?v=whatsapp-location-share-20261029a",
   "./rider.css",
+  "./rider.css?v=rider-handover-20261029a",
   "./rider.css?v=radical-ui-20261023a",
   "./dark-theme.css?v=rider-action-text-white-20261029a",
   "./rider.webmanifest",
