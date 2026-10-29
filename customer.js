@@ -2576,7 +2576,7 @@
     }
 
     const feeLine = $("#delivery-fee-line");
-    if (feeLine) feeLine.hidden = !isDelivery;
+    if (feeLine) feeLine.hidden = false;
 
     const minimumNote = $("#minimum-order-note");
     if (minimumNote) {
