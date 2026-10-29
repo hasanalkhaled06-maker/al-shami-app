@@ -405,3 +405,42 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 html body.customer-home-page #active-offers .offer-float-card :is(.offer-card-title,.offer-card-summary,.offer-card-dates,.offer-card-price,.offer-feedback){
   color:#fff!important;
 }
+
+
+/* Branded order review replaces the browser's plain dark confirmation prompt. */
+#order-review-overlay{
+  position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;
+  padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(18px + env(safe-area-inset-bottom,0px));
+  background:rgba(17,48,37,.58);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  animation:orderReviewFadeIn .18s ease-out;
+}
+#order-review-overlay .order-review-dialog{
+  width:min(560px,100%);max-height:min(86vh,820px);overflow:hidden;display:flex;flex-direction:column;
+  padding:clamp(20px,5vw,32px);border:1px solid rgba(199,157,73,.72);border-radius:26px;
+  color:#203a31;background:
+    radial-gradient(ellipse at 100% 0%,rgba(222,190,112,.22),transparent 42%),
+    linear-gradient(145deg,#fffdf6 0%,#f2f7ef 56%,#fffaf0 100%);
+  box-shadow:0 28px 70px rgba(9,37,26,.34),0 8px 0 rgba(7,91,50,.13),inset 0 1px 0 #fff;
+  transform:perspective(1000px) rotateX(0deg);animation:orderReviewRise .24s cubic-bezier(.2,.8,.2,1);
+}
+.order-review-brand{display:flex;align-items:center;gap:9px;margin-bottom:10px;color:#075b32;font-size:13px;font-weight:900;letter-spacing:.16em}
+.order-review-brand-mark{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;color:#fff;background:linear-gradient(145deg,#d9b45e,#a87922);box-shadow:0 4px 0 #89641f,0 8px 16px rgba(137,100,31,.2);font-size:17px}
+#order-review-title{margin:0;color:#173e2d;font-size:clamp(22px,5vw,29px);line-height:1.2;font-weight:850}
+.order-review-intro{margin:8px 0 16px;color:#627269;font-size:14px;line-height:1.5}
+.order-review-summary{overflow:auto;overscroll-behavior:contain;white-space:pre-wrap;overflow-wrap:anywhere;max-height:48vh;padding:16px;border:1px solid #d9e5d9;border-radius:17px;background:linear-gradient(145deg,#fff 0%,#f5f8f1 100%);color:#30443b;font-size:15px;line-height:1.55;box-shadow:inset 0 2px 5px rgba(34,70,48,.05),0 4px 10px rgba(35,67,46,.05)}
+.order-review-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:11px;margin-top:18px}
+.order-review-actions button{min-height:50px;padding:12px 14px;border-radius:15px;font:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,filter .16s ease}
+.order-review-actions button:hover{transform:translateY(-2px);filter:brightness(1.03)}
+.order-review-actions button:active{transform:translateY(2px);box-shadow:inset 0 3px 7px rgba(0,0,0,.16)}
+.order-review-cancel{border:1px solid #d4ddd2;color:#355244;background:linear-gradient(180deg,#fff,#e9f0e7);box-shadow:0 4px 0 #d1dbce,0 8px 15px rgba(31,67,45,.1)}
+.order-review-confirm{border:1px solid #075b32;color:#fff;background:linear-gradient(180deg,#21864b,#075b32);box-shadow:0 5px 0 #064423,0 10px 18px rgba(7,91,50,.24),inset 0 1px 0 rgba(255,255,255,.3)}
+.order-review-actions button:focus-visible{outline:3px solid #d9b45e;outline-offset:3px}
+@keyframes orderReviewFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes orderReviewRise{from{opacity:0;transform:perspective(1000px) translateY(18px) rotateX(2deg) scale(.98)}to{opacity:1;transform:perspective(1000px) translateY(0) rotateX(0) scale(1)}}
+@media(max-width:480px){
+  #order-review-overlay .order-review-dialog{padding:20px 17px;border-radius:22px}
+  .order-review-summary{font-size:14px;padding:13px;max-height:44vh}
+  .order-review-actions{grid-template-columns:1fr;gap:9px}
+  .order-review-actions button{min-height:48px}
+}
+@media(prefers-reduced-motion:reduce){#order-review-overlay,.order-review-dialog{animation:none!important}.order-review-actions button{transition:none}}
