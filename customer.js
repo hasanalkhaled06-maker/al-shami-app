@@ -938,6 +938,7 @@
   let menuFeatureDetailsAvailable = false;
   let approvedMenuReviewsByItem = new Map();
   let offers = [];
+  let offerAvailabilitySignature = "";
   let popularityByMenuItem = new Map();
   const CUSTOMER_CATALOG_REFRESH_INTERVAL_MS = 30000;
   let customerCatalogRefreshTimer = null;
@@ -2463,7 +2464,7 @@
       const offerId = key.slice(6);
       const offer = offers.find(item => String(item.id) === offerId);
       const price = Number(offer?.price);
-      if (!offer || !Number.isFinite(price) || price <= 0) return null;
+      if (!offer || !Number.isFinite(price) || price <= 0 || offerWindowStatus(offer) !== "active") return null;
       return { type: "offer", id: key, offer, name: offer.title || tr("offer"), price };
     }
     const product = products.find(item => String(item.id) === key && item.is_available !== false);
@@ -2632,6 +2633,23 @@
     });
   }
 
+  function offerWindowStatus(offer, now = Date.now()) {
+    const startsAt = offer?.starts_at ? new Date(offer.starts_at).getTime() : null;
+    const endsAt = offer?.ends_at ? new Date(offer.ends_at).getTime() : null;
+    if (startsAt !== null && !Number.isFinite(startsAt)) return "expired";
+    if (endsAt !== null && !Number.isFinite(endsAt)) return "expired";
+    if (startsAt !== null && startsAt > now) return "upcoming";
+    if (endsAt !== null && endsAt < now) return "expired";
+    return "active";
+  }
+
+  function offerWindowSignature(items, now = Date.now()) {
+    return JSON.stringify((items || []).map(offer => [
+      offer.id,
+      offerWindowStatus(offer, now)
+    ]));
+  }
+
   function offerDate(value, fallback) {
     if (!value || !Number.isFinite(new Date(value).getTime())) return fallback;
     return new Date(value).toLocaleDateString();
@@ -2699,6 +2717,17 @@
   function addOfferItemToCart(offer, card) {
     const feedback = card.querySelector(".offer-feedback");
     const price = Number(offer.price);
+    const availability = offerWindowStatus(offer);
+    if (availability !== "active") {
+      if (feedback) feedback.textContent = availability === "upcoming"
+        ? localized(
+            "This offer starts on " + offerDate(offer.starts_at, "the scheduled date") + ".",
+            "يبدأ هذا العرض بتاريخ " + offerDate(offer.starts_at, "الموعد المحدد") + ".",
+            "This offer starts on " + offerDate(offer.starts_at, "the scheduled date") + "."
+          )
+        : localized("This offer has ended.", "انتهى هذا العرض.", "This offer has ended.");
+      return;
+    }
     if (!Number.isFinite(price) || price <= 0) {
       if (feedback) feedback.textContent = localized(
         "The restaurant has not set a price for this offer yet.",
@@ -2737,7 +2766,10 @@
 
       const badge = document.createElement("span");
       badge.className = "offer-badge";
-      badge.textContent = localized("TODAY’S OFFER", "عرض اليوم", "NNƐ OFFER");
+      const availability = offerWindowStatus(offer);
+      badge.textContent = availability === "upcoming"
+        ? localized("COMING SOON", "قريباً", "COMING SOON")
+        : localized("TODAY’S OFFER", "عرض اليوم", "NNƐ OFFER");
 
       const heading = document.createElement("h2");
       heading.className = "offer-card-title";
@@ -2773,10 +2805,16 @@
       const addButton = document.createElement("button");
       addButton.type = "button";
       addButton.className = "offer-add-button";
-      addButton.textContent = hasPrice
-        ? localized("Add to basket", "أضف للسلة", "Fa ka basket ho")
-        : localized("Price not set", "السعر غير محدد", "Price not set");
-      addButton.disabled = !hasPrice;
+      addButton.textContent = !hasPrice
+        ? localized("Price not set", "السعر غير محدد", "Price not set")
+        : availability === "upcoming"
+          ? localized(
+              "Starts " + offerDate(offer.starts_at, "soon"),
+              "يبدأ " + offerDate(offer.starts_at, "قريباً"),
+              "Starts " + offerDate(offer.starts_at, "soon")
+            )
+          : localized("Add to basket", "أضف للسلة", "Fa ka basket ho");
+      addButton.disabled = !hasPrice || availability !== "active";
       addButton.addEventListener("click", () => addOfferItemToCart(offer, card));
 
       const feedback = document.createElement("p");
@@ -2892,9 +2930,9 @@
       }
       const now = Date.now();
       offers = (offerResult.data || []).filter(offer =>
-        (!offer.starts_at || new Date(offer.starts_at).getTime() <= now) &&
-        (!offer.ends_at || new Date(offer.ends_at).getTime() >= now)
+        offerWindowStatus(offer, now) !== "expired"
       );
+      offerAvailabilitySignature = offerWindowSignature(offers, now);
       cart = Object.fromEntries(Object.entries(cart).filter(([id, quantity]) =>
         Number.isInteger(Number(quantity)) && Number(quantity) > 0 && Number(quantity) <= 50 &&
         Boolean(getCartEntry(id))
@@ -2942,6 +2980,23 @@
     ]));
   }
 
+  function syncOfferWindowState(now = Date.now()) {
+    const nextOffers = offers.filter(offer => offerWindowStatus(offer, now) !== "expired");
+    const nextSignature = offerWindowSignature(nextOffers, now);
+    if (nextSignature === offerAvailabilitySignature && nextOffers.length === offers.length) return false;
+
+    offers = nextOffers;
+    offerAvailabilitySignature = nextSignature;
+    cart = Object.fromEntries(Object.entries(cart).filter(([id, quantity]) =>
+      Number.isInteger(Number(quantity)) && Number(quantity) > 0 && Number(quantity) <= 50 &&
+      Boolean(getCartEntry(id))
+    ));
+    persistCart();
+    renderOffers();
+    renderCart();
+    return true;
+  }
+
   async function refreshCustomerCatalog() {
     if (!db || !authSession?.user || menuLoading || customerCatalogRefreshInProgress) return;
     if (document.visibilityState === "hidden" || navigator.onLine === false) return;
@@ -2966,12 +3021,13 @@
       const nextProducts = menuResult.data || [];
       const now = Date.now();
       const nextOffers = (offerResult.data || []).filter(offer =>
-        (!offer.starts_at || new Date(offer.starts_at).getTime() <= now) &&
-        (!offer.ends_at || new Date(offer.ends_at).getTime() >= now)
+        offerWindowStatus(offer, now) !== "expired"
       );
       const menuChanged = menuCatalogSignature(nextProducts) !== menuCatalogSignature(products);
       const offersChanged = offersCatalogSignature(nextOffers) !== offersCatalogSignature(offers);
-      if (!menuChanged && !offersChanged) return;
+      const nextOfferAvailabilitySignature = offerWindowSignature(nextOffers, now);
+      const offerWindowChanged = nextOfferAvailabilitySignature !== offerAvailabilitySignature;
+      if (!menuChanged && !offersChanged && !offerWindowChanged) return;
       if (menuChanged) {
         products = nextProducts;
         menuFeatureDetailsAvailable = true;
@@ -2984,8 +3040,14 @@
         renderMenu();
         renderCart();
       }
-      if (offersChanged) {
+      if (offersChanged || offerWindowChanged) {
         offers = nextOffers;
+        offerAvailabilitySignature = nextOfferAvailabilitySignature;
+        cart = Object.fromEntries(Object.entries(cart).filter(([id, quantity]) =>
+          Number.isInteger(Number(quantity)) && Number(quantity) > 0 && Number(quantity) <= 50 &&
+          Boolean(getCartEntry(id))
+        ));
+        persistCart();
         renderOffers();
         renderCart();
       }
@@ -2999,7 +3061,10 @@
   function startCustomerCatalogRefresh() {
     if (customerCatalogRefreshTimer) return;
     customerCatalogRefreshTimer = window.setInterval(() => {
-      if (document.visibilityState === "visible") void refreshCustomerCatalog();
+      if (document.visibilityState === "visible") {
+        syncOfferWindowState();
+        void refreshCustomerCatalog();
+      }
     }, CUSTOMER_CATALOG_REFRESH_INTERVAL_MS);
   }
 
