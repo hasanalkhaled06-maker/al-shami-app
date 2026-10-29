@@ -431,7 +431,7 @@ html body.rider-app .delivery-actions .navigation-button:not(.secondary){
   background:var(--shami-wine)!important;color:#FFFFFF!important;border:1px solid #B54A5D!important;
 }
 html body.rider-app .delivery-actions .navigation-button.secondary{
-  background:#2A2226!important;color:var(--shami-text)!important;border:1px solid #59444D!important;
+  background:#2A2226!important;color:#FFFFFF!important;border:1px solid #59444D!important;
 }
 html body.rider-app .login-panel:before{background:linear-gradient(120deg,#2C151C,#701E30)!important}
 html body.rider-app .login-panel h1,html body.rider-app .approval-panel h1{color:var(--shami-text)!important}
