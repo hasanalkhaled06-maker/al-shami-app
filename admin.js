@@ -626,13 +626,11 @@
       if (subtitle) subtitle.textContent = "Orders currently being prepared or delivered.";
       hideAdminSections();
       $("#tab-orders")?.classList.remove("hidden");
-      $("#receipt-confirm-form")?.classList.add("hidden");
       $("#export-orders")?.classList.add("hidden");
       $("#order-filter option[value=\"rejected\"]")?.remove();
     } else if (mode === "owner") {
       if (heading) heading.textContent = "Restaurant overview";
       if (subtitle) subtitle.textContent = "Live orders, menu and restaurant operations.";
-      $("#receipt-confirm-form")?.classList.remove("hidden");
       $("#export-orders")?.classList.remove("hidden");
       if (!$("#order-filter option[value=\"rejected\"]")) {
         const option = document.createElement("option");
@@ -1591,10 +1589,6 @@
   });
 
   function renderOrders() {
-    const enteredReceiptCodes = new Map(
-      Array.from($("#orders-list")?.querySelectorAll("[data-receipt-code-input]") || [])
-        .map(input => [input.dataset.receiptCodeInput, input.value])
-    );
     const selectedOrderFilter = $("#order-filter")?.value || "all";
     const filteredOrders = visibleOrders().filter(order =>
       order.status !== "completed" && (order.status !== "rejected" || selectedOrderFilter === "rejected")
@@ -1673,15 +1667,6 @@
             </div>
 
             <div class="order-actions">
-              ${accessMode === "owner" && ((order.order_type === "pickup" && order.status === "ready") || (order.order_type === "delivery" && order.status === "out_for_delivery")) ? `
-                <div class="inline-receipt-confirm">
-                  <label>Customer receipt code
-                    <input type="text" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="off" placeholder="Enter 6-digit code" data-receipt-code-input="${esc(order.id)}" aria-label="6-digit receipt code for order ${esc(order.order_number || order.id.slice(0, 8))}">
-                  </label>
-                  <button class="btn btn-primary" type="button" data-confirm-order-receipt="${esc(order.id)}">Verify code &amp; Complete</button>
-                  <small class="inline-receipt-message" data-receipt-message="${esc(order.id)}" role="status" aria-live="polite"></small>
-                </div>
-              ` : ""}
               <select data-status="${order.id}"
                 aria-label="Next action for order ${esc(order.order_number || order.id.slice(0, 8))}">
                 <option value="">Choose next step…</option>
@@ -1704,9 +1689,6 @@
       `).join("")
       : '<p class="muted">No orders in this view.</p>';
 
-    $("#orders-list")?.querySelectorAll("[data-receipt-code-input]").forEach(input => {
-      input.value = enteredReceiptCodes.get(input.dataset.receiptCodeInput) || "";
-    });
     updateOrderWaitBadges();
     $("#orders-list")
       .querySelectorAll("[data-status]")
@@ -1724,18 +1706,6 @@
           });
         };
       });
-
-    $("#orders-list").querySelectorAll("[data-confirm-order-receipt]").forEach(button => {
-      button.onclick = () => {
-        const orderId = button.dataset.confirmOrderReceipt;
-        const input = $("#orders-list").querySelector("[data-receipt-code-input='" + CSS.escape(orderId) + "']");
-        const message = $("#orders-list").querySelector("[data-receipt-message='" + CSS.escape(orderId) + "']");
-        const order = orders.find(item => item.id === orderId);
-        if (!order || !input) return;
-        button.disabled = true;
-        void confirmInlineOrderReceipt(order, input.value, message, button);
-      };
-    });
 
     $("#orders-list").querySelectorAll("[data-quick-order]").forEach(button => {
       button.onclick = () => {
@@ -1983,118 +1953,9 @@ Status: ${order.status}`;
     if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); }
   }, true);
 
-  $("#receipt-confirm-form")?.addEventListener("submit", async event => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const button = form.querySelector('button[type="submit"]');
-    const message = $("#receipt-confirm-message");
-    const orderNumber = Number(form.elements.order_number.value);
-    const receiptCode = String(form.elements.receipt_code.value || "").trim();
-    if (!Number.isSafeInteger(orderNumber) || orderNumber < 1 || !/^[0-9]{6}$/.test(receiptCode)) {
-      if (message) { message.textContent = "Enter a valid order number and 6-digit receipt code."; message.className = "status-message error"; }
-      return;
-    }
-    button.disabled = true;
-    if (message) { message.textContent = "Checking receipt code…"; message.className = "status-message"; }
-    try {
-      const { error } = await db.rpc("confirm_customer_receipt", {
-        p_order_number: orderNumber,
-        p_receipt_code: receiptCode
-      });
-      if (error) throw error;
-
-      let receiptSmsFailed = false;
-      try {
-        const { error: smsError } = await db.functions.invoke("notify-order-status", {
-          body: { orderNumber, status: "completed" }
-        });
-        if (smsError) throw smsError;
-      } catch (smsError) {
-        receiptSmsFailed = true;
-        console.warn("Receipt was confirmed, but its SMS notification failed:", smsError);
-      }
-
-
-      try {
-        const { error: pushError } = await db.functions.invoke("customer-push", {
-          body: { action: "order-status", orderNumber, status: "completed" }
-        });
-        if (pushError) throw pushError;
-      } catch (pushError) {
-        console.warn("Receipt was confirmed, but the customer push notification failed:", pushError);
-      }
-
-      if (message) {
-        message.textContent = receiptSmsFailed
-          ? "Receipt confirmed and moved to History, but the customer SMS could not be sent."
-          : "Receipt confirmed. Customer notified by SMS; order moved to History.";
-        message.className = "status-message success";
-      }
-      form.reset();
-      await loadOrders();
-    } catch (error) {
-      if (message) { message.textContent = error.message || "Could not confirm receipt."; message.className = "status-message error"; }
-    } finally {
-      button.disabled = false;
-    }
-  });
-
-  async function confirmInlineOrderReceipt(order, code, message, button) {
-    const receiptCode = String(code || "").trim();
-    if (!/^[0-9]{6}$/.test(receiptCode)) {
-      if (message) { message.textContent = "Enter the customer's 6-digit receipt code."; message.className = "inline-receipt-message error"; }
-      button.disabled = false;
-      return;
-    }
-    const orderNumber = Number(order.order_number);
-    if (!Number.isSafeInteger(orderNumber) || orderNumber < 1) {
-      if (message) { message.textContent = "Order number is missing; refresh the orders list."; message.className = "inline-receipt-message error"; }
-      button.disabled = false;
-      return;
-    }
-    if (message) { message.textContent = "Checking code…"; message.className = "inline-receipt-message"; }
-    try {
-      const { error } = await db.rpc("confirm_customer_receipt", {
-        p_order_number: orderNumber,
-        p_receipt_code: receiptCode
-      });
-      if (error) throw error;
-
-      let smsFailed = false;
-      try {
-        const { error: smsError } = await db.functions.invoke("notify-order-status", {
-          body: { orderNumber, status: "completed" }
-        });
-        if (smsError) throw smsError;
-      } catch (error) {
-        smsFailed = true;
-        console.warn("Order completed, but receipt SMS failed:", error);
-      }
-      try {
-        const { error: pushError } = await db.functions.invoke("customer-push", {
-          body: { action: "order-status", orderNumber, status: "completed" }
-        });
-        if (pushError) throw pushError;
-      } catch (error) {
-        console.warn("Order completed, but customer push notification failed:", error);
-      }
-
-      if (message) {
-        message.textContent = smsFailed
-          ? "Code verified. Order completed; SMS could not be sent."
-          : "Code verified. Order completed and customer notified.";
-        message.className = "inline-receipt-message success";
-      }
-      await loadOrders();
-    } catch (error) {
-      if (message) { message.textContent = error.message || "Could not verify the receipt code."; message.className = "inline-receipt-message error"; }
-      button.disabled = false;
-    }
-  }
-
   async function updateStatus(id, newStatus, options = {}) {
     if (newStatus === "completed") {
-      toast("Use Confirm receipt with the customer's 6-digit code.");
+      toast("The delivery rider must verify the 6-digit customer code in the Delivery app.");
       await loadOrders();
       return false;
     }
