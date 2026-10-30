@@ -2146,13 +2146,90 @@ Status: ${order.status}`;
     }
   }
 
+  const MENU_IMAGE_BUCKET = "menu-images";
+  const MENU_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+  let selectedProductImageFile = null;
+  let productImagePreviewUrl = "";
+
+  function setProductImagePreview(url) {
+    const previewWrap = $("#product-image-preview-wrap");
+    const preview = $("#product-image-preview");
+    if (!previewWrap || !preview) return;
+    if (!url) {
+      preview.removeAttribute("src");
+      previewWrap.hidden = true;
+      return;
+    }
+    preview.src = url;
+    previewWrap.hidden = false;
+  }
+
+  function setProductImageFile(file) {
+    if (!file) return false;
+    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+    if (!allowedTypes.has(file.type)) {
+      status("Choose a JPG, PNG, or WebP image.", "#product-message", true);
+      return false;
+    }
+    if (file.size > MENU_IMAGE_MAX_BYTES) {
+      status("The photo must be 8 MB or smaller.", "#product-message", true);
+      return false;
+    }
+    if (productImagePreviewUrl.startsWith("blob:")) URL.revokeObjectURL(productImagePreviewUrl);
+    selectedProductImageFile = file;
+    productImagePreviewUrl = URL.createObjectURL(file);
+    $("#product-form").elements.image_url.value = "";
+    setProductImagePreview(productImagePreviewUrl);
+    $("#product-message").textContent = "Photo selected. It will upload when you save the item.";
+    $("#product-message").className = "status-message full";
+    return true;
+  }
+
+  function clearProductImage() {
+    if (productImagePreviewUrl.startsWith("blob:")) URL.revokeObjectURL(productImagePreviewUrl);
+    productImagePreviewUrl = "";
+    selectedProductImageFile = null;
+    const form = $("#product-form");
+    form.elements.image_file.value = "";
+    form.elements.image_url.value = "";
+    setProductImagePreview("");
+  }
+
   function resetProduct() {
     const form = $("#product-form");
-
+    if (productImagePreviewUrl.startsWith("blob:")) URL.revokeObjectURL(productImagePreviewUrl);
+    productImagePreviewUrl = "";
+    selectedProductImageFile = null;
     form.reset();
     form.elements.id.value = "";
     form.elements.is_available.checked = true;
+    setProductImagePreview("");
   }
+
+  const productImageDropzone = $("#product-image-dropzone");
+  const productImageInput = $("#product-image-file");
+  productImageInput?.addEventListener("change", () => {
+    if (productImageInput.files?.[0]) setProductImageFile(productImageInput.files[0]);
+  });
+  productImageDropzone?.addEventListener("paste", event => {
+    const image = Array.from(event.clipboardData?.items || [])
+      .find(item => item.type.startsWith("image/"))?.getAsFile();
+    if (!image) return;
+    event.preventDefault();
+    setProductImageFile(image);
+  });
+  productImageDropzone?.addEventListener("dragover", event => {
+    event.preventDefault();
+    productImageDropzone.classList.add("is-dragging");
+  });
+  productImageDropzone?.addEventListener("dragleave", () => productImageDropzone.classList.remove("is-dragging"));
+  productImageDropzone?.addEventListener("drop", event => {
+    event.preventDefault();
+    productImageDropzone.classList.remove("is-dragging");
+    const file = Array.from(event.dataTransfer?.files || []).find(item => item.type.startsWith("image/"));
+    if (file) setProductImageFile(file);
+  });
+  $("#clear-product-image")?.addEventListener("click", clearProductImage);
 
   async function loadProducts() {
     const { data, error } = await db
@@ -2240,6 +2317,11 @@ Status: ${order.status}`;
               form.elements[key].value = value;
             }
           });
+          if (productImagePreviewUrl.startsWith("blob:")) URL.revokeObjectURL(productImagePreviewUrl);
+          selectedProductImageFile = null;
+          productImagePreviewUrl = product.image_url || "";
+          form.elements.image_file.value = "";
+          setProductImagePreview(productImagePreviewUrl);
 
           window.scrollTo({
             top:
@@ -2299,19 +2381,47 @@ Status: ${order.status}`;
     }
 
     const id = form.elements.id.value;
+    const submitButton = form.querySelector('button[type="submit"]');
+    let uploadedPath = "";
+    let itemSaved = false;
+    submitButton.disabled = true;
+    submitButton.textContent = selectedProductImageFile ? "Uploading photo…" : "Saving…";
+    try {
+      if (selectedProductImageFile) {
+        const file = selectedProductImageFile;
+        const extension = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
+        const uniqueId = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        uploadedPath = `menu-items/${uniqueId}.${extension}`;
+        const { error: uploadError } = await db.storage.from(MENU_IMAGE_BUCKET).upload(uploadedPath, file, {
+          cacheControl: "31536000",
+          contentType: file.type,
+          upsert: false
+        });
+        if (uploadError) throw uploadError;
+        data.image_url = db.storage.from(MENU_IMAGE_BUCKET).getPublicUrl(uploadedPath).data.publicUrl;
+      }
 
-    const result = id
-      ? await db.from("menu_items").update(data).eq("id", id)
-      : await db.from("menu_items").insert(data);
+      const result = id
+        ? await db.from("menu_items").update(data).eq("id", id)
+        : await db.from("menu_items").insert(data);
 
-    if (result.error) {
-      status(result.error.message, "#product-message", true);
-      return;
+      if (result.error) throw result.error;
+      itemSaved = true;
+      status("Menu item saved with its photo.");
+      resetProduct();
+      await loadProducts();
+    } catch (error) {
+      if (uploadedPath && !itemSaved) {
+        const { error: cleanupError } = await db.storage.from(MENU_IMAGE_BUCKET).remove([uploadedPath]);
+        if (cleanupError) console.warn("Could not remove an unused menu photo:", cleanupError);
+      }
+      status(itemSaved
+        ? "The item was saved, but the menu list could not refresh. Use Refresh to reload it."
+        : error.message || "Could not save the menu item.", "#product-message", !itemSaved);
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Save item";
     }
-
-    status("Menu item saved.");
-    resetProduct();
-    await loadProducts();
   };
 
   $("#cancel-product").onclick = resetProduct;
@@ -2794,3 +2904,4 @@ Status: ${order.status}`;
 
   start();
 })();
+
