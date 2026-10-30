@@ -130,6 +130,15 @@
   .order-quick-action{min-height:42px;font-weight:800}
   #order-results-count{margin:8px 0 0;font-weight:700}
   @media(max-width:560px){#tab-orders .section-heading{gap:8px}#tab-orders .section-heading>*{min-width:0;max-width:100%}#tab-orders #order-search{flex:1 1 100%}}
+  .product-image-editor{display:grid;gap:8px}
+  .product-image-editor>label{font-weight:800;color:#263c50}
+  .product-image-dropzone{padding:16px;border:2px dashed #b9cbd6;border-radius:14px;background:#f6fafc;outline:none}
+  .product-image-dropzone:focus,.product-image-dropzone.is-dragging{border-color:#1c6b83;box-shadow:0 0 0 3px rgba(28,107,131,.12)}
+  .product-image-dropzone input{width:100%;padding:8px;border:0;background:transparent}
+  .product-image-dropzone p{margin:5px 0 0;color:#657783;font-size:13px}
+  .product-image-preview-wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .product-image-preview-wrap[hidden]{display:none!important}
+  .product-image-preview-wrap img{width:112px;height:92px;object-fit:cover;border-radius:12px;border:1px solid #ded6ca;background:#fff}
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="app-refresh.css?v=clear-flow-20261028a">
@@ -412,10 +421,18 @@
           <input name="price" type="number" min="0.01" step="0.01" required>
         </label>
 
-        <label>
-          Photo URL (optional)
-          <input name="image_url" type="url" placeholder="https://…">
-        </label>
+        <div class="full product-image-editor">
+          <label for="product-image-file">Item photo</label>
+          <div id="product-image-dropzone" class="product-image-dropzone" tabindex="0" role="button" aria-describedby="product-image-help">
+            <input id="product-image-file" name="image_file" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Choose an item photo from this device">
+            <p id="product-image-help">Choose a photo from your device, or paste an image here. JPG, PNG, or WebP · up to 8 MB.</p>
+          </div>
+          <input name="image_url" type="hidden" value="">
+          <div id="product-image-preview-wrap" class="product-image-preview-wrap" hidden>
+            <img id="product-image-preview" alt="Selected menu item preview">
+            <button id="clear-product-image" class="btn btn-light" type="button">Remove photo</button>
+          </div>
+        </div>
 
         <label class="full">
           Description
@@ -681,3 +698,4 @@
 
 </body>
 </html>
+
