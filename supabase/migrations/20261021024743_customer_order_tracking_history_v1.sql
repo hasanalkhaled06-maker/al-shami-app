@@ -1,5 +1,4 @@
--- Adds bearer-token order tracking without exposing customer phone/address data.
--- Existing orders are preserved; each receives a new private tracking token that has not been shared with its customer.
+
 ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS customer_tracking_token uuid NOT NULL DEFAULT gen_random_uuid();
 
@@ -23,7 +22,6 @@ ALTER TABLE public.orders
 
 ALTER TABLE public.orders VALIDATE CONSTRAINT orders_status_check;
 
--- Preserve the existing order validation/pricing logic and add a private tracking token to the receipt payload.
 CREATE OR REPLACE FUNCTION public.place_order(
   p_customer_name text,
   p_customer_phone text,
@@ -133,7 +131,6 @@ begin
 end;
 $function$;
 
--- A tracking token is a high-entropy bearer capability. Return only the safe summary, never phone, address, or notes.
 CREATE OR REPLACE FUNCTION public.get_customer_order_tracking(p_tracking_token uuid)
 RETURNS jsonb
 LANGUAGE plpgsql

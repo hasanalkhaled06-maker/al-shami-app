@@ -1,8 +1,8 @@
--- AL SHAMI live rider movement, heading and speed for customer ETA presentation.
--- Still token-scoped; customers do not get direct access to delivery_rider_locations.
 
 BEGIN;
 
+-- Expose only the latest GPS quality, direction and speed through the same
+-- token-scoped RPCs that already protect customer delivery tracking.
 CREATE OR REPLACE FUNCTION public.get_customer_rider_location(p_tracking_token uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -112,6 +112,7 @@ BEGIN
 END;
 $function$;
 
+-- Function privileges remain token-scoped; keep direct table access revoked.
 REVOKE ALL ON FUNCTION public.get_customer_rider_location(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_customer_rider_location(uuid) TO authenticated;
 REVOKE ALL ON FUNCTION public.get_customer_order_tracking(uuid) FROM PUBLIC, anon;
