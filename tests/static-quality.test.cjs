@@ -261,5 +261,7 @@ test("customer reward failures are described without assuming a missing migratio
   assert.match(features, /ما زال بإمكانك طلب وجبات نقداً/);
   assert.match(html, /customer-features\.js\?v=customer-feature-recovery-20261029a/);
   assert.match(worker, /customer-features\.js\?v=customer-feature-recovery-20261029a/);
-  assert.match(worker, /CACHE_NAME = CACHE_PREFIX \+ "v151"/);
+  const cacheVersion = worker.match(/CACHE_NAME = CACHE_PREFIX \+ "v(\d+)"/);
+  assert.ok(cacheVersion, "service worker cache name must include a version");
+  assert.ok(Number(cacheVersion[1]) > 151, "service worker cache must be newer than the reward recovery baseline");
 });
