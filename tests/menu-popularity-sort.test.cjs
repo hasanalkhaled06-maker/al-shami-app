@@ -30,3 +30,14 @@ test("popular menu sorting keeps local popularity fallback descending", () => {
   items.sort((a, b) => compareMenuPopularity(a, b, new Map()));
   assert.deepEqual(items.map(item => item.id), ["more-popular", "less-popular"]);
 });
+
+test("popular ranking release refreshes customer and order-history script caches", () => {
+  const pages = ["index.html", "history.html"];
+  for (const page of pages) {
+    const html = fs.readFileSync(path.resolve(__dirname, "../" + page), "utf8");
+    assert.ok(html.includes("customer.js?v=popular-rank-20261031a"), page + " must load the current popularity fix");
+  }
+  const serviceWorker = fs.readFileSync(path.resolve(__dirname, "../service-worker.js"), "utf8");
+  assert.ok(serviceWorker.includes('"./customer.js?v=popular-rank-20261031a"'));
+  assert.ok(serviceWorker.includes('CACHE_PREFIX + "v160"'));
+});
