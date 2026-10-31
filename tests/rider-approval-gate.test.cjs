@@ -45,6 +45,7 @@ function makeHarness(initialRpcResult) {
       addEventListener(type, handler) { this.listeners[type] = handler; },
       setAttribute(name, value) { this.attributes[name] = String(value); },
       replaceChildren() { this.innerHTML = ""; },
+      querySelectorAll() { return []; },
       focus() {},
       reset() {},
       elements: {
