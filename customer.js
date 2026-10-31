@@ -2356,13 +2356,28 @@
     });
     if (sortMode === "price-asc") visibleProducts.sort((a, b) => Number(a.price) - Number(b.price));
     if (sortMode === "price-desc") visibleProducts.sort((a, b) => Number(b.price) - Number(a.price));
-    if (sortMode === "popular") visibleProducts.sort((a, b) => {
-      const popularityA = Number(popularityByMenuItem.get(String(a.id)) ?? a.popularity ?? a.order_count ?? 0);
-      const popularityB = Number(popularityByMenuItem.get(String(b.id)) ?? b.popularity ?? b.order_count ?? 0);
-      return popularityB - popularityA ||
+    function compareMenuPopularity(a, b, ranks) {
+      const rankA = ranks.get(String(a.id));
+      const rankB = ranks.get(String(b.id));
+      const byMenuOrder = () =>
         Number(a.sort_order || 0) - Number(b.sort_order || 0) ||
         String(a.name || "").localeCompare(String(b.name || ""));
-    });
+
+      if (rankA !== undefined || rankB !== undefined) {
+        if (rankA === undefined) return 1;
+        if (rankB === undefined) return -1;
+        const rankDifference = Number(rankA) - Number(rankB);
+        return rankDifference || byMenuOrder();
+      }
+
+      const popularityA = Number(a.popularity ?? a.order_count ?? 0);
+      const popularityB = Number(b.popularity ?? b.order_count ?? 0);
+      return popularityB - popularityA || byMenuOrder();
+    }
+
+    if (sortMode === "popular") {
+      visibleProducts.sort((a, b) => compareMenuPopularity(a, b, popularityByMenuItem));
+    }
 
     menu.innerHTML = visibleProducts.length
       ? visibleProducts.map(product => {
