@@ -3642,16 +3642,7 @@
           if (deliveryZoneLookupAvailable && activeDeliveryZones.length) {
             throw new Error(localized("Apply the optional database upgrade before accepting zone-priced orders.", "قبل قبول طلبات برسوم حسب المنطقة، لازم تطبيق تحديث قاعدة البيانات.", "Apply the optional database upgrade before accepting zone-priced orders."));
           }
-          ({ data, error } = await db.rpc("place_order_with_location", {
-            p_customer_name: rpcArgs.p_customer_name,
-            p_customer_phone: rpcArgs.p_customer_phone,
-            p_order_type: rpcArgs.p_order_type,
-            p_delivery_address: rpcArgs.p_delivery_address,
-            p_notes: legacyOrderNotes,
-            p_items: submittedItems,
-            p_delivery_latitude: deliveryLatitude,
-            p_delivery_longitude: deliveryLongitude
-          }));
+          throw new Error(localized("The secure order endpoint is unavailable. Refresh the app or contact support before placing this order.", "خدمة الطلب الآمنة غير متاحة حالياً. حدّث التطبيق أو تواصل مع الدعم قبل إرسال الطلب.", "The secure order endpoint is unavailable. Refresh the app or contact support before placing this order."));
         }
 
         if (error) throw error;
