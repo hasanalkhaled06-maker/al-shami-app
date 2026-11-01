@@ -39,5 +39,5 @@ test("popular ranking release refreshes customer and order-history script caches
   }
   const serviceWorker = fs.readFileSync(path.resolve(__dirname, "../service-worker.js"), "utf8");
   assert.ok(serviceWorker.includes('"./customer.js?v=popular-rank-20261031a"'));
-  assert.ok(serviceWorker.includes('CACHE_PREFIX + "v160"'));
+  assert.ok(serviceWorker.includes('CACHE_PREFIX + "v161"'));
 });
