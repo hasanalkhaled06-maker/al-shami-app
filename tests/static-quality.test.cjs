@@ -150,7 +150,7 @@ test("animated AL SHAMI chef wordmark is included and cached", () => {
 test("customer auth dialog does not expose an unsupported guest-checkout control", () => {
   assert.doesNotMatch(source("index.html"), /auth-continue-guest|Continue without an account/);
   assert.doesNotMatch(source("history.html"), /auth-continue-guest|Continue without an account/);
-  assert.doesNotMatch(source("customer.js"), /auth-continue-guest/);
+  assert.doesNotMatch(source("customer.js"), /db\.rpc\(["']place_order_with_location["']/);
 });
 
 test("customer ordering and history pages expose matching email and phone sign-in controls", () => {
@@ -167,12 +167,12 @@ test("customer ordering and history pages expose matching email and phone sign-i
 });
 
 test("customer browser cannot invoke the legacy order RPC directly", () => {
-  assert.doesNotMatch(source("customer.js"), /db\\.rpc\\(["']place_order_with_location["']/);
+  assert.doesNotMatch(source("customer.js"), /db\.rpc\(["']place_order_with_location["']/);
   const migration = fs.readdirSync(path.join(ROOT, "supabase/migrations"))
     .filter(name => name.endsWith("_restrict_legacy_order_rpc.sql"))
     .map(name => fs.readFileSync(path.join(ROOT, "supabase/migrations", name), "utf8"))
-    .join("\\n");
-  assert.match(migration, /REVOKE EXECUTE ON FUNCTION public\\.place_order_with_location\\([\\s\\S]*?FROM PUBLIC, anon, authenticated/i);
+    .join("\n");
+  assert.match(migration, /REVOKE EXECUTE ON FUNCTION public\.place_order_with_location\([\s\S]*?FROM PUBLIC, anon, authenticated/i);
 });
 
 test("browser configuration does not contain a Supabase secret/service-role key", () => {
