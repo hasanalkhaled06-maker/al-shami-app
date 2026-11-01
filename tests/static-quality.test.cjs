@@ -153,6 +153,19 @@ test("customer auth dialog does not expose an unsupported guest-checkout control
   assert.doesNotMatch(source("customer.js"), /auth-continue-guest/);
 });
 
+test("customer ordering and history pages expose matching email and phone sign-in controls", () => {
+  for (const page of ["index.html", "history.html"]) {
+    const html = source(page);
+    for (const id of ["auth-method-switch", "auth-method-email", "auth-method-phone"]) {
+      assert.match(html, new RegExp('id="' + id + '"'), page + " must include " + id);
+    }
+  }
+  const worker = source("service-worker.js");
+  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v161"/);
+  assert.ok(worker.includes("./customer.js?v=popular-rank-20261031a"),
+    "offline shell must include the customer script used by both account pages");
+});
+
 test("browser configuration does not contain a Supabase secret/service-role key", () => {
   const config = source("config.js");
   assert.doesNotMatch(config, /SUPABASE_SERVICE_ROLE_KEY\s*:/i);
