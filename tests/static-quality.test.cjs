@@ -166,6 +166,15 @@ test("customer ordering and history pages expose matching email and phone sign-i
     "offline shell must include the customer script used by both account pages");
 });
 
+test("customer browser cannot invoke the legacy order RPC directly", () => {
+  assert.doesNotMatch(source("customer.js"), /db\\.rpc\\(["']place_order_with_location["']/);
+  const migration = fs.readdirSync(path.join(ROOT, "supabase/migrations"))
+    .filter(name => name.endsWith("_restrict_legacy_order_rpc.sql"))
+    .map(name => fs.readFileSync(path.join(ROOT, "supabase/migrations", name), "utf8"))
+    .join("\\n");
+  assert.match(migration, /REVOKE EXECUTE ON FUNCTION public\\.place_order_with_location\\([\\s\\S]*?FROM PUBLIC, anon, authenticated/i);
+});
+
 test("browser configuration does not contain a Supabase secret/service-role key", () => {
   const config = source("config.js");
   assert.doesNotMatch(config, /SUPABASE_SERVICE_ROLE_KEY\s*:/i);
