@@ -207,7 +207,10 @@
       </div>
       <form id="customer-auth-form" data-mode="signin" novalidate>
         <label id="auth-name-field" hidden>Full name<input id="auth-name" type="text" autocomplete="name" maxlength="100" placeholder="Your full name"></label>
-        <div id="auth-method-switch" hidden></div>
+        <div id="auth-method-switch" class="auth-mode" role="group" aria-label="Sign-in method" hidden>
+          <button id="auth-method-email" class="btn btn-light active" type="button" aria-pressed="true">Email</button>
+          <button id="auth-method-phone" class="btn btn-light" type="button" aria-pressed="false">Phone</button>
+        </div>
         <label id="auth-identifier-field"><span id="auth-identifier-label">Email address</span><input id="auth-identifier" type="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required></label>
         <label id="auth-phone-field" hidden>Phone number<input id="auth-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="+233 24 123 4567"></label>
         <label>Password<input id="auth-password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="At least 8 characters" required></label>
