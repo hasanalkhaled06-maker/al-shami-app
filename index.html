@@ -303,43 +303,30 @@
         <div><p class="eyebrow">AL SHAMI ACCOUNT</p><h2 id="customer-auth-title">Sign in to your account</h2></div>
         <button id="auth-close" class="btn btn-light auth-close" type="button" aria-label="Close sign-in" hidden>×</button>
       </div>
-      <p id="customer-auth-help" class="muted">Choose email or phone, then sign in with that identifier and your password.</p>
+      <p id="customer-auth-help" class="muted">Choose email or username, then sign in with that identifier and your password.</p>
       <div id="auth-mode-switch" class="auth-mode" role="group" aria-label="Account option">
         <button id="auth-mode-signin" class="btn btn-light active" type="button" aria-pressed="true">Sign in</button>
         <button id="auth-mode-signup" class="btn btn-light" type="button" aria-pressed="false">Create account</button>
       </div>
       <form id="customer-auth-form" data-mode="signin" novalidate>
         <label id="auth-name-field" hidden>Full name<input id="auth-name" type="text" autocomplete="name" maxlength="100" placeholder="Your full name"></label>
-        <div id="auth-method-switch" class="auth-mode" role="group" aria-label="Sign-in method" hidden>
+        <div id="auth-method-switch" class="auth-mode" role="group" aria-label="Sign-in method">
           <button id="auth-method-email" class="btn btn-light active" type="button" aria-pressed="true">Email</button>
-          <button id="auth-method-phone" class="btn btn-light" type="button" aria-pressed="false">Phone</button>
+          <button id="auth-method-username" class="btn btn-light" type="button" aria-pressed="false">Username</button>
         </div>
         <label id="auth-identifier-field"><span id="auth-identifier-label">Email address</span><input id="auth-identifier" type="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required></label>
+        <label id="auth-contact-phone-field" hidden>Contact phone number<input id="auth-contact-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="+233 24 123 4567"></label>
         <label>Password<input id="auth-password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="At least 8 characters" required></label>
         <label id="auth-confirm-field" hidden>Confirm password<input id="auth-confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="Enter password again"></label>
         <p id="auth-password-help" class="field-help">Use at least 8 characters.</p>
         <button id="auth-submit" class="btn btn-primary btn-wide" type="submit">Sign in</button>
       </form>
-      <div id="auth-phone-confirm-panel" hidden>
-        <p id="auth-phone-confirm-help" class="muted">Enter the SMS code sent to your phone.</p>
-        <label for="auth-phone-confirm-code">SMS verification code</label>
-        <input id="auth-phone-confirm-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Enter the code">
-        <button id="auth-phone-confirm-verify" class="btn btn-primary btn-wide" type="button">Verify phone number</button>
-        <button id="auth-phone-confirm-back" class="btn btn-light auth-secondary" type="button">Back to sign up</button>
-      </div>
       <button id="auth-forgot-password" class="btn btn-light auth-secondary" type="button">Forgot your password?</button>
       <div id="auth-recovery-panel" hidden>
         <h3 id="auth-recovery-title">Recover your account</h3>
-        <p id="auth-recovery-help" class="muted">Verify the phone number linked to your account to reset your password.</p>
+        <p id="auth-recovery-help" class="muted">Use the recovery link sent to your email address.</p>
         <div id="auth-recovery-send-area">
-          <label for="auth-recovery-phone">Phone number</label>
-          <input id="auth-recovery-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="+233 24 123 4567">
-          <button id="auth-recovery-send" class="btn btn-primary btn-wide" type="button">Send SMS code</button>
-        </div>
-        <div id="auth-recovery-code-area" hidden>
-          <label for="auth-recovery-code">SMS verification code</label>
-          <input id="auth-recovery-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Enter the code">
-          <button id="auth-recovery-verify" class="btn btn-primary btn-wide" type="button">Verify code</button>
+          <button id="auth-recovery-send" class="btn btn-primary btn-wide" type="button">Send recovery email</button>
         </div>
         <div id="auth-recovery-password-area" hidden>
           <label for="auth-recovery-new-password">New password</label>
@@ -803,7 +790,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
-  <script src="customer.js?v=popular-rank-20261031a"></script>
+  <script src="customer.js?v=customer-auth-20261101a"></script>
   <script src="customer-features.js?v=customer-feature-recovery-20261029a"></script>
   <script src="pwa.js?v=install-prompt-20261027a"></script>
 </body>

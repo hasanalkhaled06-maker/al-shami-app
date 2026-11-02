@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 30118)
+Total output lines: 2938
+
 (() => {
   const cfg = window.AL_SHAMI_CONFIG || {};
   const DEVICE_SETUP_KEY = "al-shami-admin-device-setup-v1:" + String(cfg.SUPABASE_URL || "site");
@@ -404,6 +407,37 @@
       list.innerHTML = '<p class="status-message error">' + esc(error.message || "Could not load users.") + '</p>';
     }
   }
+
+  $("#customer-account-search-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const results = $("#customer-account-search-results");
+    const term = String($("#customer-account-search")?.value || "").trim().slice(0, 80);
+    if (!term || !selectedDb) return;
+    results.innerHTML = '<p class="muted">Searching customer accounts…</p>';
+    try {
+      if (!(await isAdmin())) throw new Error("Administrator access is required to search customer accounts.");
+      const safe = term.replace(/[,%()]/g, " ").replace(/\s+/g, " ").trim();
+      const phoneTerm = term.replace(/[^0-9+]/g, "");
+      const [byName, byPhone] = await Promise.all([
+        selectedDb.from("customer_profiles").select("user_id,full_name,phone_e164,created_at").ilike("full_name", `%${safe}%`).limit(50),
+        phoneTerm.length >= 3
+          ? selectedDb.from("customer_profiles").select("user_id,full_name,phone_e164,created_at").ilike("phone_e164", `%${phoneTerm}%`).limit(50)
+          : Promise.resolve({ data: [], error: null })
+      ]);
+      if (byName.error) throw byName.error;
+      if (byPhone.error) throw byPhone.error;
+      const rows = new Map();
+      [...(byName.data || []), ...(byPhone.data || [])].forEach(row => rows.set(row.user_id, row));
+      const matches = [...rows.values()].slice(0, 50);
+      results.innerHTML = matches.length ? matches.map(row =>
+        '<article class="user-access-row"><div><strong>' + esc(row.full_name || "Customer") +
+        '</strong><small>Contact phone: ' + esc(row.phone_e164) + ' · Account created ' + esc(formatGhanaDateTime(row.created_at)) +
+        '</small></div></article>').join("") : '<p class="muted">No matching customer accounts were found.</p>';
+    } catch (error) {
+      console.error("Customer account search failed:", error);
+      results.innerHTML = '<p class="status-message error">' + esc(error.message || "Could not search customer accounts.") + '</p>';
+    }
+  });
 
   $("#staff-user-form")?.addEventListener("submit", async event => {
     event.preventDefault();
@@ -1531,21 +1565,7 @@
         order.order_number || order.id,
         new Date(order.created_at).toISOString(),
         order.customer_name,
-        order.customer_phone,
-        order.order_type,
-        order.delivery_address || "",
-        (order.order_items || []).map(item =>
-          Number(item.quantity) + " x " + (item.item_name || item.menu_items?.name || "Menu item")
-        ).join("; "),
-        order.subtotal,
-        order.delivery_fee,
-        order.total,
-        order.status,
-        order.notes || ""
-      ])
-    ];
-    const csv = "\uFEFF" + rows.map(row => row.map(quote).join(",")).join("\r\n");
-    const url = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8;"}));
+        or…118 tokens truncated…   const url = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8;"}));
     const link = document.createElement("a");
     link.href = url;
     link.download = "al-shami-orders-" + new Date().toISOString().slice(0,10) + ".csv";

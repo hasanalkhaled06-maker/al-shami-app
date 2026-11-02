@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 45879)
+Total output lines: 3638
+
 
 (() => {
   "use strict";
@@ -351,9 +354,6 @@
   let authSession = null;
   let authMethod = "email";
   let authRecoveryMode = null;
-  let pendingPhoneConfirmation = "";
-  let recoveryPhone = "";
-  let recoveryPhoneVerified = false;
   let customerPhoneValidatedUserId = null;
   let phoneProfileValidation = null;
   let inPasswordRecovery = false;
@@ -399,8 +399,8 @@
 
     const promise = (async () => {
       const meta = user.user_metadata || {};
-      const phone = meta.phone_e164 || meta.phone || user.phone || "";
-      // Legacy accounts without a saved phone stay usable; new accounts must reserve a unique number.
+      const phone = meta.contact_phone || meta.phone_e164 || meta.phone || user.phone || "";
+      // The database trigger reserves a number at signup. This check protects older account records.
       if (!phone) {
         unlockCustomerApp(user.id);
         return;
@@ -502,14 +502,16 @@
     const methodSwitch = $("#auth-method-switch");
     if (title) title.textContent = signup ? "Create your AL SHAMI account" : "Sign in to your account";
     if (help) {
-      if (authMethod === "phone" && signup) help.textContent = "Create an account with your Ghana phone number and password. If phone confirmation is enabled, enter the SMS code sent to you.";
-      else if (authMethod === "phone") help.textContent = "Use your Ghana phone number and password.";
-      else if (signup) help.textContent = "Create an account with your email and password. Add your phone number when placing an order.";
-      else help.textContent = "Use the email address and password you registered with.";
+      if (signup) help.textContent = "Create an account with email or username, password, and a unique contact phone number.";
+      else help.textContent = authMethod === "username" ? "Use your username and password." : "Use the email address and password you registered with.";
     }
     if (methodSwitch) methodSwitch.hidden = Boolean(authRecoveryMode);
     if (nameField) nameField.hidden = !signup;
     if (nameInput) nameInput.required = signup;
+    const contactField = $("#auth-contact-phone-field");
+    const contactInput = $("#auth-contact-phone");
+    if (contactField) contactField.hidden = !signup;
+    if (contactInput) contactInput.required = signup;
     if (confirmField) confirmField.hidden = !signup;
     if (confirmInput) confirmInput.required = signup;
     if (password) password.autocomplete = signup ? "new-password" : "current-password";
@@ -521,20 +523,20 @@
   }
 
   function setAuthMethod(method) {
-    authMethod = method === "email" ? "email" : "phone";
+    authMethod = method === "email" ? "email" : "username";
     const label = $("#auth-identifier-label");
     const field = $("#auth-identifier");
-    const phoneButton = $("#auth-method-phone");
+    const usernameButton = $("#auth-method-username");
     const emailButton = $("#auth-method-email");
-    if (label) label.textContent = authMethod === "phone" ? "Phone number" : "Email address";
+    if (label) label.textContent = authMethod === "username" ? "Username" : "Email address";
     if (field) {
-      field.type = authMethod === "phone" ? "tel" : "email";
-      field.inputMode = authMethod === "phone" ? "tel" : "email";
-      field.autocomplete = authMethod === "phone" ? "tel" : "email";
-      field.placeholder = authMethod === "phone" ? "+233 24 123 4567" : "you@example.com";
+      field.type = authMethod === "username" ? "text" : "email";
+      field.inputMode = authMethod === "username" ? "text" : "email";
+      field.autocomplete = authMethod === "username" ? "username" : "email";
+      field.placeholder = authMethod === "username" ? "yourname" : "you@example.com";
       field.value = "";
     }
-    if (phoneButton) { phoneButton.classList.toggle("active", authMethod === "phone"); phoneButton.setAttribute("aria-pressed", String(authMethod === "phone")); }
+    if (usernameButton) { usernameButton.classList.toggle("active", authMethod === "username"); usernameButton.setAttribute("aria-pressed", String(authMethod === "username")); }
     if (emailButton) { emailButton.classList.toggle("active", authMethod === "email"); emailButton.setAttribute("aria-pressed", String(authMethod === "email")); }
     setAuthMode($("#customer-auth-form")?.dataset?.mode || "signin");
   }
@@ -543,8 +545,6 @@
     const gate = $("#customer-auth");
     if (!gate) return;
     authRecoveryMode = null;
-    recoveryPhoneVerified = false;
-    recoveryPhone = "";
     $("#auth-recovery-panel").hidden = true;
     $("#customer-auth-form").hidden = false;
     $("#auth-mode-switch").hidden = false;
@@ -559,7 +559,7 @@
   function closeAuthDialog() {
     const gate = $("#customer-auth");
     const user = authSession?.user;
-    const hasSavedPhone = Boolean(user?.user_metadata?.phone_e164 || user?.user_metadata?.phone);
+    const hasSavedPhone = Boolean(user?.user_metadata?.contact_phone || user?.user_metadata?.phone_e164 || user?.user_metadata?.phone);
     const phoneValidationPending = Boolean(user && hasSavedPhone && customerPhoneValidatedUserId !== user.id);
     if (!user || phoneValidationPending || inPasswordRecovery) {
       // Keep the mandatory gate until auth and the unique phone reservation both pass.
@@ -571,43 +571,14 @@
     document.body.classList.remove("auth-dialog-open", "customer-auth-required");
   }
 
-  function showPhoneRecovery() {
-    authRecoveryMode = "phone";
-    recoveryPhoneVerified = false;
-    recoveryPhone = "";
-    const gate = $("#customer-auth");
-    if (gate) gate.hidden = false;
-    document.body.classList.add("auth-dialog-open");
-    $("#customer-auth-title").textContent = "Recover your account by SMS";
-    $("#customer-auth-help").textContent = "A one-time code will be sent to the phone linked to your account. An SMS provider must be configured.";
-    $("#auth-mode-switch").hidden = true;
-    $("#auth-method-switch").hidden = true;
-    $("#customer-auth-form").hidden = true;
-    $("#auth-forgot-password").hidden = true;
-    $("#auth-recovery-panel").hidden = false;
-    $("#auth-recovery-title").textContent = "Verify your phone";
-    $("#auth-recovery-help").textContent = "Enter the Ghana phone number used when you created your account.";
-    $("#auth-recovery-send-area").hidden = false;
-    $("#auth-recovery-code-area").hidden = true;
-    $("#auth-recovery-password-area").hidden = true;
-    $("#auth-recovery-back").hidden = false;
-    $("#auth-recovery-code").value = "";
-    $("#auth-recovery-new-password").value = "";
-    $("#auth-recovery-confirm-password").value = "";
-    $("#auth-recovery-phone").value = $("#auth-identifier")?.value || "";
-    authMessage("");
-    window.requestAnimationFrame(() => $("#auth-recovery-phone")?.focus());
-  }
-
   function showPasswordRecovery(mode) {
     inPasswordRecovery = true;
     authRecoveryMode = mode;
-    recoveryPhoneVerified = mode === "phone";
     const gate = $("#customer-auth");
     if (gate) gate.hidden = false;
     document.body.classList.add("auth-dialog-open");
-    $("#customer-auth-title").textContent = mode === "phone" ? "Choose a new password" : "Reset your password";
-    $("#customer-auth-help").textContent = mode === "phone" ? "Your phone number was verified. Choose a new password." : "Your recovery link was accepted. Choose a new password.";
+    $("#customer-auth-title").textContent = "Reset your password";
+    $("#customer-auth-help").textContent = "Your recovery link was accepted. Choose a new password.";
     $("#auth-mode-switch").hidden = true;
     $("#auth-method-switch").hidden = true;
     $("#customer-auth-form").hidden = true;
@@ -616,7 +587,6 @@
     $("#auth-recovery-title").textContent = "Set a new password";
     $("#auth-recovery-help").textContent = "Use at least 8 characters and keep it private.";
     $("#auth-recovery-send-area").hidden = true;
-    $("#auth-recovery-code-area").hidden = true;
     $("#auth-recovery-password-area").hidden = false;
     $("#auth-recovery-back").hidden = true;
     authMessage("");
@@ -676,7 +646,6 @@
   $("#auth-close")?.addEventListener("click", closeAuthDialog);
   $("#auth-recovery-back")?.addEventListener("click", () => {
     authRecoveryMode = null;
-    recoveryPhoneVerified = false;
     $("#auth-recovery-panel").hidden = true;
     $("#customer-auth-form").hidden = false;
     $("#auth-mode-switch").hidden = false;
@@ -693,48 +662,8 @@
   $("#auth-mode-signin")?.addEventListener("click", () => setAuthMode("signin"));
   $("#auth-mode-signup")?.addEventListener("click", () => setAuthMode("signup"));
   $("#auth-method-email")?.addEventListener("click", () => setAuthMethod("email"));
-  $("#auth-method-phone")?.addEventListener("click", () => setAuthMethod("phone"));
+  $("#auth-method-username")?.addEventListener("click", () => setAuthMethod("username"));
   setAuthMethod("email");
-
-  $("#auth-phone-confirm-back")?.addEventListener("click", () => {
-    pendingPhoneConfirmation = "";
-    $("#auth-phone-confirm-panel").hidden = true;
-    $("#auth-phone-confirm-code").value = "";
-    $("#customer-auth-form").hidden = false;
-    $("#auth-mode-switch").hidden = false;
-    setAuthMethod("phone");
-    setAuthMode("signup");
-  });
-
-  $("#auth-phone-confirm-verify")?.addEventListener("click", async () => {
-    const button = $("#auth-phone-confirm-verify");
-    const token = String($("#auth-phone-confirm-code")?.value || "").trim();
-    if (!pendingPhoneConfirmation) {
-      authMessage("Start phone sign-up again to request a new verification code.", true);
-      return;
-    }
-    if (!token) {
-      authMessage("Enter the SMS verification code.", true);
-      $("#auth-phone-confirm-code")?.focus();
-      return;
-    }
-    if (button) { button.disabled = true; button.textContent = "Verifying…"; }
-    try {
-      const { data, error } = await db.auth.verifyOtp({ phone: pendingPhoneConfirmation, token, type: "sms" });
-      if (error) throw error;
-      pendingPhoneConfirmation = "";
-      $("#auth-phone-confirm-panel").hidden = true;
-      $("#auth-phone-confirm-code").value = "";
-      $("#auth-mode-switch").hidden = false;
-      applyAuthState(data.session);
-      closeAuthDialog();
-      authMessage("");
-    } catch (error) {
-      authMessage(error.message || "Could not verify this phone number. Check the code and try again.", true);
-    } finally {
-      if (button) { button.disabled = false; button.textContent = "Verify phone number"; }
-    }
-  });
 
   $("#customer-auth-form")?.addEventListener("submit", async event => {
     event.preventDefault();
@@ -744,83 +673,65 @@
     const password = String($("#auth-password")?.value || "");
     const mode = form.dataset.mode === "signup" ? "signup" : "signin";
     const fullName = String($("#auth-name")?.value || "").trim();
-    let identity = "";
+    let identity = String($("#auth-identifier")?.value || "").trim();
+    let contactPhone = "";
     try {
-      const rawIdentity = String($("#auth-identifier")?.value || "").trim();
-      if (authMethod === "phone") {
-        identity = normalizeGhanaPhone(rawIdentity);
-      } else {
-        identity = rawIdentity.toLowerCase();
+      if (authMethod === "email") {
+        identity = identity.toLowerCase();
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity)) throw new Error("Enter a valid email address.");
+      } else {
+        identity = identity.toLowerCase();
+        if (!/^[a-z0-9][a-z0-9._-]{2,29}$/.test(identity)) throw new Error("Use 3–30 characters for your username: letters, numbers, dot, underscore, or dash.");
       }
-      if (!password) throw new Error("Enter your password.");
-      if (password.length < 8) throw new Error("Use a password with at least 8 characters.");
-      if (mode === "signup" && fullName.length < 2) throw new Error("Enter your name to create an account.");
-      if (mode === "signup" && password !== String($("#auth-confirm-password")?.value || "")) throw new Error("The passwords do not match.");
+      if (password.length < 8 || password.length > 128) throw new Error("Use a password with 8–128 characters.");
+      if (mode === "signup") {
+        if (fullName.length < 2) throw new Error("Enter your name to create an account.");
+        if (password !== String($("#auth-confirm-password")?.value || "")) throw new Error("The passwords do not match.");
+        try { contactPhone = normalizeGhanaPhone(String($("#auth-contact-phone")?.value || "")); }
+        catch (_) { throw new Error("Enter a valid Ghana contact phone number."); }
+      }
       if (submit) { submit.disabled = true; submit.textContent = mode === "signup" ? "Creating account…" : "Signing in…"; }
       authMessage(mode === "signup" ? "Creating your account…" : "Signing in…");
-      if (mode === "signup") {
-        let data, error;
-        if (authMethod === "phone") {
-          const result = await db.auth.signUp({
-            phone: identity,
-            password,
-            options: { data: { full_name: fullName, phone: identity, phone_e164: identity } }
-          });
-          data = result.data;
-          error = result.error;
-        } else {
-          const result = await db.auth.signUp({
-            email: identity,
-            password,
-            options: { emailRedirectTo: getCustomerAuthRedirectUrl(), data: { full_name: fullName } }
-          });
-          data = result.data;
-          error = result.error;
-        }
+      let session;
+      if (authMethod === "username") {
+        const response = await fetch(`${cfg.SUPABASE_URL}/functions/v1/customer-auth`, {
+          method: "POST", headers: { "Content-Type": "application/json", apikey: cfg.SUPABASE_ANON_KEY },
+          body: JSON.stringify({ action: mode === "signup" ? "register" : "login", username: identity, password,
+            ...(mode === "signup" ? { full_name: fullName, contact_phone: contactPhone } : {}) })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "Account action failed. Please try again.");
+        const { data, error } = await db.auth.setSession({ access_token: result.access_token, refresh_token: result.refresh_token });
         if (error) throw error;
-        if (data.session) {
-          applyAuthState(data.session);
-          closeAuthDialog();
-          authMessage("");
-        } else if (Array.isArray(data.user?.identities) && data.user.identities.length === 0) {
-          authMessage(authMethod === "phone"
-            ? "An account may already exist for this phone number. Try signing in or use Forgot password."
-            : "This email may already have an account. Try signing in or use Forgot password.");
-        } else if (authMethod === "phone") {
-          pendingPhoneConfirmation = identity;
-          $("#customer-auth-form").hidden = true;
-          $("#auth-mode-switch").hidden = true;
-          $("#auth-phone-confirm-panel").hidden = false;
-          $("#auth-phone-confirm-code").value = "";
-          authMessage("If phone confirmation is enabled, enter the SMS code sent to this number.");
-          window.requestAnimationFrame(() => $("#auth-phone-confirm-code")?.focus());
-        } else {
-          authMessage("Account request received. Open the confirmation link sent to your email before signing in if email confirmation is enabled.");
+        session = data.session;
+      } else if (mode === "signup") {
+        const { data, error } = await db.auth.signUp({
+          email: identity, password,
+          options: { emailRedirectTo: getCustomerAuthRedirectUrl(), data: {
+            customer_account: "true", contact_phone: contactPhone, full_name: fullName
+          } }
+        });
+        if (error) throw error;
+        if (data.session) session = data.session;
+        else if (Array.isArray(data.user?.identities) && data.user.identities.length === 0) throw new Error("This email is already registered. Sign in or use password recovery.");
+        else {
+          authMessage("Account request received. Open the confirmation link sent to your email before signing in.");
+          return;
         }
       } else {
-        const credentials = authMethod === "phone" ? { phone: identity, password } : { email: identity, password };
-        const { data, error } = await db.auth.signInWithPassword(credentials);
+        const { data, error } = await db.auth.signInWithPassword({ email: identity, password });
         if (error) throw error;
-        applyAuthState(data.session);
-        closeAuthDialog();
+        session = data.session;
       }
+      if (session) { applyAuthState(session); closeAuthDialog(); authMessage(""); }
     } catch (error) {
       console.error("Customer account action failed:", error);
       const detail = String(error?.message || "");
-      if (authMethod === "phone" && /phone.*not enabled|phone provider|sms provider|phone auth/i.test(detail)) {
-        authMessage("Phone sign-in is not enabled in Supabase Auth yet. Enable the Phone provider and configure SMS delivery if phone confirmation is on.", true);
-      } else if (/email address not authorized|not authorized|confirmation email|SMTP|email provider/i.test(detail)) {
-        authMessage("Email delivery is not configured for public customers yet. Supabase's default sender only delivers to project team addresses. Configure a custom SMTP sender before customer signup and password recovery.", true);
-      } else if (/duplicate key|unique constraint|23505|already linked/i.test(detail)) {
-        authMessage("This phone number is already linked to another customer account. Sign in to the existing account or use a different number.", true);
-      } else if (/user already registered|email.*already|already.*email/i.test(detail)) {
-        authMessage(authMethod === "phone"
-          ? "This phone number is already registered. Sign in with that account or use Forgot password."
-          : "This email is already registered. Sign in with that account or use Forgot password.", true);
-      } else {
-        authMessage(detail || "Account action failed. Please try again.", true);
-      }
+      if (/email address not authorized|not authorized|confirmation email|SMTP|email provider/i.test(detail)) {
+        authMessage("Email delivery is not configured for public customers yet. Configure a custom SMTP sender before email signup and password recovery.", true);
+      } else if (/duplicate key|unique constraint|23505|already linked|already registered/i.test(detail)) {
+        authMessage("This username, email, or contact phone is already linked to an account. Sign in or contact AL SHAMI for help.", true);
+      } else authMessage(detail || "Account action failed. Please try again.", true);
     } finally {
       if (submit) { submit.disabled = false; submit.textContent = form.dataset.mode === "signup" ? "Create account" : "Sign in"; }
     }
@@ -828,7 +739,7 @@
 
   $("#auth-forgot-password")?.addEventListener("click", async () => {
     if (!db) { authMessage("Password recovery is unavailable because app configuration is missing.", true); return; }
-    if (authMethod === "phone") { showPhoneRecovery(); return; }
+    if (authMethod === "username") { authMessage("Username accounts without an email cannot reset passwords online yet. Contact AL SHAMI for account help.", true); return; }
     const email = String($("#auth-identifier")?.value || "").trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       authMessage("Enter your email address first.", true);
@@ -846,53 +757,13 @@
     } finally { if (button) button.disabled = false; }
   });
 
-  $("#auth-recovery-send")?.addEventListener("click", async () => {
-    const button = $("#auth-recovery-send");
-    try {
-      if (!db) throw new Error("Account service is not configured.");
-      recoveryPhone = normalizeGhanaPhone($("#auth-recovery-phone")?.value);
-      if (button) { button.disabled = true; button.textContent = "Sending SMS…"; }
-      authMessage("Requesting a recovery code…");
-      const { error } = await db.auth.signInWithOtp({ phone: recoveryPhone, options: { shouldCreateUser: false } });
-      if (error) throw error;
-      $("#auth-recovery-code-area").hidden = false;
-      $("#auth-recovery-code").focus();
-      authMessage("If an account is registered for this number, a verification code has been requested. Check your SMS.");
-    } catch (error) {
-      console.error("Phone recovery SMS request failed:", error);
-      const detail = String(error?.message || "");
-      authMessage(/sms|provider|phone auth|not enabled/i.test(detail)
-        ? "SMS recovery is not available yet. Supabase needs phone authentication enabled and an SMS provider configured. No password has been changed."
-        : detail || "Could not request a recovery code. Try again later.", true);
-    } finally { if (button) { button.disabled = false; button.textContent = "Send SMS code"; } }
-  });
-
-  $("#auth-recovery-verify")?.addEventListener("click", async () => {
-    const button = $("#auth-recovery-verify");
-    const token = String($("#auth-recovery-code")?.value || "").trim();
-    if (!token) { authMessage("Enter the SMS verification code.", true); return; }
-    try {
-      if (button) { button.disabled = true; button.textContent = "Verifying…"; }
-      const { data, error } = await db.auth.verifyOtp({ phone: recoveryPhone || normalizeGhanaPhone($("#auth-recovery-phone")?.value), token, type: "sms" });
-      if (error) throw error;
-      if (!data.session) throw new Error("The code was accepted but no sign-in session was returned. Please try again.");
-      applyAuthState(data.session);
-      recoveryPhoneVerified = true;
-      showPasswordRecovery("phone");
-      authMessage("Phone verified. You can now choose a new password.");
-    } catch (error) {
-      console.error("Phone recovery verification failed:", error);
-      authMessage(error.message || "That code could not be verified. Request a new code and try again.", true);
-    } finally { if (button) { button.disabled = false; button.textContent = "Verify code"; } }
-  });
-
   $("#auth-recovery-save")?.addEventListener("click", async () => {
     const password = String($("#auth-recovery-new-password")?.value || "");
     const confirmation = String($("#auth-recovery-confirm-password")?.value || "");
     if (password.length < 8) { authMessage("Use a password with at least 8 characters.", true); return; }
     if (password !== confirmation) { authMessage("The passwords do not match.", true); return; }
-    if (!authSession || (authRecoveryMode === "phone" && !recoveryPhoneVerified)) {
-      authMessage("Verify your phone or open your email recovery link before changing the password.", true);
+    if (!authSession) {
+      authMessage("Open your email recovery link before changing the password.", true);
       return;
     }
     const button = $("#auth-recovery-save");
@@ -901,7 +772,6 @@
       const { error } = await db.auth.updateUser({ password });
       if (error) throw error;
       authRecoveryMode = null;
-      recoveryPhoneVerified = false;
       inPasswordRecovery = false;
       $("#auth-recovery-panel").hidden = true;
       $("#customer-auth-form").hidden = false;
@@ -1388,1159 +1258,7 @@
     return true;
   }
 
-  function trackingStatusText(status, orderType = "") {
-    const value = String(status || "").toLowerCase();
-    if (value === "completed") {
-      if (lang === "ar") return orderType === "delivery" ? "تم التوصيل" : "تم الاستلام";
-      if (lang === "tw") return orderType === "delivery" ? "Wɔde ama wo" : "Wɔafa";
-      return orderType === "delivery" ? "Delivered" : "Collected";
-    }
-    const names = trackingStatusNames[lang] || trackingStatusNames.en;
-    return names[value] || String(status || "Unknown").replace(/_/g, " ");
-  }
-
-  function rejectionReasonText(reason) {
-    const value = String(reason || "").trim();
-    if (!value) return "";
-    const known = {
-      "Out of stock": localized("Out of stock", "نفد من المخزون", "Stock no nni"),
-      "Outside delivery area": localized("Outside delivery area", "الموقع خارج نطاق التوصيل", "Beae no wɔ delivery area no akyi"),
-      "Restaurant temporarily unavailable": localized("Restaurant temporarily unavailable", "المطعم غير متاح مؤقتاً", "Restaurant no nni hɔ seesei"),
-      "Could not reach customer": localized("Could not reach customer", "تعذّر التواصل مع الزبون", "Yentumi anka customer no ho")
-    };
-    return known[value] || value;
-  }
-
-  function trackingDate(value) {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-    return date.toLocaleString(lang === "ar" ? "ar" : (lang === "tw" ? "ak-GH" : "en-GH"), { dateStyle:"medium", timeStyle:"short", timeZone:"Africa/Accra" });
-  }
-
-  function setHomeCurrentOrdersVisible(visible) {
-    if (!isHistoryPage) document.body.classList.toggle("has-current-orders", Boolean(visible));
-  }
-
-  function validRiderPoint(latitude, longitude) {
-    if (latitude == null || longitude == null || latitude === "" || longitude === "") return null;
-    const lat = Number(latitude);
-    const lng = Number(longitude);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
-    return { lat, lng };
-  }
-
-  function customerPointDistanceMeters(a, b) {
-    if (!a || !b) return Infinity;
-    const radians = value => value * Math.PI / 180;
-    const dLat = radians(b.lat - a.lat);
-    const dLng = radians(b.lng - a.lng);
-    const lat1 = radians(a.lat);
-    const lat2 = radians(b.lat);
-    const value = Math.sin(dLat / 2) ** 2 +
-      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-    return 6371000 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(Math.max(0, 1 - value)));
-  }
-
-  function riderBikeIcon(heading) {
-    const hasHeading = Number.isFinite(Number(heading)) && heading !== null && heading !== "";
-    const angle = hasHeading ? Number(heading) - 90 : 0;
-    return window.L.divIcon({
-      className: "customer-rider-bike-marker",
-      html: '<span class="customer-rider-bike-glyph" style="transform:rotate(' + angle + 'deg)" role="img" aria-label="Delivery motorcycle">🛵</span>',
-      iconSize: [46, 46],
-      iconAnchor: [23, 23],
-      popupAnchor: [0, -23]
-    });
-  }
-
-  function updateCustomerGoogleMapsLink(record, point) {
-    if (!record.googleMapsLink || !record.destinationPoint || !point) return;
-    const params = new URLSearchParams({
-      api: "1",
-      origin: point.lat + "," + point.lng,
-      destination: record.destinationPoint.lat + "," + record.destinationPoint.lng,
-      travelmode: "driving"
-    });
-    record.googleMapsLink.href = "https://www.google.com/maps/dir/?" + params.toString();
-    record.googleMapsLink.hidden = false;
-  }
-
-  function updateCustomerRiderEta(record) {
-    if (!record.etaValueNode) return;
-    if (!record.currentRiderPoint) {
-      record.etaValueNode.textContent = localized("Waiting for the rider's first GPS update…", "بانتظار أول تحديث من السائق…", "Yɛretwɛn GPS nsɛm foforo a edi kan afi driver no hɔ…");
-      return;
-    }
-    if (record.isStale) {
-      if (Number.isFinite(record.etaDurationSeconds) && record.etaCalculatedAt) {
-        const elapsed = Math.max(0, Math.floor((Date.now() - record.etaCalculatedAt) / 1000));
-        const remaining = Math.max(0, record.etaDurationSeconds - elapsed);
-        const minutes = Math.max(1, Math.ceil(remaining / 60));
-        record.etaValueNode.textContent = remaining <= 45
-          ? localized("Last ETA: rider was nearly there", "وقت الوصول السابق: كان السائق قريباً", "Bere a etwaa mu no, na driver no abɛn")
-          : localized("About " + minutes + " min based on last route", "حوالي " + minutes + " دقيقة حسب آخر مسار", "Ɛbɛyɛ sima " + minutes + " sɛnea ɔkwan a etwaa mu no kyerɛ");
-        if (record.distanceNode) {
-          record.distanceNode.textContent = localized("Outdated estimate — GPS is delayed, actual arrival time is uncertain", "تقدير قديم — إشارة GPS متأخرة، والوقت الفعلي غير مؤكّد", "Bere no yɛ dedaw — GPS nsɛm no akyɛ, enti bere a ɔbɛba no nni hɔ pefee");
-        }
-      } else {
-        record.etaValueNode.textContent = localized("Waiting for a fresh GPS fix to calculate arrival", "بانتظار موقع حديث لحساب وقت الوصول", "Yɛretwɛn GPS beae foforo na yɛabu bere a ɔbɛba");
-        if (record.distanceNode) record.distanceNode.textContent = "";
-      }
-      return;
-    }
-    if (!Number.isFinite(record.etaDurationSeconds) || !record.etaCalculatedAt) {
-      record.etaValueNode.textContent = record.routeError
-        ? localized("ETA temporarily unavailable — retrying", "وقت الوصول غير متاح حالياً، عم نعيد المحاولة", "Bere a ɔbɛba no nni hɔ seesei — yɛresan asɔ ahwɛ")
-        : localized("Calculating road route and arrival time…", "عم نحسب الطريق ووقت الوصول…", "Yɛrebu ɔkwan ne bere a ɔbɛba…");
-      if (record.distanceNode) record.distanceNode.textContent = "";
-      return;
-    }
-    const elapsed = Math.max(0, Math.floor((Date.now() - record.etaCalculatedAt) / 1000));
-    const remaining = Math.max(0, record.etaDurationSeconds - elapsed);
-    const minutes = Math.max(1, Math.ceil(remaining / 60));
-    record.etaValueNode.textContent = remaining <= 45
-      ? localized("The rider should be arriving soon", "السائق صار قريب — الوصول بأي لحظة", "Driver no abɛn — ɔreba ntɛm ara")
-      : localized("About " + minutes + " min to arrival", "باقي تقريباً " + minutes + " دقيقة للوصول", "Sima bɛyɛ " + minutes + " na wobedu");
-    if (record.distanceNode) {
-      const km = Number.isFinite(record.routeDistanceMeters) ? record.routeDistanceMeters / 1000 : null;
-      record.distanceNode.textContent = km == null ? "" : (
-        localized("Road distance " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " km · " + (record.routeSource === "google" ? "Google live-traffic estimate" : "estimate excludes live traffic"), "مسافة الطريق حوالي " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " كم · " + (record.routeSource === "google" ? "تقدير Google حسب حركة المرور" : "التقدير لا يحتسب الزحمة المباشرة"), "Ɔkwan no tenten yɛ bɛyɛ " + (km < 10 ? km.toFixed(1) : Math.round(km)) + " km · " + (record.routeSource === "google" ? "Google live-traffic estimate" : "estimate excludes live traffic"))
-      );
-    }
-  }
-
-  function updateCustomerRiderMotion(record) {
-    if (!record.motionNode) return;
-    if (record.isStale) {
-      record.motionNode.textContent = localized("GPS update delayed — waiting for the rider", "آخر إشارة GPS قديمة — عم ننتظر السائق", "GPS nsɛm no akyɛ — yɛretwɛn driver no");
-      return;
-    }
-    let speed = Number(record.latestSpeedMps);
-    if (!Number.isFinite(speed) || record.latestSpeedMps === null || record.latestSpeedMps === "") {
-      speed = record.derivedSpeedMps;
-    } else if (Number.isFinite(record.derivedSpeedMps) && record.derivedSpeedMps > 1.2) {
-      speed = Math.max(speed, record.derivedSpeedMps);
-    }
-    if (Number.isFinite(speed) && speed >= 1.15) {
-      const kmh = Math.round(speed * 3.6);
-      record.motionNode.textContent = localized("Rider moving" + (kmh > 0 ? " · about " + kmh + " km/h" : ""), "السائق عم يتحرّك" + (kmh > 0 ? " · " + kmh + " كم/س تقريباً" : ""), "Driver no retu" + (kmh > 0 ? " · bɛyɛ " + kmh + " km/h" : "" ));
-    } else if (Number.isFinite(speed) && speed <= 0.55) {
-      record.motionNode.textContent = localized("Rider appears stopped or waiting", "السائق متوقّف حالياً أو عند إشارة", "Ɛte sɛ driver no agyina anaa ɔretwɛn");
-    } else {
-      record.motionNode.textContent = localized("Live location · updating movement", "موقع السائق مباشر · عم نحدّث الحركة", "Driver no beae yɛ live · yɛreyɛ movement nsɛm foforo");
-    }
-  }
-
-  function animateCustomerRiderMarker(record, point, durationMs) {
-    if (!record.riderMarker) return;
-    if (record.animationFrame && typeof window.cancelAnimationFrame === "function") {
-      window.cancelAnimationFrame(record.animationFrame);
-      record.animationFrame = null;
-    }
-    const fromLatLng = record.riderMarker.getLatLng();
-    const from = { lat: fromLatLng.lat, lng: fromLatLng.lng };
-    const moved = customerPointDistanceMeters(from, point);
-    if (!Number.isFinite(moved) || moved < 3 || typeof window.requestAnimationFrame !== "function") {
-      record.riderMarker.setLatLng([point.lat, point.lng]);
-      return;
-    }
-    const startedAt = window.performance?.now ? window.performance.now() : Date.now();
-    const duration = Math.min(18000, Math.max(450, Number(durationMs) || 6000));
-    const frame = nowValue => {
-      if (!customerRiderMapInstances.has(record.token) || !record.riderMarker) return;
-      const now = Number.isFinite(nowValue) ? nowValue : Date.now();
-      const ratio = Math.max(0, Math.min(1, (now - startedAt) / duration));
-      const eased = ratio * ratio * (3 - 2 * ratio);
-      record.riderMarker.setLatLng([
-        from.lat + (point.lat - from.lat) * eased,
-        from.lng + (point.lng - from.lng) * eased
-      ]);
-      if (ratio < 1) record.animationFrame = window.requestAnimationFrame(frame);
-      else record.animationFrame = null;
-    };
-    record.animationFrame = window.requestAnimationFrame(frame);
-  }
-
-  function decodeGoogleEncodedPolyline(encoded) {
-    if (typeof encoded !== "string" || !encoded.length) return [];
-    const points = [];
-    let index = 0;
-    let latitude = 0;
-    let longitude = 0;
-    while (index < encoded.length) {
-      const deltas = [];
-      for (let coordinate = 0; coordinate < 2; coordinate += 1) {
-        let result = 0;
-        let shift = 0;
-        let byte;
-        do {
-          if (index >= encoded.length || shift > 30) throw new Error("Google polyline is malformed.");
-          byte = encoded.charCodeAt(index++) - 63;
-          if (byte < 0 || byte > 63) throw new Error("Google polyline is malformed.");
-          result |= (byte & 0x1f) << shift;
-          shift += 5;
-        } while (byte >= 0x20);
-        deltas.push((result & 1) ? ~(result >> 1) : (result >> 1));
-      }
-      latitude += deltas[0];
-      longitude += deltas[1];
-      const point = [latitude / 1e5, longitude / 1e5];
-      if (!Number.isFinite(point[0]) || !Number.isFinite(point[1]) ||
-          Math.abs(point[0]) > 90 || Math.abs(point[1]) > 180) {
-        throw new Error("Google polyline contains invalid coordinates.");
-      }
-      points.push(point);
-    }
-    return points;
-  }
-
-  let lastCustomerRouteRequestAt = 0;
-  let customerRouteQueue = Promise.resolve();
-
-  function refreshCustomerRoadRoute(record, point) {
-    if (!record.destinationPoint || !point || record.routeRequestPending) return;
-    const now = Date.now();
-    const movedSinceRoute = record.lastRoutePoint
-      ? customerPointDistanceMeters(record.lastRoutePoint, point)
-      : Infinity;
-    const sinceLastAttempt = record.lastRouteRequestedAt ? now - record.lastRouteRequestedAt : Infinity;
-    const routeNeeded = !record.lastRouteRequestedAt ||
-      (movedSinceRoute >= 90 && sinceLastAttempt >= 20000) ||
-      sinceLastAttempt >= 75000;
-    if (!routeNeeded) return;
-
-    const requestId = ++record.routeRequestId;
-    const routeOrigin = { lat: point.lat, lng: point.lng };
-    record.routeRequestPending = true;
-    const run = customerRouteQueue.then(async () => {
-      const wait = Math.max(0, 1100 - (Date.now() - lastCustomerRouteRequestAt));
-      if (wait > 0) await new Promise(resolve => window.setTimeout(resolve, wait));
-      if (!customerRiderMapInstances.has(record.token) || requestId !== record.routeRequestId) {
-        record.routeRequestPending = false;
-        return;
-      }
-      lastCustomerRouteRequestAt = Date.now();
-      record.lastRouteRequestedAt = lastCustomerRouteRequestAt;
-      try {
-        let latLngs = null;
-        let routeDistanceMeters = NaN;
-        let routeDurationSeconds = NaN;
-        let routeSource = "google";
-
-        try {
-          const { data, error } = await db.functions.invoke("google-route-eta", {
-            body: { trackingToken: record.token }
-          });
-          if (error) throw error;
-          latLngs = decodeGoogleEncodedPolyline(data?.encodedPolyline);
-          routeDurationSeconds = Number(data?.durationSeconds);
-          routeDistanceMeters = Number(data?.distanceMeters);
-          if (latLngs.length < 2 || !Number.isFinite(routeDurationSeconds) ||
-              !Number.isFinite(routeDistanceMeters)) {
-            throw new Error("Google route response is invalid.");
-          }
-        } catch (googleError) {
-          routeSource = "osrm";
-          const base = String(cfg.ROUTING_URL || "https://router.project-osrm.org/route/v1/driving").replace(/\/+$/, "");
-          const url = base + "/" + routeOrigin.lng + "," + routeOrigin.lat + ";" +
-            record.destinationPoint.lng + "," + record.destinationPoint.lat +
-            "?overview=full&geometries=geojson&steps=false";
-          const response = await fetch(url, {
-            method: "GET",
-            headers: { "Accept": "application/json" },
-            credentials: "omit"
-          });
-          if (!response.ok) throw new Error("Routing service returned HTTP " + response.status);
-          const result = await response.json();
-          const route = Array.isArray(result.routes) ? result.routes[0] : null;
-          if (result.code !== "Ok" || !route || !route.geometry ||
-              !Array.isArray(route.geometry.coordinates) || !route.geometry.coordinates.length ||
-              !Number.isFinite(Number(route.duration)) || !Number.isFinite(Number(route.distance))) {
-            throw new Error("No road route is available for this rider location.");
-          }
-          latLngs = route.geometry.coordinates
-            .map(coords => [Number(coords[1]), Number(coords[0])])
-            .filter(coords => Number.isFinite(coords[0]) && Number.isFinite(coords[1]));
-          routeDurationSeconds = Number(route.duration);
-          routeDistanceMeters = Number(route.distance);
-          if (latLngs.length < 2) throw new Error("The road route did not contain enough points.");
-          console.info("Using OSRM route ETA fallback:", googleError?.message || "Google route unavailable");
-        }
-
-        if (!customerRiderMapInstances.has(record.token) || requestId !== record.routeRequestId) return;
-        if (!record.routeLayer) {
-          record.routeLayer = window.L.polyline(latLngs, {
-            color: "#8d1723",
-            weight: 5,
-            opacity: 0.86,
-            lineCap: "round",
-            lineJoin: "round"
-          }).addTo(record.map);
-        } else {
-          record.routeLayer.setLatLngs(latLngs);
-        }
-        record.routeLayer.bringToBack();
-        record.lastRoutePoint = routeOrigin;
-        record.routeDistanceMeters = routeDistanceMeters;
-        record.etaDurationSeconds = routeDurationSeconds;
-        record.etaCalculatedAt = Date.now();
-        record.routeSource = routeSource;
-        record.routeError = false;
-        updateCustomerRiderEta(record);
-      } catch (error) {
-        console.warn("Customer rider route ETA failed:", error);
-        if (customerRiderMapInstances.has(record.token) && requestId === record.routeRequestId) {
-          record.routeError = true;
-          updateCustomerRiderEta(record);
-        }
-      } finally {
-        record.routeRequestPending = false;
-      }
-    });
-    customerRouteQueue = run.catch(() => {});
-    return run;
-  }
-
-  function clearCustomerRiderMaps() {
-    for (const record of customerRiderMapInstances.values()) {
-      record.routeRequestId += 1;
-      if (record.animationFrame && typeof window.cancelAnimationFrame === "function") {
-        window.cancelAnimationFrame(record.animationFrame);
-      }
-      try { record.map.remove(); } catch (_) {}
-    }
-    customerRiderMapInstances.clear();
-  }
-
-  function initializeCustomerRiderMaps() {
-    const list = $("#customer-order-history");
-    if (!list) return;
-    const hosts = list.querySelectorAll("[data-customer-rider-map]");
-    if (!hosts.length) return;
-    if (!window.L || typeof window.L.map !== "function") {
-      hosts.forEach(host => {
-        const statusNode = host.parentElement?.querySelector(".customer-rider-map-status");
-        if (statusNode) statusNode.textContent = localized("The map could not load. Refresh the page to check the rider location.", "تعذّر تحميل الخريطة. حدّث الصفحة للتحقق من موقع السائق.", "Yentumi amfa map no amma. San bue krataafa yi na hwɛ driver no beae.");
-      });
-      return;
-    }
-
-    hosts.forEach(host => {
-      const token = String(host.dataset.trackingToken || "");
-      if (!token || customerRiderMapInstances.has(token)) return;
-      const destination = validRiderPoint(host.dataset.destinationLat, host.dataset.destinationLng);
-      const initialRider = validRiderPoint(host.dataset.riderLat, host.dataset.riderLng);
-      const initialCenter = initialRider || destination || { lat: 5.6037, lng: -0.1870 };
-      const map = window.L.map(host, {
-        zoomControl: true,
-        scrollWheelZoom: false,
-        attributionControl: true
-      }).setView([initialCenter.lat, initialCenter.lng], (initialRider || destination) ? 15 : 12);
-      const tileUrl = String(cfg.MAP_TILE_URL || "https://tile.openstreetmap.org/{z}/{x}/{y}.png");
-      window.L.tileLayer(tileUrl, {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>'
-      }).addTo(map);
-
-      let destinationMarker = null;
-      if (destination) {
-        destinationMarker = window.L.marker([destination.lat, destination.lng]).addTo(map);
-        destinationMarker.bindPopup(localized("Delivery destination", "عنوان التوصيل", "Beae a wɔde aduan bɛkɔ"));
-      }
-
-      const initialHeading = host.dataset.riderHeading || null;
-      let riderMarker = null;
-      if (initialRider) {
-        riderMarker = window.L.marker([initialRider.lat, initialRider.lng], {
-          icon: riderBikeIcon(initialHeading)
-        }).addTo(map);
-        riderMarker.bindPopup(host.dataset.riderName || (localized("Delivery rider", "السائق", "Driver a ɔde aduan reba")));
-      }
-
-      if (destination && initialRider) {
-        map.fitBounds(window.L.latLngBounds(
-          [destination.lat, destination.lng],
-          [initialRider.lat, initialRider.lng]
-        ).pad(0.18), { maxZoom: 15 });
-      }
-
-      const record = {
-        token,
-        map,
-        riderMarker,
-        destinationMarker,
-        destinationPoint: destination,
-        routeLayer: null,
-        statusNode: host.parentElement?.querySelector(".customer-rider-map-status") || null,
-        etaValueNode: host.parentElement?.querySelector("[data-rider-eta-value]") || null,
-        distanceNode: host.parentElement?.querySelector("[data-rider-distance]") || null,
-        motionNode: host.parentElement?.querySelector("[data-rider-motion]") || null,
-        googleMapsLink: host.parentElement?.querySelector("[data-open-google-maps]") || null,
-        riderName: host.dataset.riderName || "",
-        lastUpdatedAt: host.dataset.riderUpdatedAt || "",
-        lastGpsUpdatedAt: host.dataset.riderUpdatedAt || "",
-        currentRiderPoint: initialRider,
-        lastMovementPoint: initialRider,
-        lastMovementAt: host.dataset.riderUpdatedAt ? Date.parse(host.dataset.riderUpdatedAt) : 0,
-        derivedSpeedMps: null,
-        lastFixIntervalMs: 15000,
-        latestSpeedMps: host.dataset.riderSpeed || null,
-        headingDeg: initialHeading,
-        isStale: host.dataset.riderStale === "true",
-        lastRoutePoint: null,
-        lastRouteRequestedAt: 0,
-        routeRequestPending: false,
-        routeRequestId: 0,
-        routeDistanceMeters: null,
-        etaDurationSeconds: null,
-        etaCalculatedAt: 0,
-        routeError: false,
-        routeSource: null,
-        animationFrame: null
-      };
-      customerRiderMapInstances.set(token, record);
-      if (initialRider) {
-        updateCustomerGoogleMapsLink(record, initialRider);
-        updateCustomerRiderMotion(record);
-        updateCustomerRiderEta(record);
-      } else if (record.etaValueNode) {
-        record.etaValueNode.textContent = localized("Waiting for the rider's first GPS update…", "بانتظار أول تحديث من السائق…", "Yɛretwɛn GPS nsɛm foforo a edi kan afi driver no hɔ…");
-      }
-
-      if (record.statusNode && initialRider) {
-        const updated = record.lastUpdatedAt ? trackingDate(record.lastUpdatedAt) : "";
-        record.statusNode.textContent = localized("Latest rider location", "آخر موقع مستلم", "Driver no beae a etwaa mu") + (updated ? " · " + updated : "") +
-          (record.isStale ? localized(" · Location may be stale; waiting for an update", " · الموقع قديم، بانتظار تحديث", " · Ebia sɛ beae no yɛ dedaw; yɛretwɛn foforo") : "");
-      } else if (record.statusNode) {
-        record.statusNode.textContent = localized("Checking for the rider's latest location…", "عم نتحقق من موقع السائق…", "Yɛrehwɛ driver no beae foforo…");
-      }
-      window.setTimeout(() => {
-        try { map.invalidateSize({ pan: false }); } catch (_) {}
-      }, 80);
-    });
-
-    void refreshCustomerRiderLocations();
-  }
-
-  async function refreshCustomerRiderLocations() {
-    if (!db || !authSession?.user || !customerRiderMapInstances.size || document.visibilityState !== "visible") return;
-    const updates = Array.from(customerRiderMapInstances.entries());
-    await Promise.all(updates.map(async ([token, record]) => {
-      try {
-        const { data, error } = await db.rpc("get_customer_rider_location", {
-          p_tracking_token: token
-        });
-        if (error) throw error;
-        if (!customerRiderMapInstances.has(token)) return;
-        if (!data) {
-          record.isStale = true;
-          updateCustomerRiderEta(record);
-          updateCustomerRiderMotion(record);
-          if (record.statusNode) record.statusNode.textContent = localized("Waiting for the rider's first GPS update. Their location appears during delivery.", "عم ننتظر أول تحديث لموقع السائق. رح يظهر موقعه أثناء التوصيل.", "Yɛretwɛn driver no GPS nsɛm a edi kan. Ne beae bɛda adi bere a ɔde aduan reba.");
-          return;
-        }
-        const point = validRiderPoint(data.latitude, data.longitude);
-        if (!point) {
-          if (record.statusNode) record.statusNode.textContent = localized("The rider location data is invalid.", "بيانات موقع السائق غير صالحة.", "Driver no beae nsɛm no nyɛ nokware.");
-          return;
-        }
-
-        const updatedAt = String(data.updated_at || "");
-        const sampleChanged = Boolean(updatedAt && updatedAt !== record.lastGpsUpdatedAt);
-        const previousPoint = record.currentRiderPoint;
-        if (sampleChanged && previousPoint && record.lastMovementAt) {
-          const sampleTime = Date.parse(updatedAt);
-          const elapsedSeconds = (sampleTime - record.lastMovementAt) / 1000;
-          const movedMeters = customerPointDistanceMeters(record.lastMovementPoint || previousPoint, point);
-          if (elapsedSeconds > 0 && elapsedSeconds <= 120 && Number.isFinite(movedMeters)) {
-            record.derivedSpeedMps = movedMeters / elapsedSeconds;
-            const sampleAgeMs = Math.max(0, Date.now() - sampleTime);
-            record.lastFixIntervalMs = Math.max(1800, Math.min(18000, elapsedSeconds * 1000 - sampleAgeMs - 700));
-          } else {
-            record.derivedSpeedMps = null;
-            record.lastFixIntervalMs = 6000;
-          }
-          record.lastMovementPoint = point;
-          record.lastMovementAt = sampleTime;
-        } else if (sampleChanged && !record.lastMovementAt) {
-          record.lastMovementPoint = point;
-          record.lastMovementAt = Date.parse(updatedAt) || Date.now();
-        }
-
-        if (!record.riderMarker) {
-          record.riderMarker = window.L.marker([point.lat, point.lng], {
-            icon: riderBikeIcon(data.heading_deg)
-          }).addTo(record.map);
-          record.riderMarker.bindPopup(data.rider_name || (localized("Delivery rider", "السائق", "Driver a ɔde aduan reba")));
-          if (record.destinationMarker) {
-            const dest = record.destinationMarker.getLatLng();
-            record.map.fitBounds(window.L.latLngBounds(
-              [dest.lat, dest.lng], [point.lat, point.lng]
-            ).pad(0.18), { maxZoom: 15 });
-          } else {
-            record.map.setView([point.lat, point.lng], 15);
-          }
-        } else {
-          const movedFromPreviousFix = previousPoint ? customerPointDistanceMeters(previousPoint, point) : 0;
-          const reportedSpeed = Number(data.speed_mps);
-          const reportedMoving = data.speed_mps !== null && data.speed_mps !== "" &&
-            Number.isFinite(reportedSpeed) && reportedSpeed > 0.9;
-          const derivedMoving = Number.isFinite(record.derivedSpeedMps) && record.derivedSpeedMps > 0.9;
-          if (previousPoint && movedFromPreviousFix >= 7 && (reportedMoving || derivedMoving)) {
-            animateCustomerRiderMarker(record, point, record.lastFixIntervalMs || 6000);
-          } else {
-            record.riderMarker.setLatLng([point.lat, point.lng]);
-          }
-          if (data.heading_deg !== null && data.heading_deg !== undefined && data.heading_deg !== "") {
-            record.riderMarker.setIcon(riderBikeIcon(data.heading_deg));
-          }
-        }
-
-        if (data.rider_name) {
-          record.riderName = String(data.rider_name);
-          record.riderMarker.setPopupContent(record.riderName);
-        }
-        record.currentRiderPoint = point;
-        record.latestSpeedMps = data.speed_mps;
-        record.headingDeg = data.heading_deg;
-        record.isStale = Boolean(data.is_stale);
-        record.lastUpdatedAt = updatedAt;
-        if (sampleChanged) record.lastGpsUpdatedAt = updatedAt;
-
-        updateCustomerGoogleMapsLink(record, point);
-        updateCustomerRiderMotion(record);
-        updateCustomerRiderEta(record);
-        void refreshCustomerRoadRoute(record, point);
-
-        if (record.statusNode) {
-          const updated = record.lastUpdatedAt ? trackingDate(record.lastUpdatedAt) : "";
-          record.statusNode.textContent = localized("Rider: " + record.riderName, "السائق: " + record.riderName, "Driver: " + record.riderName) + (updated ? " · " + localized("Updated: ", "آخر تحديث: ", "Nsɛm foforo: ") + updated : "") +
-            (record.isStale ? localized(" · Location is stale; waiting for a fresh update", " · آخر موقع قديم، عم ننتظر تحديثاً", " · Driver no beae yɛ dedaw; yɛretwɛn nsɛm foforo") : "");
-        }
-      } catch (error) {
-        console.warn("Customer rider location refresh failed:", error);
-        if (record.statusNode) record.statusNode.textContent = localized("Could not refresh the rider location. We will retry automatically.", "تعذّر تحديث موقع السائق حالياً. رح نعيد المحاولة تلقائياً.", "Yentumi anyɛ driver no beae foforo seesei. Yɛbɛsan asɔ ahwɛ ara kwa.");
-      }
-    }));
-  }
-
-  function updateCustomerRiderEtaCountdowns() {
-    for (const record of customerRiderMapInstances.values()) updateCustomerRiderEta(record);
-  }
-
-  async function refreshCustomerOrderHistory() {
-    const list = $("#customer-order-history");
-    if (!list) return;
-    if (!authSession?.user || (authSession.user.user_metadata?.phone_e164 && customerPhoneValidatedUserId !== authSession.user.id)) {
-      clearCustomerRiderMaps();
-      setHomeCurrentOrdersVisible(false);
-      list.replaceChildren();
-      return;
-    }
-    if (trackedOrdersLoading) {
-      // Do not lose a refresh requested while an earlier status check is in flight.
-      trackedOrdersRefreshQueued = true;
-      return;
-    }
-    const entries = readTrackedOrders();
-    if (!entries.length) {
-      clearCustomerRiderMaps();
-      setHomeCurrentOrdersVisible(false);
-      list.innerHTML = '<p class="muted tracked-empty">' + escapeHTML(tr("noTrackedOrders")) + "</p>";
-      return;
-    }
-    if (!db) {
-      setHomeCurrentOrdersVisible(entries.length > 0);
-      list.innerHTML = '<p class="app-message error">' + escapeHTML(tr("couldNotLoadTrackedOrder")) + "</p>";
-      return;
-    }
-    trackedOrdersLoading = true;
-    // Keep the current cards (and document height) in place during background polling.
-    // Replacing them with a short loading line makes mobile browsers clamp scrollY to 0.
-    const hasRenderedOrders = Boolean(list.querySelector(".customer-order-card, .customer-order-group"));
-    if (!hasRenderedOrders) {
-      list.innerHTML = '<p class="muted">' + escapeHTML(tr("loadingTrackedOrders")) + "</p>";
-    }
-    try {
-      const results = await Promise.all(entries.map(async entry => {
-        try {
-          const { data, error } = await db.rpc("get_customer_order_tracking", { p_tracking_token: entry.token });
-          if (error) return { entry, failed:true };
-          if (!data) return { entry, failed:true, unavailable:true };
-          return { entry, order:data };
-        } catch (_) { return { entry, failed:true }; }
-      }));
-      // An empty response can be temporary (for example during a short database or
-      // session hiccup). Keep the saved tracking token and show a retryable error.
-      const validResults = results;
-      let trackedStatusesChanged = false;
-      for (const result of validResults) {
-        if (result.failed || !result.order) continue;
-        const status = String(result.order.status || "").toLowerCase();
-        const previousStatus = String(result.entry.lastStatus || "");
-        if (status === "completed" && previousStatus && previousStatus !== "completed" && result.order.can_review === true) {
-          const details = {
-            trackingToken: result.entry.token,
-            orderId: result.order.id,
-            orderNumber: result.order.order_number ?? result.entry.orderNumber ?? "",
-            subtotal: Number(result.order.subtotal || 0),
-            orderType: result.order.order_type || "delivery"
-          };
-          if (typeof window.AL_SHAMI_SHOW_DELIVERY_COMPLETE === "function") {
-            window.AL_SHAMI_SHOW_DELIVERY_COMPLETE(details);
-          } else {
-            window.AL_SHAMI_PENDING_DELIVERY_COMPLETIONS = window.AL_SHAMI_PENDING_DELIVERY_COMPLETIONS || [];
-            window.AL_SHAMI_PENDING_DELIVERY_COMPLETIONS.push(details);
-          }
-        }
-        if (result.entry.lastStatus !== status) {
-          result.entry.lastStatus = status;
-          trackedStatusesChanged = true;
-        }
-      }
-      if (trackedStatusesChanged) {
-        saveTrackedOrders(entries);
-      }
-
-      trackedOrderRemovalTokens = new Map();
-      const renderResult = result => {
-        const entry = result.entry;
-        const removeId = String(trackedOrderRemovalTokens.size + 1);
-        trackedOrderRemovalTokens.set(removeId, entry.token);
-        const remove = '<button type="button" class="btn btn-light tracked-remove" data-remove-tracked="' + removeId + '">' + escapeHTML(tr("removeFromHistory")) + "</button>";
-        if (result.failed) {
-          const message = tr("couldNotLoadTrackedOrder");
-          return '<article class="customer-order-card"><div class="tracked-card-heading"><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(entry.orderNumber || "—") + "</strong>" + remove + "</div><p class=\"muted\">" + escapeHTML(message) + "</p>" + "</article>";
-        }
-        const order = result.order;
-        const status = String(order.status || "").toLowerCase();
-        const number = order.order_number ?? entry.orderNumber ?? "—";
-        if (typeof window.AL_SHAMI_UPDATE_SUCCESS_STATUS === "function") {
-          window.AL_SHAMI_UPDATE_SUCCESS_STATUS({
-            orderNumber: number, status, orderType: order.order_type, status_reason: order.status_reason
-          });
-        }
-        const updatedAt = order.updated_at ? trackingDate(order.updated_at) : "";
-        const updatedAtHtml = updatedAt
-          ? '<p class="tracked-date tracked-updated">' + escapeHTML(tr("updatedAtLabel")) + ": " + escapeHTML(updatedAt) + "</p>"
-          : "";
-        const isDelivery = order.order_type === "delivery";
-        const steps = [
-          "step_received", "step_accepted", "step_preparing", "step_ready",
-          ...(isDelivery ? ["step_out_for_delivery"] : []), "step_completed"
-        ];
-        const active = status === "new" ? 0 : status === "accepted" ? 1 : status === "preparing" ? 2 :
-          status === "ready" ? 3 : status === "out_for_delivery" ? 4 :
-          status === "completed" ? (isDelivery ? 5 : 4) : -1;
-        const rejectionReason = status === "rejected" ? rejectionReasonText(order.status_reason) : "";
-        const timeline = status === "rejected"
-          ? '<p class="tracked-rejected">' + escapeHTML(trackingStatusText(status)) + "</p>" +
-            (rejectionReason ? '<p class="tracked-rejection-reason"><strong>' +
-              escapeHTML(localized("Reason:", "السبب:", "Nea nti a:")) + "</strong> " + escapeHTML(rejectionReason) + "</p>" : "")
-          : '<ol class="tracked-steps ' + (isDelivery ? "is-delivery" : "is-pickup") + '">' + steps.map((key,i) =>
-              '<li class="' + (active >= 0 && i < active ? "is-complete " : "") + (active === i ? "is-current" : "") + '"><span>' + escapeHTML(tr(key)) + "</span></li>"
-            ).join("") + "</ol>";
-        const items = Array.isArray(order.items) ? order.items : [];
-        const itemHtml = items.map(item => {
-          const reviewButton = status === "completed" && order.can_review && order.id && item.menu_item_id
-            ? '<button type="button" class="btn btn-light" data-review-order="' + escapeHTML(order.id) + '" data-review-item="' + escapeHTML(item.menu_item_id) + '">' + escapeHTML(localized("Review", "قيّم", "Review")) + '</button>'
-            : "";
-          return '<li><span>' + escapeHTML(item.quantity) + " × " + escapeHTML(item.name || "Item") +
-            (item.item_note ? '<small class="tracked-item-note">' + escapeHTML(item.item_note) + '</small>' : "") +
-            '</span><span><strong>' + money(item.line_total ?? (Number(item.unit_price || 0) * Number(item.quantity || 0))) + '</strong>' + reviewButton + '</span></li>';
-        }).join("");
-        const riderTrackingVisible = isDelivery && status === "out_for_delivery";
-        const destinationPoint = validRiderPoint(order.delivery_latitude, order.delivery_longitude);
-        const currentRiderPoint = order.rider_location
-          ? validRiderPoint(order.rider_location.latitude, order.rider_location.longitude)
-          : null;
-        const riderMapMarkup = riderTrackingVisible
-          ? '<section class="customer-rider-tracking"><div class="customer-rider-map-heading"><strong>' +
-            escapeHTML(localized("Track your delivery rider", "تتبّع السائق مباشرة", "Hwɛ wo driver a ɔde aduan reba no")) +
-            '</strong><p>' + escapeHTML(localized("Follow the rider, road route and estimated arrival time. Location updates automatically during delivery.", "شوف حركة السائق والطريق ووقت الوصول التقريبي. الموقع يتحدّث تلقائياً أثناء التوصيل.", "Hwɛ driver no, ɔkwan ne bere a obedu. Wɔyɛ beae no foforo bere a wɔde aduan reba.")) + '</p></div>' +
-            '<div class="customer-rider-map" data-customer-rider-map data-tracking-token="' + escapeHTML(entry.token) + '"' +
-            (destinationPoint ? ' data-destination-lat="' + destinationPoint.lat + '" data-destination-lng="' + destinationPoint.lng + '"' : "") +
-            (currentRiderPoint ? ' data-rider-lat="' + currentRiderPoint.lat + '" data-rider-lng="' + currentRiderPoint.lng + '"' : "") +
-            (order.rider_location?.heading_deg != null ? ' data-rider-heading="' + escapeHTML(order.rider_location.heading_deg) + '"' : "") +
-            (order.rider_location?.speed_mps != null ? ' data-rider-speed="' + escapeHTML(order.rider_location.speed_mps) + '"' : "") +
-            (order.rider_location?.updated_at ? ' data-rider-updated-at="' + escapeHTML(order.rider_location.updated_at) + '"' : "") +
-            (order.rider_location?.rider_name ? ' data-rider-name="' + escapeHTML(order.rider_location.rider_name) + '"' : "") +
-            (order.rider_location?.is_stale ? ' data-rider-stale="true"' : "") +
-            ' role="application" aria-label="' + escapeHTML(localized("Map showing the live rider and delivery destination", "خريطة موقع السائق والوجهة", "Map a ɛkyerɛ driver no beae ne beae a wɔde aduan bɛkɔ")) + '"></div>' +
-            '<div class="customer-rider-eta" data-customer-rider-eta><div class="customer-rider-eta-main"><span class="customer-rider-eta-icon" aria-hidden="true">🛵</span><div class="customer-rider-eta-copy"><strong data-rider-eta-value>' +
-            escapeHTML(currentRiderPoint ? localized("Calculating arrival time…", "عم نحسب وقت الوصول…", "Yɛrebu bere a ɔbɛba…") : localized("Waiting for the rider’s first GPS update…", "بانتظار أول تحديث من السائق…", "Yɛretwɛn GPS nsɛm foforo a edi kan afi driver no hɔ…")) +
-            '</strong><span data-rider-motion>' + escapeHTML(localized("Checking rider movement…", "عم نتحقق من حركة السائق…", "Yɛrehwɛ driver no movement")) + '</span><small data-rider-distance></small></div></div>' +
-            '<a class="customer-rider-google-maps" data-open-google-maps href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" hidden>' +
-            escapeHTML(localized("Open route in Google Maps ↗", "افتح المسار في Google Maps ↗", "Bue ɔkwan no wɔ Google Maps ↗")) + '</a></div>' +
-            '<p class="customer-rider-map-status" role="status">' +
-            escapeHTML(currentRiderPoint
-              ? (localized("Updating the rider location…", "عم نحدّث موقع السائق…", "Yɛreyɛ driver no beae foforo…"))
-              : (localized("Checking the rider location…", "عم نتحقق من موقع السائق…", "Yɛrehwɛ driver no beae…"))) +
-            '</p></section>'
-          : "";
-        return '<article class="customer-order-card" data-order-subtotal="' + escapeHTML(order.subtotal ?? 0) + '" data-order-status="' + escapeHTML(status) + '">' +
-          '<div class="tracked-card-heading"><div><strong>' + escapeHTML(tr("orderLabel")) + " #" + escapeHTML(number) + '</strong><p class="tracked-date">' + escapeHTML(tr("orderedAt")) + ": " + escapeHTML(trackingDate(order.created_at)) + '</p>' + updatedAtHtml + '</div><span class="tracked-status status-' + escapeHTML(status.replace(/[^a-z_]/g,"")) + '">' + escapeHTML(trackingStatusText(status, order.order_type)) + "</span></div>" +
-          timeline + '<div class="tracked-order-meta"><span>' + escapeHTML(order.order_type === "pickup" ? tr("pickup") : tr("delivery")) + '</span><strong>' + money(order.total) + "</strong></div>" +
-          (order.requested_for ? '<p class="tracked-date">' + escapeHTML(localized("Requested for: ", "موعد الطلب: ", "Requested for: ")) + escapeHTML(trackingDate(order.requested_for)) + '</p>' : "") +
-          (order.estimated_ready_at ? '<p class="tracked-date">' + escapeHTML(localized("Estimated ready/delivery: ", "الوقت التقريبي للجهوزية/الوصول: ", "Estimated ready/delivery: ")) + escapeHTML(trackingDate(order.estimated_ready_at)) + '</p>' : "") +
-          (itemHtml ? '<ul class="tracked-items">' + itemHtml + "</ul>" : "") +
-          riderMapMarkup +
-          (status !== "completed" && status !== "rejected" && order.receipt_code
-            ? '<div class="receipt-code-note"><span class="receipt-code-label">' + escapeHTML(localized("Receipt code — show it to the cashier", "رمز تأكيد الاستلام — أعطه للكاشير عند الاستلام", "Code a ɛkyerɛ sɛ woagye aduan no — kyerɛ cashier no")) + '</span><div class="receipt-code-row"><strong class="receipt-code-value">' + escapeHTML(order.receipt_code) + '</strong><button type="button" class="receipt-code-copy" data-receipt-code="' + escapeHTML(order.receipt_code) + '">' + escapeHTML(localized("Copy code", "نسخ الرمز", "Kɔpi code no")) + '</button></div></div>'
-            : "") + remove + "</article>";
-      };
-      // Rejected orders are terminal, but keep them on the active orders page so customers
-      // see the rejection immediately. They also remain in the history page.
-      const currentStatuses = new Set(["new", "accepted", "preparing", "ready", "out_for_delivery"]);
-      const rejectedResults = validResults.filter(result =>
-        !result.failed && String(result.order?.status || "").toLowerCase() === "rejected"
-      );
-      const currentResults = validResults.filter(result =>
-        result.failed || currentStatuses.has(String(result.order?.status || "").toLowerCase())
-      );
-      const pastResults = validResults.filter(result =>
-        !result.failed &&
-        !currentStatuses.has(String(result.order?.status || "").toLowerCase()) &&
-        String(result.order?.status || "").toLowerCase() !== "rejected"
-      );
-      const activeViewResults = currentResults.concat(rejectedResults);
-      setHomeCurrentOrdersVisible(activeViewResults.length > 0);
-
-      let visibleHtml = "";
-      if (isHistoryPage) {
-        const sections = [
-          { title: tr("currentOrdersGroup"), results: currentResults },
-          { title: tr("pastOrdersGroup"), results: pastResults.concat(rejectedResults) }
-        ].filter(section => section.results.length > 0);
-        visibleHtml = sections.map(section =>
-          '<section class="customer-order-group"><h3>' + escapeHTML(section.title) + '</h3>' +
-          section.results.map(renderResult).join("") + '</section>'
-        ).join("");
-      } else {
-        visibleHtml = activeViewResults.map(renderResult).join("");
-      }
-      clearCustomerRiderMaps();
-      list.innerHTML = visibleHtml || '<p class="muted tracked-empty">' + escapeHTML(tr("noTrackedOrders")) + '</p>';
-      initializeCustomerRiderMaps();
-      const heading = $("#customer-orders-heading");
-      if (heading) heading.textContent = isHistoryPage ? tr("historyHeading") : tr("activeOrdersHeading");
-      const nav = $("#customer-orders-nav");
-      if (nav) {
-        nav.innerHTML = isHistoryPage
-          ? '<a class="btn btn-light" href="./index.html">' + escapeHTML(localized("Menu & New Order", "العودة للمنيو والطلبات الجديدة", "San kɔ aduan din ne order foforo")) + '</a>'
-          : '<a class="btn btn-light" href="./history.html">' + escapeHTML(localized("Order History", "سجل الطلبات", "Order abakɔsɛm")) + '</a>';
-      }
-    } finally {
-      trackedOrdersLoading = false;
-      if (trackedOrdersRefreshQueued) {
-        trackedOrdersRefreshQueued = false;
-        // Re-check once the in-flight request finishes so a newly completed order
-        // is moved from Active orders to History without waiting for the next poll.
-        void refreshCustomerOrderHistory();
-      }
-    }
-  }
-
-  $("#refresh-customer-orders")?.addEventListener("click", () => { void refreshCustomerOrderHistory(); });
-
-  $("#customer-order-history")?.addEventListener("click", async event => {
-    const target = event.target instanceof Element ? event.target : null;
-    const reviewButton = target?.closest("[data-review-order]");
-    if (reviewButton) {
-      const ratingRaw = window.prompt(localized("Rate this item from 1 to 5.", "قيّم الصنف من 1 لـ5.", "Rate this item from 1 to 5."));
-      if (ratingRaw === null) return;
-      const rating = Number(ratingRaw);
-      if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-        window.alert(localized("Enter a whole number from 1 to 5.", "اكتب رقم صحيح من 1 لـ5.", "Enter a whole number from 1 to 5."));
-        return;
-      }
-      const reviewText = window.prompt(localized("Add a comment (optional).", "اكتب تعليق (اختياري).", "Add a comment (optional).")) || "";
-      const photoUrl = window.prompt(localized("Paste an HTTPS photo link (optional).", "الصق رابط صورة HTTPS (اختياري).", "Paste an HTTPS photo link (optional).")) || "";
-      const { error } = await db.rpc("submit_menu_review", {
-        p_order_id: reviewButton.dataset.reviewOrder,
-        p_menu_item_id: reviewButton.dataset.reviewItem,
-        p_rating: rating,
-        p_review_text: reviewText.trim() || null,
-        p_photo_url: photoUrl.trim() || null
-      });
-      if (error) {
-        window.alert(localized("Reviews become available after the optional database upgrade is applied.", "التقييمات بتشتغل بعد تطبيق تحديث قاعدة البيانات.", "Reviews become available after the optional database upgrade is applied."));
-      } else {
-        reviewButton.disabled = true;
-        reviewButton.textContent = localized("Sent for approval", "أُرسل للمراجعة", "Sent for approval");
-      }
-      return;
-    }
-    const remove = target?.closest("[data-remove-tracked]");
-    if (!remove) return;
-    const removeId = remove.getAttribute("data-remove-tracked");
-    const token = trackedOrderRemovalTokens.get(removeId);
-    if (!token) return;
-    trackedOrderRemovalTokens.delete(removeId);
-    saveTrackedOrders(readTrackedOrders().filter(row => row.token !== token));
-    void refreshCustomerOrderHistory();
-  });
-
-  // Reconcile customer-visible order states frequently while this page is in front.
-  // The existing loading/queued guards serialize slow requests; rider GPS keeps its
-  // own six-second cadence below so status polling does not duplicate GPS queries.
-  window.setInterval(() => {
-    if (document.visibilityState === "visible") void refreshCustomerOrderHistory();
-  }, CUSTOMER_ORDER_STATUS_POLL_INTERVAL_MS);
-  window.setInterval(() => {
-    if (document.visibilityState === "visible") void refreshCustomerRiderLocations();
-  }, 6000);
-  window.setInterval(() => {
-    if (document.visibilityState === "visible") updateCustomerRiderEtaCountdowns();
-  }, 10000);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      void refreshCustomerOrderHistory();
-      void refreshCustomerRiderLocations();
-    }
-  });
-
-
-  function showCheckoutMessage(text, isError = false) {
-    const element = $("#checkout-message");
-    if (!element) return;
-
-    element.textContent = text || "";
-    element.className = "status-message" + (isError ? " error" : " success");
-  }
-
-  function showAppStatus(text, isError = false) {
-    const element = $("#app-status");
-    if (!element) return;
-
-    element.textContent = text || "";
-    element.className = "app-message " + (isError ? "error" : "info");
-    element.hidden = !text;
-  }
-
-  function announceCartChange(kind, productName, quantity) {
-    const element = $("#cart-announcement");
-    if (!element) return;
-    const label = tr(kind);
-    element.textContent = quantity === undefined
-      ? label + " " + String(productName || "")
-      : label + " " + String(productName || "") + ", " + quantity;
-  }
-
-  function showSuccess(orderNumber, total) {
-    try {
-      if (typeof window.AL_SHAMI_SHOW_SUCCESS === "function") {
-        window.AL_SHAMI_SHOW_SUCCESS({ orderNumber, total });
-      } else {
-        showCheckoutMessage(tr("sent") + (orderNumber ? " Order #" + orderNumber : ""));
-      }
-    } catch (error) {
-      console.error("Could not display order confirmation:", error);
-      showCheckoutMessage(tr("sent"));
-    }
-  }
-  function setLanguage() {
-    document.documentElement.lang = lang === "ar" ? "ar" : (lang === "tw" ? "ak" : "en");
-    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
-
-    document.querySelectorAll("[data-i18n]").forEach(element => {
-      const key = element.dataset.i18n;
-      if (translations[lang] && translations[lang][key]) {
-        element.textContent = tr(key);
-      }
-    });
-
-    const sortSelect = $("#menu-sort");
-    if (sortSelect) {
-      const labels = lang === "tw"
-        ? ["Totoe", "Bo: nea ɛyɛ mmerɛw kɔ nea ɛyɛ den", "Bo: nea ɛyɛ den kɔ nea ɛyɛ mmerɛw", "Nea nkurɔfo pɛ"]
-        : lang === "ar"
-          ? ["الترتيب الافتراضي", "السعر: من الأرخص للأغلى", "السعر: من الأغلى للأرخص", "الأكثر شعبية"]
-          : ["Recommended", "Price: low to high", "Price: high to low", "Popularity"];
-      Array.from(sortSelect.options).forEach((option, index) => { option.textContent = labels[index] || option.textContent; });
-    }
-    const sortLabel = document.querySelector(".sort-label");
-    if (sortLabel && sortLabel.firstChild && sortLabel.firstChild.nodeType === Node.TEXT_NODE) {
-      sortLabel.firstChild.textContent = lang === "tw" ? "Siesie: " : lang === "ar" ? "ترتيب: " : "Sort ";
-    }
-    const remember = document.querySelector(".remember-customer");
-    if (remember) {
-      const checkbox = remember.querySelector("input");
-      remember.textContent = lang === "tw" ? "Kae me din ne telefon nɔma wɔ saa mfiri yi so" : lang === "ar" ? "احفظ اسمي ورقم هاتفي على هذا الجهاز" : "Remember my name and phone on this device";
-      if (checkbox) remember.prepend(checkbox);
-    }
-
-    const search = $("#search");
-    if (search) search.placeholder = tr("search");
-
-    if (orderButton) {
-      orderButton.textContent = submitting ? tr("sending") : tr("send");
-    }
-
-    renderCategories();
-    renderMenu();
-    renderCart();
-    void refreshCustomerOrderHistory();
-  }
-
-  function renderCategories() {
-    const container = $("#categories");
-    if (!container) return;
-
-    const categories = [
-      "All",
-      ...new Set(products.map(product => product.category).filter(Boolean))
-    ];
-
-    container.innerHTML = categories.map(item => `
-      <button type="button"
-        class="chip ${category === item ? "active" : ""}"
-        data-cat="${escapeHTML(item)}">
-        ${item === "All" ? tr("category") : escapeHTML(item)}
-      </button>
-    `).join("");
-
-    container.querySelectorAll("[data-cat]").forEach(button => {
-      button.addEventListener("click", () => {
-        category = button.dataset.cat;
-        renderCategories();
-        renderMenu();
-      });
-    });
-  }
-
-  const menuSearchSynonymGroups = [
-    ["shawarma", "shawerma", "شاورما", "شاورمه", "شاورمة"],
-    ["burger", "burgers", "hamburger", "hamburgers", "برغر", "برجر"],
-    ["pizza", "بيتزا"],
-    ["chicken", "دجاج", "فروج", "akokɔ"],
-    ["rice", "رز", "أرز", "aburow"],
-    ["fries", "chips", "french fries", "بطاطا", "بطاطس"],
-    ["juice", "عصير"],
-    ["beef", "لحم بقري"]
-  ].map(group => group.map(normalizeMenuSearch));
-
-  function normalizeMenuSearch(value) {
-    return String(value || "")
-      .normalize("NFKC")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f\u0591-\u05c7\u0610-\u061a\u064b-\u065f\u0670\u06d6-\u06ed]/g, "")
-      .replace(/[ـ]/g, "")
-      .replace(/[^\p{L}\p{N}]+/gu, " ")
-      .trim();
-  }
-
-  function menuSearchMatches(product, query) {
-    if (!query) return true;
-    const searchText = normalizeMenuSearch(
-      `${product.name || ""} ${product.description || ""} ${product.category || ""}`
-    );
-    return query.split(/\s+/).filter(Boolean).every(term => {
-      const synonyms = menuSearchSynonymGroups.find(group => group.includes(term)) || [term];
-      return synonyms.some(alias => searchText.includes(alias));
-    });
-  }
-
-  function renderMenu() {
-    const menu = $("#menu");
-    const search = $("#search");
-    if (!menu || !search) return;
-
-    const query = normalizeMenuSearch(search.value);
-
-    const visibleProducts = products.filter(product => {
-      const categoryMatches =
-        category === "All" || product.category === category;
-      return categoryMatches && menuSearchMatches(product, query);
-    });
-    if (sortMode === "price-asc") visibleProducts.sort((a, b) => Number(a.price) - Number(b.price));
-    if (sortMode === "price-desc") visibleProducts.sort((a, b) => Number(b.price) - Number(a.price));
-    function compareMenuPopularity(a, b, ranks) {
-      const rankA = ranks.get(String(a.id));
-      const rankB = ranks.get(String(b.id));
-      const byMenuOrder = () =>
-        Number(a.sort_order || 0) - Number(b.sort_order || 0) ||
-        String(a.name || "").localeCompare(String(b.name || ""));
-
-      if (rankA !== undefined || rankB !== undefined) {
-        if (rankA === undefined) return 1;
-        if (rankB === undefined) return -1;
-        const rankDifference = Number(rankA) - Number(rankB);
-        return rankDifference || byMenuOrder();
-      }
-
-      const popularityA = Number(a.popularity ?? a.order_count ?? 0);
-      const popularityB = Number(b.popularity ?? b.order_count ?? 0);
-      return popularityB - popularityA || byMenuOrder();
-    }
-
-    if (sortMode === "popular") {
-      visibleProducts.sort((a, b) => compareMenuPopularity(a, b, popularityByMenuItem));
-    }
-
-    menu.innerHTML = visibleProducts.length
-      ? visibleProducts.map(product => {
-          const addControl = product.is_available === false
-            ? `<span class="unavailable-badge" role="status">${escapeHTML(tr("unavailable"))}</span>`
-            : `<button type="button" class="btn btn-primary"
-                data-add="${escapeHTML(product.id)}"
-                aria-label="${escapeHTML(tr("add") + " " + product.name)}">${tr("add")}</button>`;
-          const alternativePool = products.filter(candidate =>
-            candidate.is_available !== false && String(candidate.id) !== String(product.id)
-          );
-          const sameCategoryAlternatives = alternativePool.filter(candidate =>
-            String(candidate.category || "").trim().toLowerCase() === String(product.category || "").trim().toLowerCase()
-          );
-          const alternativeProducts = product.is_available === false
-            ? (sameCategoryAlternatives.length ? sameCategoryAlternatives : alternativePool)
-                .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
-                .slice(0, 3)
-            : [];
-          const foodDetails = [];
-          if (menuFeatureDetailsAvailable && product.prep_minutes) foodDetails.push(localized("Preparation: ", "التحضير: ", "Bere a wɔde yɛ: ") + product.prep_minutes + " min");
-          if (menuFeatureDetailsAvailable && product.portion_info) foodDetails.push(localized("Serving: ", "الحصة: ", "Serving: ") + product.portion_info);
-          if (menuFeatureDetailsAvailable && product.ingredients) foodDetails.push(localized("Ingredients: ", "المكونات: ", "Ingredients: ") + product.ingredients);
-          if (menuFeatureDetailsAvailable && product.spice_level != null) foodDetails.push(localized("Spice: ", "الحرارة: ", "Spice: ") + product.spice_level + "/5");
-          if (menuFeatureDetailsAvailable && Array.isArray(product.allergens) && product.allergens.length) foodDetails.push(localized("Allergens: ", "مسببات الحساسية: ", "Allergens: ") + product.allergens.join(", "));
-          const foodDetailsMarkup = foodDetails.length
-            ? '<small class="product-food-details">' + foodDetails.map(escapeHTML).join(" · ") + '</small>'
-            : "";
-          const itemReviews = approvedMenuReviewsByItem.get(String(product.id)) || [];
-          const reviewMarkup = itemReviews.length
-            ? '<small class="menu-review-summary">★ ' +
-              (itemReviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / itemReviews.length).toFixed(1) +
-              ' · ' + escapeHTML(localized(itemReviews.length + " customer reviews", itemReviews.length + " تقييمات زبائن", itemReviews.length + " customer reviews")) +
-              (itemReviews[0].photo_url ? '<img src="' + escapeHTML(itemReviews[0].photo_url) + '" alt="' + escapeHTML(localized("Customer review photo", "صورة تقييم زبون", "Customer review photo")) + '" loading="lazy">' : "") +
-              (itemReviews[0].review_text ? '<span>' + escapeHTML(itemReviews[0].review_text) + '</span>' : "") +
-              '</small>'
-            : "";
-          const alternativesMarkup = alternativeProducts.length
-            ? `<div class="unavailable-alternatives"><p class="muted">${escapeHTML(localized(
-                "Available alternatives",
-                "بدائل متوفرة",
-                "Nneɛma foforo a ɛwɔ hɔ"
-              ))}</p><div class="menu-tools">${alternativeProducts.map(alternative =>
-                `<button type="button" class="btn btn-light"
-                  data-add="${escapeHTML(alternative.id)}"
-                  aria-label="${escapeHTML(localized(
-                    "Add alternative: " + alternative.name,
-                    "أضف البديل: " + alternative.name,
-                    "Fa eyi ka wo order ho: " + alternative.name
-                  ))}">${escapeHTML(alternative.name)} · ${money(alternative.price)}</button>`
-              ).join("")}</div></div>`
-            : "";
-          return `
-        <article class="product-card ${product.is_available === false ? "product-unavailable" : ""}">
-          <div class="product-image">
-            ${product.image_url
-              ? `<img src="${escapeHTML(product.image_url)}"
-                  alt="${escapeHTML(product.name)}"
-                  width="640" height="420"
-                  loading="lazy"
-                  onerror="this.onerror=null;this.parentElement.textContent='🍽️'">`
-              : "🍽️"}
-          </div>
-          <div class="product-info">
-            <h3>${escapeHTML(product.name)}</h3>
-            <p>${escapeHTML(product.description || "Freshly prepared at AL SHAMI.")}</p>
-            ${foodDetailsMarkup}
-            ${reviewMarkup}
-            <div class="product-bottom">
-              <span class="price">${money(product.price)}</span>
-              ${addControl}
-            </div>
-            ${alternativesMarkup}
-          </div>
-        </article>
-      `;
-      }).join("")
-      : `<p class="muted">${query ? tr("noSearchResults") : tr("noItems")}</p>`;
-
-    menu.querySelectorAll("[data-add]").forEach(button => {
-      button.addEventListener("click", () => {
-        const id = button.dataset.add;
-
-        const product = products.find(item => String(item.id) === String(id));
-        if (!product || product.is_available === false) return;
-
-        cart[id] = Math.min(50, (cart[id] || 0) + 1);
-        persistCart();
-        renderCart();
-        announceCartChange("cartAdded", product.name, cart[id]);
-      });
-    });
-  }
-
-  function getCartEntry(id) {
-    const key = String(id);
-    if (key.startsWith("offer:")) {
-      const offerId = key.slice(6);
-      const offer = offers.find(item => String(item.id) === offerId);
-      const price = Number(offer?.price);
-      if (!offer || !Number.isFinite(price) || price <= 0 || offerWindowStatus(offer) !== "active") return null;
-      return { type: "offer", id: key, offer, name: offer.title || tr("offer"), price };
-    }
-    const product = products.find(item => String(item.id) === key && item.is_available !== false);
-    if (!product) return null;
-    return { type: "product", id: key, product, name: product.name || "Menu item", price: Number(product.price || 0) };
-  }
-
-  function getCartRows() {
-    return Object.entries(cart).filter(([id, quantity]) =>
-      Number.isInteger(Number(quantity)) && Number(quantity) > 0 && Number(quantity) <= 50 &&
-      Boolean(getCartEntry(id))
-    );
-  }
-
-  function deliveryZoneForPoint(latitude, longitude) {
-    const lat = Number(latitude), lng = Number(longitude);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-    const rad = value => value * Math.PI / 180;
-    const matches = activeDeliveryZones.map(zone => {
-      const lat1 = rad(lat), lat2 = rad(Number(zone.center_latitude));
-      const dLat = lat2 - lat1, dLng = rad(Number(zone.center_longitude) - lng);
-      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-      const distanceKm = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return { zone, distanceKm };
-    }).filter(row => row.distanceKm <= Number(row.zone.radius_km))
-      .sort((a, b) => Number(a.zone.radius_km) - Number(b.zone.radius_km));
-    return matches[0]?.zone || null;
-  }
-
-  function calculateSubtotal(rows = getCartRows()) {
-    return rows.reduce((sum, [id, quantity]) => {
-      const item = getCartEntry(id);
-      return sum + Number(item?.price || 0) * Number(quantity || 0);
-    }, 0);
-  }
-
-  function renderCart() {
-    const cartItems = $("#cart-items");
-    if (!cartItems) return;
-
-    const rows = getCartRows();
-    persistCart();
-    const isDelivery = $("#order-type")?.value !== "pickup";
-    const deliveryLatitude = $("#delivery-latitude")?.value;
-    const deliveryLongitude = $("#delivery-longitude")?.value;
-    const selectedZone = deliveryZoneLookupAvailable && activeDeliveryZones.length
-      ? deliveryZoneForPoint(deliveryLatitude, deliveryLongitude)
-      : null;
-    const zoneRequired = isDelivery && deliveryZoneLookupAvailable && activeDeliveryZones.length > 0;
-    const zoneAllowsOrder = !zoneRequired || Boolean(selectedZone);
-    if (orderButton) orderButton.disabled = submitting || rows.length === 0 || !zoneAllowsOrder;
-    const clearButton = $("#clear-cart");
-    if (clearButton) clearButton.disabled = submitting || rows.length === 0;
-
-    cartItems.innerHTML = rows.length
-      ? rows.map(([id, quantity]) => {
-          const item = getCartEntry(id);
-
-          return `
-            <div class="cart-row">
-              <div class="cart-name">
-                <strong>${escapeHTML(item.name)}</strong>
+  function trackingStatusText(status, orderType = …15879 tokens truncated….name)}</strong>
                 <small>${money(item.price)} each</small>
               </div>
               <label class="cart-item-note">${escapeHTML(localized("Note for this item (optional)", "ملاحظة لهالصنف (اختياري)", "Note for this item (optional)"))}
@@ -3642,16 +2360,7 @@
           if (deliveryZoneLookupAvailable && activeDeliveryZones.length) {
             throw new Error(localized("Apply the optional database upgrade before accepting zone-priced orders.", "قبل قبول طلبات برسوم حسب المنطقة، لازم تطبيق تحديث قاعدة البيانات.", "Apply the optional database upgrade before accepting zone-priced orders."));
           }
-          ({ data, error } = await db.rpc("place_order_with_location", {
-            p_customer_name: rpcArgs.p_customer_name,
-            p_customer_phone: rpcArgs.p_customer_phone,
-            p_order_type: rpcArgs.p_order_type,
-            p_delivery_address: rpcArgs.p_delivery_address,
-            p_notes: legacyOrderNotes,
-            p_items: submittedItems,
-            p_delivery_latitude: deliveryLatitude,
-            p_delivery_longitude: deliveryLongitude
-          }));
+          throw new Error(localized("The secure order endpoint is unavailable. Refresh the app or contact support before placing this order.", "خدمة الطلب الآمنة غير متاحة حالياً. حدّث التطبيق أو تواصل مع الدعم قبل إرسال الطلب.", "The secure order endpoint is unavailable. Refresh the app or contact support before placing this order."));
         }
 
         if (error) throw error;

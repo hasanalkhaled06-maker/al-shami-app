@@ -3,6 +3,9 @@ project_id = "rxjfvuxzseuybfmfyjvs"
 [functions.staff-users]
 verify_jwt = false
 
+[functions.customer-auth]
+verify_jwt = false
+
 [functions.rider-login]
 verify_jwt = false
 

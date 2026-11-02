@@ -610,6 +610,14 @@
       <details class="admin-advanced-section" id="customer-feedback-details">
         <summary>Customer feedback</summary>
         <div class="admin-advanced-section-content">
+      <h3>Customer accounts</h3>
+      <p class="muted">Search customer profiles by name or contact phone. Account phone numbers are visible to authorized administrators.</p>
+      <form id="customer-account-search-form" class="admin-inline-form">
+        <label for="customer-account-search">Name or phone</label>
+        <input id="customer-account-search" type="search" maxlength="80" placeholder="Customer name or +233…" required>
+        <button class="btn btn-light" type="submit">Search accounts</button>
+      </form>
+      <div id="customer-account-search-results" class="admin-menu-list" aria-live="polite"><p class="muted">Search to view matching customer accounts.</p></div>
       <h3>Customer reviews</h3>
       <p class="muted">Review submissions stay hidden from customers until approved. Photo links must use HTTPS.</p>
       <div id="menu-reviews-list" class="admin-menu-list"><p class="muted">Reviews will appear after the optional database upgrade is applied.</p></div>
