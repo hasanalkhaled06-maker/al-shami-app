@@ -153,16 +153,17 @@ test("customer auth dialog does not expose an unsupported guest-checkout control
   assert.doesNotMatch(source("customer.js"), /db\.rpc\(["']place_order_with_location["']/);
 });
 
-test("customer ordering and history pages expose matching email and phone sign-in controls", () => {
+test("customer ordering and history pages expose matching email and username sign-in controls", () => {
   for (const page of ["index.html", "history.html"]) {
     const html = source(page);
-    for (const id of ["auth-method-switch", "auth-method-email", "auth-method-phone"]) {
+    for (const id of ["auth-method-switch", "auth-method-email", "auth-method-username", "auth-contact-phone-field"]) {
       assert.match(html, new RegExp('id="' + id + '"'), page + " must include " + id);
     }
+    assert.doesNotMatch(html, /SMS verification code|id="auth-method-phone"/);
   }
   const worker = source("service-worker.js");
-  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v161"/);
-  assert.ok(worker.includes("./customer.js?v=popular-rank-20261031a"),
+  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v162"/);
+  assert.ok(worker.includes("./customer.js?v=customer-auth-20261101a"),
     "offline shell must include the customer script used by both account pages");
 });
 
