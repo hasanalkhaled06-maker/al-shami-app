@@ -162,8 +162,8 @@ test("customer ordering and history pages expose matching email and username sig
     assert.doesNotMatch(html, /SMS verification code|id="auth-method-phone"/);
   }
   const worker = source("service-worker.js");
-  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v162"/);
-  assert.ok(worker.includes("./customer.js?v=customer-auth-20261101a"),
+  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v163"/);
+  assert.ok(worker.includes("./customer.js?v=customer-auth-20261102a"),
     "offline shell must include the customer script used by both account pages");
 });
 
