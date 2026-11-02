@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 30118)
-Total output lines: 2938
-
 (() => {
   const cfg = window.AL_SHAMI_CONFIG || {};
   const DEVICE_SETUP_KEY = "al-shami-admin-device-setup-v1:" + String(cfg.SUPABASE_URL || "site");
@@ -1565,7 +1562,21 @@ Total output lines: 2938
         order.order_number || order.id,
         new Date(order.created_at).toISOString(),
         order.customer_name,
-        or…118 tokens truncated…   const url = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8;"}));
+        order.customer_phone,
+        order.order_type,
+        order.delivery_address || "",
+        (order.order_items || []).map(item =>
+          Number(item.quantity) + " x " + (item.item_name || item.menu_items?.name || "Menu item")
+        ).join("; "),
+        order.subtotal,
+        order.delivery_fee,
+        order.total,
+        order.status,
+        order.notes || ""
+      ])
+    ];
+    const csv = "\uFEFF" + rows.map(row => row.map(quote).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8;"}));
     const link = document.createElement("a");
     link.href = url;
     link.download = "al-shami-orders-" + new Date().toISOString().slice(0,10) + ".csv";
