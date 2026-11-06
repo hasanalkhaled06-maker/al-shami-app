@@ -41,10 +41,14 @@ Fill from the official business records and current operations before submitting
 
 DPC guidance states that controllers/processors must register, renew every two years, appoint/train a Data Protection Supervisor, and publish an organizational privacy policy. Confirm the current application fields, fee and filing status in the DPC portal before submission.
 
-## Current launch blockers
+## Current launch blockers (refreshed 6 November 2026)
 
-1. Supabase leaked-password protection is reported disabled. Supabase documentation lists this feature for Pro and above, so verify the project's plan and enable it in Auth settings.
-2. The app security fix is in open PR #22. Its SQL migration is not applied to production.
-3. Arkesel replied on 31 October that the account is registered to the existing email/phone and advised using Forgot password with phone OTP. Hasan's follow-up says SMS is still not arriving, so delivery and Sender ID approval remain unverified.
-4. The DPC filing and public notice are not complete. This draft intentionally does not submit or publish either.
-5. A live customer, admin and rider end-to-end test, including Ghana-network SMS and active rider tracking, remains necessary before declaring launch readiness.
+The website/PWA is deployed; the current Pages deployment and static application validation passed. The live customer, admin and rider entry pages load. These checks do not prove an authenticated order works end to end.
+
+1. Supabase leaked-password protection is reported disabled. Enable it in Auth settings if the project plan supports it.
+2. DPC registration and a finalized public privacy notice are incomplete. The draft still lacks verified controller identity, retention/provider details and filing status.
+3. Public customer/staff account endpoints have no durable per-account/IP abuse limiter or CAPTCHA. Add and verify a server-side control before broad promotion.
+4. A real customer → admin → rider → completion → customer-history test has not been performed. Run it with dedicated test accounts and a non-production test order.
+5. Confirm iPhone rider location freshness while the app is foregrounded. Background GPS is not claimed.
+
+The legacy order RPC permission fix is now applied to production and recorded in the repository migration history. Phone/SMS sign-in and electronic payments are excluded from this release gate; keep them disabled until their own provider and end-to-end checks pass.
