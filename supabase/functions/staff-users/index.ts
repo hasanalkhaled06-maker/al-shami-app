@@ -118,7 +118,7 @@ Deno.serve(async (req: Request) => {
         );
         profile = Array.isArray(profiles) ? profiles[0] : null;
         if (!profile?.user_id || profile.is_active !== true || profile.employment_status !== "active" || String(profile.role) !== "cashier") {
-          return json({ error: "Incorrect username or password, or this user is inactive." }, 401, origin);
+          return json({ error: "Incorrect username or password." }, 401, origin);
         }
         role = String(profile.role);
       }
