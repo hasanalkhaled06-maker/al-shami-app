@@ -385,71 +385,55 @@
   async function ensureCustomerPhoneProfile(session) {
     const user = session?.user;
     if (!user || !db) return;
-    if (customerPhoneValidatedUserId === user.id) {
-      unlockCustomerApp(user.id);
-      return;
-    }
-    if (phoneProfileValidation?.userId === user.id) {
-      await phoneProfileValidation.promise;
-      return;
-    }
+    if (customerPhoneValidatedUserId === user.id) { unlockCustomerApp(user.id); return; }
+    if (phoneProfileValidation?.userId === user.id) { await phoneProfileValidation.promise; return; }
 
     const promise = (async () => {
-      const meta = user.user_metadata || {};
-      const phone = meta.contact_phone || meta.phone_e164 || meta.phone || user.phone || "";
-      // The database trigger reserves a number at signup. This check protects older account records.
-      if (!phone) {
-        unlockCustomerApp(user.id);
+      const { data: profile, error } = await db.from("customer_profiles")
+        .select("user_id,phone_e164,full_name").eq("user_id", user.id).maybeSingle();
+      if (error) throw error;
+      if (!profile) {
+        lockCustomerApp("Please complete your customer details to continue.");
+        showCustomerProfilePanel();
         return;
       }
-
-      let canonicalPhone;
-      try {
-        canonicalPhone = normalizeGhanaPhone(phone);
-      } catch (_) {
-        throw new Error("The phone number saved on this account is invalid. Contact AL SHAMI for help.");
-      }
-
-      const { data: existing, error: lookupError } = await db
-        .from("customer_profiles")
-        .select("user_id,phone_e164")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (lookupError) throw lookupError;
-
-      if (existing) {
-        if (existing.phone_e164 !== canonicalPhone) {
-          throw new Error("The phone number saved on this account does not match its profile. Contact AL SHAMI for help.");
-        }
-      } else {
-        const { error: insertError } = await db.from("customer_profiles").insert({
-          user_id: user.id,
-          phone_e164: canonicalPhone,
-          full_name: String(meta.full_name || "Customer").trim() || "Customer"
-        });
-        if (insertError) {
-          if (insertError.code === "23505" || /duplicate key|unique constraint/i.test(insertError.message || "")) {
-            throw new Error("This phone number is already linked to another customer account. Sign in to the existing account or use a different number.");
-          }
-          throw insertError;
-        }
-      }
+      customerPhoneValidatedUserId = user.id;
+      if (checkoutForm?.elements?.customer_phone && profile.phone_e164) checkoutForm.elements.customer_phone.value = profile.phone_e164;
+      if (checkoutForm?.elements?.customer_name && profile.full_name) checkoutForm.elements.customer_name.value = profile.full_name;
       unlockCustomerApp(user.id);
     })();
 
     phoneProfileValidation = { userId: user.id, promise };
-    try {
-      await promise;
-    } catch (error) {
-      console.error("Customer phone uniqueness check failed:", error);
-      if (authSession?.user?.id === user.id && /already linked|does not match|invalid/i.test(String(error?.message || ""))) {
-        await db.auth.signOut();
-        authSession = null;
-      }
+    try { await promise; }
+    catch (error) {
+      console.error("Customer profile check failed:", error);
       lockCustomerApp(error?.message || "Could not verify this customer account. Please try again.");
     } finally {
       if (phoneProfileValidation?.userId === user.id && phoneProfileValidation.promise === promise) phoneProfileValidation = null;
     }
+  }
+
+  function showCustomerProfilePanel() {
+    const panel = $("#customer-profile-panel");
+    if (!panel) { authMessage("Customer details form is unavailable. Reload the app and try again.", true); return; }
+    const gate = $("#customer-auth");
+    if (gate) gate.hidden = false;
+    document.body.classList.add("customer-auth-required", "auth-dialog-open");
+    $("#customer-auth-form").hidden = true;
+    $("#auth-mode-switch").hidden = true;
+    $("#auth-resend-confirmation").hidden = true;
+    $("#auth-forgot-password").hidden = true;
+    $("#auth-recovery-panel").hidden = true;
+    panel.hidden = false;
+    $("#customer-auth-title").textContent = "Complete your customer profile";
+    $("#customer-auth-help").textContent = "Your name and contact number are saved only after you sign in.";
+    authMessage("");
+    window.requestAnimationFrame(() => $("#customer-profile-name")?.focus());
+  }
+
+  function hideCustomerProfilePanel() {
+    const panel = $("#customer-profile-panel");
+    if (panel) panel.hidden = true;
   }
 
   function applyAuthState(session) {
@@ -487,12 +471,8 @@
     form.dataset.mode = signup ? "signup" : "signin";
     const title = $("#customer-auth-title");
     const help = $("#customer-auth-help");
-    const nameField = $("#auth-name-field");
-    const nameInput = $("#auth-name");
     const confirmField = $("#auth-confirm-field");
     const confirmInput = $("#auth-confirm-password");
-    const emailConfirmField = $("#auth-email-confirm-field");
-    const emailConfirmInput = $("#auth-email-confirm");
     const resendConfirmation = $("#auth-resend-confirmation");
     const password = $("#auth-password");
     const submit = $("#auth-submit");
@@ -502,20 +482,12 @@
     const methodSwitch = $("#auth-method-switch");
     if (title) title.textContent = signup ? "Create your AL SHAMI account" : "Sign in to your account";
     if (help) {
-      if (signup) help.textContent = "Create an account with email or username, password, and a unique contact phone number.";
+      if (signup) help.textContent = "Create an account with email or username and password. Add your name and phone after signing in.";
       else help.textContent = authMethod === "username" ? "Use your username and password." : "Use the email address and password you registered with.";
     }
     if (methodSwitch) methodSwitch.hidden = Boolean(authRecoveryMode);
-    if (nameField) nameField.hidden = !signup;
-    if (nameInput) nameInput.required = signup;
-    const contactField = $("#auth-contact-phone-field");
-    const contactInput = $("#auth-contact-phone");
-    if (contactField) contactField.hidden = !signup;
-    if (contactInput) contactInput.required = signup;
     if (confirmField) confirmField.hidden = !signup;
     if (confirmInput) confirmInput.required = signup;
-    if (emailConfirmField) emailConfirmField.hidden = !signup || authMethod !== "email";
-    if (emailConfirmInput) emailConfirmInput.required = signup && authMethod === "email";
     if (resendConfirmation) resendConfirmation.hidden = authMethod !== "email";
     if (password) password.autocomplete = signup ? "new-password" : "current-password";
     if (submit) submit.textContent = signup ? "Create account" : "Sign in";
@@ -549,6 +521,7 @@
     if (!gate) return;
     authRecoveryMode = null;
     $("#auth-recovery-panel").hidden = true;
+    hideCustomerProfilePanel();
     $("#customer-auth-form").hidden = false;
     $("#auth-mode-switch").hidden = false;
     $("#auth-forgot-password").hidden = false;
@@ -562,10 +535,9 @@
   function closeAuthDialog() {
     const gate = $("#customer-auth");
     const user = authSession?.user;
-    const hasSavedPhone = Boolean(user?.user_metadata?.contact_phone || user?.user_metadata?.phone_e164 || user?.user_metadata?.phone);
-    const phoneValidationPending = Boolean(user && hasSavedPhone && customerPhoneValidatedUserId !== user.id);
-    if (!user || phoneValidationPending || inPasswordRecovery) {
-      // Keep the mandatory gate until auth and the unique phone reservation both pass.
+    const profileValidationPending = Boolean(user && customerPhoneValidatedUserId !== user.id);
+    if (!user || profileValidationPending || inPasswordRecovery) {
+      // Keep the mandatory gate until the signed-in customer profile is complete.
       document.body.classList.add("customer-auth-required", "auth-dialog-open");
       if (gate) gate.hidden = false;
       return;
@@ -579,6 +551,7 @@
     authRecoveryMode = mode;
     const gate = $("#customer-auth");
     if (gate) gate.hidden = false;
+    hideCustomerProfilePanel();
     document.body.classList.add("auth-dialog-open");
     $("#customer-auth-title").textContent = "Reset your password";
     $("#customer-auth-help").textContent = "Your recovery link was accepted. Choose a new password.";
@@ -675,9 +648,7 @@
     if (!db) { authMessage("Account sign-in is unavailable because app configuration is missing.", true); return; }
     const password = String($("#auth-password")?.value || "");
     const mode = form.dataset.mode === "signup" ? "signup" : "signin";
-    const fullName = String($("#auth-name")?.value || "").trim();
     let identity = String($("#auth-identifier")?.value || "").trim();
-    let contactPhone = "";
     try {
       if (authMethod === "email") {
         identity = identity.toLowerCase();
@@ -687,24 +658,14 @@
         if (!/^[a-z0-9][a-z0-9._-]{2,29}$/.test(identity)) throw new Error("Use 3–30 characters for your username: letters, numbers, dot, underscore, or dash.");
       }
       if (password.length < 8 || password.length > 128) throw new Error("Use a password with 8–128 characters.");
-      if (mode === "signup" && authMethod === "email") {
-        const emailConfirmation = String($("#auth-email-confirm")?.value || "").trim().toLowerCase();
-        if (identity !== emailConfirmation) throw new Error("The email addresses do not match. Check both entries.");
-      }
-      if (mode === "signup") {
-        if (fullName.length < 2) throw new Error("Enter your name to create an account.");
-        if (password !== String($("#auth-confirm-password")?.value || "")) throw new Error("The passwords do not match.");
-        try { contactPhone = normalizeGhanaPhone(String($("#auth-contact-phone")?.value || "")); }
-        catch (_) { throw new Error("Enter a valid Ghana contact phone number."); }
-      }
+      if (mode === "signup" && password !== String($("#auth-confirm-password")?.value || "")) throw new Error("The passwords do not match.");
       if (submit) { submit.disabled = true; submit.textContent = mode === "signup" ? "Creating account…" : "Signing in…"; }
       authMessage(mode === "signup" ? "Creating your account…" : "Signing in…");
       let session;
       if (authMethod === "username") {
         const response = await fetch(`${cfg.SUPABASE_URL}/functions/v1/customer-auth`, {
           method: "POST", headers: { "Content-Type": "application/json", apikey: cfg.SUPABASE_ANON_KEY },
-          body: JSON.stringify({ action: mode === "signup" ? "register" : "login", username: identity, password,
-            ...(mode === "signup" ? { full_name: fullName, contact_phone: contactPhone } : {}) })
+          body: JSON.stringify({ action: mode === "signup" ? "register" : "login", username: identity, password })
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.error || "Account action failed. Please try again.");
@@ -714,30 +675,15 @@
       } else if (mode === "signup") {
         const { data, error } = await db.auth.signUp({
           email: identity, password,
-          options: { emailRedirectTo: getCustomerAuthRedirectUrl(), data: {
-            customer_account: "true", contact_phone: contactPhone, full_name: fullName
-          } }
+          options: { emailRedirectTo: getCustomerAuthRedirectUrl(), data: { customer_account: "true" } }
         });
-        if (error) {
-          const response = await fetch(`${cfg.SUPABASE_URL}/functions/v1/customer-auth`, {
-            method: "POST", headers: { "Content-Type": "application/json", apikey: cfg.SUPABASE_ANON_KEY },
-            body: JSON.stringify({ action: "correct-pending-email", contact_phone: contactPhone, password, new_email: identity })
-          });
-          const result = await response.json().catch(() => ({}));
-          if (!response.ok) throw error;
-          $("#auth-password").value = "";
-          $("#auth-confirm-password").value = "";
-          authMessage(result.confirmation_sent
-            ? "We corrected the email on your unfinished signup and sent a new confirmation link. Check the inbox and spam folder."
-            : "We corrected the email on your unfinished signup, but couldn't send the confirmation email. Use Resend confirmation email after checking your email address.");
-          return;
-        }
+        if (error) throw error;
         if (data.session) session = data.session;
         else if (Array.isArray(data.user?.identities) && data.user.identities.length === 0) throw new Error("This email is already registered. Sign in, resend its confirmation email, or use password recovery.");
         else {
           $("#auth-password").value = "";
           $("#auth-confirm-password").value = "";
-          authMessage("Your account is pending email confirmation. Open the link sent to your email. If the address was mistyped, enter the correct email and confirmation above, then try Create account again with the same phone and password.");
+          authMessage("Your account is pending email confirmation. Open the link sent to your email. After confirming, sign in and add your name and contact phone.");
           return;
         }
       } else {
@@ -752,11 +698,40 @@
       if (/email address not authorized|not authorized|confirmation email|SMTP|email provider/i.test(detail)) {
         authMessage("Email delivery is not configured for public customers yet. Configure a custom SMTP sender before email signup and password recovery.", true);
       } else if (/duplicate key|unique constraint|23505|already linked|already registered/i.test(detail)) {
-        authMessage("This phone, email, or username is already linked to an account. If you mistyped your email, retry Create account with the correct email, the same phone, and the original password; otherwise sign in or contact AL SHAMI.", true);
+        authMessage("This email or username is already linked to an account. Sign in or use account recovery.", true);
       } else authMessage(detail || "Account action failed. Please try again.", true);
     } finally {
       if (submit) { submit.disabled = false; submit.textContent = form.dataset.mode === "signup" ? "Create account" : "Sign in"; }
     }
+  });
+
+  $("#customer-profile-save")?.addEventListener("click", async () => {
+    const user = authSession?.user;
+    if (!user || !db) { authMessage("Sign in first, then add your customer details.", true); return; }
+    const name = String($("#customer-profile-name")?.value || "").trim();
+    let phone;
+    if (name.length < 2) { authMessage("Enter your full name.", true); return; }
+    try { phone = normalizeGhanaPhone(String($("#customer-profile-phone")?.value || "")); }
+    catch (_) { authMessage("Enter a valid Ghana contact phone number.", true); return; }
+    const button = $("#customer-profile-save");
+    if (button) { button.disabled = true; button.textContent = "Saving…"; }
+    try {
+      const { error } = await db.from("customer_profiles").insert({ user_id: user.id, phone_e164: phone, full_name: name });
+      if (error) {
+        if (error.code === "23505" || /duplicate key|unique constraint/i.test(error.message || "")) {
+          throw new Error("This phone number is already linked to another customer account. Sign in to that account or use a different number.");
+        }
+        throw error;
+      }
+      if (checkoutForm?.elements?.customer_phone) checkoutForm.elements.customer_phone.value = phone;
+      if (checkoutForm?.elements?.customer_name) checkoutForm.elements.customer_name.value = name;
+      customerPhoneValidatedUserId = user.id;
+      hideCustomerProfilePanel();
+      unlockCustomerApp(user.id);
+      closeAuthDialog();
+      authMessage("");
+    } catch (error) { authMessage(error?.message || "Could not save your customer details. Please try again.", true); }
+    finally { if (button) { button.disabled = false; button.textContent = "Save and continue"; } }
   });
 
   $("#auth-resend-confirmation")?.addEventListener("click", async () => {
