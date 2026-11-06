@@ -47,7 +47,7 @@ The website/PWA is deployed; the current Pages deployment and static application
 
 1. Supabase leaked-password protection is reported disabled. Enable it in Auth settings if the project plan supports it.
 2. DPC registration and a finalized public privacy notice are incomplete. The draft still lacks verified controller identity, retention/provider details and filing status.
-3. Public customer/staff account endpoints have no durable per-account/IP abuse limiter or CAPTCHA. Add and verify a server-side control before broad promotion.
+3. The public username-registration Edge Function creates Auth users through the Admin API and has no durable per-IP limiter or CAPTCHA. Verify Auth's built-in limits and add abuse protection to this admin path before broad promotion.
 4. A real customer → admin → rider → completion → customer-history test has not been performed. Run it with dedicated test accounts and a non-production test order.
 5. Confirm iPhone rider location freshness while the app is foregrounded. Background GPS is not claimed.
 6. Google Play release is not ready: the latest successful Android preview was built on the separate `mobile-store-prep` branch on 24 October. Its workflow builds a debug APK and a release bundle but contains no production signing step. iOS has only an unsigned simulator preview.
