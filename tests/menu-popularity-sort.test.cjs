@@ -35,9 +35,9 @@ test("customer auth release refreshes customer and order-history script caches",
   const pages = ["index.html", "history.html"];
   for (const page of pages) {
     const html = fs.readFileSync(path.resolve(__dirname, "../" + page), "utf8");
-    assert.ok(html.includes("customer.js?v=customer-auth-20261102a"), page + " must load the current customer auth flow");
+    assert.ok(html.includes("customer.js?v=customer-profile-after-signin-20261106a"), page + " must load the current customer auth flow");
   }
   const serviceWorker = fs.readFileSync(path.resolve(__dirname, "../service-worker.js"), "utf8");
-  assert.ok(serviceWorker.includes('"./customer.js?v=customer-auth-20261102a"'));
-  assert.ok(serviceWorker.includes('CACHE_PREFIX + "v164"'));
+  assert.ok(serviceWorker.includes('"./customer.js?v=customer-profile-after-signin-20261106a"'));
+  assert.ok(serviceWorker.includes('CACHE_PREFIX + "v165"'));
 });
