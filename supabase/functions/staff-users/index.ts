@@ -100,7 +100,7 @@ Deno.serve(async (req: Request) => {
       );
       const account = Array.isArray(matches) ? matches[0] : null;
       if (!account?.user_id || !account.is_active) {
-        return json({ error: "Incorrect username or password, or this user is inactive." }, 401, origin);
+        return json({ error: "Incorrect username or password." }, 401, origin);
       }
 
       const admins = await requestJson(
@@ -254,6 +254,6 @@ Deno.serve(async (req: Request) => {
     return json({ error: "Unknown action." }, 400, origin);
   } catch (error) {
     console.error("Staff user operation failed:", String(error));
-    return json({ error: "The user operation could not be completed. Check the username, permissions, and account status." }, 400, origin);
+    return json({ error: action === "login" ? "Incorrect username or password." : "The user operation could not be completed. Check the username, permissions, and account status." }, action === "login" ? 401 : 400, origin);
   }
 });
