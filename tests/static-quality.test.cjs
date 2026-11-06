@@ -156,14 +156,14 @@ test("customer auth dialog does not expose an unsupported guest-checkout control
 test("customer ordering and history pages expose matching email and username sign-in controls", () => {
   for (const page of ["index.html", "history.html"]) {
     const html = source(page);
-    for (const id of ["auth-method-switch", "auth-method-email", "auth-method-username", "auth-contact-phone-field"]) {
+    for (const id of ["auth-method-switch", "auth-method-email", "auth-method-username", "customer-profile-panel"]) {
       assert.match(html, new RegExp('id="' + id + '"'), page + " must include " + id);
     }
     assert.doesNotMatch(html, /SMS verification code|id="auth-method-phone"/);
   }
   const worker = source("service-worker.js");
-  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v164"/);
-  assert.ok(worker.includes("./customer.js?v=customer-auth-20261102a"),
+  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v165"/);
+  assert.ok(worker.includes("./customer.js?v=customer-profile-after-signin-20261106a"),
     "offline shell must include the customer script used by both account pages");
 });
 
