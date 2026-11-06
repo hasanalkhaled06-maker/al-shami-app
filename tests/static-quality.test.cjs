@@ -163,8 +163,15 @@ test("customer ordering and history pages expose matching email and username sig
   }
   const worker = source("service-worker.js");
   assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v167"/);
-  assert.ok(worker.includes("./customer.js?v=customer-profile-after-signin-20261106a"),
+  assert.ok(worker.includes("./customer.js?v=customer-profile-after-signin-20261106a-idempotent-profile-20261106b"),
     "offline shell must include the customer script used by both account pages");
+});
+
+test("customer profile save is safe to retry after a lost response", () => {
+  const customer = source("customer.js");
+  assert.match(customer,
+    /from\("customer_profiles"\)\s*\.upsert\(\{ user_id: user\.id, phone_e164: phone, full_name: name \}, \{ onConflict: "user_id" \}\)/,
+    "profile retries for the same signed-in user must update their own row instead of failing as a duplicate");
 });
 
 test("customer browser cannot invoke the legacy order RPC directly", () => {

@@ -716,7 +716,7 @@
     const button = $("#customer-profile-save");
     if (button) { button.disabled = true; button.textContent = "Saving…"; }
     try {
-      const { error } = await db.from("customer_profiles").insert({ user_id: user.id, phone_e164: phone, full_name: name });
+      const { error } = await db.from("customer_profiles").upsert({ user_id: user.id, phone_e164: phone, full_name: name }, { onConflict: "user_id" });
       if (error) {
         if (error.code === "23505" || /duplicate key|unique constraint/i.test(error.message || "")) {
           throw new Error("This phone number is already linked to another customer account. Sign in to that account or use a different number.");
