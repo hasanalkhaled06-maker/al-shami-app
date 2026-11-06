@@ -232,10 +232,12 @@ test("all currently referenced stylesheet versions remain in the service-worker 
     [...shellMatch[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1])
   );
   const requiredStylesheets = [
-    "./dark-theme.css?v=shami-wordmark-cleanup-20261023q",
-    "./style.css?v=modern-ui-20261023a",
-    "./dark-theme.css?v=deep-accents-20261023i",
-    "./style.css?v=radical-ui-20261023a"
+    "./style.css?v=order-review-20261029a",
+    "./style.css?v=radical-ui-20261023a",
+    "./style.css?v=rider-handover-20261030a",
+    "./dark-theme.css?v=modern-wine-gold-20261024a",
+    "./dark-theme.css?v=olive-sand-copper-20261026a",
+    "./dark-theme.css?v=rider-action-text-white-20261029a"
   ];
   for (const stylesheet of requiredStylesheets) {
     assert.ok(shell.has(stylesheet), "currently referenced stylesheet is missing from cache shell: " + stylesheet);
