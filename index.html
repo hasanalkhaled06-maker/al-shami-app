@@ -39,6 +39,7 @@
     .customer-auth-card .btn{margin-top:12px}
     .customer-auth-card{max-height:calc(100dvh - 32px);overflow:auto}
     .customer-auth [hidden]{display:none!important}
+    #customer-profile-panel label{display:block;font-weight:700;margin:16px 0 6px}#customer-profile-panel input{box-sizing:border-box;width:100%;padding:13px;border:1px solid #d8d8d8;border-radius:10px;font:inherit}#customer-profile-panel .btn{margin-top:16px}
     .customer-auth-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
     .customer-auth-heading h2{margin:6px 0 10px}
     .customer-auth-heading .eyebrow{color:#8d1723}
@@ -312,19 +313,23 @@
         <button id="auth-mode-signup" class="btn btn-light" type="button" aria-pressed="false">Create account</button>
       </div>
       <form id="customer-auth-form" data-mode="signin" novalidate>
-        <label id="auth-name-field" hidden>Full name<input id="auth-name" type="text" autocomplete="name" maxlength="100" placeholder="Your full name"></label>
         <div id="auth-method-switch" class="auth-mode" role="group" aria-label="Sign-in method">
           <button id="auth-method-email" class="btn btn-light active" type="button" aria-pressed="true">Email</button>
           <button id="auth-method-username" class="btn btn-light" type="button" aria-pressed="false">Username</button>
         </div>
         <label id="auth-identifier-field"><span id="auth-identifier-label">Email address</span><input id="auth-identifier" type="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required></label>
-        <label id="auth-email-confirm-field" hidden>Confirm email address<input id="auth-email-confirm" type="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="Enter the same email again"></label>
-        <label id="auth-contact-phone-field" hidden>Contact phone number<input id="auth-contact-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="+233 24 123 4567"></label>
         <label>Password<input id="auth-password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="At least 8 characters" required></label>
         <label id="auth-confirm-field" hidden>Confirm password<input id="auth-confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="Enter password again"></label>
         <p id="auth-password-help" class="field-help">Use at least 8 characters.</p>
         <button id="auth-submit" class="btn btn-primary btn-wide" type="submit">Sign in</button>
       </form>
+      <div id="customer-profile-panel" hidden>
+        <label for="customer-profile-name">Full name</label>
+        <input id="customer-profile-name" type="text" autocomplete="name" maxlength="100" placeholder="Your full name">
+        <label for="customer-profile-phone">Contact phone number</label>
+        <input id="customer-profile-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="+233 24 123 4567">
+        <button id="customer-profile-save" class="btn btn-primary btn-wide" type="button">Save and continue</button>
+      </div>
       <button id="auth-resend-confirmation" class="btn btn-light auth-secondary" type="button">Resend confirmation email</button>
       <button id="auth-forgot-password" class="btn btn-light auth-secondary" type="button">Forgot your password?</button>
       <div id="auth-recovery-panel" hidden>
@@ -795,7 +800,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
-  <script src="customer.js?v=customer-auth-20261102a"></script>
+  <script src="customer.js?v=customer-profile-after-signin-20261106a"></script>
   <script src="customer-features.js?v=customer-feature-recovery-20261029a"></script>
   <script src="pwa.js?v=install-prompt-20261027a"></script>
 </body>
