@@ -2,10 +2,11 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v166";
+const CACHE_NAME = CACHE_PREFIX + "v167";
 const SHELL_FILES = [
   "./",
   "./index.html",
+  "./delete-account.html",
   "./install.html",
   "./history.html",
   "./admin.html",
