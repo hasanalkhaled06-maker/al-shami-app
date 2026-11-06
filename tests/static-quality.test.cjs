@@ -153,6 +153,21 @@ test("customer auth dialog does not expose an unsupported guest-checkout control
   assert.doesNotMatch(source("customer.js"), /db\.rpc\(["']place_order_with_location["']/);
 });
 
+test("customer auth uses separate action, method, and credential steps", () => {
+  for (const page of ["index.html", "history.html"]) {
+    const html = source(page);
+    assert.match(html, /id="auth-mode-switch"[^>]*>[\s\S]*Sign in[\s\S]*Create account/);
+    assert.match(html, /id="auth-method-step" hidden/);
+    assert.match(html, /id="auth-method-switch"[^>]*>[\s\S]*Continue with Email[\s\S]*Continue with Username/);
+    assert.match(html, /id="customer-auth-form"[^>]*hidden/);
+    assert.match(html, /id="auth-credentials-back"/);
+  }
+  const customer = source("customer.js");
+  assert.match(customer, /setAuthStep\("action"\)/);
+  assert.match(customer, /setAuthStep\("method"\)/);
+  assert.match(customer, /setAuthStep\("credentials"\)/);
+});
+
 test("customer ordering and history pages expose matching email and username sign-in controls", () => {
   for (const page of ["index.html", "history.html"]) {
     const html = source(page);
@@ -162,8 +177,8 @@ test("customer ordering and history pages expose matching email and username sig
     assert.doesNotMatch(html, /SMS verification code|id="auth-method-phone"/);
   }
   const worker = source("service-worker.js");
-  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v170"/);
-  assert.ok(worker.includes("./customer.js?v=customer-password-recovery-username-help-20261106c"),
+  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v171"/);
+  assert.ok(worker.includes("./customer.js?v=customer-two-step-auth-20261106d"),
     "offline shell must include the customer script used by both account pages");
 });
 

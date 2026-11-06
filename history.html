@@ -208,11 +208,16 @@
         <button id="auth-mode-signin" class="btn btn-light active" type="button" aria-pressed="true">Sign in</button>
         <button id="auth-mode-signup" class="btn btn-light" type="button" aria-pressed="false">Create account</button>
       </div>
-      <form id="customer-auth-form" data-mode="signin" novalidate>
+      <div id="auth-method-step" hidden>
+        <p id="auth-method-step-title" class="muted">Choose how you want to sign in.</p>
         <div id="auth-method-switch" class="auth-mode" role="group" aria-label="Sign-in method">
-          <button id="auth-method-email" class="btn btn-light active" type="button" aria-pressed="true">Email</button>
-          <button id="auth-method-username" class="btn btn-light" type="button" aria-pressed="false">Username</button>
+          <button id="auth-method-email" class="btn btn-light active" type="button" aria-pressed="true">Continue with Email</button>
+          <button id="auth-method-username" class="btn btn-light" type="button" aria-pressed="false">Continue with Username</button>
         </div>
+        <button id="auth-method-back" class="btn btn-light auth-secondary" type="button">Back</button>
+      </div>
+      <form id="customer-auth-form" data-mode="signin" novalidate hidden>
+        <button id="auth-credentials-back" class="btn btn-light auth-secondary" type="button">Back to email or username</button>
         <label id="auth-identifier-field"><span id="auth-identifier-label">Email address</span><input id="auth-identifier" type="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required></label>
         <label>Password<input id="auth-password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="At least 8 characters" required></label>
         <label id="auth-confirm-field" hidden>Confirm password<input id="auth-confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="Enter password again"></label>
@@ -491,7 +496,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
-  <script src="customer.js?v=customer-password-recovery-username-help-20261106c"></script>
+  <script src="customer.js?v=customer-two-step-auth-20261106d"></script>
   <script src="customer-features.js?v=customer-feature-recovery-20261029a"></script>
   <script src="pwa.js"></script>
 </body>

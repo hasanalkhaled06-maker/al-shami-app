@@ -350,6 +350,7 @@
 
   let authSession = null;
   let authMethod = "email";
+  let authStep = "action";
   let authRecoveryMode = null;
   let customerPhoneValidatedUserId = null;
   let phoneProfileValidation = null;
@@ -480,13 +481,10 @@
     const signinButton = $("#auth-mode-signin");
     const signupButton = $("#auth-mode-signup");
     const forgot = $("#auth-forgot-password");
-    const methodSwitch = $("#auth-method-switch");
     if (title) title.textContent = signup ? "Create your AL SHAMI account" : "Sign in to your account";
-    if (help) {
-      if (signup) help.textContent = "Create an account with email or username and password. Add your name and phone after signing in.";
-      else help.textContent = authMethod === "username" ? "Use your username and password." : "Use the email address and password you registered with.";
-    }
-    if (methodSwitch) methodSwitch.hidden = Boolean(authRecoveryMode);
+    if (help) help.textContent = signup
+      ? "Create an account with your email or username and password."
+      : "Sign in with your email or username and password.";
     if (confirmField) confirmField.hidden = !signup;
     if (confirmInput) confirmInput.required = signup;
     if (resendConfirmation) resendConfirmation.hidden = authMethod !== "email";
@@ -498,7 +496,7 @@
     authMessage("");
   }
 
-  function setAuthMethod(method) {
+  function setAuthMethod(method, openCredentials = true) {
     authMethod = method === "email" ? "email" : "username";
     const label = $("#auth-identifier-label");
     const field = $("#auth-identifier");
@@ -515,6 +513,39 @@
     if (usernameButton) { usernameButton.classList.toggle("active", authMethod === "username"); usernameButton.setAttribute("aria-pressed", String(authMethod === "username")); }
     if (emailButton) { emailButton.classList.toggle("active", authMethod === "email"); emailButton.setAttribute("aria-pressed", String(authMethod === "email")); }
     setAuthMode($("#customer-auth-form")?.dataset?.mode || "signin");
+    if (openCredentials) {
+      setAuthStep("credentials");
+      window.requestAnimationFrame(() => field?.focus());
+    }
+  }
+
+  function setAuthStep(step) {
+    authStep = step;
+    const actionStep = $("#auth-mode-switch");
+    const methodStep = $("#auth-method-step");
+    const form = $("#customer-auth-form");
+    if (actionStep) actionStep.hidden = step !== "action";
+    if (methodStep) methodStep.hidden = step !== "method";
+    if (form) form.hidden = step !== "credentials";
+    const title = $("#customer-auth-title");
+    const help = $("#customer-auth-help");
+    const signup = form?.dataset?.mode === "signup";
+    if (step === "action") {
+      if (title) title.textContent = "Welcome to AL SHAMI";
+      if (help) help.textContent = "Choose sign in or create an account.";
+    } else if (step === "method") {
+      if (title) title.textContent = signup ? "Create your AL SHAMI account" : "Sign in to your account";
+      if (help) help.textContent = "Choose Email or Username to continue.";
+      const stepTitle = $("#auth-method-step-title");
+      if (stepTitle) stepTitle.textContent = signup
+        ? "Create your account using email or username."
+        : "Choose how you want to sign in.";
+    } else if (step === "credentials") {
+      if (title) title.textContent = signup ? "Create account with " + (authMethod === "email" ? "Email" : "Username") : "Sign in with " + (authMethod === "email" ? "Email" : "Username");
+      if (help) help.textContent = signup
+        ? "Create an account with your " + (authMethod === "email" ? "email address" : "username") + " and password."
+        : "Enter your " + (authMethod === "email" ? "email address" : "username") + " and password.";
+    }
   }
 
   function showAuthDialog() {
@@ -523,14 +554,16 @@
     authRecoveryMode = null;
     $("#auth-recovery-panel").hidden = true;
     hideCustomerProfilePanel();
-    $("#customer-auth-form").hidden = false;
-    $("#auth-mode-switch").hidden = false;
     $("#auth-forgot-password").hidden = false;
+    $("#auth-method-step").hidden = true;
+    $("#auth-recovery-panel").hidden = true;
     $("#auth-recovery-back").hidden = false;
     gate.hidden = false;
     document.body.classList.add("auth-dialog-open");
     setAuthMode("signin");
-    window.requestAnimationFrame(() => $("#auth-identifier")?.focus());
+    setAuthMethod("email", false);
+    setAuthStep("action");
+    window.requestAnimationFrame(() => $("#auth-mode-signin")?.focus());
   }
 
   function closeAuthDialog() {
@@ -625,10 +658,10 @@
   $("#auth-recovery-back")?.addEventListener("click", () => {
     authRecoveryMode = null;
     $("#auth-recovery-panel").hidden = true;
-    $("#customer-auth-form").hidden = false;
-    $("#auth-mode-switch").hidden = false;
+    $("#auth-username-recovery-help").hidden = true;
     $("#auth-forgot-password").hidden = false;
     setAuthMode("signin");
+    setAuthStep("credentials");
     authMessage("");
   });
   $("#customer-auth")?.addEventListener("click", event => {
@@ -637,11 +670,26 @@
   document.addEventListener("keydown", event => {
     if (event.key === "Escape" && $("#customer-auth") && !$("#customer-auth").hidden && !authRecoveryMode && authSession?.user) closeAuthDialog();
   });
-  $("#auth-mode-signin")?.addEventListener("click", () => setAuthMode("signin"));
-  $("#auth-mode-signup")?.addEventListener("click", () => setAuthMode("signup"));
+  $("#auth-mode-signin")?.addEventListener("click", () => {
+    setAuthMode("signin");
+    setAuthStep("method");
+    window.requestAnimationFrame(() => $("#auth-method-email")?.focus());
+  });
+  $("#auth-mode-signup")?.addEventListener("click", () => {
+    setAuthMode("signup");
+    setAuthStep("method");
+    window.requestAnimationFrame(() => $("#auth-method-email")?.focus());
+  });
+  $("#auth-method-back")?.addEventListener("click", () => setAuthStep("action"));
+  $("#auth-credentials-back")?.addEventListener("click", () => {
+    authMessage("");
+    setAuthStep("method");
+    window.requestAnimationFrame(() => $("#auth-method-email")?.focus());
+  });
   $("#auth-method-email")?.addEventListener("click", () => setAuthMethod("email"));
   $("#auth-method-username")?.addEventListener("click", () => setAuthMethod("username"));
-  setAuthMethod("email");
+  setAuthMethod("email", false);
+  setAuthStep("action");
 
   $("#customer-auth-form")?.addEventListener("submit", async event => {
     event.preventDefault();
@@ -761,7 +809,7 @@
     if (authMethod === "username") {
       $("#customer-auth-form").hidden = true;
       $("#auth-mode-switch").hidden = true;
-      $("#auth-method-switch").hidden = true;
+      $("#auth-method-step").hidden = true;
       $("#auth-recovery-panel").hidden = false;
       $("#auth-recovery-title").textContent = "Recover username account";
       $("#auth-recovery-help").textContent = "Follow the secure recovery steps below.";
