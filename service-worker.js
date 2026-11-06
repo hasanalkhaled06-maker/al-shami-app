@@ -25,7 +25,6 @@ const SHELL_FILES = [
   "./icons/al-shami.svg",
   "./style.css?v=radical-ui-20261023a",
   "./app-refresh.css?v=light-premium-20261023b",
-  "./customer-features.js?v=delivery-complete-20261025a",
   "./pwa.js",
   "./admin.webmanifest",
   "./icons/al-shami-admin.svg",
