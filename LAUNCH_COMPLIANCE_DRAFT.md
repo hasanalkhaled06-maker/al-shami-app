@@ -51,6 +51,6 @@ The website/PWA is deployed; the current Pages deployment and static application
 4. A real customer → admin → rider → completion → customer-history test has not been performed. Run it with dedicated test accounts and a non-production test order.
 5. Confirm iPhone rider location freshness while the app is foregrounded. Background GPS is not claimed.
 6. Google Play release is not ready: the latest successful Android preview was built on the separate `mobile-store-prep` branch on 24 October. Its workflow builds a debug APK and a release bundle but contains no production signing step. iOS has only an unsigned simulator preview.
-7. The customer app has no account-deletion flow. Play requires an accessible deletion route and deletion of associated data; design this only after retention/legal obligations are defined.
+7. A public deletion-request page and in-app link are being added. This is a support request path, not automatic account deletion. Before Play submission, verify the support process end to end, publish the final retention rules, and implement/test actual deletion or documented anonymization for account data and retained orders.
 
 The legacy order RPC permission fix is now applied to production and recorded in the repository migration history. Phone/SMS sign-in and electronic payments are excluded from this release gate; keep them disabled until their own provider and end-to-end checks pass.
