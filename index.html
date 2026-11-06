@@ -318,12 +318,14 @@
           <button id="auth-method-username" class="btn btn-light" type="button" aria-pressed="false">Username</button>
         </div>
         <label id="auth-identifier-field"><span id="auth-identifier-label">Email address</span><input id="auth-identifier" type="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required></label>
+        <label id="auth-email-confirm-field" hidden>Confirm email address<input id="auth-email-confirm" type="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="Enter the same email again"></label>
         <label id="auth-contact-phone-field" hidden>Contact phone number<input id="auth-contact-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="+233 24 123 4567"></label>
         <label>Password<input id="auth-password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="At least 8 characters" required></label>
         <label id="auth-confirm-field" hidden>Confirm password<input id="auth-confirm-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="Enter password again"></label>
         <p id="auth-password-help" class="field-help">Use at least 8 characters.</p>
         <button id="auth-submit" class="btn btn-primary btn-wide" type="submit">Sign in</button>
       </form>
+      <button id="auth-resend-confirmation" class="btn btn-light auth-secondary" type="button">Resend confirmation email</button>
       <button id="auth-forgot-password" class="btn btn-light auth-secondary" type="button">Forgot your password?</button>
       <div id="auth-recovery-panel" hidden>
         <h3 id="auth-recovery-title">Recover your account</h3>
