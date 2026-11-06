@@ -37,7 +37,6 @@
     ar: ["أضف الشامي إلى الشاشة الرئيسية", "افتح هذا الرابط في Safari.", "اضغط «مشاركة» ↑ أسفل Safari.", "اختر «إضافة إلى الشاشة الرئيسية» ثم اضغط «إضافة».", "سيظهر رمز التطبيق على الشاشة الرئيسية للآيفون."],
     tw: ["Add AL SHAMI to your Home Screen", "Open this link in Safari.", "Tap Share ↑ at the bottom of Safari.", "Choose “Add to Home Screen”, then tap “Add”.", "The app icon will appear on your iPhone Home Screen."]
   };
-  if (iosGuideOpen) iosGuideOpen.hidden = !iosDevice;
   if (iosGuide && iosDevice && !standalone) {
     let dismissedAt = 0;
     try { dismissedAt = Number(localStorage.getItem(iosGuideKey) || 0); } catch (_) {}
