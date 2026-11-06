@@ -174,6 +174,16 @@ test("customer profile save is safe to retry after a lost response", () => {
     "profile retries for the same signed-in user must update their own row instead of failing as a duplicate");
 });
 
+test("iPhone visitors get Home Screen install steps on the customer landing page", () => {
+  const html = source("index.html");
+  const pwa = source("pwa.js");
+  assert.match(html, /id="ios-install-guide"/);
+  assert.match(html, /id="ios-install-step-3"/);
+  assert.match(pwa, /iPhone\|iPad\|iPod/);
+  assert.match(pwa, /Add to Home Screen/);
+  assert.match(pwa, /al-shami-ios-home-install-dismissed-at/);
+});
+
 test("customer browser cannot invoke the legacy order RPC directly", () => {
   assert.doesNotMatch(source("customer.js"), /db\.rpc\(["']place_order_with_location["']/);
   const migration = fs.readdirSync(path.join(ROOT, "supabase/migrations"))

@@ -26,6 +26,58 @@
   }
   if (installBanner) installBanner.hidden = standalone;
   if (standalone) document.documentElement.classList.add("app-installed");
+  const iosGuide = document.getElementById("ios-install-guide");
+  const iosGuideClose = document.getElementById("ios-install-close");
+  const iosDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const iosGuideKey = "al-shami-ios-home-install-dismissed-at";
+  const iosGuideCopy = {
+    en: ["Add AL SHAMI to your Home Screen", "Open this link in Safari.", "Tap Share ↑ at the bottom of Safari.", "Choose “Add to Home Screen”, then tap “Add”.", "The app icon will appear on your iPhone Home Screen."],
+    ar: ["أضف الشامي إلى الشاشة الرئيسية", "افتح هذا الرابط في Safari.", "اضغط «مشاركة» ↑ أسفل Safari.", "اختر «إضافة إلى الشاشة الرئيسية» ثم اضغط «إضافة».", "سيظهر رمز التطبيق على الشاشة الرئيسية للآيفون."],
+    tw: ["Add AL SHAMI to your Home Screen", "Open this link in Safari.", "Tap Share ↑ at the bottom of Safari.", "Choose “Add to Home Screen”, then tap “Add”.", "The app icon will appear on your iPhone Home Screen."]
+  };
+  if (iosGuide && iosDevice && !standalone) {
+    let dismissedAt = 0;
+    try { dismissedAt = Number(localStorage.getItem(iosGuideKey) || 0); } catch (_) {}
+    if (!dismissedAt || Date.now() - dismissedAt > 14 * 24 * 60 * 60 * 1000) {
+      window.setTimeout(() => {
+        if (!window.matchMedia("(display-mode: standalone)").matches && window.navigator.standalone !== true) {
+          iosGuide.hidden = false;
+          iosGuideClose?.focus();
+        }
+      }, 650);
+    }
+  }
+  const closeIosGuide = () => {
+    if (!iosGuide) return;
+    iosGuide.hidden = true;
+    try { localStorage.setItem(iosGuideKey, String(Date.now())); } catch (_) {}
+  };
+  iosGuideClose?.addEventListener("click", closeIosGuide);
+  iosGuide?.addEventListener("click", event => {
+    if (event.target === iosGuide) closeIosGuide();
+  });
+  window.addEventListener("keydown", event => {
+    if (event.key === "Escape" && iosGuide && !iosGuide.hidden) closeIosGuide();
+  });
+  const updateIosGuideCopy = () => {
+    const language = document.getElementById("language")?.value || "en";
+    const copy = iosGuideCopy[language] || iosGuideCopy.en;
+    const ids = ["ios-install-title", "ios-install-step-1", "ios-install-step-2", "ios-install-step-3", "ios-install-note"];
+    ids.forEach((id, index) => {
+      const node = document.getElementById(id);
+      if (node) node.textContent = copy[index];
+    });
+  };
+  updateIosGuideCopy();
+  document.getElementById("language")?.addEventListener("change", updateIosGuideCopy);
+
+  if (!document.getElementById("ios-install-guide-style")) {
+    const style = document.createElement("style");
+    style.id = "ios-install-guide-style";
+    style.textContent = ".ios-install-guide{position:fixed;z-index:10030;inset:0;display:grid;place-items:center;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));background:#21151599;font:16px/1.55 system-ui,-apple-system,sans-serif;color:#382b26}.ios-install-guide[hidden]{display:none!important}.ios-install-card{position:relative;width:min(480px,100%);max-height:calc(100dvh - 40px);overflow:auto;padding:28px 24px 22px;border:1px solid #e3d2b1;border-radius:20px;background:#fffaf0;box-shadow:0 20px 60px #120a0a55}.ios-install-card h2{margin:5px 36px 14px 0;color:#641622;font-size:1.4rem;line-height:1.25}.ios-install-card ol{padding-left:24px}.ios-install-card li{margin:12px 0}.ios-install-card .ios-install-eyebrow{margin:0;color:#8d1723;font-size:.78rem;font-weight:800;letter-spacing:.08em}.ios-install-card #ios-install-note{margin:16px 0 0;color:#64554c}.ios-install-close{position:absolute;top:12px;right:12px;width:42px;height:42px;border:1px solid #d7c8b7;border-radius:50%;background:#fff;color:#641622;font-size:28px;line-height:1;cursor:pointer}.ios-install-close:focus-visible{outline:3px solid #d9b46b;outline-offset:2px}";
+    document.head.appendChild(style);
+  }
   const updateInstallCopy = () => {
     const language = document.getElementById("language")?.value || "en";
     const copy = installCopy[language] || installCopy.en;
