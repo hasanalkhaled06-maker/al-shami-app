@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v169";
+const CACHE_NAME = CACHE_PREFIX + "v170";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -20,7 +20,7 @@ const SHELL_FILES = [
   "./dark-theme.css?v=modern-wine-gold-20261024a",
   "./assets/al-shami-chef-3d.webp",
   "./config.js",
-  "./customer.js?v=customer-profile-after-signin-20261106a-idempotent-profile-20261106b",
+  "./customer.js?v=customer-password-recovery-username-help-20261106c",
   "./customer-features.js?v=customer-feature-recovery-20261029a",
   "./pwa.js?v=install-prompt-20261027a",
   "./icons/al-shami.svg",

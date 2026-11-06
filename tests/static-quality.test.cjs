@@ -162,8 +162,8 @@ test("customer ordering and history pages expose matching email and username sig
     assert.doesNotMatch(html, /SMS verification code|id="auth-method-phone"/);
   }
   const worker = source("service-worker.js");
-  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v169"/);
-  assert.ok(worker.includes("./customer.js?v=customer-profile-after-signin-20261106a-idempotent-profile-20261106b"),
+  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v170"/);
+  assert.ok(worker.includes("./customer.js?v=customer-password-recovery-username-help-20261106c"),
     "offline shell must include the customer script used by both account pages");
 });
 
@@ -182,6 +182,15 @@ test("iPhone visitors get Home Screen install steps on the customer landing page
   assert.match(pwa, /iPhone\|iPad\|iPod/);
   assert.match(pwa, /Add to Home Screen/);
   assert.match(pwa, /al-shami-ios-home-install-dismissed-at/);
+});
+
+test("username password recovery gives a visible support path", () => {
+  for (const page of ["index.html", "history.html"]) {
+    const html = source(page);
+    assert.match(html, /id="auth-username-recovery-help"/);
+    assert.match(html, /https:\/\/wa\.me\/233547489859/);
+  }
+  assert.match(source("customer.js"), /authMethod === "username"[\s\S]*?auth-username-recovery-help/);
 });
 
 test("customer browser cannot invoke the legacy order RPC directly", () => {

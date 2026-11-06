@@ -338,6 +338,10 @@
         <div id="auth-recovery-send-area">
           <button id="auth-recovery-send" class="btn btn-primary btn-wide" type="button">Send recovery email</button>
         </div>
+        <div id="auth-username-recovery-help" hidden>
+          <p id="auth-username-recovery-message">Username accounts do not have an email reset link. Contact AL SHAMI support to verify ownership and recover access. Never send your password or a sign-in code.</p>
+          <a id="auth-username-recovery-contact" class="btn btn-primary btn-wide" href="https://wa.me/233547489859?text=I%20need%20help%20recovering%20my%20AL%20SHAMI%20username%20account." target="_blank" rel="noopener noreferrer">Contact support on WhatsApp</a>
+        </div>
         <div id="auth-recovery-password-area" hidden>
           <label for="auth-recovery-new-password">New password</label>
           <input id="auth-recovery-new-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="At least 8 characters">
@@ -801,7 +805,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="config.js"></script>
-  <script src="customer.js?v=customer-profile-after-signin-20261106a-idempotent-profile-20261106b"></script>
+  <script src="customer.js?v=customer-password-recovery-username-help-20261106c"></script>
   <script src="customer-features.js?v=customer-feature-recovery-20261029a"></script>
   <script src="pwa.js?v=install-prompt-20261027a"></script>
   <section id="ios-install-guide" class="ios-install-guide" role="dialog" aria-modal="true" aria-labelledby="ios-install-title" hidden>

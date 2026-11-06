@@ -424,6 +424,7 @@
     $("#auth-resend-confirmation").hidden = true;
     $("#auth-forgot-password").hidden = true;
     $("#auth-recovery-panel").hidden = true;
+    $("#auth-username-recovery-help").hidden = true;
     panel.hidden = false;
     $("#customer-auth-title").textContent = "Complete your customer profile";
     $("#customer-auth-help").textContent = "Your name and contact number are saved only after you sign in.";
@@ -563,6 +564,7 @@
     $("#auth-recovery-title").textContent = "Set a new password";
     $("#auth-recovery-help").textContent = "Use at least 8 characters and keep it private.";
     $("#auth-recovery-send-area").hidden = true;
+    $("#auth-username-recovery-help").hidden = true;
     $("#auth-recovery-password-area").hidden = false;
     $("#auth-recovery-back").hidden = true;
     authMessage("");
@@ -756,7 +758,20 @@
 
   $("#auth-forgot-password")?.addEventListener("click", async () => {
     if (!db) { authMessage("Password recovery is unavailable because app configuration is missing.", true); return; }
-    if (authMethod === "username") { authMessage("Username accounts without an email cannot reset passwords online yet. Contact AL SHAMI for account help.", true); return; }
+    if (authMethod === "username") {
+      $("#customer-auth-form").hidden = true;
+      $("#auth-mode-switch").hidden = true;
+      $("#auth-method-switch").hidden = true;
+      $("#auth-recovery-panel").hidden = false;
+      $("#auth-recovery-title").textContent = "Recover username account";
+      $("#auth-recovery-help").textContent = "Follow the secure recovery steps below.";
+      $("#auth-recovery-send-area").hidden = true;
+      $("#auth-recovery-password-area").hidden = true;
+      $("#auth-username-recovery-help").hidden = false;
+      $("#auth-recovery-back").hidden = false;
+      authMessage("");
+      return;
+    }
     const email = String($("#auth-identifier")?.value || "").trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       authMessage("Enter your email address first.", true);
