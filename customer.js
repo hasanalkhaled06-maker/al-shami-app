@@ -491,6 +491,9 @@
     const nameInput = $("#auth-name");
     const confirmField = $("#auth-confirm-field");
     const confirmInput = $("#auth-confirm-password");
+    const emailConfirmField = $("#auth-email-confirm-field");
+    const emailConfirmInput = $("#auth-email-confirm");
+    const resendConfirmation = $("#auth-resend-confirmation");
     const password = $("#auth-password");
     const submit = $("#auth-submit");
     const signinButton = $("#auth-mode-signin");
@@ -511,6 +514,9 @@
     if (contactInput) contactInput.required = signup;
     if (confirmField) confirmField.hidden = !signup;
     if (confirmInput) confirmInput.required = signup;
+    if (emailConfirmField) emailConfirmField.hidden = !signup || authMethod !== "email";
+    if (emailConfirmInput) emailConfirmInput.required = signup && authMethod === "email";
+    if (resendConfirmation) resendConfirmation.hidden = authMethod !== "email";
     if (password) password.autocomplete = signup ? "new-password" : "current-password";
     if (submit) submit.textContent = signup ? "Create account" : "Sign in";
     if (forgot) forgot.hidden = signup || Boolean(authRecoveryMode);
@@ -681,6 +687,10 @@
         if (!/^[a-z0-9][a-z0-9._-]{2,29}$/.test(identity)) throw new Error("Use 3–30 characters for your username: letters, numbers, dot, underscore, or dash.");
       }
       if (password.length < 8 || password.length > 128) throw new Error("Use a password with 8–128 characters.");
+      if (mode === "signup" && authMethod === "email") {
+        const emailConfirmation = String($("#auth-email-confirm")?.value || "").trim().toLowerCase();
+        if (identity !== emailConfirmation) throw new Error("The email addresses do not match. Check both entries.");
+      }
       if (mode === "signup") {
         if (fullName.length < 2) throw new Error("Enter your name to create an account.");
         if (password !== String($("#auth-confirm-password")?.value || "")) throw new Error("The passwords do not match.");
@@ -708,11 +718,26 @@
             customer_account: "true", contact_phone: contactPhone, full_name: fullName
           } }
         });
-        if (error) throw error;
+        if (error) {
+          const response = await fetch(`${cfg.SUPABASE_URL}/functions/v1/customer-auth`, {
+            method: "POST", headers: { "Content-Type": "application/json", apikey: cfg.SUPABASE_ANON_KEY },
+            body: JSON.stringify({ action: "correct-pending-email", contact_phone: contactPhone, password, new_email: identity })
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw error;
+          $("#auth-password").value = "";
+          $("#auth-confirm-password").value = "";
+          authMessage(result.confirmation_sent
+            ? "We corrected the email on your unfinished signup and sent a new confirmation link. Check the inbox and spam folder."
+            : "We corrected the email on your unfinished signup, but couldn't send the confirmation email. Use Resend confirmation email after checking your email address.");
+          return;
+        }
         if (data.session) session = data.session;
-        else if (Array.isArray(data.user?.identities) && data.user.identities.length === 0) throw new Error("This email is already registered. Sign in or use password recovery.");
+        else if (Array.isArray(data.user?.identities) && data.user.identities.length === 0) throw new Error("This email is already registered. Sign in, resend its confirmation email, or use password recovery.");
         else {
-          authMessage("Account request received. Open the confirmation link sent to your email before signing in.");
+          $("#auth-password").value = "";
+          $("#auth-confirm-password").value = "";
+          authMessage("Your account is pending email confirmation. Open the link sent to your email. If the address was mistyped, enter the correct email and confirmation above, then try Create account again with the same phone and password.");
           return;
         }
       } else {
@@ -727,11 +752,31 @@
       if (/email address not authorized|not authorized|confirmation email|SMTP|email provider/i.test(detail)) {
         authMessage("Email delivery is not configured for public customers yet. Configure a custom SMTP sender before email signup and password recovery.", true);
       } else if (/duplicate key|unique constraint|23505|already linked|already registered/i.test(detail)) {
-        authMessage("This username, email, or contact phone is already linked to an account. Sign in or contact AL SHAMI for help.", true);
+        authMessage("This phone, email, or username is already linked to an account. If you mistyped your email, retry Create account with the correct email, the same phone, and the original password; otherwise sign in or contact AL SHAMI.", true);
       } else authMessage(detail || "Account action failed. Please try again.", true);
     } finally {
       if (submit) { submit.disabled = false; submit.textContent = form.dataset.mode === "signup" ? "Create account" : "Sign in"; }
     }
+  });
+
+  $("#auth-resend-confirmation")?.addEventListener("click", async () => {
+    if (!db) { authMessage("Email confirmation is unavailable because app configuration is missing.", true); return; }
+    if (authMethod !== "email") { authMessage("Choose Email to resend an email confirmation.", true); return; }
+    const email = String($("#auth-identifier")?.value || "").trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      authMessage("Enter the email address used for the unfinished signup first.", true);
+      $("#auth-identifier")?.focus();
+      return;
+    }
+    const button = $("#auth-resend-confirmation");
+    if (button) button.disabled = true;
+    try {
+      const { error } = await db.auth.resend({ type: "signup", email, options: { emailRedirectTo: getCustomerAuthRedirectUrl() } });
+      if (error) throw error;
+      authMessage("If this email has an unfinished account, a confirmation link has been sent. Check your inbox and spam folder.");
+    } catch (error) {
+      authMessage(error.message || "Could not resend the confirmation email. Please wait a minute and try again.", true);
+    } finally { if (button) button.disabled = false; }
   });
 
   $("#auth-forgot-password")?.addEventListener("click", async () => {
