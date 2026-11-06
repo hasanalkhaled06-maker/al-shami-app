@@ -5,6 +5,15 @@
 **Production DB:** connected Supabase project `al_shami_orders`  
 **Scope:** all four app entry pages, JavaScript and CSS, PWA manifests/cache, SQL migration files, live RLS/grants and database functions, Supabase security/performance advisors, recent GitHub Actions, and aggregated Auth logs. This is a source/configuration audit, not a formal penetration test or end-to-end certification.
 
+## Release readiness refresh — 6 November 2026
+
+- GitHub Actions **Validate application scripts** passed for commit `3e828df`, and GitHub Pages deployment completed successfully. The live customer, admin, and rider entry pages load; this is not an authenticated order-flow test.
+- Supabase health advisor returned no lints. The live legacy `place_order_with_location` RPC no longer grants execute to `PUBLIC`, `anon`, or `authenticated`; authenticated access to `place_order_with_options` and `place_order_with_rewards` remains.
+- The live `get_public_menu_popularity()` implementation returns a dense rank, not exact order counts. The older exact-count finding below is superseded.
+- No real customer → admin → rider → completion → customer-history acceptance run has been completed. CI is static/syntax coverage, not an end-to-end order test.
+- Remaining release gates include DPC registration and a finalized public privacy notice, enabling leaked-password protection if supported by the project plan, and adding durable abuse protection to public account endpoints.
+- This release gate excludes phone/SMS sign-in and electronic payments; those need their own provider and end-to-end checks before activation.
+
 ## Executive summary
 
 Good foundations already exist: server-calculated prices, menu availability checks, admin allow-list, rider approval checks, private staff documents, scoped order tracking, cash-only checkout, and GitHub Actions checks. The main risks are shared-origin session handling, large overlapping CSS overrides, sensitive RPCs, limited end-to-end tests, and a growing operations feature set without full role-specific permissions.
@@ -34,7 +43,7 @@ Good foundations already exist: server-calculated prices, menu availability chec
 |---|---|---|
 | **P1** | Supabase leaked-password protection is disabled. | Enable it in Auth if the subscription supports it; retain rate limits and sensible password-length rules. |
 | **P1** | Several `SECURITY DEFINER` RPCs are executable by authenticated users. | Review every advisor finding individually. Some current functions check admin/rider membership; don't revoke grants blindly. Add negative tests for customer, unapproved rider and unrelated rider. |
-| **P1** | Public `get_public_menu_popularity()` exposes exact order counts by menu item. | Decide whether public popularity sorting is worth revealing exact aggregate sales. Prefer a coarse rank/band or safe ordering. |
+| **Superseded** | An older review said `get_public_menu_popularity()` exposed exact order counts. | Live SQL shows the function returns only a dense rank. Recheck if the function output changes. |
 | **P1** | History exposes hard deletion through `delete_order_for_admin`. | Prefer archive/void with a reason and immutable audit history. Do not delete historical orders or change DB grants until an additive migration and recovery plan are reviewed. |
 | **P1** | Customer checkout requires sign-in. | Test account-required vs guest checkout with real customers; treat it as a business decision. Keep phone checks and server-side totals either way. |
 | **P2** | Order transition UX and concurrency need a full acceptance test. | The current `admin_transition_order_status` and `cashier_set_order_status` RPCs enforce `al_shami_order_transition_allowed`; the old finding that no server-side check existed is superseded. Test every valid/invalid transition, concurrent updates and receipt-code completion before considering any database change. |
