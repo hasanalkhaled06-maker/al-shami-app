@@ -8,6 +8,14 @@
   const installMessage = installBanner?.querySelector("span");
   const standalone = window.matchMedia("(display-mode: standalone)").matches ||
     window.navigator.standalone === true;
+  const mobileInstallDevice = /Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const customerAccount = document.getElementById("customer-account");
+  const shouldShowLaptopInstall = () => !standalone && !mobileInstallDevice &&
+    !(customerAccount && !customerAccount.hidden);
+  const updateInstallBannerVisibility = () => {
+    if (installBanner) installBanner.hidden = !shouldShowLaptopInstall();
+  };
   const installHelpCopy = {
     en: "Open this page in Microsoft Edge, then choose ⋯ > Apps > Install this site as an app.",
     ar: "افتح الصفحة بمتصفح Microsoft Edge، ثم اختر ⋯ > التطبيقات > تثبيت هذا الموقع كتطبيق.",
@@ -24,7 +32,13 @@
     style.textContent = ".pwa-install-banner{position:fixed;z-index:10021;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);transform:translateX(-50%);width:min(680px,calc(100% - 24px));padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #d8e2e9;border-radius:14px;background:#f4f8fb;color:#29475b;font:600 14px/1.45 system-ui,sans-serif;box-shadow:0 12px 34px #1b252d30}.pwa-install-banner[hidden]{display:none!important}.pwa-install-banner .btn{flex:0 0 auto}@media(max-width:480px){.pwa-install-banner{padding:10px 12px;font-size:12px}.pwa-install-banner .btn{padding:9px 11px}}";
     document.head.appendChild(style);
   }
-  if (installBanner) installBanner.hidden = standalone;
+  updateInstallBannerVisibility();
+  if (customerAccount && installBanner) {
+    new MutationObserver(updateInstallBannerVisibility).observe(customerAccount, {
+      attributes: true,
+      attributeFilter: ["hidden"]
+    });
+  }
   if (standalone) document.documentElement.classList.add("app-installed");
   const iosGuide = document.getElementById("ios-install-guide");
   const iosGuideClose = document.getElementById("ios-install-close");
@@ -99,7 +113,7 @@
   window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
     installPrompt = event;
-    if (installBanner) installBanner.hidden = false;
+    updateInstallBannerVisibility();
   });
 
   installButton?.addEventListener("click", async () => {
