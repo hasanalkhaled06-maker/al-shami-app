@@ -530,6 +530,10 @@
     const title = $("#customer-auth-title");
     const help = $("#customer-auth-help");
     const signup = form?.dataset?.mode === "signup";
+    const resendConfirmation = $("#auth-resend-confirmation");
+    const forgotPassword = $("#auth-forgot-password");
+    if (resendConfirmation) resendConfirmation.hidden = step !== "credentials" || authMethod !== "email";
+    if (forgotPassword) forgotPassword.hidden = step !== "credentials" || signup || Boolean(authRecoveryMode);
     if (step === "action") {
       if (title) title.textContent = "Welcome to AL SHAMI";
       if (help) help.textContent = "Choose sign in or create an account.";

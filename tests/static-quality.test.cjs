@@ -166,6 +166,8 @@ test("customer auth uses separate action, method, and credential steps", () => {
   assert.match(customer, /setAuthStep\("action"\)/);
   assert.match(customer, /setAuthStep\("method"\)/);
   assert.match(customer, /setAuthStep\("credentials"\)/);
+  assert.match(customer, /forgotPassword\.hidden = step !== "credentials"/);
+  assert.match(customer, /resendConfirmation\.hidden = step !== "credentials"/);
 });
 
 test("customer ordering and history pages expose matching email and username sign-in controls", () => {
@@ -177,8 +179,8 @@ test("customer ordering and history pages expose matching email and username sig
     assert.doesNotMatch(html, /SMS verification code|id="auth-method-phone"/);
   }
   const worker = source("service-worker.js");
-  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v171"/);
-  assert.ok(worker.includes("./customer.js?v=customer-two-step-auth-20261106d"),
+  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v172"/);
+  assert.ok(worker.includes("./customer.js?v=customer-two-step-auth-20261106e"),
     "offline shell must include the customer script used by both account pages");
 });
 
