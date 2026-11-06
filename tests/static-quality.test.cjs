@@ -162,7 +162,7 @@ test("customer ordering and history pages expose matching email and username sig
     assert.doesNotMatch(html, /SMS verification code|id="auth-method-phone"/);
   }
   const worker = source("service-worker.js");
-  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v168"/);
+  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v169"/);
   assert.ok(worker.includes("./customer.js?v=customer-profile-after-signin-20261106a-idempotent-profile-20261106b"),
     "offline shell must include the customer script used by both account pages");
 });
