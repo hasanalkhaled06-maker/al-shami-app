@@ -179,7 +179,7 @@ test("customer ordering and history pages expose matching email and username sig
     assert.doesNotMatch(html, /SMS verification code|id="auth-method-phone"/);
   }
   const worker = source("service-worker.js");
-  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v172"/);
+  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v173"/);
   assert.ok(worker.includes("./customer.js?v=customer-two-step-auth-20261106e"),
     "offline shell must include the customer script used by both account pages");
 });
@@ -189,6 +189,16 @@ test("customer profile save is safe to retry after a lost response", () => {
   assert.match(customer,
     /from\("customer_profiles"\)\s*\.upsert\(\{ user_id: user\.id, phone_e164: phone, full_name: name \}, \{ onConflict: "user_id" \}\)/,
     "profile retries for the same signed-in user must update their own row instead of failing as a duplicate");
+});
+
+test("iPhone install guide is wired before its script and remains manually available", () => {
+  const html = source("index.html");
+  const pwa = source("pwa.js");
+  assert.match(html, /id="ios-install-help-open"/);
+  assert.ok(html.indexOf('id="ios-install-guide"') < html.indexOf('pwa.js?v=iphone-install-help-20261106b'),
+    "install guide markup must exist before pwa.js reads it");
+  assert.match(pwa, /ios-install-help-open/);
+  assert.match(pwa, /al-shami-ios-home-install-dismissed-at-v2/);
 });
 
 test("iPhone visitors get Home Screen install steps on the customer landing page", () => {

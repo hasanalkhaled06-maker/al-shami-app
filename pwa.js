@@ -28,14 +28,16 @@
   if (standalone) document.documentElement.classList.add("app-installed");
   const iosGuide = document.getElementById("ios-install-guide");
   const iosGuideClose = document.getElementById("ios-install-close");
+  const iosGuideOpen = document.getElementById("ios-install-help-open");
   const iosDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const iosGuideKey = "al-shami-ios-home-install-dismissed-at";
+  const iosGuideKey = "al-shami-ios-home-install-dismissed-at-v2";
   const iosGuideCopy = {
     en: ["Add AL SHAMI to your Home Screen", "Open this link in Safari.", "Tap Share ↑ at the bottom of Safari.", "Choose “Add to Home Screen”, then tap “Add”.", "The app icon will appear on your iPhone Home Screen."],
     ar: ["أضف الشامي إلى الشاشة الرئيسية", "افتح هذا الرابط في Safari.", "اضغط «مشاركة» ↑ أسفل Safari.", "اختر «إضافة إلى الشاشة الرئيسية» ثم اضغط «إضافة».", "سيظهر رمز التطبيق على الشاشة الرئيسية للآيفون."],
     tw: ["Add AL SHAMI to your Home Screen", "Open this link in Safari.", "Tap Share ↑ at the bottom of Safari.", "Choose “Add to Home Screen”, then tap “Add”.", "The app icon will appear on your iPhone Home Screen."]
   };
+  if (iosGuideOpen) iosGuideOpen.hidden = !iosDevice;
   if (iosGuide && iosDevice && !standalone) {
     let dismissedAt = 0;
     try { dismissedAt = Number(localStorage.getItem(iosGuideKey) || 0); } catch (_) {}
@@ -48,6 +50,12 @@
       }, 650);
     }
   }
+  const openIosGuide = () => {
+    if (!iosGuide) return;
+    iosGuide.hidden = false;
+    iosGuideClose?.focus();
+  };
+  iosGuideOpen?.addEventListener("click", openIosGuide);
   const closeIosGuide = () => {
     if (!iosGuide) return;
     iosGuide.hidden = true;
@@ -63,6 +71,8 @@
   const updateIosGuideCopy = () => {
     const language = document.getElementById("language")?.value || "en";
     const copy = iosGuideCopy[language] || iosGuideCopy.en;
+    const helpButton = document.getElementById("ios-install-help-open");
+    if (helpButton) helpButton.textContent = language === "ar" ? "طريقة إضافة التطبيق إلى شاشة الآيفون" : "How to add AL SHAMI to iPhone Home Screen";
     const ids = ["ios-install-title", "ios-install-step-1", "ios-install-step-2", "ios-install-step-3", "ios-install-note"];
     ids.forEach((id, index) => {
       const node = document.getElementById(id);
