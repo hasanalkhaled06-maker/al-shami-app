@@ -23,16 +23,9 @@ Complete the DPC registration with the restaurant's legal controller identity an
 
 ### 2. Customer account deletion
 
-There is no customer account deletion flow in the current PWA. Deleting only the Supabase Auth user would leave personal data in `public.orders`: customer name, phone and possibly delivery address/location. Orders also retain customer IDs and tracking tokens unless explicitly cleared. Other user-linked records include customer profiles, username mapping, push subscriptions/preferences, reviews, reward ledger, referral codes and referrals.
+A public deletion-request page (`delete-account.html`) and in-app link are being added. This creates a support path but does not itself delete data. Deleting only the Supabase Auth user would leave personal data in `public.orders`: customer name, phone and possibly delivery address/location. Orders also retain customer IDs and tracking tokens unless explicitly cleared. Other user-linked records include customer profiles, username mapping, push subscriptions/preferences, reviews, reward ledger, referral codes and referrals.
 
-Implementation must be an authenticated, re-authenticated, idempotent flow that:
-- refuses or defers deletion while the customer has an active order;
-- removes account credentials, profile data, notification subscriptions/preferences and other account-only personal data;
-- anonymizes personal fields and unlinks the customer from retained order/accounting records, if the documented legal retention policy requires keeping those records;
-- invalidates outstanding sessions and tracking access;
-- reports success only after all required steps complete, and safely supports retry after a partial external Auth deletion.
-
-Before rollout, add and review a transactional database migration/RPC plus an authenticated server-side function and customer UI, test it with disposable test accounts, then deploy the function and migration in order. Do not enable a UI button that calls an undeployed function. No production migration or deletion has been performed in this preparation.
+Before Play submission, verify the support process end to end and implement/test actual deletion or documented anonymization. The flow must be authenticated/re-authenticated, refuse or defer while an order is active, remove account-only data, address retained order records according to the published legal retention policy, invalidate sessions/tracking access, and safely support retries. No production migration or deletion has been performed.
 
 ### 3. Registration abuse and password security
 
