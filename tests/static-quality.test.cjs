@@ -6,7 +6,7 @@ const path = require("node:path");
 const test = require("node:test");
 
 const ROOT = path.resolve(__dirname, "..");
-const PAGES = ["index.html", "history.html", "admin.html", "rider.html"];
+const PAGES = ["index.html", "history.html", "delete-account.html", "admin.html", "rider.html"];
 const MANIFESTS = ["manifest.webmanifest", "admin.webmanifest", "rider.webmanifest"];
 
 function source(file) {
@@ -162,7 +162,7 @@ test("customer ordering and history pages expose matching email and username sig
     assert.doesNotMatch(html, /SMS verification code|id="auth-method-phone"/);
   }
   const worker = source("service-worker.js");
-  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v166"/);
+  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v167"/);
   assert.ok(worker.includes("./customer.js?v=customer-profile-after-signin-20261106a"),
     "offline shell must include the customer script used by both account pages");
 });
