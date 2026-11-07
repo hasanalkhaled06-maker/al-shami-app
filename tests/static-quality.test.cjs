@@ -179,7 +179,7 @@ test("customer ordering and history pages expose matching email and username sig
     assert.doesNotMatch(html, /SMS verification code|id="auth-method-phone"/);
   }
   const worker = source("service-worker.js");
-  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v177"/);
+  assert.match(worker, /CACHE_NAME\s*=\s*CACHE_PREFIX\s*\+\s*"v178"/);
   assert.ok(worker.includes("./customer.js?v=customer-two-step-auth-20261106e"),
     "offline shell must include the customer script used by both account pages");
 });
@@ -200,7 +200,7 @@ test("iPhone install guide is wired before its script and remains manually avail
   const methodStep = html.indexOf('id="auth-method-step"');
   assert.ok(authStart < installHelp && installHelp < methodStep,
     "install help must be reachable on the auth screen before sign-in");
-  assert.ok(html.indexOf('id="ios-install-guide"') < html.indexOf('pwa.js?v=android-install-option-20261107a'),
+  assert.ok(html.indexOf('id="ios-install-guide"') < html.indexOf('pwa.js?v=android-install-option-20261107b'),
     "install guide markup must exist before pwa.js reads it");
   assert.match(pwa, /ios-install-help-open/);
   assert.match(pwa, /al-shami-ios-home-install-dismissed-at-v2/);
