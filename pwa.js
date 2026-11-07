@@ -9,13 +9,40 @@
   const standalone = window.matchMedia("(display-mode: standalone)").matches ||
     window.navigator.standalone === true;
   const androidInstallDevice = /Android/i.test(navigator.userAgent);
+  const iosInstallDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const mobileInstallDevice = /Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const customerAccount = document.getElementById("customer-account");
-  const shouldShowInstallBanner = () => !standalone &&
-    (androidInstallDevice || (!mobileInstallDevice && !(customerAccount && !customerAccount.hidden)));
+  const androidInstallHelpOpen = document.getElementById("android-install-help-open");
+  const iosInstallHelpOpen = document.getElementById("ios-install-help-open");
+  const shouldShowLaptopInstall = () => !standalone && !mobileInstallDevice &&
+    !(customerAccount && !customerAccount.hidden);
+  const platformInstallHelpCopy = {
+    android: {
+      en: "Install AL SHAMI on Android",
+      ar: "تثبيت تطبيق الشامي على أندرويد",
+      tw: "Install AL SHAMI on Android"
+    },
+    ios: {
+      en: "How to add AL SHAMI to iPhone Home Screen",
+      ar: "طريقة إضافة تطبيق الشامي إلى شاشة الآيفون",
+      tw: "How to add AL SHAMI to iPhone Home Screen"
+    }
+  };
+  const updatePlatformInstallHelp = () => {
+    const language = document.getElementById("language")?.value || "en";
+    if (androidInstallHelpOpen) {
+      androidInstallHelpOpen.hidden = !androidInstallDevice || standalone;
+      androidInstallHelpOpen.textContent = platformInstallHelpCopy.android[language] || platformInstallHelpCopy.android.en;
+    }
+    if (iosInstallHelpOpen) {
+      iosInstallHelpOpen.hidden = !iosInstallDevice || standalone;
+      iosInstallHelpOpen.textContent = platformInstallHelpCopy.ios[language] || platformInstallHelpCopy.ios.en;
+    }
+  };
   const updateInstallBannerVisibility = () => {
-    if (installBanner) installBanner.hidden = !shouldShowInstallBanner();
+    if (installBanner) installBanner.hidden = !shouldShowLaptopInstall();
   };
   const installHelpCopy = {
     desktop: {
@@ -58,9 +85,8 @@
   if (standalone) document.documentElement.classList.add("app-installed");
   const iosGuide = document.getElementById("ios-install-guide");
   const iosGuideClose = document.getElementById("ios-install-close");
-  const iosGuideOpen = document.getElementById("ios-install-help-open");
-  const iosDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const iosGuideOpen = iosInstallHelpOpen;
+  const iosDevice = iosInstallDevice;
   const iosGuideKey = "al-shami-ios-home-install-dismissed-at-v2";
   const iosGuideCopy = {
     en: ["Add AL SHAMI to your Home Screen", "Open this link in Safari.", "Tap Share ↑ at the bottom of Safari.", "Choose “Add to Home Screen”, then tap “Add”.", "The app icon will appear on your iPhone Home Screen."],
@@ -109,7 +135,9 @@
     });
   };
   updateIosGuideCopy();
+  updatePlatformInstallHelp();
   document.getElementById("language")?.addEventListener("change", updateIosGuideCopy);
+  document.getElementById("language")?.addEventListener("change", updatePlatformInstallHelp);
 
   if (!document.getElementById("ios-install-guide-style")) {
     const style = document.createElement("style");
@@ -128,6 +156,7 @@
   document.getElementById("language")?.addEventListener("change", updateInstallCopy);
 
   window.addEventListener("beforeinstallprompt", event => {
+    if (androidInstallDevice) return;
     event.preventDefault();
     installPrompt = event;
     updateInstallBannerVisibility();
