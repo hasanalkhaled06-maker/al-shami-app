@@ -8,24 +8,41 @@
   const installMessage = installBanner?.querySelector("span");
   const standalone = window.matchMedia("(display-mode: standalone)").matches ||
     window.navigator.standalone === true;
+  const androidInstallDevice = /Android/i.test(navigator.userAgent);
   const mobileInstallDevice = /Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const customerAccount = document.getElementById("customer-account");
-  const shouldShowLaptopInstall = () => !standalone && !mobileInstallDevice &&
+  const shouldShowInstallBanner = () => !standalone &&
+    (androidInstallDevice || !mobileInstallDevice) &&
     !(customerAccount && !customerAccount.hidden);
   const updateInstallBannerVisibility = () => {
-    if (installBanner) installBanner.hidden = !shouldShowLaptopInstall();
+    if (installBanner) installBanner.hidden = !shouldShowInstallBanner();
   };
   const installHelpCopy = {
-    en: "Open this page in Microsoft Edge, then choose ⋯ > Apps > Install this site as an app.",
-    ar: "افتح الصفحة بمتصفح Microsoft Edge، ثم اختر ⋯ > التطبيقات > تثبيت هذا الموقع كتطبيق.",
-    tw: "Open this page in Microsoft Edge, then choose ⋯ > Apps > Install this site as an app."
+    desktop: {
+      en: "Open this page in Microsoft Edge, then choose ⋯ > Apps > Install this site as an app.",
+      ar: "افتح الصفحة بمتصفح Microsoft Edge، ثم اختر ⋯ > التطبيقات > تثبيت هذا الموقع كتطبيق.",
+      tw: "Open this page in Microsoft Edge, then choose ⋯ > Apps > Install this site as an app."
+    },
+    android: {
+      en: "In Chrome, tap ⋮ > Install app (or Add to Home screen).",
+      ar: "في Chrome اضغط ⋮ ثم «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».",
+      tw: "In Chrome, tap ⋮ > Install app (or Add to Home screen)."
+    }
   };
   const installCopy = {
-    en: ["Install AL SHAMI on this laptop for quick access.", "Install app"],
-    ar: ["ثبّت تطبيق الشامي على اللابتوب للوصول السريع.", "تثبيت التطبيق"],
-    tw: ["Install AL SHAMI on this laptop for quick access.", "Install app"]
+    desktop: {
+      en: ["Install AL SHAMI on this laptop for quick access.", "Install app"],
+      ar: ["ثبّت تطبيق الشامي على اللابتوب للوصول السريع.", "تثبيت التطبيق"],
+      tw: ["Install AL SHAMI on this laptop for quick access.", "Install app"]
+    },
+    android: {
+      en: ["Install AL SHAMI on your Android phone.", "Install app"],
+      ar: ["ثبّت تطبيق الشامي على هاتفك الأندرويد.", "تثبيت التطبيق"],
+      tw: ["Install AL SHAMI on your Android phone.", "Install app"]
+    }
   };
+  const installPlatformCopy = copy => copy[androidInstallDevice ? "android" : "desktop"];
   if (!document.getElementById("pwa-install-banner-style")) {
     const style = document.createElement("style");
     style.id = "pwa-install-banner-style";
@@ -103,7 +120,8 @@
   }
   const updateInstallCopy = () => {
     const language = document.getElementById("language")?.value || "en";
-    const copy = installCopy[language] || installCopy.en;
+    const platformCopy = installPlatformCopy(installCopy);
+    const copy = platformCopy[language] || platformCopy.en;
     if (installMessage) installMessage.textContent = copy[0];
     if (installButton) installButton.textContent = copy[1];
   };
@@ -119,7 +137,8 @@
   installButton?.addEventListener("click", async () => {
     if (!installPrompt) {
       const language = document.getElementById("language")?.value || "en";
-      if (installMessage) installMessage.textContent = installHelpCopy[language] || installHelpCopy.en;
+      const platformHelp = installPlatformCopy(installHelpCopy);
+      if (installMessage) installMessage.textContent = platformHelp[language] || platformHelp.en;
       return;
     }
     const promptEvent = installPrompt;
@@ -129,7 +148,8 @@
     if (choice?.outcome === "accepted" && installBanner) installBanner.hidden = true;
     if (choice?.outcome !== "accepted" && installMessage) {
       const language = document.getElementById("language")?.value || "en";
-      installMessage.textContent = installHelpCopy[language] || installHelpCopy.en;
+      const platformHelp = installPlatformCopy(installHelpCopy);
+      installMessage.textContent = platformHelp[language] || platformHelp.en;
     }
   });
 
