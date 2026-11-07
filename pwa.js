@@ -13,8 +13,7 @@
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const customerAccount = document.getElementById("customer-account");
   const shouldShowInstallBanner = () => !standalone &&
-    (androidInstallDevice || !mobileInstallDevice) &&
-    !(customerAccount && !customerAccount.hidden);
+    (androidInstallDevice || (!mobileInstallDevice && !(customerAccount && !customerAccount.hidden)));
   const updateInstallBannerVisibility = () => {
     if (installBanner) installBanner.hidden = !shouldShowInstallBanner();
   };
