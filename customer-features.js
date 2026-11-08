@@ -273,7 +273,8 @@
     if(prefs&&!prefsError)options?.querySelectorAll("[data-pref]").forEach(el=>el.checked=Boolean(prefs[el.dataset.pref]));
     await refreshPushControl();
     if(rewardError){loyaltySettings=null;loyaltyLoadFailed=true;window.AL_SHAMI_LOYALTY_SETTINGS=null;refreshPointDisplays();if(status)status.textContent=loadStatusText("rewardsError");return;}
-    loyaltyLoadFailed=false;\n    loyaltySettings={enabled:Boolean(rewards.enabled),points:Number(rewards.points||0),pointsPerGhs:Number(rewards.points_per_ghs||0),pointsPerGhsRedeemed:Math.max(1,Number(rewards.points_per_ghs_redeemed||100))};
+    loyaltyLoadFailed=false;
+    loyaltySettings={enabled:Boolean(rewards.enabled),points:Number(rewards.points||0),pointsPerGhs:Number(rewards.points_per_ghs||0),pointsPerGhsRedeemed:Math.max(1,Number(rewards.points_per_ghs_redeemed||100))};
     window.AL_SHAMI_LOYALTY_SETTINGS=loyaltySettings;
     window.dispatchEvent(new Event("alshami:loyalty-settings"));
     refreshPointDisplays();
