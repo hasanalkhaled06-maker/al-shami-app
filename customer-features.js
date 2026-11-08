@@ -54,6 +54,8 @@
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&overlay&&!overlay.hidden)overlay.hidden=true;});
 
   let loyaltySettings=null;
+  let loyaltyLoadFailed=false;
+  let loyaltySignedIn=false;
   const language=()=>document.querySelector("#language")?.value||"en";
   const pointWords={
     en:{title:"My points",points:"points",checkoutTitle:"Rewards for this order",checkoutNote:"See your points balance here and apply points as a discount before placing the order.",checkoutBalanceLoading:"Loading your points balance…",checkoutBalanceSignIn:"Sign in to see your points and use them on this order.",checkoutBalanceError:"Your points could not load just now. Try again in a moment.",checkoutBalanceDisabled:"Rewards are not active yet.",checkoutBalance:"Available for this order: {points} points · discount value GH₵ {value}",value:"Store credit value: GH₵ ",view:"View rewards",notReady:"Your points balance will appear here when rewards are enabled.",disabled:"Rewards are not active yet.",estimate:"This order will earn {points} points (about GH₵ {value}) after completion.",estimateDisabled:"Rewards are not active yet, so this order will not earn points.",pending:"Expected points after completion: +{points}",earned:"Points earned from this order: +{points}",rejected:"No points were earned for this order."},
@@ -92,6 +94,16 @@
       if(balance)balance.textContent=String(loyaltySettings.points);
       if(balanceLabel)balanceLabel.textContent=t.points;
       if(balanceValue)balanceValue.textContent=t.value+formatGhs(loyaltySettings.points/loyaltySettings.pointsPerGhsRedeemed);
+    }
+    const checkoutTitle=document.querySelector("#checkout-rewards-title");
+    const checkoutNote=document.querySelector("#checkout-rewards-note");
+    const checkoutBalance=document.querySelector("#checkout-points-balance");
+    if(checkoutTitle)checkoutTitle.textContent=t.checkoutTitle;
+    if(checkoutNote)checkoutNote.textContent=t.checkoutNote;
+    if(checkoutBalance){
+      if(!loyaltySettings)checkoutBalance.textContent=loyaltySignedIn?(loyaltyLoadFailed?t.checkoutBalanceError:t.checkoutBalanceLoading):t.checkoutBalanceSignIn;
+      else if(!loyaltySettings.enabled)checkoutBalance.textContent=t.checkoutBalanceDisabled;
+      else checkoutBalance.textContent=t.checkoutBalance.replace("{points}",String(loyaltySettings.points)).replace("{value}",formatGhs(loyaltySettings.points/loyaltySettings.pointsPerGhsRedeemed));
     }
     const estimate=document.querySelector("#checkout-points-estimate");
     if(estimate){
@@ -251,7 +263,9 @@
 
   async function load(){
     const {data:{session}}=await db.auth.getSession();
-    if(!session?.user){if(status)status.textContent="Sign in to view rewards and set alert choices.";return;}
+    loyaltySignedIn=Boolean(session?.user);
+    if(!session?.user){loyaltySettings=null;loyaltyLoadFailed=false;refreshPointDisplays();if(status)status.textContent="Sign in to view rewards and set alert choices.";return;}
+    loyaltyLoadFailed=false;refreshPointDisplays();
     const [{data:rewards,error:rewardError},{data:prefs,error:prefsError}]=await Promise.all([
       db.rpc("get_my_loyalty_summary"),
       db.from("customer_notification_preferences").select("order_updates,rider_tracking,promotions").eq("customer_user_id",session.user.id).maybeSingle()
