@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v179";
+const CACHE_NAME = CACHE_PREFIX + "v180";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -22,6 +22,7 @@ const SHELL_FILES = [
   "./config.js",
   "./customer.js?v=customer-two-step-auth-20261106e",
   "./customer-features.js?v=customer-feature-recovery-20261029a",
+  "./pwa.js?v=iphone-install-help-20261106c",
   "./pwa.js?v=android-install-option-20261107c",
   "./icons/al-shami.svg",
   "./style.css?v=radical-ui-20261023a",
