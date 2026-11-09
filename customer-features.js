@@ -9,6 +9,7 @@
   const css=document.createElement("style");
   css.textContent=".customer-reward-balance-card{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:16px 0 2px;padding:16px 18px;border:1px solid #ead8b7;border-radius:16px;background:linear-gradient(120deg,#fff8e7,#fffdf8);color:#281a17}.customer-reward-balance-card p{margin:3px 0}.customer-reward-title{font-size:.82rem;font-weight:800;color:#67101a}.customer-reward-balance{font-size:1.15rem}.customer-reward-value{color:#665750;font-size:.9rem}.customer-reward-balance-card button{margin:0}.customer-order-points{margin:10px 0 0;padding:9px 11px;border-radius:9px;background:#f5f1e7;color:#4d3917;font-size:.9rem;font-weight:700}.customer-order-points.is-earned{background:#eaf7ed;color:#17623d}.customer-order-points.is-pending{background:#fff7e8;color:#795317}.customer-points-estimate{margin:5px 0 0;padding:10px 12px;border-radius:10px;background:#f1f8f2;color:#17623d;font-weight:750}.customer-feature-card{margin:16px 0;padding:18px;border:1px solid #e7d9d0;border-radius:16px;background:#fffaf6;color:#281a17}.customer-feature-card h3{margin:0 0 10px}.customer-feature-card .feature-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:9px 0}.customer-feature-card input[type=number],.customer-feature-card input[type=text]{max-width:190px;padding:9px;border:1px solid #c9b9ae;border-radius:8px}.customer-feature-card label{display:inline-flex;gap:7px;align-items:center}.customer-feature-note{font-size:.9em;color:#665750}.customer-settings-overlay[hidden]{display:none!important}.customer-settings-overlay{position:fixed;inset:0;z-index:10020;background:#150d0dd9;display:grid;place-items:center;padding:18px}.customer-settings-dialog{width:min(620px,100%);max-height:85vh;overflow:auto;background:#fff;border-radius:20px;padding:22px;color:#241a18;box-shadow:0 18px 60px #0006}.customer-settings-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px}.customer-settings-dialog h2{margin:0}.customer-settings-dialog #customer-settings-close{font-size:1.2rem}";
   css.textContent += ".customer-checkout-points{margin:12px 0;padding:13px 15px;border:1px solid #b8dcc2;border-left:5px solid #21814a;border-radius:12px;background:#eef8f0;color:#174f30;font-size:1rem;font-weight:850;line-height:1.45}.customer-checkout-points[hidden]{display:none!important}.customer-checkout-balance-label{display:block;margin-bottom:3px;color:#5b4a26;font-size:.8rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em}.customer-delivery-complete-modal[hidden]{display:none!important}.customer-delivery-complete-modal{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:18px;background:rgba(26,11,13,.74);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.customer-delivery-complete-card{width:min(500px,100%);max-height:88vh;overflow:auto;padding:24px;border:1px solid #ead8b7;border-top:5px solid #caa45e;border-radius:22px;background:#fffdf8;color:#281a17;box-shadow:0 22px 70px #0006}.customer-delivery-complete-card h2{margin:0 0 9px;color:#641622}.customer-delivery-complete-card p{line-height:1.5}.customer-delivery-complete-earned{padding:12px;border-radius:12px;background:#eaf7ed;color:#17623d;font-weight:850}.customer-delivery-complete-balance{color:#665750;font-weight:700}.customer-service-stars{display:flex;gap:8px;margin:12px 0}.customer-service-stars button{min-width:48px;min-height:48px;border:1px solid #d7c6a2;border-radius:12px;background:#fff8e7;color:#8a6828;font-size:28px;cursor:pointer}.customer-service-stars button[aria-pressed=true]{background:#e8c677;color:#4d3510;border-color:#8b5e13;box-shadow:0 0 0 3px #caa45e55;transform:translateY(-2px)}.customer-service-stars button:focus-visible{outline:3px solid #641622;outline-offset:3px}.customer-service-review-label{display:block;margin:14px 0 6px;font-weight:800}.customer-service-review-text{box-sizing:border-box;width:100%;min-height:90px;padding:11px;border:1px solid #d8cfc5;border-radius:10px;font:inherit;resize:vertical}.customer-delivery-complete-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.customer-delivery-complete-actions button{flex:1 1 140px;min-height:46px;margin:0}.customer-service-review-message{min-height:1.4em;color:#17623d;font-weight:700}@media(max-width:480px){.customer-delivery-complete-card{padding:19px;border-radius:18px}.customer-service-stars button{min-width:44px;min-height:44px}}";
+  css.textContent += ".customer-first-launch-permissions[hidden]{display:none!important}.customer-first-launch-permissions{position:fixed;inset:0;z-index:20000;display:grid;place-items:center;padding:18px;background:rgba(25,10,12,.76);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.customer-first-launch-card{box-sizing:border-box;width:min(540px,100%);max-height:88vh;overflow:auto;padding:24px;border:1px solid #ead8b7;border-top:5px solid #caa45e;border-radius:20px;background:#fffdf8;color:#281a17;box-shadow:0 20px 65px #0006}.customer-first-launch-card h2{margin:0 0 9px;color:#641622}.customer-first-launch-card>p{line-height:1.55}.customer-first-launch-step{display:grid;grid-template-columns:1fr auto;gap:10px 14px;align-items:center;margin:12px 0;padding:14px;border:1px solid #e8ddd0;border-radius:13px;background:#fff}.customer-first-launch-step h3{margin:0 0 3px;font-size:1rem}.customer-first-launch-step p{margin:0;color:#665750;font-size:.88rem;line-height:1.4}.customer-first-launch-step button{margin:0;min-height:44px}.customer-first-launch-status{grid-column:1/-1;min-height:1.35em;margin:0;color:#17623d;font-size:.86rem;font-weight:750}.customer-first-launch-actions{display:flex;gap:10px;margin-top:16px}.customer-first-launch-actions button{flex:1;min-height:48px;margin:0}.customer-first-launch-actions #customer-first-launch-continue{background:#641622;color:#fff;border-color:#641622;font-weight:850}@media(max-width:460px){.customer-first-launch-card{padding:19px}.customer-first-launch-step{grid-template-columns:1fr}.customer-first-launch-step button{width:100%}}";
   document.head.append(css);
 
   const form=document.querySelector("#checkout-form");
@@ -44,6 +45,13 @@
   completionModal.hidden=true;
   completionModal.innerHTML='<section class="customer-delivery-complete-card" role="dialog" aria-modal="true" aria-labelledby="delivery-complete-title"><p class="customer-reward-title">AL SHAMI · ORDER COMPLETE</p><h2 id="delivery-complete-title"></h2><p id="delivery-complete-description"></p><p id="delivery-complete-earned" class="customer-delivery-complete-earned"></p><p id="delivery-complete-balance" class="customer-delivery-complete-balance"></p><hr><h3 id="customer-service-review-title"></h3><p id="customer-service-review-prompt"></p><div class="customer-service-stars" role="group" aria-label="Rate your experience"><button type="button" data-service-rating="1" aria-pressed="false" aria-label="1 star">★</button><button type="button" data-service-rating="2" aria-pressed="false" aria-label="2 stars">★</button><button type="button" data-service-rating="3" aria-pressed="false" aria-label="3 stars">★</button><button type="button" data-service-rating="4" aria-pressed="false" aria-label="4 stars">★</button><button type="button" data-service-rating="5" aria-pressed="false" aria-label="5 stars">★</button></div><label id="customer-service-review-label" class="customer-service-review-label" for="customer-service-review-text"></label><textarea id="customer-service-review-text" class="customer-service-review-text" maxlength="1000"></textarea><p id="customer-service-review-message" class="customer-service-review-message" role="status" aria-live="polite"></p><div class="customer-delivery-complete-actions"><button id="customer-service-review-submit" class="btn btn-primary" type="button"></button><button id="customer-service-review-later" class="btn btn-light" type="button"></button></div></section>';
   document.body.append(completionModal);
+
+  const firstLaunchPermissions=document.createElement("div");
+  firstLaunchPermissions.id="customer-first-launch-permissions";
+  firstLaunchPermissions.className="customer-first-launch-permissions";
+  firstLaunchPermissions.hidden=true;
+  firstLaunchPermissions.innerHTML='<section class="customer-first-launch-card" role="dialog" aria-modal="true" aria-labelledby="customer-first-launch-title"><p class="customer-reward-title">AL SHAMI · FIRST VISIT</p><h2 id="customer-first-launch-title"></h2><p id="customer-first-launch-intro"></p><div class="customer-first-launch-step"><div><h3 id="customer-first-launch-location-title"></h3><p id="customer-first-launch-location-description"></p></div><button id="customer-first-launch-location-button" class="btn btn-light" type="button"></button><p id="customer-first-launch-location-status" class="customer-first-launch-status" role="status" aria-live="polite"></p></div><div class="customer-first-launch-step"><div><h3 id="customer-first-launch-notification-title"></h3><p id="customer-first-launch-notification-description"></p></div><button id="customer-first-launch-notification-button" class="btn btn-light" type="button"></button><p id="customer-first-launch-notification-status" class="customer-first-launch-status" role="status" aria-live="polite"></p></div><div class="customer-first-launch-actions"><button id="customer-first-launch-continue" class="btn btn-primary" type="button"></button></div></section>';
+  document.body.append(firstLaunchPermissions);
 
   const overlay=document.querySelector("#customer-settings-dialog"),status=document.querySelector("#customer-feature-status");
   const summary=document.querySelector("#customer-rewards-summary"),options=document.querySelector("#customer-notification-options");
@@ -364,6 +372,90 @@
       await refreshPushControl();
     }
   });
+  const firstLaunchPermissionWords={
+    en:{title:"Set up AL SHAMI",intro:"Choose whether AL SHAMI can use your location for delivery and send order updates. Your browser will ask before either permission is granted.",locationTitle:"Delivery location",locationDescription:"Allow location access to make choosing your delivery address easier.",locationButton:"Allow location",notificationTitle:"Order notifications",notificationDescription:"Get order status and rider tracking updates on this device.",notificationButton:"Enable notifications",continue:"Continue to the app",locationReady:"Location access is already allowed.",locationGranted:"Location permission allowed.",locationDenied:"Location access was not allowed. You can change it in browser settings.",locationUnavailable:"Could not read your location right now. You can still continue.",locationUnsupported:"Location is not supported by this browser.",notificationGranted:"Notification permission allowed.",notificationDenied:"Notifications are blocked in browser settings.",notificationUnsupported:"Notifications are not supported in this browser.",notificationNeedsLogin:"Permission allowed. Sign in to finish setting up order alerts.",notificationReady:"Order notifications are enabled on this device.",notificationFailed:"Could not finish notification setup. Try again from Account settings."},
+    ar:{title:"إعداد تطبيق الشامي",intro:"اختار إذا بتسمح للتطبيق يستخدم موقعك لعنوان التوصيل ويبعتلك تحديثات الطلب. المتصفح رح يطلب إذنك قبل تفعيل كل خيار.",locationTitle:"موقع التوصيل",locationDescription:"اسمح بالوصول للموقع ليسهل تحديد عنوان التوصيل.",locationButton:"السماح بالموقع",notificationTitle:"إشعارات الطلب",notificationDescription:"لتوصلك حالة الطلب وتحديثات حركة الموصّل على هالجهاز.",notificationButton:"تفعيل الإشعارات",continue:"متابعة إلى التطبيق",locationReady:"إذن الموقع مسموح من قبل.",locationGranted:"تم السماح بالوصول للموقع.",locationDenied:"ما تم السماح للموقع. فيك تغيّر الإذن من إعدادات المتصفح.",locationUnavailable:"ما قدرنا نحدد موقعك هلأ. فيك تتابع عادي.",locationUnsupported:"الموقع غير مدعوم بهالمتصفح.",notificationGranted:"تم السماح بالإشعارات.",notificationDenied:"الإشعارات محظورة من إعدادات المتصفح.",notificationUnsupported:"الإشعارات غير مدعومة بهالمتصفح.",notificationNeedsLogin:"تم السماح بالإشعارات. سجّل دخولك لإكمال تفعيل تحديثات الطلب.",notificationReady:"إشعارات الطلب مفعّلة على هالجهاز.",notificationFailed:"ما قدرنا نكمل تفعيل الإشعارات. جرّب من إعدادات الحساب."}
+  };
+  const firstLaunchWords=()=>firstLaunchPermissionWords[language()==="ar"?"ar":"en"];
+  const firstLaunchPermissionKey="al-shami-first-launch-permissions-v1";
+  const setFirstLaunchStatus=(id,message)=>{const node=document.querySelector(id);if(node)node.textContent=message;};
+  function renderFirstLaunchPermissionCopy(){
+    const t=firstLaunchWords();
+    const values={
+      "#customer-first-launch-title":t.title,
+      "#customer-first-launch-intro":t.intro,
+      "#customer-first-launch-location-title":t.locationTitle,
+      "#customer-first-launch-location-description":t.locationDescription,
+      "#customer-first-launch-location-button":t.locationButton,
+      "#customer-first-launch-notification-title":t.notificationTitle,
+      "#customer-first-launch-notification-description":t.notificationDescription,
+      "#customer-first-launch-notification-button":t.notificationButton,
+      "#customer-first-launch-continue":t.continue
+    };
+    Object.entries(values).forEach(([selector,value])=>{const node=document.querySelector(selector);if(node)node.textContent=value;});
+  }
+  function updateInitialPermissionStatus(){
+    const t=firstLaunchWords();
+    if("Notification" in window){
+      if(Notification.permission==="granted")setFirstLaunchStatus("#customer-first-launch-notification-status",t.notificationGranted);
+      else if(Notification.permission==="denied")setFirstLaunchStatus("#customer-first-launch-notification-status",t.notificationDenied);
+    }else setFirstLaunchStatus("#customer-first-launch-notification-status",t.notificationUnsupported);
+    if(navigator.permissions?.query){
+      navigator.permissions.query({name:"geolocation"}).then(permission=>{
+        if(permission.state==="granted")setFirstLaunchStatus("#customer-first-launch-location-status",t.locationReady);
+        else if(permission.state==="denied")setFirstLaunchStatus("#customer-first-launch-location-status",t.locationDenied);
+      }).catch(()=>{});
+    }else if(!navigator.geolocation)setFirstLaunchStatus("#customer-first-launch-location-status",t.locationUnsupported);
+  }
+  document.querySelector("#customer-first-launch-location-button")?.addEventListener("click",()=>{
+    const t=firstLaunchWords();
+    if(!navigator.geolocation){setFirstLaunchStatus("#customer-first-launch-location-status",t.locationUnsupported);return;}
+    const button=document.querySelector("#customer-first-launch-location-button");
+    if(button)button.disabled=true;
+    navigator.geolocation.getCurrentPosition(
+      ()=>setFirstLaunchStatus("#customer-first-launch-location-status",t.locationGranted),
+      error=>setFirstLaunchStatus("#customer-first-launch-location-status",error?.code===1?t.locationDenied:t.locationUnavailable),
+      {enableHighAccuracy:false,timeout:10000,maximumAge:60000}
+    );
+    window.setTimeout(()=>{if(button)button.disabled=false;},1000);
+  });
+  document.querySelector("#customer-first-launch-notification-button")?.addEventListener("click",async()=>{
+    const t=firstLaunchWords();
+    if(!("Notification" in window)||!navigator.serviceWorker||!("PushManager" in window)){
+      setFirstLaunchStatus("#customer-first-launch-notification-status",t.notificationUnsupported);return;
+    }
+    try{
+      let permission=Notification.permission;
+      if(permission==="default")permission=await Notification.requestPermission();
+      if(permission!=="granted"){setFirstLaunchStatus("#customer-first-launch-notification-status",t.notificationDenied);return;}
+      const {data:{session}}=await db.auth.getSession();
+      if(!session?.user){setFirstLaunchStatus("#customer-first-launch-notification-status",t.notificationNeedsLogin);return;}
+      const registration=await navigator.serviceWorker.ready;
+      let subscription=await registration.pushManager.getSubscription();
+      if(!subscription){
+        const {publicKey}=await invokeCustomerPush({action:"public-key"});
+        if(!publicKey)throw new Error("Push key unavailable");
+        const applicationServerKey=Uint8Array.from(atob(publicKey.replace(/-/g,"+").replace(/_/g,"/")+"===".slice((publicKey.length+3)%4)),c=>c.charCodeAt(0));
+        subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey});
+        const currentLanguage=String(document.querySelector("#language")?.value||"en").toLowerCase();
+        await invokeCustomerPush({action:"subscribe",subscription:subscription.toJSON(),language:currentLanguage});
+      }
+      setFirstLaunchStatus("#customer-first-launch-notification-status",t.notificationReady);
+      await refreshPushControl();
+    }catch(error){
+      console.error("First-launch notification setup failed:",error);
+      setFirstLaunchStatus("#customer-first-launch-notification-status",t.notificationFailed);
+    }
+  });
+  document.querySelector("#customer-first-launch-continue")?.addEventListener("click",()=>{
+    try{localStorage.setItem(firstLaunchPermissionKey,"done");}catch(_){}
+    firstLaunchPermissions.hidden=true;
+  });
+  renderFirstLaunchPermissionCopy();
+  updateInitialPermissionStatus();
+  try{if(localStorage.getItem(firstLaunchPermissionKey)!=="done")firstLaunchPermissions.hidden=false;}catch(_){firstLaunchPermissions.hidden=false;}
+  document.querySelector("#language")?.addEventListener("change",renderFirstLaunchPermissionCopy);
+
   void refreshPushControl();
 
   options?.addEventListener("change",async()=>{
