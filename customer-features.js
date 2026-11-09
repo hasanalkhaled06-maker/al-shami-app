@@ -412,12 +412,12 @@
     if(!navigator.geolocation){setFirstLaunchStatus("#customer-first-launch-location-status",t.locationUnsupported);return;}
     const button=document.querySelector("#customer-first-launch-location-button");
     if(button)button.disabled=true;
+    const finishLocationRequest=message=>{setFirstLaunchStatus("#customer-first-launch-location-status",message);if(button)button.disabled=false;};
     navigator.geolocation.getCurrentPosition(
-      ()=>setFirstLaunchStatus("#customer-first-launch-location-status",t.locationGranted),
-      error=>setFirstLaunchStatus("#customer-first-launch-location-status",error?.code===1?t.locationDenied:t.locationUnavailable),
+      ()=>finishLocationRequest(t.locationGranted),
+      error=>finishLocationRequest(error?.code===1?t.locationDenied:t.locationUnavailable),
       {enableHighAccuracy:false,timeout:10000,maximumAge:60000}
     );
-    window.setTimeout(()=>{if(button)button.disabled=false;},1000);
   });
   document.querySelector("#customer-first-launch-notification-button")?.addEventListener("click",async()=>{
     const t=firstLaunchWords();
