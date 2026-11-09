@@ -2,7 +2,7 @@
 "use strict";
 
 const CACHE_PREFIX = "al-shami-static-";
-const CACHE_NAME = CACHE_PREFIX + "v180";
+const CACHE_NAME = CACHE_PREFIX + "v181";
 const SHELL_FILES = [
   "./",
   "./index.html",
@@ -21,7 +21,7 @@ const SHELL_FILES = [
   "./assets/al-shami-chef-3d.webp",
   "./config.js",
   "./customer.js?v=customer-two-step-auth-20261106e",
-  "./customer-features.js?v=checkout-rewards-visible-20261108a",
+  "./customer-features.js?v=first-launch-permissions-20261109b",
   "./pwa.js?v=iphone-install-help-20261106c",
   "./pwa.js?v=android-install-option-20261107c",
   "./icons/al-shami.svg",
