@@ -203,10 +203,10 @@
       const mapAvailable = Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
       const navLabel = mapAvailable ? "Open directions in Google Maps" : "Find address in Google Maps";
       const whatsappLink = whatsappDeliveryLink(order, orderNumber);
-      const receiptPanel = String(order.status || "").toLowerCase() === "out_for_delivery"
+      const receiptPanel = ["out_for_delivery", "ready", "ready_for_pickup"].includes(String(order.status || "").toLowerCase())
         ? '<form class="rider-receipt-form" data-rider-receipt-form data-order-id="' + escapeHtml(order.id) + '">' +
             '<strong>Confirm handover</strong>' +
-            '<p>Ask the customer for their 6-digit receipt code, then enter it here to complete delivery.</p>' +
+            '<p>Ask the customer for their 6-digit receipt code at handover. Confirmation becomes available when the order is Out for delivery.</p>' +
             '<label>Customer receipt code<input type="text" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="one-time-code" required data-rider-receipt-code="' + escapeHtml(order.id) + '" placeholder="6-digit code" aria-label="Customer receipt code for order ' + escapeHtml(orderNumber) + '"></label>' +
             '<button class="navigation-button receipt-complete-button" type="submit">Verify code &amp; complete delivery</button>' +
             '<p class="rider-receipt-message" data-rider-receipt-message="' + escapeHtml(order.id) + '" role="status" aria-live="polite"></p>' +
