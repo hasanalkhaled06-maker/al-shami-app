@@ -44,7 +44,8 @@
   const floatingCartButton = $("#floating-cart-button");
   const floatingCartCount = $("#floating-cart-count");
   const floatingCartTotal = $("#floating-cart-total");
-
+  let menuIsVisible = false;
+  let orderIsVisible = false;
 
   let deliveryMapInstance = null;
   let deliveryMapMarker = null;
@@ -2524,6 +2525,7 @@
     if (floatingCartButton) {
       floatingCartButton.setAttribute("aria-label", (lang === "ar" ? "انتقل إلى طلبك، عدد القطع " : lang === "tw" ? "Kɔ wo order so, nneɛma " : "Go to your order, items ") + itemCount + ", " + money(total));
       floatingCartButton.classList.toggle("has-items", rows.length > 0);
+      floatingCartButton.classList.toggle("is-visible", rows.length > 0 || (menuIsVisible && !orderIsVisible));
     }
 
     if ($("#cart-subtotal")) {
@@ -3703,14 +3705,12 @@
     }
   });
 
-  let menuIsVisible = false;
-  let orderIsVisible = false;
   const floatingCartObserver = new IntersectionObserver(entries => {
     for (const entry of entries) {
       if (entry.target === $("#menu")) menuIsVisible = entry.isIntersecting;
       if (entry.target === $(".checkout-section")) orderIsVisible = entry.isIntersecting;
     }
-    const shouldShow = menuIsVisible && !orderIsVisible;
+    const shouldShow = (menuIsVisible && !orderIsVisible) || Boolean(floatingCartButton?.classList.contains("has-items"));
     floatingCartButton?.classList.toggle("is-visible", shouldShow);
     if (floatingCartButton) floatingCartButton.setAttribute("aria-hidden", shouldShow ? "false" : "true");
   }, { threshold: 0.05 });
